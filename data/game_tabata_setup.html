@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Tabata / HIIT</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        .mode-tabs { display:flex; gap:10px; margin-bottom:15px; }
+        .mode-tab { flex:1; padding:10px; text-align:center; background:var(--bg-color); border-radius:6px; cursor:pointer; font-weight:bold; border:2px solid transparent;}
+        .mode-tab.active { background: var(--primary); color:white; border-color:#fff;}
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_tabata">HIIT Controller ⏱️</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="tab_setup_pucks">📍 Stations (Pucks)</h3>
+            <div class="slider-header">
+                <span data-i18n="tab_lbl_pucks">Active Pucks:</span>
+                <span id="puckDisp" class="slider-val">1</span>
+            </div>
+            <input type="range" id="puckSlider" min="1" max="20" value="1" oninput="updPucks()">
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
+        </div>
+
+        <div class="card" style="border-left: 5px solid var(--success);">
+            <h3 data-i18n="tab_setup_work">🟢 WORK Phase</h3>
+            <div class="slider-header">
+                <span data-i18n="tab_lbl_dur">Duration:</span>
+                <span id="workDisp" class="slider-val">20s</span>
+            </div>
+            <input type="range" id="workSlider" min="10" max="300" step="10" value="20" oninput="document.getElementById('workDisp').innerText = this.value + 's'; updLimits();">
+        </div>
+
+        <div class="card" style="border-left: 5px solid var(--danger);">
+            <h3 data-i18n="tab_setup_rest">🔴 REST Phase</h3>
+            <div class="slider-header">
+                <span data-i18n="tab_lbl_dur">Duration:</span>
+                <span id="restDisp" class="slider-val">10s</span>
+            </div>
+            <input type="range" id="restSlider" min="10" max="120" step="10" value="10" oninput="document.getElementById('restDisp').innerText = this.value + 's'; updLimits();">
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="tab_setup_goal">🏁 Workout Goal</h3>
+            <div class="mode-tabs">
+                <div id="tabRounds" class="mode-tab active" onclick="setMode(0)" data-i18n="tab_opt_rounds">🔄 By Rounds</div>
+                <div id="tabTime" class="mode-tab" onclick="setMode(1)" data-i18n="tab_opt_time">⏱️ By Time</div>
+            </div>
+
+            <div id="boxRounds">
+                <div class="slider-header">
+                    <span data-i18n="tab_lbl_rnd">Circuit Rounds:</span>
+                    <span id="rndDisp" class="slider-val">3</span>
+                </div>
+                <input type="range" id="rndSlider" min="1" max="20" value="3" oninput="updLimits()">
+                <div id="rndInfo" style="text-align:center; color:var(--text-muted); margin-top:10px; font-weight:bold;"></div>
+            </div>
+
+            <div id="boxTime" style="display:none;">
+                <div class="slider-header">
+                    <span data-i18n="tab_lbl_tlim">Total Time Limit:</span>
+                    <span id="timeLimitDisp" class="slider-val">05m 00s</span>
+                </div>
+                <input type="range" id="timeLimitSlider" min="0" max="62" value="12" oninput="updLimits()">
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="tab_setup_snd">🔊 Sound Mode</h3>
+            <select id="sndSelect">
+                <option value="0" selected data-i18n="tab_snd_0">Countdown (3-2-1 Beeps)</option>
+                <option value="1" data-i18n="tab_snd_1">Single Beep (On Switch)</option>
+                <option value="2" data-i18n="tab_snd_2">Silent Mode</option>
+            </select>
+        </div>
+
+        <button id="btnNext" onclick="startGame()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="tab_btn_start">START WORKOUT 🏁</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        let connPucks = 0;
+        let limitMode = 0; 
+
+        fetch('/api/game/load?id=22'); 
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connPucks = data.filter(p => p.active).length;
+            let slider = document.getElementById('puckSlider');
+            slider.max = Math.max(1, connPucks);
+            if(parseInt(slider.value) > connPucks) slider.value = Math.max(1, connPucks);
+            updPucks();
+        });
+
+        function setMode(m) {
+            limitMode = m;
+            document.getElementById('tabRounds').className = (m === 0) ? "mode-tab active" : "mode-tab";
+            document.getElementById('tabTime').className = (m === 1) ? "mode-tab active" : "mode-tab";
+            document.getElementById('boxRounds').style.display = (m === 0) ? "block" : "none";
+            document.getElementById('boxTime').style.display = (m === 1) ? "block" : "none";
+            updLimits();
+        }
+
+        function updPucks() {
+            let p = parseInt(document.getElementById('puckSlider').value);
+            document.getElementById('puckDisp').innerText = p;
+            
+            let info = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+            
+            info.innerText = `${getTranslation('conn_pucks')} ${connPucks}`;
+            if (p > connPucks) {
+                info.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                info.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+            updLimits();
+        }
+
+        function updLimits() {
+            let r = parseInt(document.getElementById('rndSlider').value);
+            let p = parseInt(document.getElementById('puckSlider').value);
+            document.getElementById('rndDisp').innerText = r;
+            
+            let calcStr = getTranslation('tab_setup_calc')
+                .replace('{0}', r)
+                .replace('{1}', p)
+                .replace('{2}', r * p);
+            document.getElementById('rndInfo').innerText = calcStr;
+
+            let val = parseInt(document.getElementById('timeLimitSlider').value);
+            let secs = 0;
+            if (val <= 12) secs = 180 + val * 10;
+            else secs = 300 + (val - 12) * 30;
+
+            let m = Math.floor(secs / 60);
+            let s = secs % 60;
+            document.getElementById('timeLimitDisp').innerText = `${m}m ${s.toString().padStart(2,'0')}s`;
+            
+            return { rounds: r, timeSecs: secs };
+        }
+
+        function startGame() {
+            let p = document.getElementById('puckSlider').value;
+            if (p > connPucks) {
+                if(!confirm("Not enough pucks connected! Continue anyway?")) return;
+            }
+            
+            let w = document.getElementById('workSlider').value;
+            let r = document.getElementById('restSlider').value;
+            let s = document.getElementById('sndSelect').value;
+            
+            let lims = updLimits();
+            let lVal = (limitMode === 0) ? lims.rounds : lims.timeSecs;
+
+            fetch(`/api/game/action?cmd=cfg_pucks&val=${p}`)
+            .then(()=> fetch(`/api/game/action?cmd=cfg_work&val=${w}`))
+            .then(()=> fetch(`/api/game/action?cmd=cfg_rest&val=${r}`))
+            .then(()=> fetch(`/api/game/action?cmd=cfg_sound&val=${s}`))
+            .then(()=> fetch(`/api/game/action?cmd=cfg_lmode&val=${limitMode}`))
+            .then(()=> fetch(`/api/game/action?cmd=cfg_lval&val=${lVal}`))
+            .then(()=> {
+                location.href = 'game_tabata_run.html';
+            });
+        }
+
+        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'puckSlider',      el:'puckSlider' },
+        { key:'workSlider',      el:'workSlider' },
+        { key:'restSlider',      el:'restSlider' },
+        { key:'rndSlider',       el:'rndSlider' },
+        { key:'timeLimitSlider', el:'timeLimitSlider' },
+        { key:'sndSelect',       el:'sndSelect',  type:'select' },
+        { key:'limitMode',       get:function(){return limitMode;}, set:function(v){setMode(parseInt(v));} }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

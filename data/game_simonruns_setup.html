@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Simon Runs</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        .info-box { 
+            background:var(--card-hover); 
+            padding:10px; 
+            border-radius:5px; 
+            margin-top:20px; 
+            font-size:0.9rem; 
+            color:var(--text-muted); 
+        }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_simonruns">Simon Runs 🏃‍♂️</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="simr_setup_cfg">⚙️ Config</h3>
+            <p id="connInfo" class="info-txt" style="margin-bottom:20px;" data-i18n="loading">Loading...</p>
+            
+            <div class="slider-header">
+                <span data-i18n="simr_lbl_grp">Groups:</span>
+                <span id="grpDisp" class="slider-val">1</span>
+            </div>
+            <input type="range" id="grpSlider" min="1" max="3" value="1" oninput="updateCalc()">
+            
+            <div class="toggle-row" style="margin-top:15px;">
+                <span data-i18n="simr_lbl_cent">Central Display Puck</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkCentral" onchange="updateCalc()"> 
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            
+            <div class="slider-header" style="margin-top:15px;">
+                <span data-i18n="simr_lbl_len">Length:</span>
+                <span id="lenDisp" class="slider-val">10</span>
+            </div>
+            <input type="range" id="lenSlider" min="5" max="20" value="10" oninput="document.getElementById('lenDisp').innerText=this.value">
+            
+            <div class="toggle-row" style="margin-top:15px;">
+                <span data-i18n="simr_lbl_blind">Color Blind Mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkBlind">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            
+            <div id="calcInfo" class="info-box">Calculating...</div>
+        </div>
+
+        <button id="btnNext" onclick="goToNames()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡️</button>
+        <button onclick="doCancel()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        fetch('/api/game/load?id=6'); 
+
+        let totalPucks = 0;
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            totalPucks = data.filter(p => p.active).length;
+            document.getElementById('connInfo').innerText = `${getTranslation('conn_pucks')} ${totalPucks}`;
+            updateCalc();
+        });
+
+        function updateCalc() {
+            let groups = parseInt(document.getElementById('grpSlider').value);
+            let central = document.getElementById('chkCentral').checked;
+            document.getElementById('grpDisp').innerText = groups;
+            
+            let chkC = document.getElementById('chkCentral');
+            if(groups === 1) { chkC.disabled = true; chkC.checked = false; central = false; } 
+            else { chkC.disabled = false; }
+
+            let displayPucks = central ? 1 : groups;
+            let availableForInput = totalPucks - displayPucks;
+            let pucksPerGroup = Math.floor(availableForInput / groups);
+            
+            let html = "";
+            let valid = true;
+            
+            if (pucksPerGroup < 1) {
+                html = `<span style="color:var(--danger)">${getTranslation('simr_err_pucks')} ${displayPucks + groups}.</span>`;
+                valid = false;
+            } else {
+                html = `${groups} ${getTranslation('simr_ok_grp')}<br>${displayPucks} ${getTranslation('simr_ok_disp')} ${pucksPerGroup} ${getTranslation('simr_ok_inp')}`;
+            }
+            
+            document.getElementById('calcInfo').innerHTML = html;
+            document.getElementById('btnNext').disabled = !valid;
+            document.getElementById('btnNext').style.opacity = valid ? 1 : 0.5;
+        }
+
+		function goToNames() {
+			let grp = document.getElementById('grpSlider').value;
+			let len = document.getElementById('lenSlider').value;
+			let cent = document.getElementById('chkCentral').checked ? 1 : 0;
+			let blnd = document.getElementById('chkBlind').checked ? 1 : 0;
+
+			// Nur im Speicher ablegen!
+			sessionStorage.setItem('sr_groups', grp);
+			sessionStorage.setItem('sr_len', len);
+			sessionStorage.setItem('sr_central', cent);
+			sessionStorage.setItem('sr_blind', blnd);
+			  
+			location.href = 'game_simonruns_names.html';
+		}
+        
+        function doCancel() {
+            fetch('/api/game/action?cmd=exit');
+            setTimeout(() => location.href = '/', 200);
+        }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'grpSlider',  el:'grpSlider' },
+        { key:'chkCentral', el:'chkCentral', type:'check' },
+        { key:'lenSlider',  el:'lenSlider' },
+        { key:'chkBlind',   el:'chkBlind',   type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

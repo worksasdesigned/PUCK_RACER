@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Bomb Squad</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_bomb">Bomb Squad 💣</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="bomb_setup_cfg">⚙️ Configuration</h3>
+            
+            <div class="slider-header">
+                <span data-i18n="bomb_lbl_pucks">Active Pucks:</span>
+                <span id="puckVal" class="slider-val">1</span>
+            </div>
+            <input type="range" id="puck" min="1" max="12" value="1" oninput="upd('puck', this.value); checkPucks();">
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
+            
+            <div class="slider-header" style="margin-top:20px;">
+                <span data-i18n="bomb_lbl_time">Max Timer (Random):</span>
+                <span id="timeVal" class="slider-val">10s</span>
+            </div>
+            <input type="range" id="time" min="3" max="15" value="10" oninput="upd('time', this.value + 's')">
+            
+            <div class="slider-header" style="margin-top:20px;">
+                <span data-i18n="bomb_lbl_rounds">Rounds:</span>
+                <span id="rndVal" class="slider-val">5</span>
+            </div>
+            <input type="range" id="rnd" min="1" max="20" value="5" oninput="upd('rnd', this.value)">
+            
+            <div style="margin-top:20px; font-weight:bold;" data-i18n="bomb_lbl_diff">Difficulty:</div>
+            <select id="diff" style="margin-bottom:20px;">
+                <option value="0" data-i18n="bomb_diff_0">Easy (+/- 750ms)</option>
+                <option value="1" selected data-i18n="bomb_diff_1">Medium (+/- 500ms)</option>
+                <option value="2" data-i18n="bomb_diff_2">Hard (+/- 250ms)</option>
+            </select>
+            
+            <div class="toggle-row">
+                <span data-i18n="bomb_lbl_sync">Group Mode (Sync)</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkGroup">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="goHome()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        // Das Laden des Spiels in der Setup-Phase behalten wir zur Sicherheit, 
+        // damit der ESP im richtigen Modus ist, um den Status abzufragen.
+        fetch('/api/game/load?id=8'); 
+
+        let maxPucks = 0;
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            maxPucks = data.filter(p => p.active).length;
+            checkPucks();
+        });
+
+        function upd(id, val) { document.getElementById(id+'Val').innerText = val; }
+
+        function checkPucks() {
+            let p = parseInt(document.getElementById('puck').value);
+            let info = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+            
+            info.innerText = `${getTranslation('req_pucks')} ${p} | ${getTranslation('conn_pucks')} ${maxPucks}`;
+            
+            if (p > maxPucks) {
+                info.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                info.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+        }
+
+        function nextStep() {
+            let p = parseInt(document.getElementById('puck').value);
+            if (p > maxPucks) {
+                if(!confirm("Not enough pucks connected! Continue anyway?")) return;
+            }
+
+            // Werte aus der Oberfläche auslesen
+            let t = document.getElementById('time').value; 
+            let r = document.getElementById('rnd').value;
+            let d = document.getElementById('diff').value;
+            let g = document.getElementById('chkGroup').checked ? 1 : 0;
+            
+            // ALLE Konfigurationen sicher im sessionStorage ablegen
+            sessionStorage.setItem('bomb_pucks', p);
+            sessionStorage.setItem('bomb_time', t);
+            sessionStorage.setItem('bomb_rounds', r);
+            sessionStorage.setItem('bomb_diff', d);
+            sessionStorage.setItem('bomb_group', g);
+            
+            // Direkt zur Namen-Seite wechseln. Das Senden übernimmt dann die Namen-Seite!
+            location.href = 'game_bomb_names.html';
+        }
+
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'puck',     el:'puck' },
+        { key:'time',     el:'time' },
+        { key:'rnd',      el:'rnd' },
+        { key:'diff',     el:'diff',     type:'select' },
+        { key:'chkGroup', el:'chkGroup', type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

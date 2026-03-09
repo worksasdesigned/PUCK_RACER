@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - TTTT</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_tttt">Tactical TicTacToe ❌⭕</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="tttt_setup_ply">👥 Anzahl Spieler</h3>
+            <div class="slider-header">
+                <span></span>
+                <span id="plyDisp" class="slider-val">2</span>
+            </div>
+            <input type="range" id="plySlider" min="1" max="3" value="2" oninput="document.getElementById('plyDisp').innerText=this.value">
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="tttt_setup_grid">🔲 Grid Size (Pucks)</h3>
+            <div class="slider-header">
+                <span data-i18n="tttt_lbl_pucks">Required Pucks:</span>
+                <span id="puckDisp" class="slider-val">10 (3x3)</span>
+            </div>
+            <input type="range" id="puckSlider" min="1" max="4" value="4" oninput="updPucks()">
+            <p class="info-txt" id="puckHint" data-i18n="tttt_hint_10">Hint: You need 10 pucks for real TicTacToe! Fewer pucks activate special variations.</p>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="tttt_setup_mode">⚙️ Game Mode</h3>
+            <div class="toggle-row">
+                <span data-i18n="tttt_lbl_hard">Hard-Mode (Neutralize pucks first)</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkHard">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span data-i18n="tttt_lbl_auto">Auto-Restart on Win</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkAuto">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        
+        let connPucks = 10;
+        const puckVals = [4, 6, 7, 10];
+        const puckLbls = ["4 (1x3 Line)", "6 (Dice-5)", "7 (2x3 Grid)", "10 (3x3 Grid)"];
+
+        // Pucks vom ESP32 abfragen und Slider automatisch auf das Maximum einstellen
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connPucks = data.filter(p => p.active).length;
+            
+            // Ermittle den maximal möglichen Spielfeld-Index (0 bis 3)
+            let bestIdx = 0; // Fallback auf 4 Pucks
+            if (connPucks >= 10) bestIdx = 3;
+            else if (connPucks >= 7) bestIdx = 2;
+            else if (connPucks >= 6) bestIdx = 1;
+            
+            // Slider anpassen (Werte im HTML sind 1 bis 4, daher +1)
+            document.getElementById('puckSlider').value = bestIdx + 1;
+            
+            // UI mit den neuen Werten aktualisieren
+            updPucks();
+        });
+
+        function updPucks() {
+            let idx = parseInt(document.getElementById('puckSlider').value) - 1;
+            let val = puckVals[idx];
+            document.getElementById('puckDisp').innerText = puckLbls[idx];
+            
+            let hint = document.getElementById('puckHint');
+            // Zeige Warnung nur, wenn der Benutzer manuell höher geht als physisch möglich
+            if (val > connPucks) {
+                hint.innerHTML = `<span style='color:var(--danger)'>Not enough pucks connected! (${connPucks} available)</span>`;
+            } else {
+                hint.innerText = getTranslation('tttt_hint_10') || "Hint: You need 10 pucks for real TicTacToe!";
+            }
+        }
+
+        function nextStep() {
+            let idx = parseInt(document.getElementById('puckSlider').value) - 1;
+            let val = puckVals[idx];
+            
+            if (val > connPucks) {
+                if(!confirm("You don't have enough pucks connected. Continue anyway?")) return;
+            }
+
+            sessionStorage.setItem('tttt_ply', document.getElementById('plySlider').value);
+            sessionStorage.setItem('tttt_pucks', val);
+            sessionStorage.setItem('tttt_hard', document.getElementById('chkHard').checked ? 1 : 0);
+            sessionStorage.setItem('tttt_auto', document.getElementById('chkAuto').checked ? 1 : 0);
+            
+            location.href = 'game_tttt_names.html';
+        }
+
+        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        
+        // Initialer Aufruf (wird nach dem fetch nochmal überschrieben)
+        updPucks();
+    </script>
+	<script>
+    window.TRAINING_FIELDS = [
+        { key:'plySlider',  el:'plySlider' },
+        { key:'puckSlider', el:'puckSlider' },
+        { key:'chkHard',    el:'chkHard', type:'check' },
+        { key:'chkAuto',    el:'chkAuto', type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

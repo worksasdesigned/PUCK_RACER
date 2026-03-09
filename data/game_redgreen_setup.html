@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Red Light Green Light</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_redgreen">Red Light 🚦 Green Light</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="rg_setup_cfg">⚙️ Config</h3>
+            
+            <div class="slider-header">
+                <span data-i18n="rg_lbl_grp">Groups:</span>
+                <span id="grpDisp" class="slider-val">1</span>
+            </div>
+            <input type="range" id="grp" min="1" max="10" value="1" oninput="upd('grp',this.value)">
+           
+            <div class="slider-header" style="margin-top:20px;">
+                <span data-i18n="lbl_time_limit">Time Limit:</span>
+                <span id="timeDisp" class="slider-val">60s</span>
+            </div>
+            <input type="range" id="time" min="10" max="300" step="10" value="60" oninput="upd('time',this.value+'s')">
+            
+            <div style="margin-top:20px; font-weight:bold;" data-i18n="rg_lbl_spd">Speed:</div>
+            <select id="speed" style="margin-top:5px;">
+                <option value="0" data-i18n="rg_opt_slow">Slow (Safe)</option>
+                <option value="1" selected data-i18n="rg_opt_med">Medium</option>
+                <option value="2" data-i18n="rg_opt_fast">Fast (Panic!)</option>
+            </select>
+            
+            <p id="puckInfo" class="info-txt" style="margin-top:15px;" data-i18n="loading">Checking...</p>
+        </div>
+        
+        <button onclick="next()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡️</button>
+        <button onclick="home()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+    
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        fetch('/api/game/load?id=9'); 
+        
+        fetch('/api/status').then(r=>r.json()).then(d => {
+            let cnt = d.filter(p=>p.active).length;
+            document.getElementById('puckInfo').innerText = `${getTranslation('conn_pucks')} ${cnt}`;
+            let s = document.getElementById('grp');
+            s.max = cnt > 0 ? cnt : 1;
+        });
+
+        function upd(id, v) { document.getElementById(id+'Disp').innerText = v; }
+        
+		function next() {
+			let g = document.getElementById('grp').value;
+			let t = document.getElementById('time').value;
+			let s = document.getElementById('speed').value;
+			
+			// Nur im Speicher ablegen!
+			sessionStorage.setItem('rg_groups', g);
+			sessionStorage.setItem('rg_time', t);
+			sessionStorage.setItem('rg_speed', s);
+			location.href='game_redgreen_names.html';
+		}
+        function home() { fetch('/api/game/action?cmd=exit'); location.href='/'; }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'grp',   el:'grp' },
+        { key:'time',  el:'time' },
+        { key:'speed', el:'speed', type:'select' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

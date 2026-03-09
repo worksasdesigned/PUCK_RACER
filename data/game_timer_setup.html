@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Simple Timer</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_timer">Simple Timer ⏱️</div></header>
+    <main>
+        <div class="card">
+            <div class="slider-header">
+                <h3 data-i18n="tmr_setup_time" style="margin:0;">⏳ Set Time</h3>
+                <span id="timeDisp" class="slider-val">1m 00s</span>
+            </div>
+            <input type="range" id="timeSlider" min="1" max="60" value="6" oninput="updateTime()">
+            <div class="info-txt" data-i18n="tmr_setup_time_hint">(10 seconds up to 60 minutes)</div>
+        </div>
+
+        <div class="card">
+            <div class="slider-header">
+                <h3 data-i18n="tmr_setup_pucks" style="margin:0;">👥 Pucks / Students</h3>
+                <span id="puckDisp" class="slider-val">1</span>
+            </div>
+            <input type="range" id="puckSlider" min="1" max="10" value="1" oninput="calcPucks()">
+            <p id="puckInfo" class="info-txt" data-i18n="loading_pucks">Loading...</p>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        let connectedPucks = 0;
+
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connectedPucks = data.filter(p => p.active).length;
+            calcPucks(); 
+        });
+
+        function updateTime() {
+            let val = parseInt(document.getElementById('timeSlider').value);
+            let totalSecs = (val <= 6) ? val * 10 : (val - 5) * 60;
+            let m = Math.floor(totalSecs / 60);
+            let s = totalSecs % 60;
+            
+            let disp = "";
+            if (m > 0) disp += m + "m ";
+            if (s > 0 || m === 0) disp += s + "s";
+            
+            document.getElementById('timeDisp').innerText = disp;
+            return totalSecs;
+        }
+
+        function calcPucks() {
+            let nPucks = parseInt(document.getElementById('puckSlider').value);
+            document.getElementById('puckDisp').innerText = nPucks;
+            
+            let infoEl = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+
+            infoEl.innerHTML = `${getTranslation('req_pucks')} ${nPucks} | ${getTranslation('conn_pucks')} ${connectedPucks}`;
+            if (nPucks > connectedPucks) {
+                infoEl.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                infoEl.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+        }
+
+        function nextStep() {
+            let nPucks = parseInt(document.getElementById('puckSlider').value);
+            if (nPucks > connectedPucks) {
+                if(!confirm("Not enough pucks connected! Continue anyway?")) return;
+            }
+            
+            sessionStorage.setItem('timer_players', nPucks);
+            sessionStorage.setItem('timer_time', updateTime());
+            
+            location.href = 'game_timer_names.html';
+        }
+
+        function cancelSetup() {
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
+        }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'timeSlider',  el:'timeSlider' },
+        { key:'puckSlider',  el:'puckSlider' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

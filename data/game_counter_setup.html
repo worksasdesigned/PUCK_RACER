@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Simple Counter</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_counter">Simple Counter</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="cd_setup_players">👥 Players</h3>
+            <div class="slider-header">
+                <span></span>
+                <span id="playerDisplay" class="slider-val">2</span>
+            </div>
+            <input type="range" id="playerSlider" min="1" max="12" value="2" oninput="updatePlayers(this.value)">
+            <p id="playerInfo" class="info-txt" data-i18n="loading">Loading...</p>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="cnt_setup_time">⏱ Time Limit</h3>
+            <div class="slider-header">
+                <span></span>
+                <span id="timeDisplay" class="slider-val">∞</span>
+            </div>
+            <input type="range" id="timeSlider" min="0" max="60" value="0" oninput="updateTime(this.value)">
+            <p class="info-txt" data-i18n="cnt_setup_time_hint">Slide right for time limit</p>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="cnt_setup_opt">Options</h3>
+            <div class="toggle-row">
+                <span data-i18n="cnt_setup_warn">Sound Warning at end?</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkWarn">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_back">Back</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        
+        let seconds = 0;
+        let maxPucks = 0;
+
+        // Pucks auslesen, um Slider dynamisch zu begrenzen
+        fetch('/api/status').then(r => r.json()).then(data => {
+            maxPucks = data.filter(p => p.active).length;
+            let slider = document.getElementById('playerSlider');
+            slider.max = Math.max(1, maxPucks);
+            if (parseInt(slider.value) > maxPucks) slider.value = maxPucks;
+            updatePlayers(slider.value);
+        });
+
+        function updatePlayers(val) {
+            val = parseInt(val);
+            document.getElementById('playerDisplay').innerText = val;
+            let info = document.getElementById('playerInfo');
+            info.innerText = `${getTranslation('req_pucks')} ${val} | ${getTranslation('conn_pucks')} ${maxPucks}`;
+            if (val > maxPucks) {
+                info.classList.add('warn-txt');
+            } else {
+                info.classList.remove('warn-txt');
+            }
+        }
+
+        function updateTime(val) {
+            val = parseInt(val);
+            if (val === 0) {
+                seconds = 0;
+                document.getElementById('timeDisplay').innerText = "∞";
+            } else if (val <= 18) {
+                seconds = val * 10;
+            } else {
+                seconds = 180 + ((val - 18) * 30);
+            }
+            
+            if (seconds > 0) {
+                let min = Math.floor(seconds / 60);
+                let sec = seconds % 60;
+                document.getElementById('timeDisplay').innerText = `${min}:${sec.toString().padStart(2, '0')} min`;
+            }
+        }
+
+        function nextStep() {
+            let p = parseInt(document.getElementById('playerSlider').value);
+            if (p > maxPucks) {
+                if(!confirm(getTranslation('confirm_not_enough_pucks'))) return;
+            }
+            // Spieleranzahl speichern
+            sessionStorage.setItem('cnt_players', p);
+            sessionStorage.setItem('cnt_time', seconds);
+            sessionStorage.setItem('cnt_warn', document.getElementById('chkWarn').checked ? 1 : 0);
+            location.href = 'game_counter_names.html';
+        }
+
+        function cancelSetup() {
+            fetch('/api/game/action?cmd=exit')
+                .then(() => location.href = '/')
+                .catch(() => location.href = '/');
+        }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'timeSlider', el:'timeSlider' },
+        { key:'chkWarn',    el:'chkWarn', type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

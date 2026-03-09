@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Domination</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        .hint-box { 
+            background: rgba(0,0,0,0.3); 
+            border:1px solid var(--border-color); 
+            padding:15px; 
+            border-radius:6px; 
+            font-size:0.9rem; 
+            color:var(--text-muted); 
+            margin-top:20px;
+            text-align:center;
+        }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_domination">Domination ⚔️</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="dom_setup_time">⏱️ Game Time</h3>
+            <div class="slider-header">
+                <span data-i18n="lbl_time_limit">Duration:</span>
+                <span id="timeDisp" class="slider-val">3m 00s</span>
+            </div>
+            <input type="range" id="timeSlider" min="3" max="30" value="18" oninput="updateTime()">
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="dom_setup_prot">🛡️ Protection</h3>
+            <div style="font-size:0.9rem; color:var(--text-muted); margin-bottom:10px;" data-i18n="dom_setup_prot_hint">
+                How long is a puck protected after being captured?
+            </div>
+            <div class="slider-header">
+                <span data-i18n="dom_lbl_block">Block Time:</span>
+                <span id="blockDisp" class="slider-val">2s</span>
+            </div>
+            <input type="range" id="blockSlider" min="0" max="10" value="2" oninput="document.getElementById('blockDisp').innerText = this.value + 's'">
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="dom_setup_arenas">👥 Arenas (Groups)</h3>
+            <div class="slider-header">
+                <span data-i18n="dom_lbl_active">Active Arenas:</span>
+                <span id="grpDisp" class="slider-val">1</span>
+            </div>
+            <input type="range" id="grpSlider" min="1" max="2" value="1" oninput="calcPucks()">
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="dom_setup_rules">⚙️ Rules</h3>
+            <div class="toggle-row">
+                <span data-i18n="dom_lbl_sync">Synchronous Start (Wait for all Teams)</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkSync" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        let connectedPucks = 0;
+
+        fetch('/api/game/load?id=20'); 
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connectedPucks = data.filter(p => p.active).length;
+            calcPucks(); 
+        });
+
+        function updateTime() {
+            let val = parseInt(document.getElementById('timeSlider').value) * 10;
+            let m = Math.floor(val / 60);
+            let s = val % 60;
+            document.getElementById('timeDisp').innerText = `${m}m ${s.toString().padStart(2,'0')}s`;
+            return val;
+        }
+
+        function calcPucks() {
+            let nGrp = parseInt(document.getElementById('grpSlider').value);
+            document.getElementById('grpDisp').innerText = nGrp;
+            
+            let needed = nGrp * 2; 
+            let infoEl = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+            
+            let txtConn = getTranslation('conn_pucks');
+            let txtPerArena = getTranslation('dom_info_pucks');
+            
+            infoEl.innerHTML = `${txtConn} ${connectedPucks} <br><b>${Math.floor(connectedPucks/nGrp)}</b> ${txtPerArena}`;
+            
+            if (needed > connectedPucks) {
+                infoEl.innerHTML = `<b style="color:var(--danger)">${getTranslation('dom_err_pucks')}</b>`;
+                infoEl.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                infoEl.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+        }
+
+        function nextStep() {
+            let nGrp = parseInt(document.getElementById('grpSlider').value);
+            if (nGrp * 2 > connectedPucks) {
+                if(!confirm("Please connect more Pucks!")) return;
+            }
+            
+            sessionStorage.setItem('dom_groups', nGrp);
+            sessionStorage.setItem('dom_time', updateTime());
+            sessionStorage.setItem('dom_block', document.getElementById('blockSlider').value);
+            sessionStorage.setItem('dom_sync', document.getElementById('chkSync').checked ? 1 : 0);
+            
+            location.href = 'game_domination_names.html';
+        }
+
+        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'timeSlider',  el:'timeSlider' },
+        { key:'blockSlider', el:'blockSlider' },
+        { key:'grpSlider',   el:'grpSlider' },
+        { key:'chkSync',     el:'chkSync', type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

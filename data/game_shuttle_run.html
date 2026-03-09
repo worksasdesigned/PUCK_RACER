@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RUN - Shuttle</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="tour.js"></script> 
+	<style>
+        .timer-box { text-align: center; margin-bottom: 20px; }
+        .big-time { font-size: 5rem; font-weight: bold; color: var(--text-main); font-family: 'Courier New', monospace; line-height: 1; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        
+        .status-box { 
+            text-align: center; margin-bottom: 20px; 
+            border: 2px solid var(--border-color); background: var(--card-hover); 
+            padding: 15px; border-radius: 10px;
+        }
+        .big-status { 
+            font-size: 1.5rem; font-weight: bold; color: var(--text-main); 
+            text-transform:uppercase; letter-spacing: 2px;
+            animation: pulse 2s infinite;
+        }
+        
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; height: 100%; }
+        
+        .run-row { display: flex; align-items: center; justify-content: space-between; background: var(--card-hover); margin-bottom: 8px; padding: 15px; border-radius: 8px; border-left: 10px solid var(--border-color); position: relative; transition: background 0.2s, border-color 0.2s;}
+        .p-name { font-size: 1.2rem; color: var(--text-main); font-weight:bold; }
+        .p-status { font-size: 2rem; }
+        .p-rounds { font-size: 1.2rem; color:var(--text-muted); text-align:right;}
+        .p-diff { font-size:0.9rem; color:var(--danger); display:block;}
+        
+        .row-false-start { border-color: var(--danger) !important; background: rgba(220,53,69,0.2); }
+        
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+        
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="g_shuttle">Shuttle Run</div>
+     <div class="status-bar">
+    <div class="status-dot dot-green" id="cnt-green">0</div>
+    <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+    <div class="status-dot dot-red" id="cnt-red">0</div>
+</div>
+    </header>
+
+    <main>
+        <div class="timer-box">
+            <div class="big-time" id="timer">00:00.0</div>
+        </div>
+
+        <div class="status-box">
+            <div class="big-status" id="statusText">WAITING...</div>
+        </div>
+
+        <div class="controls">
+            <button onclick="doAction('reset')" class="btn-warn btn-ctrl" data-i18n="btn_back">BACK</button>
+            <button onclick="doAction('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
+            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
+        </div>
+
+        <div id="scoreboard">
+            <div id="loadingTxt" style="text-align:center; color:var(--text-muted); padding:20px;" data-i18n="loading">Loading...</div>
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+<script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const COLORS = ['#0000FF', '#00FF00', '#FF0000', '#FFFF00', '#FF00FF'];
+        const MEDALS = ['🥇','🥈','🥉'];
+        
+        setInterval(updateStatus, 400); 
+
+        function updateStatus() {
+            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                 
+                
+                document.getElementById('timer').innerText = formatTime(data.time || 0);
+                
+                let elText = document.getElementById('statusText');
+                let elBtn = document.getElementById('btnStart');
+                
+                let txt = "UNKNOWN";
+                let txtReset = getTranslation('btn_reset');
+                let txtStart = getTranslation('btn_start');
+                let txtRun = getTranslation('btn_running');
+
+                if(data.state == 1) { txt = getTranslation('sr_st_hold'); elBtn.innerText = txtStart; }
+                else if(data.state == 2) { txt = getTranslation('sr_st_ready'); elBtn.innerText = txtRun; }
+                else if(data.state == 3) { txt = getTranslation('sr_st_false'); elBtn.innerText = txtReset; elText.style.color = "var(--danger)"; }
+                else if(data.state == 4) { txt = getTranslation('sr_st_run'); elBtn.innerText = txtReset; elText.style.color = "var(--success)"; }
+                else if(data.state == 5) { txt = getTranslation('sr_st_fin'); elBtn.innerText = txtReset; elText.style.color = "var(--text-main)"; }
+                else { txt = getTranslation('sr_st_setup'); elBtn.innerText = txtStart; elText.style.color = "var(--text-main)"; }
+                
+                if(data.state != 3 && data.state != 4) elText.style.color = "var(--text-main)"; 
+                elText.innerText = txt;
+
+                renderTable(data);
+            }).catch(e => {
+                document.getElementById('conn-stat').style.opacity = 0.2;
+            });
+        }
+
+        function renderTable(data) {
+            let container = document.getElementById('scoreboard');
+            let loadingTxt = document.getElementById('loadingTxt');
+            if (loadingTxt) loadingTxt.style.display = 'none';
+
+            let players = data.players || [];
+            let winnerTime = data.winnerTime;
+            
+            players.forEach((p, i) => {
+                let name = sessionStorage.getItem(`p_name_${i}`) || `Player ${i+1}`;
+                let color = COLORS[i % COLORS.length];
+                
+                let icon = "";
+                if(data.state == 1 || data.state == 2) {
+                    if(p.holding) icon = "🖐️"; 
+                }
+                
+                let roundsTxt = `R: ${p.round} / ${p.max}`;
+                let timeTxt = "";
+                let medal = "";
+                let rowClasses = "run-row";
+
+                if(data.state == 3 && i == data.fs) rowClasses += " row-false-start";
+
+                
+                if(p.finished) {
+                    icon = "🏁";
+                    roundsTxt = getTranslation('lbl_done');
+                    let t = p.time;
+                    timeTxt = (t/1000).toFixed(2) + "s";
+                    
+                    if(winnerTime > 0) {
+                        let diff = t - winnerTime;
+                        if(diff > 0) timeTxt += `<span class='p-diff'>+${(diff/1000).toFixed(2)}</span>`;
+                        else medal = MEDALS[0]; 
+                    }
+                }
+
+                let rowId = `run-row-${i}`;
+                let rowEl = document.getElementById(rowId);
+
+                if (!rowEl) {
+                    container.insertAdjacentHTML('beforeend', `
+                    <div id="${rowId}" class="${rowClasses}" style="border-left-color: ${color}">
+                        <div><div class="p-name" id="name-${i}">${medal} ${name}</div></div>
+                        <div class="p-status" id="icon-${i}">${icon}</div>
+                        <div class="p-rounds" id="info-${i}">
+                            ${roundsTxt}<br>${timeTxt}
+                        </div>
+                    </div>`);
+                } else {
+                    if (rowEl.className !== rowClasses) rowEl.className = rowClasses;
+                    document.getElementById(`name-${i}`).innerHTML = `${medal} ${name}`;
+                    document.getElementById(`icon-${i}`).innerText = icon;
+                    document.getElementById(`info-${i}`).innerHTML = `${roundsTxt}<br>${timeTxt}`;
+                }
+            });
+        }
+
+        function doAction(act) {
+            if(act === 'reset') {
+                fetch(`/api/game/action?cmd=reset`);
+                location.href = 'game_shuttle_names.html'; 
+            } else {
+                fetch(`/api/game/action?cmd=${act}`);
+            }
+        }
+
+        function goHome() {
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
+        }
+
+        function formatTime(ms) {
+            let totalSec = Math.floor(ms / 1000);
+            let m = Math.floor(totalSec / 60);
+            let s = totalSec % 60;
+            let z = Math.floor((ms % 1000) / 100); 
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}.${z}`;
+        }
+    </script>
+</body>
+</html>

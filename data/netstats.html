@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Stats // Puck Racer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+         
+        .stats-page { font-family: 'Share Tech Mono', 'Courier New', monospace; }
+
+        .stat-card {
+            background: #0a0a0a; border: 1px solid #1a3a1a; border-radius: 8px;
+            padding: 15px; margin-bottom: 15px;
+        }
+        .stat-title {
+            color: #33aa33; font-size: 0.75rem; letter-spacing: 3px;
+            text-transform: uppercase; margin-bottom: 12px;
+            border-bottom: 1px solid #1a3a1a; padding-bottom: 8px;
+        }
+        .stat-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid #0d1a0d;
+        }
+        .stat-label { color: #888; font-size: 0.85rem; }
+        .stat-val { font-size: 1.1rem; font-weight: bold; }
+        .val-good { color: #33ff33; }
+        .val-warn { color: #ffaa00; }
+        .val-bad { color: #ff4444; }
+        .val-neutral { color: #aaa; }
+
+        .big-stat {
+            text-align: center; padding: 15px 0;
+        }
+        .big-stat .number {
+            font-size: 3rem; font-weight: bold; line-height: 1;
+        }
+        .big-stat .label {
+            color: #555; font-size: 0.75rem; margin-top: 5px; letter-spacing: 2px;
+        }
+
+        .bar-container {
+            display: flex; height: 24px; border-radius: 4px; overflow: hidden;
+            border: 1px solid #222; margin: 10px 0;
+        }
+        .bar-seg { display: flex; align-items: center; justify-content: center;
+            font-size: 0.65rem; color: #000; font-weight: bold; min-width: 2px; }
+
+        .legend { display: flex; gap: 15px; justify-content: center; flex-wrap: wrap; margin-top: 8px; }
+        .legend-item { display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: #888; }
+        .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+        .explain {
+            background: #0d1a0d; border-radius: 6px; padding: 12px;
+            margin-top: 15px; font-size: 0.75rem; color: #555; line-height: 1.6;
+        }
+        .explain b { color: #33aa33; }
+
+        .scan-controls { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; }
+        .btn-scan {
+            background: #1a3a1a; color: #33ff33; border: 1px solid #33aa33;
+            padding: 10px 20px; border-radius: 6px; font-size: 0.9rem;
+            cursor: pointer; font-family: 'Share Tech Mono', monospace; letter-spacing: 1px;
+        }
+        .btn-scan:hover { background: #224422; }
+        .btn-scan.danger { background: #3a1a1a; color: #ff4444; border-color: #aa3333; }
+
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" style="font-size:1rem;">📊 Network Stats</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main class="stats-page">
+
+        <!-- RX SECTION -->
+        <div class="stat-card">
+            <div class="stat-title">▸ INCOMING (Pucks → Coordinator)</div>
+
+            <div class="big-stat">
+                <div class="number val-good" id="rxQual">--</div>
+                <div class="label">RECEIVE QUALITY</div>
+            </div>
+
+            <div class="bar-container" id="rxBar"></div>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#33ff33"></div> Unique events</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#226622"></div> Duplicates (backup copies arrived)</div>
+            </div>
+
+            <div class="stat-row">
+                <span class="stat-label">Total packets received</span>
+                <span class="stat-val val-neutral" id="rxTotal">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Unique valid events</span>
+                <span class="stat-val val-good" id="rxValid">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Duplicate packets (good = backup arrived)</span>
+                <span class="stat-val val-neutral" id="rxDupes">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Avg. copies per event</span>
+                <span class="stat-val" id="rxCopies">--</span>
+            </div>
+
+            <div class="explain">
+                <b>How to read this:</b> Button presses are sent up to 3× for reliability.
+                If you see ~2-3 copies per event, your connection is excellent.
+				<b>But not important messages are only send <u>once!</u></b><br>
+				We can't distinguish how many important / unimportant massages have been send. So no reason for panic if you see 33% and very few packages. Especially when the pucks had been in idle mode for some time! </b>
+				After a longer game session mostly "3x packages should have been send". Heartbeats, pings, QoS packages are only send once.
+                If it drops to ~1.0, packets are being lost. Below 1.0 means some events were missed entirely.
+            </div>
+        </div>
+
+        <!-- TX SECTION -->
+        <div class="stat-card">
+            <div class="stat-title">▸ OUTGOING (Coordinator → Pucks)</div>
+
+            <div class="big-stat">
+                <div class="number val-good" id="txQual">--</div>
+                <div class="label">TRANSMIT SUCCESS RATE</div>
+            </div>
+
+            <div class="bar-container" id="txBar"></div>
+            <div class="legend">
+                <div class="legend-item"><div class="legend-dot" style="background:#33ff33"></div> Successful</div>
+                <div class="legend-item"><div class="legend-dot" style="background:#ff4444"></div> Failed</div>
+            </div>
+
+            <div class="stat-row">
+                <span class="stat-label">Successful transmissions</span>
+                <span class="stat-val val-good" id="txOk">0</span>
+            </div>
+            <div class="stat-row">
+                <span class="stat-label">Failed transmissions</span>
+                <span class="stat-val val-bad" id="txFail">0</span>
+            </div>
+
+            <div class="explain">
+                <b>How to read this:</b> These are LED/sound commands sent to pucks.
+                Failed = the ESP-NOW ACK was not received. A few failures are normal,
+                the coordinator retries important commands. Consistently high failure
+                rates suggest interference or range issues.
+            </div>
+        </div>
+
+        <div class="scan-controls">
+            <button class="btn-scan" onclick="refreshStats()">↻ REFRESH</button>
+            <button class="btn-scan danger" onclick="resetStats()">RESET COUNTERS</button>
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="location.href='/admin.html'" class="btn-back" style="width:100%;">⬅ Back to Admin</button>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        function qualColor(pct) {
+            if (pct >= 95) return 'val-good';
+            if (pct >= 80) return 'val-warn';
+            return 'val-bad';
+        }
+
+        function renderBar(containerId, segments) {
+            const el = document.getElementById(containerId);
+            const total = segments.reduce((s, x) => s + x.val, 0);
+            if (total === 0) { el.innerHTML = '<div class="bar-seg" style="width:100%;background:#222;">no data</div>'; return; }
+            el.innerHTML = segments.map(s => {
+                const pct = (s.val / total * 100);
+                if (pct < 1) return '';
+                return `<div class="bar-seg" style="width:${pct}%;background:${s.color};">${pct > 8 ? Math.round(pct) + '%' : ''}</div>`;
+            }).join('');
+        }
+
+        function render(d) {
+            // RX
+            const rxTotal = d.totalPacketsRx || 0;
+            const rxValid = d.validEvents || 0;
+            const rxDupes = d.duplicates || 0;
+
+            document.getElementById('rxTotal').innerText = rxTotal;
+            document.getElementById('rxValid').innerText = rxValid;
+            document.getElementById('rxDupes').innerText = rxDupes;
+
+            // Copies per event (button sends 3x, heartbeat 2x - mixed average)
+            let copies = rxValid > 0 ? (rxTotal / rxValid).toFixed(1) : '--';
+            let copiesEl = document.getElementById('rxCopies');
+            copiesEl.innerText = copies !== '--' ? `~${copies}×` : '--';
+            if (copies !== '--') {
+                copiesEl.className = 'stat-val ' + (copies >= 2.0 ? 'val-good' : copies >= 1.3 ? 'val-warn' : 'val-bad');
+            }
+
+            // RX Quality = we got all unique events, hard to know what we missed
+            // Show copies ratio as quality indicator
+            let rxPct = copies !== '--' ? Math.min(100, Math.round(copies / 3.0 * 100)) : 0;
+            let rxQualEl = document.getElementById('rxQual');
+            rxQualEl.innerText = rxTotal > 0 ? `${rxPct}%` : '--';
+            rxQualEl.className = 'number ' + qualColor(rxPct);
+
+            renderBar('rxBar', [
+                { val: rxValid, color: '#33ff33' },
+                { val: rxDupes, color: '#226622' }
+            ]);
+
+            // TX
+            const txOk = d.successfulTx || 0;
+            const txFail = d.failedTx || 0;
+            const txTotal = txOk + txFail;
+
+            document.getElementById('txOk').innerText = txOk;
+            document.getElementById('txFail').innerText = txFail;
+
+            let txPct = txTotal > 0 ? Math.round(txOk / txTotal * 100) : 0;
+            let txQualEl = document.getElementById('txQual');
+            txQualEl.innerText = txTotal > 0 ? `${txPct}%` : '--';
+            txQualEl.className = 'number ' + qualColor(txPct);
+
+            renderBar('txBar', [
+                { val: txOk, color: '#33ff33' },
+                { val: txFail, color: '#ff4444' }
+            ]);
+        }
+
+        function refreshStats() {
+            fetch('/api/netstats').then(r => r.json()).then(render)
+                .catch(() => {});
+        }
+
+        function resetStats() {
+            fetch('/api/netstats/reset').then(() => refreshStats());
+        }
+
+        refreshStats();
+        setInterval(refreshStats, 2000);
+    </script>
+</body>
+</html>

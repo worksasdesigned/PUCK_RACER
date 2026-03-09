@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Names - Target Touch</title>
+    <link rel="stylesheet" href="style.css?v=4">
+    <style>
+        .player-row { background:var(--card-bg); padding:15px; border-radius:8px; border-left:5px solid #fff; margin-bottom:15px;}
+        .player-title { display:flex; align-items:center; gap:10px; margin-bottom:10px; font-weight:bold; }
+        .color-box { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #fff; display:inline-block; vertical-align:middle; transition: all 0.3s;}
+        input[type=text] { flex-grow: 1; padding: 10px; font-size: 1.1rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-main); }
+        .help-box { background: rgba(0,0,0,0.2); border:1px solid var(--border-color); padding:10px; border-radius:6px; font-size:0.85rem; color:var(--text-muted); margin-top:10px;}
+        .hidden { display: none; }
+        #toggleIcon { transition: transform 0.3s; display: inline-block; }
+        .rotate { transform: rotate(-90deg); }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="tgt_names_title">Setup Players</div></header>
+    <main>
+        <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">Initializing...</div>
+        
+        <div id="content" style="display:none;">
+            <div class="layout-card">
+                <div class="layout-header" onclick="toggleLayout()">
+                    <span>Aufbau pro Gruppe</span>
+                    <span id="toggleIcon">▼</span>
+                </div>
+                <div class="layout-body" id="layoutBody" style="flex-direction: column; align-items: center; gap: 20px;">
+                    <p style="font-size:0.85rem; color:var(--text-main); text-align:center; margin:0;" data-i18n="tgt_layout_creative">
+                        Be creative! You can also place the pucks behind a small obstacle course.
+                    </p>
+                    <div id="arenaContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;"></div>
+                </div>
+            </div>
+
+            <div id="pickerBar" style="margin-bottom:15px;">
+                <button onclick="loadFromPicker()" class="btn-primary" style="font-size:1.1rem; background:var(--card-hover); border:1px dashed var(--primary); color:var(--primary);">
+                    👥 <span data-i18n="pp_load_players">Load Players from List</span>
+                </button>
+            </div>
+            
+            <div id="playerList"></div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="location.href='game_target_setup.html'" class="btn-warn" style="font-size:1.2rem;" data-i18n="btn_back">⬅ BACK</button>
+                <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">TO GAME 🏁</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="player_picker.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        const GRP_COLORS = ['#FF00FF', '#00FFFF', '#FFFF00', '#00FF00', '#FF1493'];
+
+        const TARGET_LAYOUTS = {
+            3: ["C2","C3","C4"],
+            4: ["C1","C2","C3","C4"],
+            5: ["B1","C2","C3","C4","B5"],
+            6: ["C2","D2","C3","D3","C4","D4"],
+            7: ["C1","B2","C2","C3","B4","C4","C5"],
+            8: ["C1","B2","C2","A3","C3","B4","C4","C5"],
+            9: ["C1","C2","D2","C3","D3","E3","C4","D4","C5"]
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(initList, 500);
+        });
+
+        async function initList() {
+            // 1. ESP Reset
+            await fetch('/api/game/load?id=15');
+            
+            let nGrp = parseInt(sessionStorage.getItem('targ_groups') || 1);
+            let nPucks = parseInt(sessionStorage.getItem('targ_pucks') || 3);
+            let isSeq = sessionStorage.getItem('targ_seq') == '1';
+            
+            // 2. Config senden
+            await fetch(`/api/game/action?cmd=cfg_groups&val=${nGrp}`);
+            await fetch(`/api/game/action?cmd=cfg_pucks&val=${nPucks}`);
+            await fetch(`/api/game/action?cmd=cfg_mode&val=${sessionStorage.getItem('targ_mode') || 0}`);
+            await fetch(`/api/game/action?cmd=cfg_time&val=${sessionStorage.getItem('targ_time') || 60}`);
+            await fetch(`/api/game/action?cmd=cfg_rounds&val=${sessionStorage.getItem('targ_rounds') || 5}`);
+            await fetch(`/api/game/action?cmd=cfg_delay&val=${sessionStorage.getItem('targ_delay') || 1}`);
+            await fetch(`/api/game/action?cmd=cfg_seq&val=${sessionStorage.getItem('targ_seq') || 0}`);
+            await fetch(`/api/game/action?cmd=cfg_grpstart&val=${sessionStorage.getItem('targ_grpstart') || 0}`);
+            
+            await fetch('/api/game/action?cmd=setup'); 
+            
+            let listContainer = document.getElementById('playerList');
+            let arenaContainer = document.getElementById('arenaContainer');
+            listContainer.innerHTML = "";
+            arenaContainer.innerHTML = "";
+            
+            let helpText = isSeq ? (typeof getTranslation === 'function' ? getTranslation('tgt_help_seq') : 'Sequenziell') : (typeof getTranslation === 'function' ? getTranslation('tgt_help_rnd') : 'Zufällig');
+            let layoutKey = [3, 4, 5, 6, 7, 8, 9].find(n => n >= nPucks) || 9;
+            let activeLayout = TARGET_LAYOUTS[layoutKey];
+
+            for(let i=0; i<nGrp; i++) {
+                let gName = sessionStorage.getItem(`p_name_${i}`) || `Player ${i+1}`;
+                let col = GRP_COLORS[i % GRP_COLORS.length];
+
+                // 1. Spielerliste
+                listContainer.innerHTML += `
+                <div class="player-row" style="border-left-color:${col}">
+                    <div class="player-title">
+                        <div class="color-box" id="cb_${i}" style="background:${col}; box-shadow:0 0 10px ${col}"></div>
+                        <input type="text" id="name_${i}" value="${gName}" placeholder="Player Name">
+                    </div>
+                    <div class="help-box">${helpText}</div>
+                </div>`;
+
+                // 2. Arena-Tabelle
+                let tableHtml = `<div><h4 style="margin:0 0 10px 0; text-align:center; color:${col}">Group ${i+1}</h4><table class="arena-table">`;
+                const cols = ['A', 'B', 'C', 'D', 'E'];
+                for(let r = 1; r <= 5; r++) {
+                    tableHtml += `<tr>`;
+                    for(let c = 0; c < 5; c++) {
+                        tableHtml += `<td id="cell-${i}-${cols[c]}${r}"></td>`;
+                    }
+                    tableHtml += `</tr>`;
+                }
+                tableHtml += `</table></div>`;
+                arenaContainer.innerHTML += tableHtml;
+
+                // 3. Pucks & Werfer setzen
+                let cellThrower = document.getElementById(`cell-${i}-B3`);
+                if(cellThrower) cellThrower.innerHTML = `<div style="font-size:1.5rem; display:inline-block; transform: scaleX(-1);">🤾</div>`;
+
+                for(let p = 0; p < nPucks && p < activeLayout.length; p++) {
+                    let coord = activeLayout[p];
+                    let cell = document.getElementById(`cell-${i}-${coord}`);
+                    let globalIdx = (i * nPucks) + p;
+                    if(cell) {
+                        cell.innerHTML = `<div class="puck-icon" id="puck_vis_${globalIdx}" style="background:${col}">${p+1}</div>`;
+                    }
+                }
+            }
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+            
+            setInterval(pollPuckEffects, 1500);
+        }
+
+        async function pollPuckEffects() {
+            try {
+                let r = await fetch('/api/effects');
+                let data = await r.json();
+                data.forEach(eff => {
+                    const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
+
+                    // Arena Puck
+                    let vis = document.getElementById(`puck_vis_${eff.id}`);
+                    if(vis) {
+                        vis.classList.remove('eff-breathe', 'eff-chase', 'eff-rainbow');
+                        if(eff.eff == 3 || eff.eff == 4 || eff.eff == 5) vis.classList.add('eff-breathe');
+                        if(eff.eff == 6 || eff.eff == 7) vis.classList.add('eff-chase');
+                        if(eff.eff == 9) vis.classList.add('eff-rainbow');
+                        
+                        if(eff.eff == 18) {
+                            let percent = Math.round(eff.dur / 2.55);
+                            vis.style.background = `conic-gradient(${rgb} ${percent}%, var(--border-color) ${percent}%)`;
+                            vis.style.border = `2px solid ${rgb}`;
+                        } else {
+                            vis.style.background = rgb;
+                            vis.style.border = `2px solid #fff`;
+                        }
+                        vis.style.boxShadow = `0 0 15px ${rgb}`;
+                    }
+
+                    // Farbe in der Liste synchronisieren
+                    let nPucks = parseInt(sessionStorage.getItem('targ_pucks') || 3);
+                    let pId = Math.floor(eff.id / nPucks);
+                    let cb = document.getElementById(`cb_${pId}`);
+                    // Nur aktualisieren, wenn der Puck leuchtet (Effekt != 0)
+                    if(cb && eff.eff !== 0) { 
+                        cb.style.background = rgb;
+                        cb.style.boxShadow = `0 0 10px ${rgb}`; 
+                    }
+                });
+            } catch(e) {}
+        }
+
+        function toggleLayout() {
+            document.getElementById('layoutBody').classList.toggle('hidden');
+            document.getElementById('toggleIcon').classList.toggle('rotate');
+        }
+        
+        function loadFromPicker() {
+            openPlayerPicker(parseInt(sessionStorage.getItem('targ_groups') || 1), function(selected) {
+                selected.forEach((p, i) => {
+                    let inp = document.getElementById('name_' + i);
+                    if (inp) { inp.value = p.name; sessionStorage.setItem('p_name_' + i, p.name); }
+                });
+            });
+        }
+
+        function startGame() {
+            let nGrp = sessionStorage.getItem('targ_groups') || 1;
+            for(let i=0; i<nGrp; i++) {
+                sessionStorage.setItem(`p_name_${i}`, document.getElementById(`name_${i}`).value);
+            }
+            setTimeout(() => { location.href = 'game_target_run.html'; }, 200);
+        }
+    </script>
+</body>
+</html>

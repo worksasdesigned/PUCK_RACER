@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Track - Pacemaker</title>
+    <link rel="stylesheet" href="style.css?v=4">
+    <style>
+        .player-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background:var(--card-bg); padding:10px; border-radius:8px; border-left: 5px solid #fff;}
+        .color-box { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; flex-shrink: 0; transition: all 0.3s;}
+        input[type=text] { flex-grow: 1; padding: 12px; font-size: 1.1rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-main); }
+        .hidden { display: none; }
+        #toggleIcon { transition: transform 0.3s; display: inline-block; }
+        .rotate { transform: rotate(-90deg); }
+        .start-badge { position: absolute; top: -15px; background: #fff; color: #000; font-size: 0.7rem; padding: 2px 5px; border-radius: 4px; font-weight:bold; z-index:10; white-space:nowrap;}
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="pm_track_title">Build the Track</div></header>
+    <main>
+        <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="pm_track_loading">Analyzing Pucks...</div>
+        
+        <div id="content" style="display:none;">
+            <div class="layout-card">
+                <div class="layout-header" onclick="toggleLayout()">
+                    <span data-i18n="pm_track_layout">Streckenaufbau</span>
+                    <span id="toggleIcon">▼</span>
+                </div>
+                <div class="layout-body" id="layoutBody">
+                    <div style="text-align:center; width:100%;">
+                        <p style="font-size:1rem; color:var(--text-main); font-weight:bold; margin-bottom:5px;" id="modeInst"></p>
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:15px;" id="distHint">
+                            Achte auf einen gleichmäßigen Abstand!
+                        </p>
+                        <div id="arenaContainer" style="overflow-x: auto; margin-bottom:20px; overflow-y:visible;"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="playerList"></div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="pm_btn_run">TO RUN SCREEN 🏁</button>
+                <button onclick="location.href='game_pacemaker_setup.html'" class="btn-back" data-i18n="btn_back">⬅ BACK</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        
+        // Vollständige und kreisförmige Layouts für 4 bis 12 Pucks
+        const PM_LAYOUTS = {
+            4:  ["C1", "E3", "C5", "A3"],
+            5:  ["C1", "E2", "E4", "C5", "A3"],
+            6:  ["B1", "D1", "E3", "D5", "B5", "A3"],
+            7:  ["B1", "D1", "E2", "E4", "D5", "B5", "A3"],
+            8:  ["B1", "D1", "E2", "E4", "D5", "B5", "A4", "A2"],
+            9:  ["B1", "C1", "D1", "E2", "E4", "D5", "C5", "B5", "A3"],
+            10: ["B1", "C1", "D1", "E2", "E4", "D5", "C5", "B5", "A4", "A2"],
+            11: ["B1", "C1", "D1", "E2", "E3", "E4", "D5", "C5", "B5", "A4", "A2"],
+            12: ["B1", "C1", "D1", "E2", "E3", "E4", "D5", "C5", "B5", "A4", "A3", "A2"]
+        };
+        
+        let p2StartIdx = -1;
+        let numGroups = 1;
+        let isShuttle = false; // FIX: Global deklariert
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(initList, 500);
+        });
+
+        async function initList() {
+            try {
+                await fetch('/api/game/load?id=18');
+
+                let pace = sessionStorage.getItem('pm_pace') || 150;
+                let dist = sessionStorage.getItem('pm_dist') || 10;
+                let dur = sessionStorage.getItem('pm_dur') || 120;
+                let shut = sessionStorage.getItem('pm_shut') || 0;
+                let hold = sessionStorage.getItem('pm_hold') || 1;
+                let inpt = sessionStorage.getItem('pm_inpt') || 0;
+                let lapt = sessionStorage.getItem('pm_lapt') || 60;
+                numGroups = parseInt(sessionStorage.getItem('pm_grp') || 1);
+
+                await fetch(`/api/game/action?cmd=cfg_pace&val=${pace}`);
+                await delay(100);
+                await fetch(`/api/game/action?cmd=cfg_dist&val=${dist}`);
+                await delay(100);
+                await fetch(`/api/game/action?cmd=cfg_dur&val=${dur}`);
+                await delay(100);
+                await fetch(`/api/game/action?cmd=cfg_shut&val=${shut}`);
+                await delay(100);
+                await fetch(`/api/game/action?cmd=cfg_hold&val=${hold}`);
+                await delay(100);
+                await fetch(`/api/game/action?cmd=cfg_inpt&val=${inpt}`);
+                await delay(100);
+                await fetch(`/api/game/action?cmd=cfg_lapt&val=${lapt}`);
+                await delay(100);
+                await fetch(`/api/game/action?cmd=cfg_grp&val=${numGroups}`);
+                await delay(100);
+
+                await fetch('/api/game/action?cmd=setup');
+                await delay(100);
+                await fetch('/api/game/action?cmd=show_track'); 
+                
+                let res = await fetch('/api/status');
+                let data = await res.json();
+                let pCount = data.filter(p => p.active).length;
+                
+                if(pCount < 4) {
+                    let errTxt = (typeof getTranslation === 'function') ? getTranslation('pm_track_err') : 'Zu wenige Pucks!';
+                    if(!errTxt) errTxt = 'Zu wenige Pucks!';
+                    document.getElementById('loading').innerHTML = `<span style='color:var(--danger)'>${errTxt}</span>`;
+                    return;
+                }
+                
+                p2StartIdx = Math.floor(pCount / 2); 
+                
+                isShuttle = shut === '1'; // FIX: Globale Variable zuweisen
+                let isLapMode = inpt === '1';
+                let distTxt = (dist && !isLapMode) ? ` (${dist}m)` : "";
+                
+                let tShuttle = (typeof getTranslation === 'function') ? getTranslation('pm_inst_shuttle') : "Shuttle Lauf";
+                let tCircle = (typeof getTranslation === 'function') ? getTranslation('pm_inst_circle') : "Rundkurs";
+                let tDistHint = (typeof getTranslation === 'function') ? getTranslation('pm_inst_dist') : "Achte auf einen gleichmäßigen Abstand";
+                
+                document.getElementById('modeInst').innerHTML = isShuttle ? (tShuttle || "Shuttle Lauf") : (tCircle || "Rundkurs");
+                document.getElementById('distHint').innerHTML = tDistHint + distTxt + ".";
+
+                // 1. Tabelle generieren
+                let tableHtml = `<table class="arena-table">`;
+                const cols = ['A', 'B', 'C', 'D', 'E'];
+                for(let r = 1; r <= 5; r++) {
+                    tableHtml += `<tr>`;
+                    for(let c = 0; c < 5; c++) {
+                        tableHtml += `<td id="cell-${cols[c]}${r}"></td>`;
+                    }
+                    tableHtml += `</tr>`;
+                }
+                tableHtml += `</table>`;
+                document.getElementById('arenaContainer').innerHTML = tableHtml;
+
+                // 2. Layout wählen (Kreis oder Shuttle)
+                let activeLayout = [];
+                if (isShuttle) {
+                    // Lineares Setup über Spalten A und C (plus E als Puffer für 11/12)
+                    activeLayout = ["A1", "A2", "A3", "A4", "A5", "C1", "C2", "C3", "C4", "C5", "E1", "E2"];
+                } else {
+                    activeLayout = PM_LAYOUTS[pCount] || PM_LAYOUTS[12];
+                }
+
+                // 3. Pucks einsetzen
+                for(let i = 0; i < pCount && i < activeLayout.length; i++) {
+                    let coord = activeLayout[i];
+                    let cell = document.getElementById(`cell-${coord}`);
+                    
+                    let startHtml = "";
+                    if(i === 0) startHtml = `<div class="start-badge">START 1</div>`;
+                    if(!isShuttle && numGroups === 2 && i === p2StartIdx) startHtml = `<div class="start-badge" style="background:var(--warning)">START 2</div>`;
+                    
+                    if(cell) {
+                        cell.innerHTML = `<div class="puck-icon" id="puck_vis_${i}">${startHtml}${i+1}</div>`;
+                    }
+                }
+
+                // 4. Info-Text für Shuttle-Verlängerung in Spalte B einfügen
+                if (isShuttle && pCount > 5) {
+                    let b3 = document.getElementById('cell-B3');
+                    if (b3) {
+                        let tExt = (typeof getTranslation === 'function') ? getTranslation('pm_extend_line') : "➡ Verlängere die Linie ➡";
+                        if (!tExt) tExt = "➡ Verlängere die Linie ➡";
+                        
+                        b3.style.position = 'relative';
+                        b3.innerHTML = `<div style="position:absolute; left:50%; top:50%; transform:translate(-50%, -50%); white-space:nowrap; color:var(--text-muted); font-size:0.8rem; font-weight:bold;">${tExt}</div>`;
+                    }
+                }
+
+                // 5. Spielerliste aufbauen
+                let container = document.getElementById('playerList');
+                container.innerHTML = "";
+                
+                let ph = (typeof getTranslation === 'function') ? getTranslation('pm_lbl_runner') : "Runner Name";
+                if(!ph) ph = "Runner Name";
+                
+                for(let i=0; i<numGroups; i++) {
+                    let name = sessionStorage.getItem(`p_name_${i}`) || `Runner ${i+1}`;
+                    let ringCol = (i === 0) ? '#00FF00' : '#FF00FF'; 
+                    
+                    container.innerHTML += `
+                    <div class="player-row" style="border-left-color: ${ringCol};">
+                        <div class="color-box" id="cb_${i}" style="background:${ringCol}; box-shadow:0 0 10px ${ringCol};"></div>
+                        <input type="text" id="name_${i}" value="${name}" placeholder="${ph} ${i+1}">
+                    </div>`;
+                }
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+                setInterval(pollPuckEffects, 1500);
+
+            } catch (error) { console.error("Fehler:", error); }
+        }
+
+        async function pollPuckEffects() {
+            try {
+                let r = await fetch('/api/effects');
+                let data = await r.json();
+                data.forEach(eff => {
+                    const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
+                    
+                    let vis = document.getElementById(`puck_vis_${eff.id}`);
+                    if(vis) {
+                        vis.classList.remove('eff-breathe', 'eff-chase', 'eff-rainbow');
+                        if(eff.eff == 3 || eff.eff == 4 || eff.eff == 5) vis.classList.add('eff-breathe');
+                        if(eff.eff == 6 || eff.eff == 7) vis.classList.add('eff-chase');
+                        if(eff.eff == 9) vis.classList.add('eff-rainbow');
+                        
+                        if(eff.eff == 18) {
+                            let percent = Math.round(eff.dur / 2.55);
+                            vis.style.background = `conic-gradient(${rgb} ${percent}%, var(--border-color) ${percent}%)`;
+                            vis.style.border = `2px solid ${rgb}`;
+                        } else {
+                            vis.style.background = rgb;
+                            vis.style.border = `2px solid #fff`;
+                        }
+                        vis.style.boxShadow = `0 0 15px ${rgb}`;
+                    }
+
+                    if(eff.id === 0) {
+                        let cb = document.getElementById(`cb_0`);
+                        if(cb) { cb.style.background = rgb; cb.style.boxShadow = `0 0 10px ${rgb}`; }
+                    }
+                    if(!isShuttle && numGroups === 2 && eff.id === p2StartIdx) {
+                        let cb = document.getElementById(`cb_1`);
+                        if(cb) { cb.style.background = rgb; cb.style.boxShadow = `0 0 10px ${rgb}`; }
+                    }
+                });
+            } catch(e) {}
+        }
+
+        function toggleLayout() {
+            document.getElementById('layoutBody').classList.toggle('hidden');
+            document.getElementById('toggleIcon').classList.toggle('rotate');
+        }
+
+        function startGame() {
+            for(let i=0; i<numGroups; i++) {
+                let val = document.getElementById(`name_${i}`).value;
+                sessionStorage.setItem(`p_name_${i}`, val);
+            }
+            setTimeout(() => { location.href = 'game_pacemaker_run.html'; }, 200);
+        }
+    </script>
+</body>
+</html>

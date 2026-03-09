@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Stopwatch</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_stopwatch">Stopwatch ⏱️</div></header>
+    <main>
+        <div class="card">
+            <div class="slider-header">
+                <h3 data-i18n="sw_setup_plr" style="margin:0;">🏃 Players / Pucks</h3>
+                <span id="playerDisplay" class="slider-val">1</span>
+            </div>
+            <input type="range" id="playerSlider" min="1" max="10" value="1" oninput="updatePlayers(this.value)">
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="sw_setup_modes">⚙️ Modes & Rules</h3>
+            <div class="toggle-row">
+                <span><b data-i18n="sw_lbl_central">Central Start</b><br><small style="color:var(--text-muted); font-size:0.8rem;" data-i18n="sw_hint_central">Trainer starts all</small></span>
+                <label class="switch">
+                    <input type="checkbox" id="chkCentral" onchange="toggleHoldOption()">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            
+            <div class="toggle-row" id="holdRow" style="opacity:0.5; pointer-events:none;">
+                <span><b data-i18n="sw_lbl_hold">Hold to Start</b><br><small style="color:var(--text-muted); font-size:0.8rem;" data-i18n="sw_hint_hold">Players must hold puck</small></span>
+                <label class="switch">
+                    <input type="checkbox" id="chkHold" disabled>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            
+            <div class="toggle-row" style="border-top:1px solid var(--border-color); padding-top:15px; margin-top:15px;">
+                <span><b data-i18n="sw_lbl_lap">Lap Mode</b><br><small style="color:var(--text-muted); font-size:0.8rem;" data-i18n="sw_hint_lap">Click = Lap</small></span>
+                <label class="switch">
+                    <input type="checkbox" id="chkLap">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        let connectedPucks = 0;
+
+        fetch('/api/game/load?id=10'); 
+
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connectedPucks = data.filter(p => p.active).length;
+            let slider = document.getElementById('playerSlider');
+            slider.max = Math.max(1, connectedPucks);
+            if (parseInt(slider.value) > connectedPucks) slider.value = Math.max(1, connectedPucks);
+            updatePlayers(slider.value); 
+        });
+
+        function updatePlayers(val) {
+            document.getElementById('playerDisplay').innerText = val;
+            let infoEl = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+
+            infoEl.innerHTML = `${getTranslation('req_pucks')} ${val} | ${getTranslation('conn_pucks')} ${connectedPucks}`;
+            if (val > connectedPucks) {
+                infoEl.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                infoEl.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+        }
+
+        function toggleHoldOption() {
+            let centralChecked = document.getElementById('chkCentral').checked;
+            let holdRow = document.getElementById('holdRow');
+            let holdChk = document.getElementById('chkHold');
+            
+            if (centralChecked) {
+                holdRow.style.opacity = 1;
+                holdRow.style.pointerEvents = "auto";
+                holdChk.disabled = false;
+            } else {
+                holdRow.style.opacity = 0.5;
+                holdRow.style.pointerEvents = "none";
+                holdChk.disabled = true;
+                holdChk.checked = false;
+            }
+        }
+
+        function nextStep() {
+            let players = document.getElementById('playerSlider').value;
+            if (players > connectedPucks) {
+                if(!confirm("Not enough pucks connected! Continue anyway?")) return;
+            }
+            
+            let central = document.getElementById('chkCentral').checked ? 1 : 0;
+            let hold = document.getElementById('chkHold').checked ? 1 : 0;
+            let lap = document.getElementById('chkLap').checked ? 1 : 0;
+            sessionStorage.setItem('sw_players', players);
+            
+            fetch(`/api/game/action?cmd=cfg_num&val=${players}`)
+            .then(()=> fetch(`/api/game/action?cmd=cfg_central&val=${central}`))
+            .then(()=> fetch(`/api/game/action?cmd=cfg_hold&val=${hold}`))
+            .then(()=> fetch(`/api/game/action?cmd=cfg_lap&val=${lap}`))
+            .then(()=> {
+                location.href = 'game_stopwatch_names.html';
+            });
+        }
+
+        function cancelSetup() {
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/');
+        }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'playerSlider', el:'playerSlider' },
+        { key:'chkCentral',   el:'chkCentral', type:'check' },
+        { key:'chkHold',      el:'chkHold',    type:'check' },
+        { key:'chkLap',       el:'chkLap',     type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer Live</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 10px; border: 1px solid var(--border-color);}
+        .big-time { font-size: 3.5rem; font-family: monospace; color: var(--text-main); font-weight: bold;}
+        .stats-info { font-size: 1.2rem; color: var(--primary); font-weight:bold; margin-top:5px;}
+
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
+
+        .bright-box { display:flex; align-items:center; gap:10px; background:var(--card-bg); padding:10px 15px; border-radius:8px; border:1px solid var(--border-color); margin-bottom:15px; }
+        .bright-box input[type=range] { flex-grow:1; height:20px; }
+
+        /* --- Neues, kompaktes Layout für die Spieler-Zeilen --- */
+        .row-box { 
+            background: var(--card-bg); 
+            border-radius: 8px; 
+            margin-bottom: 12px; 
+            padding: 12px; 
+            border-left: 8px solid var(--border-color);
+            transition: background 0.3s;
+        }
+        
+        /* Deutlich sichtbare grüne Färbung für fertige Spieler */
+        .row-green { 
+            border-color: var(--success) !important; 
+            background-color: rgba(0, 255, 0, 0.25) !important; 
+        }
+        .row-red { border-color: var(--danger) !important; background: rgba(255, 0, 0, 0.1); }
+        .row-yellow { border-color: var(--warning) !important; background: rgba(255, 200, 0, 0.1); }
+        
+        .r-head { display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px; }
+        .r-name { font-size:1.2rem; font-weight:bold; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .r-status { font-size:1.5rem; }
+
+        /* Container für Uhrzeit und alle Knöpfe */
+        .r-body {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        /* Obere Zeile: Minus Knöpfe | Uhrzeit | Plus Knöpfe */
+        .time-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .time-val { 
+            font-family: monospace; 
+            font-size: 2rem; 
+            font-weight: bold; 
+            color: var(--text-main); 
+            text-align: center;
+            flex-grow: 1;
+            margin: 0 10px;
+        }
+        
+        /* Verhindert das vertikale Stapeln der Knöpfe */
+        .btn-grp-h { 
+            display: flex; 
+            gap: 4px; 
+            flex-wrap: nowrap; 
+        }
+        
+        .btn-t { 
+            background: var(--card-bg); 
+            color: var(--text-main); 
+            border: 1px solid var(--border-color); 
+            padding: 5px 6px; 
+            border-radius: 4px; 
+            font-weight: bold; 
+            cursor: pointer;
+            font-size: 0.8rem;
+            min-width: 36px;
+        }
+        .btn-t:active { transform:scale(0.9); }
+        .btn-t.sub { color: #ff6b6b; }
+        .btn-t.add { color: #51cf66; }
+
+        /* Untere Zeile: Start, Pause, Stop zentriert */
+        .action-row { 
+            display: flex; 
+            justify-content: center; 
+            gap: 15px;
+        }
+        
+        .btn-action { 
+            border: none; 
+            padding: 10px 30px; 
+            border-radius: 6px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            font-size: 1.1rem;
+        }
+        .btn-stop { background: var(--danger); color: white; }
+        .btn-pause { background: var(--warning); color: black; }
+        .btn-res { background: var(--success); color: black; }
+        
+        /* Für sehr kleine Handy-Bildschirme */
+        @media (max-width: 400px) {
+            .btn-t { padding: 4px; min-width: 30px; font-size: 0.75rem; }
+            .time-val { font-size: 1.5rem; margin: 0 5px; }
+            .btn-action { padding: 8px 20px; }
+        }
+        
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Simple Timer ⏱️</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="top-info">
+            <div class="big-time" id="globalTime">00:00</div>
+            <div class="stats-info" id="statsText">Finished: 0 / 0</div>
+        </div>
+
+        <div class="bright-box">
+            <span>💡 Dimmer:</span>
+            <input type="range" id="brightSlider" min="10" max="100" value="100" oninput="setBrightness(this.value)">
+        </div>
+
+        <div class="controls">
+            <button onclick="goBack()" class="btn-warn btn-ctrl">⬅</button>
+            <button onclick="doAction('start')" class="btn-primary btn-ctrl">START ALL</button>
+            <button onclick="doAction('stop')" class="btn-danger btn-ctrl">STOP ALL</button>
+        </div>
+
+        <div id="gameBoard"></div>
+
+        <div class="bottom-nav">
+            <button onclick="goHome()" class="btn-back" style="width:100%;">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        
+        const P_COLORS = ['#0000FF', '#800080', '#FFA500', '#00FFFF', '#FF00FF', '#FFFF00', '#00FF00', '#FF1493', '#00FFFF', '#FFFFFF'];
+        const ICONS = ["⏳", "⏸️", "✅", "⏰", "⏹️"];
+
+        document.getElementById('gameBoard').addEventListener('click', function(e) {
+            let btn = e.target.closest('button');
+            if(btn) {
+                let cmd = btn.getAttribute('data-cmd');
+                if(cmd) doAction(cmd);
+            }
+        });
+
+        setInterval(updateStatus, 400); 
+
+        function setBrightness(val) {
+            fetch(`/api/game/action?cmd=set_bright&val=${val}`);
+        }
+
+        function updateStatus() {
+            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                if(data.tot > 0) {
+                    document.getElementById('globalTime').innerText = formatTime(data.gT);
+                    document.getElementById('statsText').innerText = `Finished: ${data.fin} / ${data.tot}`;
+                }
+
+                renderTable(data.players);
+            }).catch(e => {
+                // Fehlerbehandlung leise im Hintergrund
+            });
+        }
+
+        function formatTime(ms) {
+            let t = Math.floor(ms / 1000);
+            let m = Math.floor(t / 60);
+            let s = t % 60;
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        function renderTable(players) {
+            let container = document.getElementById('gameBoard');
+            if (!players) return;
+
+            players.forEach((p, i) => {
+                let rowId = `t-row-${i}`;
+                let rowEl = document.getElementById(rowId);
+                
+                let pName = sessionStorage.getItem(`p_name_${i}`) || `Student ${i+1}`;
+                let color = P_COLORS[i % 10];
+                
+                let rowClass = "row-box";
+                if (p.st === 2) rowClass += " row-green";
+                else if (p.st === 3) rowClass += " row-red";
+                else if (p.st === 1) rowClass += " row-yellow";
+
+                if (!rowEl) {
+                    container.insertAdjacentHTML('beforeend', `
+                    <div id="${rowId}" class="${rowClass}" style="border-left-color: ${color}">
+                        <div class="r-head">
+                            <span class="r-name">${pName}</span>
+                            <span id="st-icon-${i}" class="r-status">${ICONS[p.st]}</span>
+                        </div>
+                        <div class="r-body">
+                            <div class="time-row">
+                                <div class="btn-grp-h">
+                                    <button class="btn-t sub" data-cmd="p_sub60_${i}">-60</button>
+                                    <button class="btn-t sub" data-cmd="p_sub30_${i}">-30</button>
+                                    <button class="btn-t sub" data-cmd="p_sub10_${i}">-10</button>
+                                </div>
+                                <div id="time-${i}" class="time-val">${formatTime(p.t)}</div>
+                                <div class="btn-grp-h">
+                                    <button class="btn-t add" data-cmd="p_add10_${i}">+10</button>
+                                    <button class="btn-t add" data-cmd="p_add30_${i}">+30</button>
+                                    <button class="btn-t add" data-cmd="p_add60_${i}">+60</button>
+                                </div>
+                            </div>
+                            <div class="action-row">
+                                <button class="btn-action btn-res" data-cmd="p_res_${i}">▶</button>
+                                <button class="btn-action btn-pause" data-cmd="p_pause_${i}">⏸</button>
+                                <button class="btn-action btn-stop" data-cmd="p_stop_${i}">⏹</button>
+                            </div>
+                        </div>
+                    </div>`);
+                } else {
+                    if (rowEl.className !== rowClass) rowEl.className = rowClass;
+                    document.getElementById(`st-icon-${i}`).innerText = ICONS[p.st];
+                    document.getElementById(`time-${i}`).innerText = formatTime(p.t);
+                }
+            });
+        }
+
+        function doAction(act) { fetch(`/api/game/action?cmd=${act}`); }
+        function goBack() { doAction('reset'); location.href = 'game_timer_names.html'; }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+</body>
+</html>

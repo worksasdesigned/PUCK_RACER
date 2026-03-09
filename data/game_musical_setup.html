@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Musical Chairs</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_musical">Reise nach Jerusalem 🪑🎵</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="mus_setup_mp3">🎵 Background Music (MP3)</h3>
+            <div id="mp3Status" style="font-weight:bold; color:var(--primary); margin-bottom:15px;">Scanning...</div>
+            
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Max. 3MB. Uploading a new file will delete the old one!</p>
+            <input type="file" id="mp3Upload" accept=".mp3" style="display:none;" onchange="uploadMp3()">
+            <button onclick="document.getElementById('mp3Upload').click()" class="btn-warn" style="font-size:1rem; padding:10px;">Upload new MP3</button>
+            <div id="upProgress" style="display:none; color:var(--warning); margin-top:10px; font-weight:bold;">Uploading... Please wait.</div>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="mus_setup_ply">👥 Players</h3>
+            <div class="slider-header">
+                <span>Total Players:</span>
+                <span id="plyDisp" class="slider-val">2</span>
+            </div>
+            <input type="range" id="plySlider" min="2" max="13" value="5" oninput="updPly()">
+            <p id="plyHint" class="info-txt">Loading pucks...</p>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="mus_setup_time">⏱ Timers</h3>
+            
+            <div class="slider-header">
+                <span data-i18n="mus_time_base">Base Music Time:</span>
+                <span id="baseDisp" class="slider-val">10s</span>
+            </div>
+            <input type="range" id="baseSlider" min="5" max="30" value="10" oninput="document.getElementById('baseDisp').innerText = this.value + 's'">
+            
+            <div class="slider-header" style="margin-top:15px;">
+                <span data-i18n="mus_time_var">Variance (Randomness):</span>
+                <span id="varDisp" class="slider-val">Medium (5s)</span>
+            </div>
+            <input type="range" id="varSlider" min="0" max="2" value="1" oninput="updVar()">
+
+            <div class="slider-header" style="margin-top:15px;">
+                <span data-i18n="mus_time_pause">Pause between rounds:</span>
+                <span id="pauseDisp" class="slider-val">5s</span>
+            </div>
+            <input type="range" id="pauseSlider" min="3" max="20" value="5" oninput="document.getElementById('pauseDisp').innerText = this.value + 's'">
+        </div>
+
+        <button onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        let maxPucks = 1;
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            maxPucks = data.filter(p => p.active).length;
+            let sl = document.getElementById('plySlider');
+            sl.max = maxPucks + 1;
+            if(parseInt(sl.value) > sl.max) sl.value = sl.max;
+            updPly();
+        });
+
+        fetch('/api/music_info').then(r=>r.json()).then(data => {
+            let st = document.getElementById('mp3Status');
+            if (data.file && data.file !== "") st.innerText = "Loaded: " + data.file.replace('/', '');
+            else st.innerHTML = "<span style='color:var(--danger)'>No MP3 found!</span>";
+        });
+
+        function updPly() {
+            let v = document.getElementById('plySlider').value;
+            document.getElementById('plyDisp').innerText = v;
+            let pucksReq = v - 1;
+            document.getElementById('plyHint').innerText = `${pucksReq} Pucks will be active in round 1.`;
+        }
+
+        function updVar() {
+            let v = document.getElementById('varSlider').value;
+            let txt = ["Low (2s)", "Medium (5s)", "High (10s)"];
+            document.getElementById('varDisp').innerText = txt[v];
+        }
+
+        async function uploadMp3() {
+            let fileInput = document.getElementById('mp3Upload');
+            if(fileInput.files.length === 0) return;
+            let file = fileInput.files[0];
+            
+            if(file.size > 3 * 1024 * 1024) {
+                alert("File too large! Maximum is 3MB.");
+                return;
+            }
+            if(!confirm("Uploading will delete your current MP3. Proceed?")) return;
+
+            document.getElementById('upProgress').style.display = 'block';
+            
+            let fd = new FormData();
+            fd.append('file', file, file.name);
+            let res = await fetch('/api/upload_mp3', {method: 'POST', body: fd});
+            
+            document.getElementById('upProgress').style.display = 'none';
+            if(res.ok) {
+                alert("Upload successful!");
+                document.getElementById('mp3Status').innerText = "Loaded: " + file.name;
+            } else {
+                alert("Upload failed.");
+            }
+        }
+
+        function nextStep() {
+            sessionStorage.setItem('mus_ply', document.getElementById('plySlider').value);
+            sessionStorage.setItem('mus_base', document.getElementById('baseSlider').value);
+            sessionStorage.setItem('mus_var', document.getElementById('varSlider').value);
+            sessionStorage.setItem('mus_pause', document.getElementById('pauseSlider').value);
+            location.href = 'game_musical_names.html';
+        }
+
+        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+	<script>
+    window.TRAINING_FIELDS = [
+        { key:'plySlider',   el:'plySlider' },
+        { key:'baseSlider',  el:'baseSlider' },
+        { key:'varSlider',   el:'varSlider' },
+        { key:'pauseSlider', el:'pauseSlider' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Sorting Hat</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_sorting">The Sorting Hat 🎩</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="sort_setup_cfg">🔢 Configuration</h3>
+            
+            <div class="slider-header">
+                <span data-i18n="sort_lbl_grp">Groups (Houses):</span>
+                <span id="grpVal" class="slider-val">2</span>
+            </div>
+            <input type="range" id="grp" min="2" max="8" value="2" oninput="upd('grp', this.value)">
+            
+            <div class="slider-header" style="margin-top:15px;">
+                <span data-i18n="sort_lbl_plr">Total Players:</span>
+                <span id="plrVal" class="slider-val">20</span>
+            </div>
+            <input type="range" id="plr" min="2" max="100" value="20" oninput="upd('plr', this.value)">
+            
+            <div class="slider-header" style="margin-top:15px;">
+                <span data-i18n="sort_lbl_pucks">Active Pucks:</span>
+                <span id="puckVal" class="slider-val">1</span>
+            </div>
+            <input type="range" id="puck" min="1" max="3" value="1" oninput="upd('puck', this.value)">
+            
+            <p id="connInfo" class="info-txt" data-i18n="loading">Checking Pucks...</p>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="sort_btn_preview">PREVIEW ➡</button>
+        <button onclick="goHome()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        fetch('/api/game/load?id=7');
+
+        let maxPucks = 0;
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            maxPucks = data.filter(p => p.active).length;
+            document.getElementById('connInfo').innerText = `${getTranslation('conn_pucks')} ${maxPucks}`;
+            
+            let slider = document.getElementById('puck');
+            slider.max = Math.min(3, maxPucks > 0 ? maxPucks : 1);
+            if(slider.value > slider.max) {
+                slider.value = slider.max;
+                upd('puck', slider.value);
+            }
+        });
+
+        function upd(id, val) {
+            document.getElementById(id+'Val').innerText = val;
+        }
+
+		function nextStep() {
+			let grp = document.getElementById('grp').value;
+			let plr = document.getElementById('plr').value;
+			let puck = document.getElementById('puck').value;
+			
+			// Nur im Speicher ablegen!
+			sessionStorage.setItem('sort_grp', grp);
+			sessionStorage.setItem('sort_plr', plr);
+			sessionStorage.setItem('sort_puck', puck);
+			location.href = 'game_sorting_names.html';
+		}
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'grp',  el:'grp' },
+        { key:'plr',  el:'plr' },
+        { key:'puck', el:'puck' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

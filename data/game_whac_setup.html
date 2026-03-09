@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Whac-A-Mole</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        /* Spezifische Text-Box für Difficulty */
+        .diff-text { 
+            font-size: 0.9rem; color: var(--text-main); text-align: center; margin-top: 10px; 
+            font-weight:bold; background:var(--card-hover); padding:10px; border-radius:6px; border:1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_whac">Whac-A-Mole 🔨</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="whac_setup_time">⏱️ Time Limit</h3>
+            <div class="slider-header">
+                <span data-i18n="lbl_time_limit">Duration:</span>
+                <span id="timeDisp" class="slider-val">60s</span>
+            </div>
+            <input type="range" id="timeSlider" min="30" max="300" step="10" value="60" oninput="updTime()">
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="whac_setup_pucks">👥 Arenas & Pucks</h3>
+            <div class="slider-header">
+                <span data-i18n="whac_lbl_grp">Active Groups:</span>
+                <span id="grpDisp" class="slider-val">1</span>
+            </div>
+            <input type="range" id="grpSlider" min="1" max="3" value="1" oninput="updLimits()">
+            
+            <div class="slider-header" style="margin-top:15px;">
+                <span data-i18n="whac_lbl_ppg">Pucks per Group:</span>
+                <span id="ppgDisp" class="slider-val">3</span>
+            </div>
+            <input type="range" id="ppgSlider" min="3" max="10" value="5" oninput="updLimits()">
+            
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="whac_setup_diff">🧠 Difficulty & Colors</h3>
+            <div class="slider-header">
+                <span data-i18n="whac_lbl_lvl">Level:</span>
+                <span id="diffDisp" class="slider-val">1</span>
+            </div>
+            <input type="range" id="diffSlider" min="1" max="5" value="1" oninput="updDiff()">
+            <div id="diffTxt" class="diff-text"></div>
+
+            <div class="slider-header" style="margin-top:15px;">
+                <span data-i18n="whac_lbl_cols">Total Colors in Game:</span>
+                <span id="colDisp" class="slider-val">2</span>
+            </div>
+            <input type="range" id="colSlider" min="1" max="10" value="3" oninput="document.getElementById('colDisp').innerText = this.value">
+            <div class="info-txt" style="margin-top:5px;" data-i18n="whac_hint_cols">1 Color = Pure reaction. 2+ Colors = Cognitive selection.</div>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="whac_setup_rules">⚙️ Rules</h3>
+            <div class="toggle-row">
+                <span data-i18n="whac_lbl_sound">Sound Effects</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkSound" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span data-i18n="whac_lbl_show">Show Hit Colors before start</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkShow" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        let connPucks = 0;
+
+        fetch('/api/game/load?id=24'); 
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connPucks = data.filter(p => p.active).length;
+            updLimits();
+            updDiff();
+            updTime();
+        });
+
+        function updTime() {
+            let s = parseInt(document.getElementById('timeSlider').value);
+            let m = Math.floor(s / 60);
+            let sec = s % 60;
+            document.getElementById('timeDisp').innerText = `${m}m ${sec.toString().padStart(2,'0')}s`;
+        }
+
+        function updDiff() {
+            let lvl = parseInt(document.getElementById('diffSlider').value);
+            document.getElementById('diffDisp').innerText = lvl;
+            document.getElementById('diffTxt').innerText = getTranslation(`whac_diff_${lvl}`);
+        }
+
+        function updLimits() {
+            let ppg = parseInt(document.getElementById('ppgSlider').value);
+            let grp = parseInt(document.getElementById('grpSlider').value);
+            
+            document.getElementById('ppgDisp').innerText = ppg;
+            document.getElementById('grpDisp').innerText = grp;
+            
+            let req = ppg * grp;
+            let info = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+            
+            info.innerHTML = `${getTranslation('req_pucks')} ${req} | ${getTranslation('conn_pucks')} ${connPucks}`;
+            
+            if (req > connPucks) {
+                info.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                info.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+        }
+
+        function nextStep() {
+            let ppg = parseInt(document.getElementById('ppgSlider').value);
+            let grp = parseInt(document.getElementById('grpSlider').value);
+            if (ppg * grp > connPucks) {
+                if(!confirm("Not enough pucks connected! Continue anyway?")) return;
+            }
+            
+            sessionStorage.setItem('whac_grp', grp);
+            sessionStorage.setItem('whac_ppg', ppg);
+            sessionStorage.setItem('whac_time', document.getElementById('timeSlider').value);
+            sessionStorage.setItem('whac_diff', document.getElementById('diffSlider').value);
+            sessionStorage.setItem('whac_col', document.getElementById('colSlider').value);
+            sessionStorage.setItem('whac_snd', document.getElementById('chkSound').checked ? 1 : 0);
+            sessionStorage.setItem('whac_shw', document.getElementById('chkShow').checked ? 1 : 0);
+            
+            location.href = 'game_whac_names.html';
+        }
+
+        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/'); }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'timeSlider', el:'timeSlider' },
+        { key:'grpSlider',  el:'grpSlider' },
+        { key:'ppgSlider',  el:'ppgSlider' },
+        { key:'diffSlider', el:'diffSlider' },
+        { key:'colSlider',  el:'colSlider' },
+        { key:'chkSound',   el:'chkSound', type:'check' },
+        { key:'chkShow',    el:'chkShow',  type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

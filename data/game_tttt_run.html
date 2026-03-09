@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RUN - TTTT</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color);}
+        .big-time { font-size: 4rem; font-family: monospace; color: var(--text-main); font-weight: bold; line-height:1;}
+        
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; height: 100%;}
+        
+        .score-list { display: flex; flex-direction: column; gap: 8px;}
+        .score-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--card-hover); border-radius: 8px; border-left: 10px solid var(--border-color); transition: 0.3s;}
+        .score-row.active-turn { transform: scale(1.02); box-shadow: 0 0 15px rgba(255,255,255,0.2); background: rgba(255,255,255,0.05);}
+        
+        .p-name { font-size: 1.3rem; font-weight: bold; color: var(--text-main); }
+        .p-stat { font-size: 2rem; font-family: monospace; font-weight:bold;}
+
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="g_tttt">Tactical TicTacToe ❌⭕</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="top-info">
+            <div class="big-time" id="globalTime">00:00</div>
+            <div style="color:var(--text-muted); margin-top:5px; text-transform:uppercase;" id="stateInfo">WAITING</div>
+        </div>
+
+        <div class="controls">
+            <button onclick="goBack()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
+            <button onclick="doAction('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
+            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
+        </div>
+
+        <h3 style="margin-top:20px; color:var(--text-muted); font-size:1rem; text-transform:uppercase;" data-i18n="tttt_run_owned">Gehaltene Pucks</h3>
+        <div class="score-list" id="scoreList"></div>
+
+        <div class="bottom-nav">
+            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        const PLAYER_COLORS = ['#0000FF', '#FF0000', '#00FF00'];
+        let numPlayers = parseInt(sessionStorage.getItem('tttt_ply') || 2);
+        
+        // Initiales Setup der Score-Liste
+        let sHtml = "";
+        for(let i=0; i<numPlayers; i++) {
+            let name = sessionStorage.getItem(`p_name_${i}`) || `Player ${i+1}`;
+            sHtml += `
+            <div class="score-row" id="s-row-${i}" style="border-left-color:${PLAYER_COLORS[i]};">
+                <span class="p-name">${name}</span>
+                <span class="p-stat" id="s-val-${i}" style="color:${PLAYER_COLORS[i]};">0</span>
+            </div>`;
+        }
+        document.getElementById('scoreList').innerHTML = sHtml;
+
+        setInterval(update, 400); 
+
+        function formatTime(ms) {
+            let sec = Math.floor(ms / 1000); 
+            let m = Math.floor(sec / 60);
+            let s = sec % 60;
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        function update() {
+            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                
+                document.getElementById('globalTime').innerText = formatTime(data.t);
+
+                let stTxt = "SETUP";
+                let stCol = "var(--text-muted)";
+                
+                if(data.st === 1) { 
+                    stTxt = "RUNNING"; 
+                    stCol = "var(--primary)"; 
+                } else if(data.st === 2) { 
+                    stTxt = "FINISHED 🏆"; 
+                    stCol = "gold"; 
+                }
+                
+                document.getElementById('stateInfo').innerText = stTxt;
+                document.getElementById('stateInfo').style.color = stCol;
+
+                let bStart = document.getElementById('btnStart');
+                if (data.st === 0 || data.st === 2) {
+                    bStart.innerText = getTranslation('btn_start') || "START";
+                    bStart.style.background = "var(--primary)";
+                } else {
+                    bStart.innerText = "RUNNING";
+                    bStart.style.background = "var(--card-hover)";
+                }
+
+                // Update Scores & Aktiven Spieler
+                if (data.sc && Array.isArray(data.sc)) {
+                    for(let i=0; i<numPlayers; i++) {
+                        document.getElementById(`s-val-${i}`).innerText = data.sc[i];
+                        let row = document.getElementById(`s-row-${i}`);
+                        if (data.st === 1 && data.cp === i) {
+                            row.classList.add('active-turn');
+                        } else {
+                            row.classList.remove('active-turn');
+                        }
+                    }
+                }
+
+            }).catch(e => {});
+        }
+
+        function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
+        function goBack() { doAction('reset'); location.href = 'game_tttt_names.html'; }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+</body>
+</html>

@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .toolbar { display:flex; gap:10px; margin-bottom:20px; }
+        .toolbar button { flex:1; font-size:1.1rem; }
+
+        /* Gruppen-Cards */
+        .grp-card {
+            background:var(--card-bg); border:1px solid var(--border-color);
+            border-radius:10px; margin-bottom:12px; overflow:hidden;
+            transition:border-color 0.2s;
+        }
+        .grp-card.open { border-color:var(--primary); }
+        .grp-header {
+            display:flex; align-items:center; padding:14px 16px; cursor:pointer;
+            gap:12px; user-select:none;
+        }
+        .grp-header:active { background:var(--card-hover); }
+        .grp-arrow { font-size:1.2rem; transition:transform 0.2s; color:var(--text-muted); flex-shrink:0; }
+        .grp-card.open .grp-arrow { transform:rotate(90deg); }
+        .grp-name { flex:1; font-size:1.15rem; font-weight:bold; color:var(--text-main); }
+        .grp-count {
+            background:var(--bg-color); padding:3px 10px; border-radius:12px;
+            font-size:0.85rem; color:var(--text-muted); flex-shrink:0;
+        }
+        .grp-del {
+            background:none; border:none; color:var(--danger); font-size:1.3rem;
+            cursor:pointer; padding:0 4px; margin:0; width:auto; opacity:0.6;
+            transition:opacity 0.2s;
+        }
+        .grp-del:hover { opacity:1; }
+
+        /* Gruppen-Body (eingeklappt) */
+        .grp-body { display:none; padding:0 16px 16px; }
+        .grp-card.open .grp-body { display:block; }
+
+        /* Gruppen-Name bearbeiten */
+        .grp-name-input {
+            width:100%; padding:10px; font-size:1rem; margin-bottom:12px;
+            background:var(--bg-color); color:var(--text-main);
+            border:1px solid var(--border-color); border-radius:6px;
+        }
+
+        /* Spieler-Liste */
+        .player-item {
+            display:flex; align-items:center; gap:10px;
+            padding:10px 8px; border-bottom:1px solid var(--border-color);
+        }
+        .player-item:last-child { border-bottom:none; }
+        .player-name-input {
+            flex:1; padding:8px; font-size:1rem;
+            background:transparent; color:var(--text-main);
+            border:1px solid transparent; border-radius:4px; outline:none;
+        }
+        .player-name-input:focus { border-color:var(--primary); background:var(--bg-color); }
+        .player-del {
+            background:none; border:none; color:var(--danger); font-size:1.1rem;
+            cursor:pointer; padding:4px 8px; margin:0; width:auto; opacity:0.5;
+        }
+        .player-del:active { opacity:1; }
+
+        /* Spieler hinzufügen */
+        .add-row { display:flex; gap:8px; margin-top:10px; }
+        .add-row input { flex:1; padding:10px; font-size:1rem; }
+        .add-row button { width:auto; padding:10px 18px; flex-shrink:0; }
+
+        /* Import Modal */
+        .import-overlay {
+            position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.85); backdrop-filter:blur(4px);
+            z-index:5000; display:none; align-items:center; justify-content:center;
+            padding:15px; box-sizing:border-box;
+        }
+        .import-overlay.show { display:flex; }
+        .import-box {
+            background:var(--card-bg); border:1px solid var(--border-color);
+            border-radius:12px; width:100%; max-width:500px;
+            max-height:90vh; overflow-y:auto;
+        }
+        .import-header {
+            padding:16px; border-bottom:1px solid var(--border-color);
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .import-header h3 { margin:0; color:var(--primary); }
+        .import-body { padding:16px; }
+        .import-body textarea {
+            width:100%; height:150px; padding:10px; font-size:0.95rem;
+            font-family:monospace; background:var(--bg-color); color:var(--text-main);
+            border:1px solid var(--border-color); border-radius:6px; resize:vertical;
+            box-sizing:border-box;
+        }
+        .import-hint { font-size:0.85rem; color:var(--text-muted); margin:8px 0; line-height:1.4; }
+        .import-drop {
+            border:2px dashed var(--border-color); border-radius:8px;
+            padding:25px; text-align:center; cursor:pointer; margin-bottom:12px;
+            transition:border-color 0.2s, background 0.2s;
+        }
+        .import-drop:hover, .import-drop.dragover { border-color:var(--primary); background:rgba(13,110,253,0.05); }
+        .import-drop input { display:none; }
+        .import-preview {
+            max-height:200px; overflow-y:auto; margin-top:12px;
+            background:var(--bg-color); border-radius:6px; padding:8px;
+            font-size:0.85rem; display:none;
+        }
+        .import-preview table { width:100%; }
+        .import-preview td { padding:4px 8px; font-size:0.85rem; }
+        .import-preview .col-grp { color:var(--primary); font-weight:bold; }
+        .import-preview .col-name { color:var(--text-main); }
+        .import-footer { padding:12px 16px; display:flex; gap:10px; border-top:1px solid var(--border-color); }
+        .import-footer button { flex:1; }
+
+        /* Status Toast */
+        .toast {
+            position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+            background:var(--success); color:#000; padding:10px 20px;
+            border-radius:8px; font-weight:bold; font-size:0.9rem;
+            z-index:9999; opacity:0; transition:opacity 0.3s;
+            pointer-events:none;
+        }
+        .toast.show { opacity:1; }
+
+        /* Leer-Zustand */
+        .empty-state {
+            text-align:center; padding:50px 20px; color:var(--text-muted);
+        }
+        .empty-state .icon { font-size:3rem; margin-bottom:10px; display:block; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="pm_title">Player Manager</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="toolbar">
+            <button onclick="addGroup()" class="btn-primary" data-i18n="pm_add_group">➕ Add Group</button>
+            <button onclick="openImport()" class="btn-warn" data-i18n="pm_import">📋 Import</button>
+            <button onclick="exportCSV()" class="btn-warn" style="background:var(--card-bg); color:var(--text-main); border:1px solid var(--border-color);">💾 Backup</button>
+        </div>
+
+        <div id="groupList"></div>
+
+        <button onclick="location.href='/'" class="btn-back" style="margin-top:30px;" data-i18n="btn_home">🏠 Home</button>
+    </main>
+
+    <!-- IMPORT MODAL -->
+    <div class="import-overlay" id="importOverlay">
+        <div class="import-box">
+            <div class="import-header">
+                <h3 data-i18n="pm_import_title">📋 Import Players</h3>
+                <button class="close-modal" onclick="closeImport()" style="width:auto;background:none;border:none;color:var(--text-main);font-size:1.5rem;padding:0;margin:0;">✕</button>
+            </div>
+            <div class="import-body">
+                <div class="import-drop" id="importDrop" onclick="document.getElementById('importFile').click()">
+                    <span style="font-size:2rem;">📂</span><br>
+                    <span data-i18n="pm_import_drop">Drop CSV/TXT here or tap to select</span>
+                    <input type="file" id="importFile" accept=".csv,.txt,.tsv" onchange="handleImportFile(this.files[0])">
+                </div>
+                <p class="import-hint" data-i18n="pm_import_hint">Or paste names below. Supports: Tab, semicolon, or comma as separator.<br>Format: <b>Group, Name</b> or just <b>Name</b> (one per line).</p>
+                <textarea id="importText" placeholder="U12;Lena M.&#10;U12;Tim K.&#10;U14;Max S.&#10;&#10;or just:&#10;Lena M.&#10;Tim K."></textarea>
+                <div class="import-preview" id="importPreview">
+                    <table id="importTable"></table>
+                </div>
+            </div>
+            <div class="import-footer">
+                <button onclick="closeImport()" class="btn-back" data-i18n="btn_cancel">Cancel</button>
+                <button onclick="previewImport()" class="btn-warn" data-i18n="pm_preview">👁 Preview</button>
+                <button onclick="executeImport()" class="btn-primary" id="importBtn" data-i18n="pm_do_import" disabled>Import</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        // ==================== DATENMODELL ====================
+        let data = { groups: [] };
+        let nextGroupId = 1;
+        let nextPlayerId = 1;
+        let saveTimer = null;
+        let parsedImport = []; // [{group, name}]
+
+        // ==================== INIT ====================
+        loadData();
+
+        function loadData() {
+            fetch('/api/players')
+                .then(r => r.json())
+                .then(d => {
+                    data = d || { groups: [] };
+                    if (!data.groups) data.groups = [];
+                    // Höchste IDs ermitteln
+                    data.groups.forEach(g => {
+                        if (g.id >= nextGroupId) nextGroupId = g.id + 1;
+                        g.players.forEach(p => {
+                            if (p.id >= nextPlayerId) nextPlayerId = p.id + 1;
+                        });
+                    });
+                    renderGroups();
+                })
+                .catch(e => {
+                    console.error('Load error:', e);
+                    renderGroups();
+                });
+        }
+
+        // ==================== SANITIZATION ====================
+        function sanitize(str, maxLen) {
+            if (typeof str !== 'string') return '';
+            return str
+                .replace(/[{}\[\]"'\\<>&`]/g, '')  // JSON + HTML gefährliche Zeichen
+                .replace(/\s+/g, ' ')                // Mehrfach-Whitespace
+                .trim()
+                .substring(0, maxLen || 20);
+        }
+
+        function sanitizeGroupName(str) { return sanitize(str, 25); }
+        function sanitizePlayerName(str) { return sanitize(str, 20); }
+
+        // ==================== RENDERING ====================
+        function renderGroups() {
+            let container = document.getElementById('groupList');
+
+            if (data.groups.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="icon">👥</span>
+                        <p data-i18n="pm_empty">No groups yet. Add a group or import players!</p>
+                    </div>`;
+                applyTranslations();
+                return;
+            }
+
+            let html = '';
+            data.groups.forEach((g, gi) => {
+                let isOpen = document.querySelector(`.grp-card[data-gid="${g.id}"]`)?.classList.contains('open');
+                html += `
+                <div class="grp-card ${isOpen ? 'open' : ''}" data-gid="${g.id}">
+                    <div class="grp-header" onclick="toggleGroup(${g.id})">
+                        <span class="grp-arrow">▶</span>
+                        <span class="grp-name">${escHTML(g.name)}</span>
+                        <span class="grp-count">${g.players.length} 👤</span>
+                        <button class="grp-del" onclick="event.stopPropagation(); deleteGroup(${g.id})" title="Delete Group">🗑</button>
+                    </div>
+                    <div class="grp-body">
+                        <input class="grp-name-input" value="${escHTML(g.name)}" maxlength="25"
+                               placeholder="Group Name"
+                               onchange="renameGroup(${g.id}, this.value)"
+                               data-i18n-placeholder="pm_grp_name_ph">
+                        <div id="players-${g.id}">`;
+
+                g.players.forEach((p, pi) => {
+                    html += `
+                            <div class="player-item">
+                                <span style="color:var(--text-muted); font-size:0.8rem; width:24px;">${pi+1}.</span>
+                                <input class="player-name-input" value="${escHTML(p.name)}" maxlength="20"
+                                       onchange="renamePlayer(${g.id}, ${p.id}, this.value)">
+                                <button class="player-del" onclick="deletePlayer(${g.id}, ${p.id})">✕</button>
+                            </div>`;
+                });
+
+                html += `
+                        </div>
+                        <div class="add-row">
+                            <input type="text" id="newPlayer-${g.id}" maxlength="20"
+                                   placeholder="New Player Name"
+                                   onkeydown="if(event.key==='Enter') addPlayerFromInput(${g.id})"
+                                   data-i18n-placeholder="pm_new_player_ph">
+                            <button onclick="addPlayerFromInput(${g.id})" class="btn-primary">+</button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+            applyTranslations();
+        }
+
+        function escHTML(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // ==================== GRUPPEN CRUD ====================
+        function toggleGroup(gid) {
+            let card = document.querySelector(`.grp-card[data-gid="${gid}"]`);
+            if (card) card.classList.toggle('open');
+        }
+
+        function addGroup() {
+            let name = prompt(getTranslation('pm_prompt_group') || 'Group name:');
+            if (!name) return;
+            name = sanitizeGroupName(name);
+            if (!name) return;
+
+            data.groups.push({ id: nextGroupId++, name: name, players: [] });
+            renderGroups();
+            scheduleSave();
+            // Neue Gruppe direkt öffnen
+            setTimeout(() => {
+                let card = document.querySelector(`.grp-card[data-gid="${nextGroupId - 1}"]`);
+                if (card) card.classList.add('open');
+            }, 50);
+        }
+
+        function deleteGroup(gid) {
+            let grp = data.groups.find(g => g.id === gid);
+            if (!grp) return;
+            let msg = (getTranslation('pm_confirm_del_grp') || 'Delete group "{name}" and all {n} players?')
+                .replace('{name}', grp.name).replace('{n}', grp.players.length);
+            if (!confirm(msg)) return;
+            data.groups = data.groups.filter(g => g.id !== gid);
+            renderGroups();
+            scheduleSave();
+        }
+
+        function renameGroup(gid, newName) {
+            newName = sanitizeGroupName(newName);
+            let grp = data.groups.find(g => g.id === gid);
+            if (grp && newName) { grp.name = newName; scheduleSave(); }
+        }
+
+        // ==================== SPIELER CRUD ====================
+        function addPlayerFromInput(gid) {
+            let inp = document.getElementById('newPlayer-' + gid);
+            let name = sanitizePlayerName(inp.value);
+            if (!name) return;
+
+            let grp = data.groups.find(g => g.id === gid);
+            if (!grp) return;
+
+            // Duplikat-Check
+            if (grp.players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
+                showToast('⚠️ ' + name + ' exists!', true);
+                return;
+            }
+
+            grp.players.push({ id: nextPlayerId++, name: name });
+            inp.value = '';
+            renderGroups();
+            scheduleSave();
+
+            // Gruppe offen halten + Input fokussieren
+            setTimeout(() => {
+                let card = document.querySelector(`.grp-card[data-gid="${gid}"]`);
+                if (card) card.classList.add('open');
+                let newInp = document.getElementById('newPlayer-' + gid);
+                if (newInp) newInp.focus();
+            }, 50);
+        }
+
+        function deletePlayer(gid, pid) {
+            let grp = data.groups.find(g => g.id === gid);
+            if (!grp) return;
+            grp.players = grp.players.filter(p => p.id !== pid);
+            renderGroups();
+            // Gruppe offen halten
+            setTimeout(() => {
+                let card = document.querySelector(`.grp-card[data-gid="${gid}"]`);
+                if (card) card.classList.add('open');
+            }, 50);
+            scheduleSave();
+        }
+
+        function renamePlayer(gid, pid, newName) {
+            newName = sanitizePlayerName(newName);
+            let grp = data.groups.find(g => g.id === gid);
+            if (!grp) return;
+            let player = grp.players.find(p => p.id === pid);
+            if (player && newName) { player.name = newName; scheduleSave(); }
+        }
+
+        // ==================== AUTO-SAVE ====================
+        function scheduleSave() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveData, 800);
+        }
+
+        function saveData() {
+            fetch('/api/players', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(r => {
+                if (r.ok) showToast('💾 Saved');
+                else showToast('❌ Save failed!', true);
+            })
+            .catch(e => showToast('❌ Connection error!', true));
+        }
+
+        function showToast(msg, isError) {
+            let t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.background = isError ? 'var(--danger)' : 'var(--success)';
+            t.style.color = isError ? '#fff' : '#000';
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+        // ==================== CSV BACKUP/EXPORT ====================
+        function exportCSV() {
+            if (data.groups.length === 0) {
+                showToast('⚠️ No groups to export!', true);
+                return;
+            }
+
+            let lines = ['Group;Name'];
+            data.groups.forEach(g => {
+                g.players.forEach(p => {
+                    lines.push(g.name + ';' + p.name);
+                });
+            });
+
+            let csv = lines.join('\r\n');
+            let blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+            let url = URL.createObjectURL(blob);
+
+            let a = document.createElement('a');
+            a.href = url;
+            let d = new Date();
+            let stamp = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+            a.download = 'PuckRacer_Players_' + stamp + '.csv';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            let total = data.groups.reduce((s,g) => s + g.players.length, 0);
+            showToast('💾 ' + total + ' players exported');
+        }
+
+        // ==================== CSV IMPORT ====================
+        function openImport() {
+            parsedImport = [];
+            document.getElementById('importText').value = '';
+            document.getElementById('importPreview').style.display = 'none';
+            document.getElementById('importBtn').disabled = true;
+            document.getElementById('importOverlay').classList.add('show');
+        }
+
+        function closeImport() {
+            document.getElementById('importOverlay').classList.remove('show');
+        }
+
+        // Drag & Drop auf dem Import-Feld
+        (function() {
+            let drop = document.getElementById('importDrop');
+            if (!drop) return;
+            drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+            drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+            drop.addEventListener('drop', e => {
+                e.preventDefault(); drop.classList.remove('dragover');
+                if (e.dataTransfer.files.length) handleImportFile(e.dataTransfer.files[0]);
+            });
+        })();
+
+        function handleImportFile(file) {
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('importText').value = e.target.result;
+                previewImport();
+            };
+            reader.readAsText(file);
+        }
+
+        function previewImport() {
+            let text = document.getElementById('importText').value;
+            parsedImport = parseImportText(text);
+
+            let preview = document.getElementById('importPreview');
+            let table = document.getElementById('importTable');
+            let btn = document.getElementById('importBtn');
+
+            if (parsedImport.length === 0) {
+                preview.style.display = 'block';
+                table.innerHTML = '<tr><td style="color:var(--danger)">No valid entries found.</td></tr>';
+                btn.disabled = true;
+                return;
+            }
+
+            let html = `<tr><th style="color:var(--text-muted);font-size:0.75rem;">GROUP</th><th style="color:var(--text-muted);font-size:0.75rem;">NAME</th></tr>`;
+            parsedImport.forEach(e => {
+                html += `<tr><td class="col-grp">${escHTML(e.group)}</td><td class="col-name">${escHTML(e.name)}</td></tr>`;
+            });
+            html += `<tr><td colspan="2" style="color:var(--success);padding-top:8px;font-weight:bold;">✓ ${parsedImport.length} entries</td></tr>`;
+
+            table.innerHTML = html;
+            preview.style.display = 'block';
+            btn.disabled = false;
+        }
+
+        // ==================== SMART PARSER ====================
+        function parseImportText(text) {
+            if (!text || !text.trim()) return [];
+
+            // BOM entfernen
+            if (text.charCodeAt(0) === 0xFEFF) text = text.substring(1);
+
+            let lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+            if (lines.length === 0) return [];
+
+            // Header-Zeile erkennen und überspringen
+            let firstLower = lines[0].toLowerCase();
+            if (firstLower.includes('name') && (firstLower.includes('group') || firstLower.includes('gruppe') || firstLower.includes('class') || firstLower.includes('klasse') || firstLower.includes('team'))) {
+                lines.shift();
+            }
+
+            // Delimiter erkennen anhand der ersten 10 Zeilen
+            let sample = lines.slice(0, 10).join('\n');
+            let delim = null;
+
+            // Priorität: Tab > Semikolon > Komma
+            // Tab ist eindeutig (kommt nie in Namen vor)
+            if (sample.includes('\t')) delim = '\t';
+            // Semikolon ist sicher (Komma könnte in "Nachname, Vorname" vorkommen)
+            else if (sample.includes(';')) delim = ';';
+            // Komma nur wenn es in mehreren Zeilen vorkommt (kein Einzel-Zufall)
+            else {
+                let commaLines = lines.filter(l => l.includes(',')).length;
+                if (commaLines > lines.length * 0.5) delim = ',';
+            }
+
+            let entries = [];
+
+            for (let line of lines) {
+                if (delim) {
+                    let parts = splitRespectingQuotes(line, delim);
+                    if (parts.length >= 2) {
+                        let group = sanitizeGroupName(parts[0]);
+                        let name = sanitizePlayerName(parts[1]);
+                        if (name) entries.push({ group: group || 'Import', name });
+                    } else if (parts.length === 1) {
+                        let name = sanitizePlayerName(parts[0]);
+                        if (name) entries.push({ group: 'Import', name });
+                    }
+                } else {
+                    // Kein Delimiter → jede Zeile ist ein Name
+                    let name = sanitizePlayerName(line);
+                    if (name) entries.push({ group: 'Import', name });
+                }
+            }
+
+            return entries;
+        }
+
+        // CSV-Quoting respektieren: "Anna, Marie" bleibt ein Feld
+        function splitRespectingQuotes(line, delim) {
+            let parts = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                let ch = line[i];
+                if (ch === '"') {
+                    inQuotes = !inQuotes;
+                    continue; // Anführungszeichen entfernen
+                }
+                if (ch === delim && !inQuotes) {
+                    parts.push(current.trim());
+                    current = '';
+                    continue;
+                }
+                current += ch;
+            }
+            parts.push(current.trim());
+            return parts;
+        }
+
+        // ==================== IMPORT AUSFÜHREN ====================
+        function executeImport() {
+            if (parsedImport.length === 0) return;
+
+            let added = 0;
+
+            parsedImport.forEach(entry => {
+                // Gruppe finden oder anlegen
+                let grp = data.groups.find(g => g.name.toLowerCase() === entry.group.toLowerCase());
+                if (!grp) {
+                    grp = { id: nextGroupId++, name: entry.group, players: [] };
+                    data.groups.push(grp);
+                }
+
+                // Duplikat-Check innerhalb der Gruppe
+                if (!grp.players.some(p => p.name.toLowerCase() === entry.name.toLowerCase())) {
+                    grp.players.push({ id: nextPlayerId++, name: entry.name });
+                    added++;
+                }
+            });
+
+            closeImport();
+            renderGroups();
+            scheduleSave();
+            showToast(`✓ ${added} players imported`);
+        }
+    </script>
+</body>
+</html>

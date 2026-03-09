@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Memory Sprint</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        .hint-box { 
+            background: rgba(0,0,0,0.2); 
+            border:1px solid var(--border-color); 
+            padding:15px; 
+            border-radius:6px; 
+            font-size:0.9rem; 
+            color:var(--text-muted); 
+            margin-top:10px;
+            text-align:center;
+        }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_memory">Memory Sprint 🧠🏃</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="mem_setup_pucks">👥 Pucks (Pairs)</h3>
+            <div class="slider-header">
+                <span data-i18n="mem_lbl_pucks">Active Pucks:</span>
+                <span id="puckDisp" class="slider-val">4</span>
+            </div>
+            <input type="range" id="puckSlider" min="4" max="20" step="2" value="4" oninput="updPucks()">
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
+            <div class="hint-box" data-i18n="mem_hint_pucks">Recommended: 8 to 12 Pucks for a good challenge!</div>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="mem_setup_speed">👁️ Memorize Phase</h3>
+            <div class="slider-header">
+                <span data-i18n="mem_lbl_speed">Speed (Time to memorize):</span>
+                <span id="spdDisp" class="slider-val"></span>
+            </div>
+            <input type="range" id="spdSlider" min="0" max="2" value="1" oninput="updSpeed()">
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="mem_setup_rules">⚙️ Game Rules</h3>
+            <div class="toggle-row">
+                <span>
+                    <b data-i18n="mem_lbl_search">Search Mode</b> <br>
+                    <small style="font-size:0.8rem; color:var(--text-muted);" data-i18n="mem_hint_search">(No initial colors shown)</small>
+                </span>
+                <label class="switch">
+                    <input type="checkbox" id="chkSearch">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            <div class="toggle-row" style="margin-top: 15px;">
+                <span>
+                    <b data-i18n="mem_lbl_auto">Auto Restart</b> <br>
+                    <small style="font-size:0.8rem; color:var(--text-muted);" data-i18n="mem_hint_auto">(Endless drill)</small>
+                </span>
+                <label class="switch">
+                    <input type="checkbox" id="chkAuto">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        let connPucks = 0;
+
+        fetch('/api/game/load?id=19'); 
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connPucks = data.filter(p => p.active).length;
+            let slider = document.getElementById('puckSlider');
+            
+            let maxEven = Math.floor(connPucks / 2) * 2;
+            if(maxEven < 4) maxEven = 4; 
+            slider.max = maxEven;
+            
+            if(parseInt(slider.value) > maxEven) slider.value = maxEven;
+            updPucks();
+            updSpeed();
+        });
+
+        function updPucks() {
+            let p = parseInt(document.getElementById('puckSlider').value);
+            document.getElementById('puckDisp').innerText = p;
+            
+            let info = document.getElementById('puckInfo');
+            info.innerText = `${getTranslation('conn_pucks')} ${connPucks} (${p/2} Pairs)`;
+            
+            let btn = document.getElementById('btnNext');
+            if (p > connPucks) {
+                info.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                info.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+        }
+
+        function updSpeed() {
+            let val = document.getElementById('spdSlider').value;
+            document.getElementById('spdDisp').innerText = getTranslation(`mem_spd_${val}`);
+        }
+
+        function nextStep() {
+            let p = document.getElementById('puckSlider').value;
+            if (p > connPucks) {
+                if(!confirm("Not enough pucks connected! Continue anyway?")) return;
+            }
+            
+            sessionStorage.setItem('mem_pucks', p);
+            sessionStorage.setItem('mem_speed', document.getElementById('spdSlider').value);
+            sessionStorage.setItem('mem_auto', document.getElementById('chkAuto').checked ? 1 : 0);
+            sessionStorage.setItem('mem_search', document.getElementById('chkSearch').checked ? 1 : 0);
+            
+            location.href = 'game_memory_names.html';
+        }
+
+        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'puckSlider', el:'puckSlider' },
+        { key:'spdSlider',  el:'spdSlider' },
+        { key:'chkSearch',  el:'chkSearch', type:'check' },
+        { key:'chkAuto',    el:'chkAuto',   type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

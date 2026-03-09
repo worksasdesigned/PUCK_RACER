@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React 2P Live</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color);}
+        .big-time { font-size: 3.5rem; font-family: monospace; color: var(--text-main); font-weight: bold;}
+        .target-time { font-size: 1.2rem; color: var(--text-muted); margin-top:5px; }
+
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
+
+        .grp-box { background: var(--card-hover); border-radius: 8px; margin-bottom: 15px; padding: 10px; border-left: 8px solid var(--border-color); transition: background 0.3s;}
+        .grp-head { display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--border-color); padding-bottom:5px; margin-bottom:10px; }
+        .g-name { font-size:1.2rem; font-weight:bold; color:var(--text-main);}
+        .g-badge { background:var(--bg-color); padding:3px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold; }
+
+        .duel-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; }
+        .p-box { text-align:center; padding:10px; background:var(--bg-color); border-radius:6px; }
+        .p-name { font-size:1.1rem; margin-bottom:5px; color:var(--text-main); }
+        .p-score { font-size:2.5rem; font-weight:bold; font-family:monospace; color:var(--text-main); }
+        .p-avg { font-size:0.85rem; color:var(--text-muted); }
+        .vs-text { font-weight:bold; color:var(--text-muted); font-size:1.5rem; text-align:center;}
+
+        .color-dot { width: 12px; height: 12px; border-radius: 50%; display:inline-block; border:1px solid #fff;}
+
+        .action-btns { display: flex; gap: 10px; margin-top: 10px;}
+        .btn-action { flex:1; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .btn-action:active { transform: scale(0.95); }
+        .btn-stop { background: var(--danger); color: white; }
+        .btn-start { background: var(--success); color: black; }
+        
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="g_react2p">React 2-Player ⚡</div>
+     <div class="status-bar">
+    <div class="status-dot dot-green" id="cnt-green">0</div>
+    <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+    <div class="status-dot dot-red" id="cnt-red">0</div>
+</div>
+    </header>
+
+    <main>
+        <div class="top-info">
+            <div class="big-time" id="globalTime">00:00.0</div>
+            <div class="target-time" id="limitTime">Limit: 90s</div>
+        </div>
+
+        <div class="controls">
+            <button onclick="goBack()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
+            <button onclick="doAction('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start_all">START ALL</button>
+            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop_all">STOP ALL</button>
+        </div>
+
+        <div id="gameBoard"></div>
+
+        <div class="bottom-nav">
+            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+<script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const GRP_COLORS = ['#800080', '#40E0D0', '#FF7F50', '#7FFFD4', '#9370DB'];
+        const STATES = ["SETUP", "GET READY", "COUNTDOWN", "WAITING...", "GO!", "ROUND OVER", "FINISHED"];
+        
+        let tRestart = getTranslation('r2_run_restart_grp');
+        let tStop = getTranslation('r2_run_stop_grp');
+
+        document.getElementById('gameBoard').addEventListener('click', function(e) {
+            let btn = e.target.closest('.action-btn');
+            if(btn) {
+                let cmd = btn.getAttribute('data-cmd');
+                if(cmd) doAction(cmd);
+            }
+        });
+
+        setInterval(updateStatus, 400); 
+
+		function updateStatus() {
+            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                 
+                
+                if (data.time !== undefined) {
+                    let t = Math.floor(data.time / 1000);
+                    let m = Math.floor(t / 60);
+                    let s = t % 60;
+                    let ms = Math.floor((data.time % 1000) / 100);
+                    document.getElementById('globalTime').innerText = `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}.${ms}`;
+                }
+                if (data.limit) {
+                    document.getElementById('limitTime').innerText = getTranslation('lbl_time_limit') + ` ${data.limit/1000}s`;
+                }
+                
+                // FIX: Status vom ersten Team prüfen, da es keinen globalen Status gibt!
+                let btn = document.getElementById('btnStart');
+                if (data.groups && data.groups.length > 0) {
+                    let firstSt = data.groups[0].st;
+                    // 0 = Setup, 6 = Finished
+                    if (firstSt === 0 || firstSt === 6) { 
+                        btn.innerText = (firstSt === 6) ? getTranslation('btn_reset') : getTranslation('btn_start_all'); 
+                        btn.style.background = "var(--primary)"; 
+                    } else { 
+                        btn.innerText = getTranslation('btn_running'); 
+                        btn.style.background = "var(--card-hover)"; 
+                    }
+                }
+
+                renderTable(data.groups);
+                
+            }).catch(e => {
+                document.getElementById('conn-stat').style.opacity = 0.2;
+            });
+        }
+		
+        function renderTable(groups) {
+            let container = document.getElementById('gameBoard');
+            if (!groups) return;
+
+            groups.forEach((g, i) => {
+                let rowId = `r2-grp-${i}`;
+                let rowEl = document.getElementById(rowId);
+                
+                let phGrp = getTranslation('r2_names_grp');
+                let phP1 = getTranslation('r2_names_p1');
+                let phP2 = getTranslation('r2_names_p2');
+
+                let gName = sessionStorage.getItem(`r2_gname_${i}`) || `${phGrp} ${i+1}`;
+                let p1Name = sessionStorage.getItem(`r2_p1name_${i}`) || `${phP1}`;
+                let p2Name = sessionStorage.getItem(`r2_p2name_${i}`) || `${phP2}`;
+                let color = GRP_COLORS[i];
+                
+                let stateTxt = STATES[g.st] || "UNK";
+                let badgeColor = "var(--text-main)";
+                let badgeBg = "var(--bg-color)";
+                let glowClass = "";
+
+                if (g.st === 4) { badgeColor = "#000"; badgeBg = "var(--success)"; glowClass = "rgba(0,255,0,0.1)"; }
+                if (g.st === 6) { badgeColor = "#fff"; badgeBg = "var(--danger)"; }
+                
+                let p1ColsHtml = g.p1c.map(c => `<div class="color-dot" style="background:${c}"></div>`).join('');
+                let p2ColsHtml = g.p2c.map(c => `<div class="color-dot" style="background:${c}"></div>`).join('');
+                
+                let p1AvgStr = (g.p1a > 0) ? `Ø ${(g.p1a/1000).toFixed(2)}s` : "--";
+                let p2AvgStr = (g.p2a > 0) ? `Ø ${(g.p2a/1000).toFixed(2)}s` : "--";
+
+                if (!rowEl) {
+                    container.insertAdjacentHTML('beforeend', `
+                    <div id="${rowId}" class="grp-box" style="border-left-color: ${color}">
+                        <div class="grp-head">
+                            <span class="g-name">${gName}</span>
+                            <span id="badge-${i}" class="g-badge" style="background:${badgeBg}; color:${badgeColor};">${stateTxt}</span>
+                        </div>
+                        <div class="duel-row">
+                            <div class="p-box">
+                                <div class="p-name">${p1Name} ${p1ColsHtml}</div>
+                                <div id="p1s-${i}" class="p-score">${g.p1s}</div>
+                                <div id="p1a-${i}" class="p-avg">${p1AvgStr}</div>
+                            </div>
+                            <div class="vs-text">VS</div>
+                            <div class="p-box">
+                                <div class="p-name">${p2ColsHtml} ${p2Name}</div>
+                                <div id="p2s-${i}" class="p-score">${g.p2s}</div>
+                                <div id="p2a-${i}" class="p-avg">${p2AvgStr}</div>
+                            </div>
+                        </div>
+                        <div class="action-btns">
+                            <button class="btn-action btn-start action-btn" data-cmd="grp_start&val=${i}">${tRestart}</button>
+                            <button class="btn-action btn-stop action-btn" data-cmd="grp_stop&val=${i}">${tStop}</button>
+                        </div>
+                    </div>`);
+                } else {
+                    let badge = document.getElementById(`badge-${i}`);
+                    if (badge.innerText !== stateTxt) {
+                        badge.innerText = stateTxt;
+                        badge.style.background = badgeBg;
+                        badge.style.color = badgeColor;
+                        rowEl.style.background = glowClass !== "" ? glowClass : "var(--card-hover)";
+                    }
+
+                    document.getElementById(`p1s-${i}`).innerText = g.p1s;
+                    document.getElementById(`p2s-${i}`).innerText = g.p2s;
+                    document.getElementById(`p1a-${i}`).innerText = p1AvgStr;
+                    document.getElementById(`p2a-${i}`).innerText = p2AvgStr;
+                }
+            });
+        }
+
+        function doAction(act) { fetch(`/api/game/action?cmd=${act}`); }
+        function goBack() { doAction('reset'); location.href = 'game_react2p_names.html'; }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+</body>
+</html>

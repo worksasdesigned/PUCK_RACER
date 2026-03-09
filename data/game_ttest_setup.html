@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Agility T-Test</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_ttest">Agility T-Test 🏃‍♂️</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="tt_setup_time">⏱️ Game Time</h3>
+            <div class="slider-header">
+                <span data-i18n="lbl_time_limit">Time Limit:</span>
+                <span id="timeDisp" class="slider-val">3m 00s</span>
+            </div>
+            <input type="range" id="timeSlider" min="3" max="39" value="18" oninput="updateTime()">
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="tt_setup_players">👥 Players / Lanes</h3>
+            <div class="slider-header">
+                <span data-i18n="tt_lbl_groups">Number of Groups:</span>
+                <span id="grpDisp" class="slider-val">1</span>
+            </div>
+            <input type="range" id="grpSlider" min="1" max="2" value="1" oninput="calcPucks()">
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="tt_setup_rules">⚙️ Rules</h3>
+            <div class="toggle-row">
+                <span data-i18n="tt_lbl_grpstart">Group Start (Hold Start Puck)</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkGroupStart" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span data-i18n="tt_lbl_sound">Sound (Beeps & Countdown)</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkSound" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span><span data-i18n="tt_lbl_press">Puck Press Required</span> <br><small style="font-size:0.8rem;color:var(--text-muted);" data-i18n="tt_lbl_press_hint">(Recommended)</small></span>
+                <label class="switch">
+                    <input type="checkbox" id="chkPress" checked onchange="toggleAutoSpeed()">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            
+            <div id="speedBox" style="display:none; margin-top:20px; border-top:1px solid var(--border-color); padding-top:15px;">
+                <div class="slider-header">
+                    <span data-i18n="tt_lbl_speed">Auto-Advance Speed:</span>
+                    <span id="spdDisp" class="slider-val">Medium</span>
+                </div>
+                <input type="range" id="spdSlider" min="0" max="2" value="1" oninput="updateSpeed()">
+            </div>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        let connectedPucks = 0;
+        const SPEEDS = ["Slow (~2m/s)", "Medium (~3m/s)", "Fast (~4m/s)"];
+
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connectedPucks = data.filter(p => p.active).length;
+            calcPucks(); 
+        });
+
+        function updateTime() {
+            let val = parseInt(document.getElementById('timeSlider').value);
+            let totalSecs = (val <= 18) ? val * 10 : 180 + (val - 18) * 20;
+            let m = Math.floor(totalSecs / 60);
+            let s = totalSecs % 60;
+            document.getElementById('timeDisp').innerText = `${m}m ${s.toString().padStart(2,'0')}s`;
+            return totalSecs;
+        }
+
+        function toggleAutoSpeed() {
+            document.getElementById('speedBox').style.display = document.getElementById('chkPress').checked ? 'none' : 'block';
+        }
+
+        function updateSpeed() {
+            document.getElementById('spdDisp').innerText = SPEEDS[document.getElementById('spdSlider').value];
+        }
+
+        function calcPucks() {
+            let nGrp = parseInt(document.getElementById('grpSlider').value);
+            document.getElementById('grpDisp').innerText = nGrp;
+            
+            let needed = nGrp * 4;
+            let infoEl = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+
+            infoEl.innerHTML = `${getTranslation('req_pucks')} ${needed} | ${getTranslation('conn_pucks')} ${connectedPucks}`;
+            
+            if (needed > connectedPucks) {
+                infoEl.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                infoEl.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+        }
+
+        function nextStep() {
+            let nGrp = document.getElementById('grpSlider').value;
+            if (nGrp * 4 > connectedPucks) {
+                if(!confirm("Not enough pucks connected! Continue anyway?")) return;
+            }
+            
+            sessionStorage.setItem('tt_groups', nGrp);
+            sessionStorage.setItem('tt_time', updateTime());
+            sessionStorage.setItem('tt_grpstart', document.getElementById('chkGroupStart').checked ? 1 : 0);
+            sessionStorage.setItem('tt_press', document.getElementById('chkPress').checked ? 1 : 0);
+            sessionStorage.setItem('tt_sound', document.getElementById('chkSound').checked ? 1 : 0);
+            sessionStorage.setItem('tt_speed', document.getElementById('spdSlider').value);
+            
+            location.href = 'game_ttest_names.html';
+        }
+
+        function cancelSetup() {
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
+        }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'timeSlider',    el:'timeSlider' },
+        { key:'grpSlider',     el:'grpSlider' },
+        { key:'chkGroupStart', el:'chkGroupStart', type:'check' },
+        { key:'chkPress',      el:'chkPress',      type:'check' },
+        { key:'chkSound',      el:'chkSound',      type:'check' },
+        { key:'spdSlider',     el:'spdSlider' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

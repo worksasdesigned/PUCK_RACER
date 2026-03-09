@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Names - Stopwatch</title>
+    <link rel="stylesheet" href="style.css?v=4">
+    <style>
+        .player-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background:var(--card-bg); padding:10px; border-radius:8px; border-left:5px solid #fff;}
+        .color-box { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; flex-shrink: 0; transition: all 0.3s;}
+        input[type=text] { flex-grow: 1; padding: 12px; font-size: 1.1rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-main); }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="sw_names_title">Players</div></header>
+    <main>
+        <div id="pickerBar" style="display:none; margin-bottom:15px;">
+            <button onclick="loadFromPicker()" class="btn-primary" style="font-size:1.1rem; background:var(--card-hover); border:1px dashed var(--primary); color:var(--primary);">
+                👥 <span data-i18n="pp_load_players">Load Players from List</span>
+            </button>
+        </div>
+        
+        <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading_pucks">Initializing Pucks...</div>
+        
+        <div id="playerList" class="card" style="display:none;"></div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="location.href='game_stopwatch_setup.html'" class="btn-warn" style="font-size:1.2rem;" data-i18n="btn_back">⬅ BACK</button>
+            <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">TO GAME 🏁</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="player_picker.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const COLORS = ['blue','red','green','yellow','magenta','cyan','orange','purple','white','lime'];
+        let num = parseInt(sessionStorage.getItem('sw_players') || 1);
+        
+        setTimeout(initList, 500);
+
+        function initList() {
+            fetch('/api/game/action?cmd=setup').then(() => {
+                let container = document.getElementById('playerList');
+                let html = "";
+                for(let i=0; i<num; i++) {
+                    let name = sessionStorage.getItem(`p_name_${i}`) || `Player ${i+1}`;
+                    let color = COLORS[i%10];
+                    html += `
+                    <div class="player-row" style="border-left-color: ${color}">
+                        <div class="color-box" id="cb_${i}" style="background:${color};"></div>
+                        <input type="text" id="name_${i}" value="${name}" placeholder="Name">
+                    </div>`;
+                }
+                container.innerHTML = html;
+                document.getElementById('loading').style.display = 'none';
+                container.style.display = 'block';
+                document.getElementById('pickerBar').style.display = 'block';
+                
+                setInterval(pollPuckEffects, 1500);
+            });
+        }
+
+        function pollPuckEffects() {
+            fetch('/api/effects').then(r => r.json()).then(data => {
+                data.forEach(eff => {
+                    let cb = document.getElementById(`cb_${eff.id}`);
+                    if(cb) {
+                        const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
+                        cb.style.background = rgb; 
+                        cb.style.boxShadow = `0 0 10px ${rgb}`;
+                    }
+                });
+            });
+        }
+        
+        function loadFromPicker() {
+            openPlayerPicker(num, function(selected) {
+                selected.forEach((p, i) => {
+                    let inp = document.getElementById('name_' + i);
+                    if (inp) { inp.value = p.name; sessionStorage.setItem('p_name_' + i, p.name); }
+                });
+            });
+        }
+
+        function startGame() {
+            for(let i=0; i<num; i++) {
+                sessionStorage.setItem(`p_name_${i}`, document.getElementById(`name_${i}`).value);
+            }
+            location.href='game_stopwatch_run.html';
+        }
+    </script>
+</body>
+</html>

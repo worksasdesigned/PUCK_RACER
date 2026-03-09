@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Training Manager</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ===== TOOLBAR ===== */
+        .toolbar { display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap; }
+        .toolbar button { flex:1; font-size:1rem; min-width:0; }
+
+        /* ===== TRAINING CARDS ===== */
+        .trn-card {
+            background:var(--card-bg); border:1px solid var(--border-color);
+            border-radius:10px; margin-bottom:12px; overflow:hidden;
+            transition:border-color 0.2s;
+        }
+        .trn-card.open { border-color:var(--primary); }
+        .trn-card.active-training { border-color:var(--success); box-shadow:0 0 12px rgba(0,255,0,0.15); }
+
+        .trn-header {
+            display:flex; align-items:center; padding:14px 16px; cursor:pointer;
+            gap:12px; user-select:none;
+        }
+        .trn-header:active { background:var(--card-hover); }
+        .trn-arrow { font-size:1.2rem; transition:transform 0.2s; color:var(--text-muted); flex-shrink:0; }
+        .trn-card.open .trn-arrow { transform:rotate(90deg); }
+        .trn-name { flex:1; font-size:1.15rem; font-weight:bold; color:var(--text-main); }
+        .trn-count {
+            background:var(--bg-color); padding:3px 10px; border-radius:12px;
+            font-size:0.85rem; color:var(--text-muted); flex-shrink:0;
+        }
+        .trn-del {
+            background:none; border:none; color:var(--danger); font-size:1.3rem;
+            cursor:pointer; padding:0 4px; margin:0; width:auto; opacity:0.6;
+            transition:opacity 0.2s;
+        }
+        .trn-del:hover { opacity:1; }
+
+        /* ===== TRAINING BODY ===== */
+        .trn-body { display:none; padding:0 16px 16px; }
+        .trn-card.open .trn-body { display:block; }
+
+        .trn-name-input, .trn-desc-input {
+            width:100%; padding:10px; font-size:1rem;
+            background:var(--bg-color); color:var(--text-main);
+            border:1px solid var(--border-color); border-radius:6px;
+            box-sizing:border-box;
+        }
+        .trn-desc-input {
+            margin-top:8px; font-size:0.9rem; resize:vertical; min-height:50px; max-height:120px;
+            font-family:inherit;
+        }
+        .field-label {
+            font-size:0.75rem; color:var(--text-muted); text-transform:uppercase;
+            margin-top:12px; margin-bottom:4px; letter-spacing:0.5px;
+        }
+
+        /* ===== GAME LIST INSIDE TRAINING ===== */
+        .game-item {
+            display:flex; align-items:stretch; gap:0;
+            background:var(--card-hover); margin-bottom:8px; border-radius:8px;
+            border-left:6px solid var(--primary); overflow:hidden;
+            transition:background 0.2s, border-color 0.3s;
+        }
+        .game-item.done { border-left-color:var(--success); opacity:0.6; }
+        .game-item.current { border-left-color:var(--warning); background:rgba(255,193,7,0.08); }
+
+        .game-drag {
+            display:flex; align-items:center; padding:0 8px; cursor:grab;
+            color:var(--text-muted); font-size:1.2rem; user-select:none;
+            touch-action:none;
+        }
+        .game-drag:active { cursor:grabbing; }
+
+        .game-info { flex:1; padding:10px 10px; min-width:0; cursor:pointer; }
+        .game-title-row { display:flex; align-items:center; gap:8px; }
+        .game-icon { font-size:1.2rem; flex-shrink:0; }
+        .game-label { font-size:1rem; font-weight:bold; color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .game-step { font-size:0.75rem; color:var(--text-muted); flex-shrink:0; }
+
+        .game-note {
+            font-size:0.85rem; color:var(--text-muted); margin-top:4px;
+            font-style:italic; line-height:1.3;
+            white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+        }
+        .game-note:empty { display:none; }
+
+        .game-actions {
+            display:flex; flex-direction:column; justify-content:center; gap:2px;
+            padding:4px 6px; flex-shrink:0;
+        }
+        .game-actions button {
+            background:none; border:none; color:var(--text-muted); cursor:pointer;
+            font-size:1rem; padding:2px 6px; margin:0; width:auto; line-height:1;
+            border-radius:4px; transition:background 0.15s, color 0.15s;
+        }
+        .game-actions button:hover { background:var(--card-bg); color:var(--text-main); }
+        .game-actions .act-del:hover { color:var(--danger); }
+
+        /* ===== TRAINING ACTION BUTTONS ===== */
+        .trn-actions {
+            display:flex; gap:8px; margin-top:16px; padding-top:12px;
+            border-top:1px solid var(--border-color);
+        }
+        .trn-actions button { flex:1; font-size:0.95rem; }
+
+        /* ===== NOTE EDIT MODAL ===== */
+        .note-overlay {
+            position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.85); backdrop-filter:blur(4px);
+            z-index:5000; display:none; align-items:center; justify-content:center;
+            padding:15px; box-sizing:border-box;
+        }
+        .note-overlay.show { display:flex; }
+        .note-box {
+            background:var(--card-bg); border:1px solid var(--border-color);
+            border-radius:12px; width:100%; max-width:450px;
+        }
+        .note-header {
+            padding:16px; border-bottom:1px solid var(--border-color);
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .note-header h3 { margin:0; color:var(--primary); font-size:1.1rem; }
+        .note-body { padding:16px; }
+        .note-body textarea {
+            width:100%; height:100px; padding:10px; font-size:1rem;
+            font-family:inherit; background:var(--bg-color); color:var(--text-main);
+            border:1px solid var(--border-color); border-radius:6px; resize:vertical;
+            box-sizing:border-box;
+        }
+        .note-footer { padding:12px 16px; display:flex; gap:10px; border-top:1px solid var(--border-color); }
+        .note-footer button { flex:1; }
+
+        /* ===== GAME PICKER MODAL ===== */
+        .picker-overlay {
+            position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.85); backdrop-filter:blur(4px);
+            z-index:5000; display:none; align-items:flex-start; justify-content:center;
+            padding:15px; box-sizing:border-box; overflow-y:auto;
+        }
+        .picker-overlay.show { display:flex; }
+        .picker-box {
+            background:var(--card-bg); border:1px solid var(--border-color);
+            border-radius:12px; width:100%; max-width:450px; margin:30px 0;
+        }
+        .picker-header {
+            padding:16px; border-bottom:1px solid var(--border-color);
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .picker-header h3 { margin:0; color:var(--primary); font-size:1.1rem; }
+        .picker-body { padding:8px; max-height:60vh; overflow-y:auto; }
+        .picker-item {
+            display:flex; align-items:center; gap:12px; padding:12px;
+            cursor:pointer; border-radius:8px; transition:background 0.15s;
+        }
+        .picker-item:hover { background:var(--card-hover); }
+        .picker-item .pi-icon { font-size:1.5rem; flex-shrink:0; width:42px; height:42px; line-height:42px; text-align:center; overflow:hidden; white-space:nowrap; }
+        .picker-item .pi-name { font-size:1rem; font-weight:bold; color:var(--text-main); }
+
+        /* ===== IMPORT/EXPORT MODAL ===== */
+        .import-overlay {
+            position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.85); backdrop-filter:blur(4px);
+            z-index:5000; display:none; align-items:center; justify-content:center;
+            padding:15px; box-sizing:border-box;
+        }
+        .import-overlay.show { display:flex; }
+        .import-box {
+            background:var(--card-bg); border:1px solid var(--border-color);
+            border-radius:12px; width:100%; max-width:500px; max-height:90vh; overflow-y:auto;
+        }
+        .import-header {
+            padding:16px; border-bottom:1px solid var(--border-color);
+            display:flex; justify-content:space-between; align-items:center;
+        }
+        .import-header h3 { margin:0; color:var(--primary); }
+        .import-body { padding:16px; }
+        .import-body textarea {
+            width:100%; height:180px; padding:10px; font-size:0.85rem;
+            font-family:monospace; background:var(--bg-color); color:var(--text-main);
+            border:1px solid var(--border-color); border-radius:6px; resize:vertical;
+            box-sizing:border-box;
+        }
+        .import-drop {
+            border:2px dashed var(--border-color); border-radius:8px;
+            padding:25px; text-align:center; cursor:pointer; margin-bottom:12px;
+            transition:border-color 0.2s, background 0.2s;
+        }
+        .import-drop:hover, .import-drop.dragover { border-color:var(--primary); background:rgba(13,110,253,0.05); }
+        .import-drop input { display:none; }
+        .import-footer { padding:12px 16px; display:flex; gap:10px; border-top:1px solid var(--border-color); }
+        .import-footer button { flex:1; }
+
+        /* ===== EMPTY STATE ===== */
+        .empty-state { text-align:center; padding:50px 20px; color:var(--text-muted); }
+        .empty-state .icon { font-size:3rem; margin-bottom:10px; display:block; }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+            background:var(--success); color:#000; padding:10px 20px;
+            border-radius:8px; font-weight:bold; font-size:0.9rem;
+            z-index:9999; opacity:0; transition:opacity 0.3s; pointer-events:none;
+        }
+        .toast.show { opacity:1; }
+
+        /* ===== DRAG STATE ===== */
+        .game-item.dragging { opacity:0.4; }
+        .game-item.drag-over { border-top:3px solid var(--primary); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="tm_title">Training Manager</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Active Training Banner -->
+        <div id="activeBanner" style="display:none; background:rgba(0,255,0,0.1); border:1px solid var(--success); border-radius:8px; padding:12px 16px; margin-bottom:16px; text-align:center;">
+            <div style="font-weight:bold; color:var(--success); font-size:1.1rem;" id="activeBannerName"></div>
+            <div style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;" id="activeBannerStep"></div>
+            <button onclick="endActiveTraining()" class="btn-danger" style="margin-top:10px; font-size:0.9rem; padding:8px 20px;" data-i18n="tm_btn_end">⏹ End Training</button>
+        </div>
+
+        <div class="toolbar">
+            <button onclick="addTraining()" class="btn-primary">➕ <span data-i18n="tm_add">New Training</span></button>
+            <button onclick="openImport()" class="btn-warn" data-i18n="tm_import">📋 Import</button>
+            <button onclick="exportBackup()" class="btn-warn" style="background:var(--card-bg); color:var(--text-main); border:1px solid var(--border-color);" data-i18n="tm_backup">💾 Backup</button>
+        </div>
+
+        <div id="trainingList"></div>
+
+        <button onclick="goHome()" class="btn-back" style="margin-top:30px;" data-i18n="btn_home">🏠 Home</button>
+    </main>
+
+    <!-- NOTE EDIT MODAL -->
+    <div class="note-overlay" id="noteOverlay">
+        <div class="note-box">
+            <div class="note-header">
+                <h3 id="noteModalTitle" data-i18n="tm_note_title">📝 Edit Note</h3>
+                <button class="close-modal" onclick="closeNoteModal()" style="width:auto;background:none;border:none;color:var(--text-main);font-size:1.5rem;padding:0;margin:0;">✕</button>
+            </div>
+            <div class="note-body">
+                <textarea id="noteText" data-i18n="tm_note_ph" placeholder="e.g. 2 groups, 8 pucks, adapter on wall bars..." maxlength="200"></textarea>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-top:4px; text-align:right;"><span id="noteCharCount">0</span>/200</div>
+            </div>
+            <div class="note-footer">
+                <button onclick="closeNoteModal()" class="btn-back" data-i18n="tm_cancel">Cancel</button>
+                <button onclick="saveNote()" class="btn-primary" data-i18n="tm_note_save">💾 Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GAME PICKER MODAL -->
+    <div class="picker-overlay" id="pickerOverlay" onclick="if(event.target===this)closePicker()">
+        <div class="picker-box">
+            <div class="picker-header">
+                <h3 data-i18n="tm_picker_title">🎮 Add Game</h3>
+                <button class="close-modal" onclick="closePicker()" style="width:auto;background:none;border:none;color:var(--text-main);font-size:1.5rem;padding:0;margin:0;">✕</button>
+            </div>
+            <div class="picker-body" id="pickerBody"></div>
+        </div>
+    </div>
+
+    <!-- IMPORT MODAL -->
+    <div class="import-overlay" id="importOverlay">
+        <div class="import-box">
+            <div class="import-header">
+                <h3 data-i18n="tm_import_title">📋 Import Training</h3>
+                <button class="close-modal" onclick="closeImport()" style="width:auto;background:none;border:none;color:var(--text-main);font-size:1.5rem;padding:0;margin:0;">✕</button>
+            </div>
+            <div class="import-body">
+                <div class="import-drop" id="importDrop" onclick="document.getElementById('importFile').click()">
+                    <span style="font-size:2rem;">📂</span><br>
+                    <span data-i18n="tm_import_drop">Drop JSON backup here or tap</span>
+                    <input type="file" id="importFile" accept=".json" onchange="handleImportFile(this.files[0])">
+                </div>
+                <p style="font-size:0.85rem; color:var(--text-muted); margin:8px 0;" data-i18n="tm_import_hint">Or paste JSON content:</p>
+                <textarea id="importText" placeholder='{"trainings":[...]}'></textarea>
+            </div>
+            <div class="import-footer">
+                <button onclick="closeImport()" class="btn-back" data-i18n="tm_cancel">Cancel</button>
+                <button onclick="executeImport()" class="btn-primary" data-i18n="tm_import_btn">📋 Import</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        // ========================================================================
+        //  GAME REGISTRY — selbe Spiele wie index.html (ohne settings/players)
+        // ========================================================================
+        const GAMES = {
+            counter:    { numId:2,  icon:'🔢',    url:'/game_counter_setup.html',    key:'g_counter' },
+            timer:      { numId:16, icon:'⏱️',     url:'/game_timer_setup.html',      key:'g_timer' },
+            stopwatch:  { numId:10, icon:'⏱⏱️',    url:'/game_stopwatch_setup.html',  key:'g_stopwatch' },
+            countdown:  { numId:3,  icon:'⏱️🧮',   url:'/game_countdown_setup.html',  key:'g_countdown' },
+            shuttle:    { numId:1,  icon:'🏃‍♂️🔁',  url:'/game_shuttle_setup.html',    key:'g_shuttle' },
+            simon:      { numId:4,  icon:'🔴🟢🔵🟡', url:'/game_simon_setup.html',     key:'g_simon' },
+            simonruns:  { numId:6,  icon:'🔴🟢🔵🏃‍♂️', url:'/game_simonruns_setup.html', key:'g_simonruns' },
+            zombie:     { numId:11, icon:'🧟🏃‍♂️',  url:'/game_zombie_setup.html',     key:'g_zombie' },
+            whac:       { numId:24, icon:'🔨🧠',   url:'/game_whac_setup.html',       key:'g_whac' },
+            sorting:    { numId:7,  icon:'🎩✨',   url:'/game_sorting_setup.html',    key:'g_sorting' },
+            bomb:       { numId:8,  icon:'💣⏰',   url:'/game_bomb_setup.html',       key:'g_bomb' },
+            redgreen:   { numId:9,  icon:'🚦🛑',   url:'/game_redgreen_setup.html',   key:'g_redgreen' },
+            beep:       { numId:12, icon:'🏃‍♂️🔁⏱️', url:'/game_beep_setup.html',      key:'g_beep' },
+            react2p:    { numId:13, icon:'⚡🤜🤛',  url:'/game_react2p_setup.html',    key:'g_react2p' },
+            target:     { numId:15, icon:'🎯',     url:'/game_target_setup.html',     key:'g_target' },
+            ball:       { numId:23, icon:'🏀🏃‍♂️',  url:'/game_ball_setup.html',       key:'g_ball' },
+            ttest:      { numId:14, icon:'🏃‍♂️💨',  url:'/game_ttest_setup.html',      key:'g_ttest' },
+            hunt:       { numId:17, icon:'🏃‍♂️🎯🏃‍♀️', url:'/game_hunt_setup.html',      key:'g_hunt' },
+            pacemaker:  { numId:18, icon:'🏃‍♂️⏱️🟢', url:'/game_pacemaker_setup.html', key:'g_pacemaker' },
+            memory:     { numId:19, icon:'🧠🏃',   url:'/game_memory_setup.html',     key:'g_memory' },
+            domination: { numId:20, icon:'🔴⚔🔵',  url:'/game_domination_setup.html', key:'g_domination' },
+            batak:      { numId:21, icon:'⚡🎯👀',  url:'/game_batak_setup.html',      key:'g_batak' },
+            tabata:     { numId:22, icon:'⏱️🥵',   url:'/game_tabata_setup.html',     key:'g_tabata' },
+            display:    { numId:5,  icon:'▶️✨',   url:'/game_display_setup.html',    key:'g_display' },
+            cat:        { numId:25, icon:'🐱⚡',   url:'/game_cat_setup.html',         key:'g_cat' },
+            musical:    { numId:26, icon:'🪑🎵',   url:'/game_musical_setup.html',     key:'g_musical' },
+            tttt:       { numId:27, icon:'❌⭕',   url:'/game_tttt_setup.html',        key:'g_tttt' }
+        };
+
+        // ========================================================================
+        //  DATENMODELL
+        // ========================================================================
+        let data = { trainings: [] };
+        let nextId = 1;
+        let saveTimer = null;
+
+        // Modal State
+        let editNoteTrnId = null;
+        let editNoteGameIdx = null;
+        let pickerTrnId = null;
+
+        // ========================================================================
+        //  INIT
+        // ========================================================================
+        loadData();
+
+        function loadData() {
+            fetch('/api/trainings')
+                .then(r => r.json())
+                .then(d => {
+                    data = d || { trainings: [] };
+                    if (!data.trainings) data.trainings = [];
+                    data.trainings.forEach(t => {
+                        if (t.id >= nextId) nextId = t.id + 1;
+                    });
+                    renderAll();
+                    checkPendingConfig();
+                    checkAutoAdvance();
+                    checkActiveBanner();
+                })
+                .catch(e => { console.error('Load error:', e); renderAll(); });
+        }
+
+        // ========================================================================
+        //  ACTIVE TRAINING SESSION
+        // ========================================================================
+        function checkActiveBanner() {
+            let activeId = sessionStorage.getItem('training_active_id');
+            let activeTs = parseInt(sessionStorage.getItem('training_active_ts') || '0');
+            let now = Date.now();
+
+            // Auto-Ablauf nach 4 Stunden
+            if (activeId && (now - activeTs > 4 * 60 * 60 * 1000)) {
+                endActiveTraining();
+                return;
+            }
+
+            if (activeId) {
+                let trn = data.trainings.find(t => t.id == activeId);
+                if (trn) {
+                    let step = parseInt(sessionStorage.getItem('training_step') || '0');
+                    document.getElementById('activeBannerName').textContent = '▶ ' + trn.name;
+                    document.getElementById('activeBannerStep').textContent =
+                        getTranslation('tm_active_step').replace('{0}', step + 1).replace('{1}', trn.games.length);
+                    document.getElementById('activeBanner').style.display = 'block';
+
+                    // Aktives Training automatisch aufklappen
+                    setTimeout(() => {
+                        let card = document.querySelector('.trn-card[data-tid="' + activeId + '"]');
+                        if (card && !card.classList.contains('open')) card.classList.add('open');
+                    }, 100);
+                } else {
+                    endActiveTraining();
+                }
+            }
+        }
+
+        function endActiveTraining() {
+            sessionStorage.removeItem('training_active_id');
+            sessionStorage.removeItem('training_active_ts');
+            sessionStorage.removeItem('training_step');
+            sessionStorage.removeItem('training_game_finished');
+            document.getElementById('activeBanner').style.display = 'none';
+            renderAll();
+        }
+
+        // ========================================================================
+        //  PENDING CONFIG RETURN — zurück von einer Setup-Seite
+        // ========================================================================
+        function checkPendingConfig() {
+            let pendingRaw = sessionStorage.getItem('training_config_return');
+            if (!pendingRaw) return;
+
+            try {
+                let pending = JSON.parse(pendingRaw);
+                sessionStorage.removeItem('training_config_return');
+
+                let trn = data.trainings.find(t => t.id == pending.tid);
+                if (trn && trn.games[pending.idx]) {
+                    trn.games[pending.idx].settings = pending.settings;
+                    scheduleSave();
+                    showToast(getTranslation('tm_toast_cfg'));
+
+                    setTimeout(() => {
+                        let card = document.querySelector('.trn-card[data-tid="' + pending.tid + '"]');
+                        if (card) card.classList.add('open');
+                    }, 200);
+                }
+            } catch(e) { console.error('Config return parse error:', e); }
+        }
+
+        // ========================================================================
+        //  AUTO-ADVANCE: Spiel wurde beendet → Step weiterschalten
+        // ========================================================================
+        function checkAutoAdvance() {
+            let activeId = sessionStorage.getItem('training_active_id');
+            let justFinished = sessionStorage.getItem('training_game_finished');
+            if (!activeId || !justFinished) return;
+
+            sessionStorage.removeItem('training_game_finished');
+            let step = parseInt(sessionStorage.getItem('training_step') || '0');
+            let trn = data.trainings.find(t => t.id == activeId);
+
+            if (trn && step < trn.games.length - 1) {
+                sessionStorage.setItem('training_step', String(step + 1));
+                showToast(getTranslation('tm_toast_step').replace('{0}', step + 1));
+            } else if (trn) {
+                showToast(getTranslation('tm_toast_complete'));
+            }
+            renderAll();
+        }
+
+        // ========================================================================
+        //  SANITIZATION
+        // ========================================================================
+        function sanitize(str, maxLen) {
+            if (typeof str !== 'string') return '';
+            return str.replace(/[{}\[\]"'\\<>&`]/g, '').replace(/\s+/g, ' ').trim().substring(0, maxLen || 30);
+        }
+
+        function escHTML(s) {
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // ========================================================================
+        //  RENDERING
+        // ========================================================================
+        function renderAll() {
+            let container = document.getElementById('trainingList');
+            let activeId = sessionStorage.getItem('training_active_id');
+            let activeStep = parseInt(sessionStorage.getItem('training_step') || '0');
+
+            if (data.trainings.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <span class="icon">${getTranslation('tm_empty_icon')}</span>
+                        <p>${getTranslation('tm_empty')}</p>
+                    </div>`;
+                return;
+            }
+
+            let html = '';
+            data.trainings.forEach(trn => {
+                let isOpen = document.querySelector('.trn-card[data-tid="' + trn.id + '"]')?.classList.contains('open');
+                let isActive = (activeId == trn.id);
+                let cardClass = 'trn-card' + (isOpen ? ' open' : '') + (isActive ? ' active-training' : '');
+
+                html += `
+                <div class="${cardClass}" data-tid="${trn.id}">
+                    <div class="trn-header" onclick="toggleTraining(${trn.id})">
+                        <span class="trn-arrow">▶</span>
+                        <span class="trn-name">${escHTML(trn.name)}</span>
+                        <span class="trn-count">${trn.games.length} 🎮</span>
+                        <button class="trn-del" onclick="event.stopPropagation(); deleteTraining(${trn.id})" title="Löschen">🗑</button>
+                    </div>
+                    <div class="trn-body">
+                        <div class="field-label">${getTranslation('tm_lbl_name')}</div>
+                        <input class="trn-name-input" value="${escHTML(trn.name)}" maxlength="40"
+                               onchange="renameTraining(${trn.id}, this.value)">
+
+                        <div class="field-label">${getTranslation('tm_lbl_desc')}</div>
+                        <textarea class="trn-desc-input" maxlength="120"
+                                  onchange="changeDesc(${trn.id}, this.value)"
+                                  placeholder="${getTranslation('tm_desc_ph')}">${escHTML(trn.desc || '')}</textarea>
+
+                        <div class="field-label" style="margin-top:16px;">${getTranslation('tm_lbl_games')} (${trn.games.length})</div>
+                        <div id="games-${trn.id}">`;
+
+                trn.games.forEach((g, gi) => {
+                    let gDef = GAMES[g.gameId];
+                    let icon = gDef ? gDef.icon : '❓';
+                    let label = gDef ? getGameName(g.gameId) : g.gameId;
+                    let hasSettings = g.settings && Object.keys(g.settings).length > 0;
+
+                    let itemClass = 'game-item';
+                    if (isActive && gi < activeStep) itemClass += ' done';
+                    if (isActive && gi === activeStep) itemClass += ' current';
+
+                    html += `
+                        <div class="${itemClass}" data-trn="${trn.id}" data-idx="${gi}"
+                             draggable="true"
+                             ondragstart="gameDragStart(event,${trn.id},${gi})"
+                             ondragover="gameDragOver(event)"
+                             ondragenter="gameDragEnter(event)"
+                             ondragleave="gameDragLeave(event)"
+                             ondrop="gameDrop(event,${trn.id},${gi})"
+                             ondragend="gameDragEnd(event)">
+                            <div class="game-drag">⠿</div>
+                            <div class="game-info" onclick="onGameClick(${trn.id}, ${gi})">
+                                <div class="game-title-row">
+                                    <span class="game-icon">${icon}</span>
+                                    <span class="game-label">${escHTML(label)}</span>
+                                    <span class="game-step">#${gi + 1}</span>
+                                    ${hasSettings ? '<span style="color:var(--success);font-size:0.8rem;" title="Settings gespeichert">⚙️</span>' : ''}
+                                </div>
+                                <div class="game-note">${escHTML(g.note || '')}</div>
+                            </div>
+                            <div class="game-actions">
+                                <button onclick="event.stopPropagation(); openNoteModal(${trn.id},${gi})" title="Notiz">📝</button>
+                                <button onclick="event.stopPropagation(); configureGame(${trn.id},${gi})" title="Setup">⚙️</button>
+                                <button class="act-del" onclick="event.stopPropagation(); removeGame(${trn.id},${gi})" title="Entfernen">✕</button>
+                            </div>
+                        </div>`;
+                });
+
+                html += `
+                        </div>
+
+                        <div style="margin-top:12px;">
+                            <button onclick="openPicker(${trn.id})" class="btn-primary" style="width:100%;">${getTranslation('tm_add_game')}</button>
+                        </div>
+
+                        <div class="trn-actions">
+                            <button onclick="startTraining(${trn.id})" class="btn-primary" ${trn.games.length === 0 ? 'disabled style="opacity:0.4"' : ''}>
+                                ${getTranslation('tm_btn_start')}
+                            </button>
+                            <button onclick="duplicateTraining(${trn.id})" class="btn-warn" style="background:var(--card-bg); color:var(--text-main); border:1px solid var(--border-color);">
+                                ${getTranslation('tm_btn_dup')}
+                            </button>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
+            if (typeof applyTranslations === 'function') applyTranslations();
+        }
+
+        function getGameName(gameId) {
+            let gDef = GAMES[gameId];
+            if (!gDef) return gameId;
+            if (typeof getTranslation === 'function') {
+                let t = getTranslation(gDef.key);
+                if (t && t !== gDef.key) return t;
+            }
+            return gameId;
+        }
+
+        // ========================================================================
+        //  TRAINING CRUD
+        // ========================================================================
+        function toggleTraining(tid) {
+            let card = document.querySelector('.trn-card[data-tid="' + tid + '"]');
+            if (card) card.classList.toggle('open');
+        }
+
+        function addTraining() {
+            let name = prompt(getTranslation('tm_prompt_name'));
+            if (!name) return;
+            name = sanitize(name, 40);
+            if (!name) return;
+
+            data.trainings.push({ id: nextId++, name: name, desc: '', games: [] });
+            renderAll();
+            scheduleSave();
+
+            setTimeout(() => {
+                let card = document.querySelector('.trn-card[data-tid="' + (nextId - 1) + '"]');
+                if (card) card.classList.add('open');
+            }, 50);
+        }
+
+        function deleteTraining(tid) {
+            let trn = data.trainings.find(t => t.id === tid);
+            if (!trn) return;
+            if (!confirm(getTranslation('tm_confirm_del').replace('{name}', trn.name).replace('{n}', trn.games.length))) return;
+            if (sessionStorage.getItem('training_active_id') == tid) endActiveTraining();
+            data.trainings = data.trainings.filter(t => t.id !== tid);
+            renderAll();
+            scheduleSave();
+        }
+
+        function renameTraining(tid, newName) {
+            newName = sanitize(newName, 40);
+            let trn = data.trainings.find(t => t.id === tid);
+            if (trn && newName) { trn.name = newName; scheduleSave(); }
+        }
+
+        function changeDesc(tid, newDesc) {
+            let trn = data.trainings.find(t => t.id === tid);
+            if (trn) { trn.desc = sanitize(newDesc, 120); scheduleSave(); }
+        }
+
+        function duplicateTraining(tid) {
+            let src = data.trainings.find(t => t.id === tid);
+            if (!src) return;
+            let copy = JSON.parse(JSON.stringify(src));
+            copy.id = nextId++;
+            copy.name = src.name + ' (Copy)';
+            data.trainings.push(copy);
+            renderAll();
+            scheduleSave();
+            showToast(getTranslation('tm_toast_dup'));
+        }
+
+        // ========================================================================
+        //  GAME MANAGEMENT
+        // ========================================================================
+        function openPicker(tid) {
+            pickerTrnId = tid;
+            let body = document.getElementById('pickerBody');
+            let html = '';
+            for (let gid in GAMES) {
+                let g = GAMES[gid];
+                let label = getGameName(gid);
+                html += `<div class="picker-item" onclick="pickGame('${gid}')">
+                    <span class="pi-icon">${g.icon}</span>
+                    <span class="pi-name">${escHTML(label)}</span>
+                </div>`;
+            }
+            body.innerHTML = html;
+            document.getElementById('pickerOverlay').classList.add('show');
+        }
+
+        function closePicker() {
+            document.getElementById('pickerOverlay').classList.remove('show');
+            pickerTrnId = null;
+        }
+
+        function pickGame(gameId) {
+            if (pickerTrnId === null) return;
+            let trn = data.trainings.find(t => t.id === pickerTrnId);
+            if (!trn) return;
+            let tid = pickerTrnId;
+            trn.games.push({ gameId: gameId, note: '', settings: {} });
+            closePicker();
+            renderAll();
+            scheduleSave();
+            setTimeout(() => {
+                let card = document.querySelector('.trn-card[data-tid="' + tid + '"]');
+                if (card) card.classList.add('open');
+            }, 50);
+        }
+
+        function removeGame(tid, idx) {
+            let trn = data.trainings.find(t => t.id === tid);
+            if (!trn) return;
+            trn.games.splice(idx, 1);
+            renderAll();
+            scheduleSave();
+            setTimeout(() => {
+                let card = document.querySelector('.trn-card[data-tid="' + tid + '"]');
+                if (card) card.classList.add('open');
+            }, 50);
+        }
+
+        // ========================================================================
+        //  NOTE EDITING
+        // ========================================================================
+        function openNoteModal(tid, idx) {
+            editNoteTrnId = tid;
+            editNoteGameIdx = idx;
+            let trn = data.trainings.find(t => t.id === tid);
+            if (!trn) return;
+            let g = trn.games[idx];
+            let gDef = GAMES[g.gameId];
+            let label = gDef ? getGameName(g.gameId) : g.gameId;
+
+            document.getElementById('noteModalTitle').textContent = '📝 ' + label;
+            document.getElementById('noteText').value = g.note || '';
+            updateNoteCharCount();
+            document.getElementById('noteOverlay').classList.add('show');
+            setTimeout(() => document.getElementById('noteText').focus(), 100);
+        }
+
+        function closeNoteModal() {
+            document.getElementById('noteOverlay').classList.remove('show');
+            editNoteTrnId = null;
+            editNoteGameIdx = null;
+        }
+
+        function saveNote() {
+            if (editNoteTrnId === null) return;
+            let tid = editNoteTrnId;
+            let trn = data.trainings.find(t => t.id === tid);
+            if (!trn) return;
+            trn.games[editNoteGameIdx].note = sanitize(document.getElementById('noteText').value, 200);
+            closeNoteModal();
+            renderAll();
+            scheduleSave();
+            setTimeout(() => {
+                let card = document.querySelector('.trn-card[data-tid="' + tid + '"]');
+                if (card) card.classList.add('open');
+            }, 50);
+        }
+
+        document.getElementById('noteText').addEventListener('input', updateNoteCharCount);
+        function updateNoteCharCount() {
+            document.getElementById('noteCharCount').textContent = document.getElementById('noteText').value.length;
+        }
+
+        // ========================================================================
+        //  CONFIGURE GAME — Setup-Seite im Konfigurationsmodus öffnen
+        // ========================================================================
+        function configureGame(tid, idx) {
+            let trn = data.trainings.find(t => t.id === tid);
+            if (!trn) return;
+            let g = trn.games[idx];
+            let gDef = GAMES[g.gameId];
+            if (!gDef) return;
+
+            sessionStorage.setItem('training_config_id', String(tid));
+            sessionStorage.setItem('training_config_idx', String(idx));
+
+            // Vorhandene Settings in sessionStorage laden
+            if (g.settings) {
+                for (let key in g.settings) {
+                    sessionStorage.setItem(key, g.settings[key]);
+                }
+            }
+
+            location.href = gDef.url;
+        }
+
+        // ========================================================================
+        //  GAME CLICK — Spiel aus aktivem Training starten
+        // ========================================================================
+        function onGameClick(tid, idx) {
+            let activeId = sessionStorage.getItem('training_active_id');
+            if (activeId == tid) {
+                launchGame(tid, idx);
+            }
+        }
+
+        // ========================================================================
+        //  START / LAUNCH TRAINING
+        // ========================================================================
+        function startTraining(tid) {
+            let trn = data.trainings.find(t => t.id === tid);
+            if (!trn || trn.games.length === 0) return;
+
+            sessionStorage.setItem('training_active_id', String(tid));
+            sessionStorage.setItem('training_active_ts', String(Date.now()));
+            sessionStorage.setItem('training_step', '0');
+
+            renderAll();
+            checkActiveBanner();
+            showToast(getTranslation('tm_toast_started'));
+        }
+
+        function launchGame(tid, idx) {
+            let trn = data.trainings.find(t => t.id === tid);
+            if (!trn || idx >= trn.games.length) return;
+            let g = trn.games[idx];
+            let gDef = GAMES[g.gameId];
+            if (!gDef) return;
+
+            sessionStorage.setItem('training_step', String(idx));
+            sessionStorage.setItem('training_active_ts', String(Date.now()));
+
+            if (g.settings && Object.keys(g.settings).length > 0) {
+                for (let key in g.settings) {
+                    sessionStorage.setItem(key, g.settings[key]);
+                }
+                // Signal training_config.js to restore saved values (no UI changes)
+                sessionStorage.setItem('training_play_mode', '1');
+            }
+
+            location.href = gDef.url;
+        }
+
+        // ========================================================================
+        //  DRAG & DROP (Game Reorder)
+        // ========================================================================
+        let dragSrcTrn = null, dragSrcIdx = null;
+
+        function gameDragStart(e, tid, idx) {
+            dragSrcTrn = tid; dragSrcIdx = idx;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', String(idx));
+            setTimeout(() => {
+                let item = e.target.closest('.game-item');
+                if (item) item.classList.add('dragging');
+            }, 0);
+        }
+        function gameDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+        function gameDragEnter(e) { e.preventDefault(); let item = e.target.closest('.game-item'); if(item) item.classList.add('drag-over'); }
+        function gameDragLeave(e) { let item = e.target.closest('.game-item'); if(item) item.classList.remove('drag-over'); }
+        function gameDrop(e, tid, idx) {
+            e.preventDefault();
+            let item = e.target.closest('.game-item');
+            if(item) item.classList.remove('drag-over');
+            if (dragSrcTrn !== tid || dragSrcIdx === idx) return;
+            let trn = data.trainings.find(t => t.id === tid);
+            if (!trn) return;
+            let moved = trn.games.splice(dragSrcIdx, 1)[0];
+            trn.games.splice(idx, 0, moved);
+            renderAll();
+            scheduleSave();
+            setTimeout(() => {
+                let card = document.querySelector('.trn-card[data-tid="' + tid + '"]');
+                if (card) card.classList.add('open');
+            }, 50);
+        }
+        function gameDragEnd(e) {
+            document.querySelectorAll('.game-item').forEach(el => el.classList.remove('dragging', 'drag-over'));
+            dragSrcTrn = null; dragSrcIdx = null;
+        }
+
+        // ========================================================================
+        //  SAVE
+        // ========================================================================
+        function scheduleSave() {
+            clearTimeout(saveTimer);
+            saveTimer = setTimeout(saveData, 800);
+        }
+
+        function saveData() {
+            fetch('/api/trainings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(r => { if (r.ok) showToast(getTranslation('tm_toast_saved')); else showToast(getTranslation('tm_toast_err'), true); })
+            .catch(e => showToast(getTranslation('tm_toast_conn'), true));
+        }
+
+        // ========================================================================
+        //  BACKUP / EXPORT
+        // ========================================================================
+        function exportBackup() {
+            if (data.trainings.length === 0) { showToast(getTranslation('tm_toast_no_data'), true); return; }
+            let json = JSON.stringify(data, null, 2);
+            let blob = new Blob([json], { type: 'application/json' });
+            let url = URL.createObjectURL(blob);
+            let a = document.createElement('a');
+            a.href = url;
+            let d = new Date();
+            let stamp = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+            a.download = 'PuckRacer_Trainings_' + stamp + '.json';
+            document.body.appendChild(a); a.click();
+            document.body.removeChild(a); URL.revokeObjectURL(url);
+            showToast(getTranslation('tm_toast_export').replace('{0}', data.trainings.length));
+        }
+
+        // ========================================================================
+        //  IMPORT
+        // ========================================================================
+        function openImport() {
+            document.getElementById('importText').value = '';
+            document.getElementById('importOverlay').classList.add('show');
+        }
+        function closeImport() { document.getElementById('importOverlay').classList.remove('show'); }
+
+        (function() {
+            let drop = document.getElementById('importDrop');
+            if (!drop) return;
+            drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('dragover'); });
+            drop.addEventListener('dragleave', () => drop.classList.remove('dragover'));
+            drop.addEventListener('drop', e => {
+                e.preventDefault(); drop.classList.remove('dragover');
+                if (e.dataTransfer.files.length) handleImportFile(e.dataTransfer.files[0]);
+            });
+        })();
+
+        function handleImportFile(file) {
+            if (!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) { document.getElementById('importText').value = e.target.result; };
+            reader.readAsText(file);
+        }
+
+        function executeImport() {
+            let text = document.getElementById('importText').value.trim();
+            if (!text) { showToast(getTranslation('tm_toast_no_content'), true); return; }
+            try {
+                let imported = JSON.parse(text);
+                if (!imported.trainings || !Array.isArray(imported.trainings)) {
+                    showToast(getTranslation('tm_toast_bad_format'), true); return;
+                }
+                let added = 0;
+                imported.trainings.forEach(t => {
+                    if (!t.name || !Array.isArray(t.games)) return;
+                    t.id = nextId++;
+                    t.name = sanitize(t.name, 40);
+                    t.desc = sanitize(t.desc || '', 120);
+                    t.games.forEach(g => {
+                        g.gameId = sanitize(g.gameId, 20);
+                        g.note = sanitize(g.note || '', 200);
+                        if (!g.settings || typeof g.settings !== 'object') g.settings = {};
+                    });
+                    data.trainings.push(t);
+                    added++;
+                });
+                closeImport(); renderAll(); scheduleSave();
+                showToast(getTranslation('tm_toast_imported').replace('{0}', added));
+            } catch(e) { showToast(getTranslation('tm_toast_json_err') + e.message, true); }
+        }
+
+        // ========================================================================
+        //  UTILS
+        // ========================================================================
+        function showToast(msg, isError) {
+            let t = document.getElementById('toast');
+            t.textContent = msg;
+            t.style.background = isError ? 'var(--danger)' : 'var(--success)';
+            t.style.color = isError ? '#fff' : '#000';
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        }
+
+        function goHome() {
+            sessionStorage.removeItem('training_config_id');
+            sessionStorage.removeItem('training_config_idx');
+            location.href = '/';
+        }
+    </script>
+</body>
+</html>

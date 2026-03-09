@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bomb Squad Live</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .top-row { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;}
+        .round-box { font-size: 1.2rem; color: var(--text-muted); font-weight:bold;}
+        .target-box { font-size: 1.2rem; color: var(--warning); font-weight: bold; }
+
+        .big-time { 
+            font-size: 6rem; font-weight: bold; color: var(--text-main); 
+            text-align: center; font-family: monospace; 
+            margin: 10px 0; line-height: 1;
+        }
+
+        .status-box {
+            text-align: center; font-size: 2rem; font-weight: bold; 
+            text-transform: uppercase; margin-bottom: 20px; color: var(--text-muted);
+        }
+
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
+
+        .trainer-hint {
+            background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); 
+            padding: 10px; border-radius: 6px; font-size: 0.9rem; 
+            color: var(--text-muted); text-align: center; margin-bottom: 20px;
+        }
+
+        .p-row { 
+            display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center;
+            background: var(--card-bg); padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 8px solid var(--border-color); 
+        }
+        .p-name { font-size: 1.3rem; font-weight: bold; color:var(--text-main);}
+        .p-res { font-size: 1.8rem; }
+        .p-delta { font-family: monospace; color: var(--text-muted); font-size: 1.1rem; text-align: right; }
+        
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="g_bomb">Bomb Squad 💣</div>
+     <div class="status-bar">
+    <div class="status-dot dot-green" id="cnt-green">0</div>
+    <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+    <div class="status-dot dot-red" id="cnt-red">0</div>
+</div>
+    </header>
+
+    <main>
+        <div class="top-row">
+            <div class="round-box" id="rndInfo">Round 1/5</div>
+            <div class="target-box" id="targetInfo">Target: --</div>
+        </div>
+
+        <div class="big-time" id="stopwatch">0.0</div>
+        <div class="status-box" id="stateInfo">WAITING</div>
+
+        <div class="controls">
+            <button onclick="goBack()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
+            <button id="btnAction" onclick="doAction('start')" class="btn-primary btn-ctrl" data-i18n="btn_start">START</button>
+            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
+        </div>
+
+        <div class="trainer-hint" data-i18n="bomb_run_hint"></div>
+
+        <div id="playerList"></div>
+
+        <div class="bottom-nav">
+            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+<script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const COLORS = ['#0000FF', '#00FF00', '#FF0000', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#40E0D0', '#FFC0CB', '#FFFFFF', '#00FF00'];
+        
+        setInterval(update, 400); 
+
+        function update() {
+            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                 
+                render(data);
+            }).catch(e => {});
+        }
+
+        function render(data) {
+            if(data.state === 3) { // RUNNING
+                let t = (data.time / 1000).toFixed(1);
+                document.getElementById('stopwatch').innerText = t;
+                document.getElementById('stopwatch').style.color = "var(--text-main)";
+            } 
+            else if(data.state === 4) { // FINISHED
+                 let t = (data.time / 1000).toFixed(1);
+                 document.getElementById('stopwatch').innerText = t;
+                 document.getElementById('stopwatch').style.color = "var(--warning)"; 
+            }
+            else {
+                document.getElementById('stopwatch').innerText = "0.0";
+                document.getElementById('stopwatch').style.color = "var(--border-color)";
+            }
+
+            let st = getTranslation(`bomb_st_${data.state}`);
+            let txtRound = getTranslation('bomb_run_rnd');
+            let txtTarget = getTranslation('bomb_run_target');
+            
+            document.getElementById('rndInfo').innerText = `${txtRound} ${data.round} / ${data.max}`;
+            document.getElementById('stateInfo').innerText = st;
+            document.getElementById('targetInfo').innerText = `${txtTarget} ${data.target}s`;
+
+            let btn = document.getElementById('btnAction');
+            if (data.round === 0 || data.state === 0) {
+                btn.innerText = getTranslation('btn_start');
+                btn.style.background = "var(--primary)";
+            } 
+            else if (data.state === 4) {
+                if (data.round >= data.max) {
+                     btn.innerText = getTranslation('btn_reset'); 
+                     btn.style.background = "var(--success)";
+                } else {
+                     btn.innerText = getTranslation('bomb_btn_next'); 
+                     btn.style.background = "var(--primary)";
+                }
+            } 
+            else {
+                btn.innerText = getTranslation('btn_running');
+                btn.style.background = "var(--card-hover)";
+            }
+
+            renderPlayers(data);
+        }
+
+        function renderPlayers(data) {
+            let container = document.getElementById('playerList');
+            if(!data.players) return;
+
+            let players = data.players.map((p, i) => ({...p, id: i}));
+            players.sort((a,b) => b.score - a.score);
+
+            let txtTimeout = getTranslation('bomb_lbl_timeout');
+
+            players.forEach((p, index) => {
+                let name = sessionStorage.getItem(`p_name_${p.id}`) || `Player ${p.id+1}`;
+                let col = COLORS[p.id % COLORS.length];
+                
+                let icon = "⏳";
+                if(p.res == 1) icon = "✅"; 
+                if(p.res == 2) icon = "💥"; 
+                
+                let deltaTxt = "--";
+                let deltaColor = "var(--text-muted)";
+                
+                if(p.last != 0) {
+                    if (p.last === 99999) { deltaTxt = txtTimeout; deltaColor="var(--danger)"; }
+                    else {
+                        let val = p.last/1000;
+                        let sign = val > 0 ? "+" : "";
+                        deltaTxt = `${sign}${val.toFixed(2)}s`;
+                        deltaColor = (p.res == 1) ? "var(--success)" : "var(--danger)";
+                    }
+                }
+                
+                let avgTxt = (p.avg == 0) ? "" : `Ø ${(p.avg/1000).toFixed(2)}s`;
+
+                let rowId = `b-row-${p.id}`;
+                let rowEl = document.getElementById(rowId);
+
+                if (!rowEl) {
+                    container.insertAdjacentHTML('beforeend', `
+                    <div id="${rowId}" class="p-row" style="border-left-color: ${col}; order: ${index};">
+                        <div class="p-name">${name}</div>
+                        <div class="p-res" id="icon-${p.id}">${icon}</div>
+                        <div class="p-delta">
+                            <div id="sc-${p.id}" style="font-size:1.8rem; font-weight:bold; color:var(--primary); text-align:right;">${p.score}</div>
+                            <div id="del-${p.id}" style="font-weight:bold; color:${deltaColor}; font-size:0.9rem;">${deltaTxt}</div>
+                            <div id="avg-${p.id}" style="font-size:0.8rem; color:var(--text-muted);">${avgTxt}</div>
+                        </div>
+                    </div>`);
+                } else {
+                    rowEl.style.order = index;
+                    document.getElementById(`sc-${p.id}`).innerText = p.score;
+                    document.getElementById(`icon-${p.id}`).innerText = icon;
+                    
+                    let delEl = document.getElementById(`del-${p.id}`);
+                    delEl.innerText = deltaTxt;
+                    delEl.style.color = deltaColor;
+                    
+                    document.getElementById(`avg-${p.id}`).innerText = avgTxt;
+                }
+            });
+        }
+
+        function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
+        
+        function goBack() {
+            fetch('/api/game/action?cmd=reset').then(() => location.href = 'game_bomb_names.html');
+        }
+        
+        function goHome() { 
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); 
+        }
+    </script>
+</body>
+</html>

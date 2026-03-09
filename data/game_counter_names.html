@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Counter Names</title>
+    <link rel="stylesheet" href="style.css?v=4">
+    <style>
+        .player-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background:var(--card-bg); padding:10px; border-radius:8px; border-left: 5px solid #fff;}
+        .color-box { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; flex-shrink: 0; transition: all 0.3s;}
+        input[type=text] { flex-grow: 1; padding: 12px; font-size: 1.1rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-main); }
+        .hidden { display: none; }
+        #toggleIcon { transition: transform 0.3s; display: inline-block; }
+        .rotate { transform: rotate(-90deg); }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="cnt_names_title">Players - Counter</div></header>
+    <main>
+        <div class="layout-card" id="layoutCard" style="display:none;">
+            <div class="layout-header" onclick="toggleLayout()">
+                <span data-i18n="cnt_layout_title">Aufbau Info</span>
+                <span id="toggleIcon" class="rotate">▼</span>
+            </div>
+            <div class="layout-body hidden" id="layoutBody">
+                <div style="text-align:center; width:100%;">
+                    <p style="font-size:1rem; color:var(--text-main); margin:10px 0;" data-i18n="puck_per_player">
+                        1 Puck pro Spieler verteilen.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div id="pickerBar" style="display:none; margin-bottom:15px;">
+            <button onclick="loadFromPicker()" class="btn-primary" style="font-size:1.1rem; background:var(--card-hover); border:1px dashed var(--primary); color:var(--primary);">
+                👥 <span data-i18n="pp_load_players">Load Players</span>
+            </button>
+        </div>
+        
+        <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">Initializing...</div>
+        
+        <div id="playerList" class="card" style="display:none;"></div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="location.href='game_counter_setup.html'" class="btn-warn" style="font-size:1.2rem;" data-i18n="btn_back">⬅ BACK</button>
+            <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">TO GAME 🏁</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="player_picker.js"></script>
+<script>
+    if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+    const COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FFFFFF', '#800080', '#FFC0CB'];
+    let numPlayers = 1;
+
+    // Delay-Funktion für die Sockets
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+
+    document.addEventListener("DOMContentLoaded", () => {
+        setTimeout(initList, 500);
+    });
+
+    async function initList() {
+        try {
+            // 1. Spiel in den RAM laden (ID 2)
+            await fetch('/api/game/load?id=2');
+
+            // 2. Spieleranzahl aus Setup laden
+            numPlayers = parseInt(sessionStorage.getItem('cnt_players') || 0);
+            if(numPlayers === 0) {
+                let res = await fetch('/api/status');
+                let data = await res.json();
+                numPlayers = data.filter(p => p.active).length;
+            }
+            if(numPlayers === 0) numPlayers = 1;
+
+            // 3. Konfigurationswerte aus Setup laden
+            let time = parseInt(sessionStorage.getItem('cnt_time') || 0);
+            let warn = parseInt(sessionStorage.getItem('cnt_warn') || 0);
+            
+            // 4. Configs an ESP senden (mit Delays)
+            await fetch(`/api/game/action?cmd=config_players&val=${numPlayers}`);
+            await delay(100);
+            await fetch(`/api/game/action?cmd=config_time&val=${time}`);
+            await delay(100);
+            await fetch(`/api/game/action?cmd=config_warn&val=${warn}`);
+            await delay(100);
+            await fetch(`/api/game/action?cmd=setup`);
+            
+            // 5. UI Liste aufbauen (nur für aktive Spieler)
+            let container = document.getElementById('playerList');
+            container.innerHTML = "";
+            for(let i=0; i<numPlayers; i++) {
+                let color = COLORS[i % COLORS.length];
+                let name = sessionStorage.getItem(`p_name_${i}`) || `Player ${i+1}`;
+                container.innerHTML += `
+                <div class="player-row" style="border-left-color: ${color}">
+                    <div class="color-box" id="cb_${i}" style="background:${color}; box-shadow:0 0 10px ${color}"></div>
+                    <input type="text" id="name_${i}" value="${name}" placeholder="Name">
+                </div>`;
+            }
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('layoutCard').style.display = 'block';
+            container.style.display = 'block';
+            document.getElementById('pickerBar').style.display = 'block';
+            
+            setInterval(pollPuckEffects, 1500);
+
+        } catch (error) {
+            console.error("Initialisierungsfehler:", error);
+        }
+    }
+
+    async function pollPuckEffects() {
+        try {
+            let r = await fetch('/api/effects');
+            let data = await r.json();
+            data.forEach(eff => {
+                let cb = document.getElementById(`cb_${eff.id}`);
+                if(cb) {
+                    const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
+                    cb.style.background = rgb; 
+                    cb.style.boxShadow = `0 0 10px ${rgb}`;
+                }
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    function toggleLayout() {
+        document.getElementById('layoutBody').classList.toggle('hidden');
+        document.getElementById('toggleIcon').classList.toggle('rotate');
+    }
+
+    function loadFromPicker() {
+        openPlayerPicker(numPlayers, function(selected) {
+            selected.forEach((p, i) => {
+                let inp = document.getElementById('name_' + i);
+                if (inp) { inp.value = p.name; sessionStorage.setItem('p_name_' + i, p.name); }
+            });
+        });
+    }
+
+    function startGame() {
+        for(let i=0; i<numPlayers; i++) {
+            let val = document.getElementById(`name_${i}`).value;
+            sessionStorage.setItem(`p_name_${i}`, val);
+        }
+        location.href = 'game_counter_run.html';
+    }
+</script>
+</body>
+</html>

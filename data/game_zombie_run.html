@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zombie Escape Live</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color);}
+        .best-time { font-size: 2.5rem; font-family: monospace; color: gold; font-weight: bold;}
+        .best-name { font-size: 1.2rem; color: var(--text-muted); }
+
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+
+        .btn-reduce { background: #6f42c1; color: white; margin-bottom: 15px; width:100%; padding:15px; font-weight:bold; font-size:1.1rem; border:none; border-radius:6px;} 
+        .btn-reduce:active { transform:scale(0.95); }
+
+        .z-row { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 10px; background: var(--card-hover); margin-bottom: 8px; padding: 12px; border-radius: 8px; border-left: 8px solid var(--border-color); transition: background 0.2s, opacity 0.3s;}
+        .z-name { font-size: 1.2rem; font-weight: bold; color: var(--text-main); }
+        .z-status { font-size: 1.8rem; text-align: center; min-width: 40px;}
+        
+        .z-time-box { text-align: right; min-width: 90px; }
+        .z-targ { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 2px;}
+        .z-time { font-family: monospace; font-size: 1.5rem; font-weight: bold; }
+        
+        .row-success { background: rgba(0, 255, 0, 0.15); border-color: var(--success) !important; }
+        .row-fail { background: rgba(220, 53, 69, 0.2); border-color: var(--danger) !important; }
+        .row-eliminated { opacity: 0.4; border-color: var(--border-color) !important; background: var(--bg-color); filter: grayscale(100%);}
+
+        .action-btns { display: flex; flex-direction: row; gap: 5px; justify-content: flex-start; margin-top: 5px;}
+        .btn-small { width: max-content; padding: 8px 12px; font-size: 0.85rem; font-weight: bold; border: 1px solid rgba(0,0,0,0.5); border-radius: 4px; color: white; cursor: pointer; text-transform: uppercase;}
+        .btn-small:active { transform: scale(0.95); }
+        .btn-small.red { background: var(--danger); }
+        .btn-small.green { background: var(--success); color: black;}
+
+        /* Zombie Chase Track */
+        .z-chase {
+            position: relative; height: 32px; margin-top: 6px;
+            background: rgba(255,255,255,0.04); border-radius: 6px; overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.06);
+        }
+        .z-emoji {
+            position: absolute; top: 50%; font-size: 1.4rem; line-height: 1;
+            transform: translateY(-50%); transition: left 0.35s linear, right 0.35s linear;
+        }
+        .z-emoji.runner { right: 5%; }
+        .z-emoji.runner.flip { right: auto; left: 5%; transform: translateY(-50%) scaleX(-1); }
+        .z-emoji.zombie { left: 0%; }
+        .z-emoji.zombie.flip { left: auto; right: 0%; transform: translateY(-50%) scaleX(-1); }
+        .z-chase-caught .zombie { animation: zombieShake 0.3s infinite alternate; }
+        @keyframes zombieShake { from { transform: translateY(-50%) rotate(-5deg); } to { transform: translateY(-50%) rotate(5deg); } }
+        .z-caught-txt { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            font-size: 0.75rem; font-weight: bold; color: var(--danger); white-space: nowrap;
+            display: none;
+        }
+        .z-chase-caught .z-caught-txt { display: block; }
+
+        /* Shuttle Laps Counter */
+        .z-laps {
+            font-size: 1.8rem; font-weight: bold; color: var(--primary);
+            text-align: center; line-height: 1;
+        }
+        .z-laps-label { font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="g_zombie">Zombie Escape 🧟</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="top-info">
+            <div style="color:var(--text-muted); font-size:0.9rem; text-transform:uppercase;" data-i18n="z_run_best">Global Best Time</div>
+            <div class="best-time" id="bestTime">--:--</div>
+            <div class="best-name" id="bestName" data-i18n="z_run_wait">Waiting for first run...</div>
+        </div>
+
+        <div class="controls">
+            <button onclick="goBack()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
+            <button onclick="doStart()" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
+            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
+        </div>
+
+        <button onclick="doAction('man_reduce')" id="btnReduceAll" class="btn-reduce" style="display:none;" data-i18n="z_btn_red">📉 Reduce Target Time for ALL</button>
+
+        <div id="gameBoard"></div>
+
+        <div class="bottom-nav">
+            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FFFFFF', '#00FF00', '#FFC0CB'];
+        let isAutoReduce = false;
+        let isSetupState = true;
+        let isShuttle = false;
+        let bestShuttleLaps = 0;
+        let bestShuttleGroup = -1;
+        
+        let tRnd = getTranslation('z_run_rnd');
+        let tTarg = getTranslation('z_run_targ');
+        let tLast = getTranslation('z_run_last');
+        let tDis = getTranslation('z_btn_dis');
+        let tRev = getTranslation('z_btn_rev');
+
+        document.getElementById('gameBoard').addEventListener('click', function(e) {
+            let btn = e.target.closest('.action-btn');
+            if(btn) {
+                let cmd = btn.getAttribute('data-cmd');
+                if(cmd) doAction(cmd);
+            }
+        });
+
+        setInterval(updateStatus, 400); 
+
+        function updateStatus() {
+            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                 
+                isAutoReduce = (data.auto === 1);
+                isShuttle = (data.shuttle === 1);
+                
+                document.getElementById('btnReduceAll').style.display = isAutoReduce ? 'none' : 'block';
+
+                if (isShuttle) {
+                    let topLaps = 0, topGrp = -1;
+                    if (data.groups) data.groups.forEach((g,i) => {
+                        if (g.shl > topLaps) { topLaps = g.shl; topGrp = i; }
+                    });
+                    if (topLaps > 0) {
+                        document.getElementById('bestTime').innerText = '🔄 ' + topLaps + ' ' + (getTranslation('z_run_laps') || 'Laps');
+                        document.getElementById('bestName').innerText = sessionStorage.getItem(`p_name_${topGrp}`) || `Lane ${topGrp+1}`;
+                    }
+                } else if(data.bestT > 0 && data.bestG >= 0) {
+                    document.getElementById('bestTime').innerText = (data.bestT / 1000).toFixed(2) + "s";
+                    document.getElementById('bestName').innerText = sessionStorage.getItem(`p_name_${data.bestG}`) || `Lane ${data.bestG+1}`;
+                }
+
+                if (data.groups && data.groups.length > 0) {
+                    isSetupState = (data.groups[0].st === 0);
+                    let btnStart = document.getElementById('btnStart');
+                    if (isSetupState) {
+                        btnStart.innerText = getTranslation('btn_start');
+                        btnStart.style.background = "var(--primary)";
+                    } else {
+                        btnStart.innerText = getTranslation('btn_reset');
+                        btnStart.style.background = "var(--success)";
+                    }
+                }
+
+                renderTable(data.groups);
+            }).catch(e => {});
+        }
+
+        function renderTable(groups) {
+            let container = document.getElementById('gameBoard');
+            
+            groups.forEach((g, i) => {
+                let rowId = `z-row-${i}`;
+                let rowEl = document.getElementById(rowId);
+                
+                let name = sessionStorage.getItem(`p_name_${i}`) || `Lane ${i+1}`;
+                let color = COLORS[i % 10];
+                
+                let icon = "";
+                let rowClass = "z-row";
+                let timeColor = "var(--text-main)";
+                let tStr = "0.00s";
+                
+                if (g.st === 6) {
+                    rowClass += " row-eliminated";
+                    icon = "☠️";
+                    tStr = "--";
+                } 
+                else {
+                    if (g.st === 0) { icon = "💤"; tStr = "WAITING"; }
+                    else if (g.st === 1 || g.st === 2) { icon = g.hld ? "🖐️" : "⌛"; } 
+                    else if (g.st === 3) { icon = "⚠️"; rowClass += " row-fail"; timeColor = "var(--danger)"; }
+                    else if (g.st === 4) { icon = "🏃"; timeColor = "var(--primary)"; }
+                    else if (g.st === 5) {
+                        if (g.time <= g.targ) { icon = "✅"; rowClass += " row-success"; timeColor = "var(--success)"; } 
+                        else { icon = "💥"; rowClass += " row-fail"; timeColor = "var(--danger)"; }
+                    }
+                    if (g.st >= 4) { tStr = (g.time / 1000).toFixed(2) + "s"; }
+                }
+
+                let lastTimeTxt = (g.rnd > 0 && g.st < 4 && g.st > 0) ? `${tLast} ${(g.time / 1000).toFixed(2)}s` : "";
+                let targetStr = (g.st === 6) ? "--" : (g.targ / 1000).toFixed(1) + "s";
+
+                let actionCmd = (g.st !== 6) ? `man_elim&val=${i}` : `man_revive&val=${i}`;
+                let actionClass = (g.st !== 6) ? "btn-small red action-btn" : "btn-small green action-btn";
+                let actionText = (g.st !== 6) ? tDis : tRev;
+
+                let gridCols = isShuttle ? '1fr auto auto auto' : '1fr auto auto';
+
+                if (!rowEl) {
+                    container.insertAdjacentHTML('beforeend', `
+                    <div id="${rowId}" class="${rowClass}" style="border-left-color: ${color}; grid-template-columns: ${gridCols};">
+                        <div>
+                            <div class="z-name">${name}</div>
+                            <div class="z-chase" id="z-chase-${i}" style="display:none;">
+                                <span class="z-emoji zombie" id="z-zombie-${i}">🧟</span>
+                                <span class="z-emoji runner" id="z-runner-${i}">🏃</span>
+                                <span class="z-caught-txt" data-i18n="z_run_caught">${getTranslation('z_run_caught') || '💥 He got you!'}</span>
+                            </div>
+                            <div style="font-size:0.8rem; color:var(--text-muted);">${tRnd} <span id="z-rnd-${i}">0</span></div>
+                            <div class="action-btns">
+                                <button id="z-btn-${i}" class="${actionClass}" data-cmd="${actionCmd}">${actionText}</button>
+                            </div>
+                        </div>
+                        <div id="z-status-${i}" class="z-status">${icon}</div>
+                        <div id="z-laps-box-${i}" style="text-align:center; min-width:50px; ${isShuttle ? '' : 'display:none;'}">
+                            <div class="z-laps" id="z-laps-${i}">0</div>
+                            <div class="z-laps-label">🔄 <span data-i18n="z_run_laps">Laps</span></div>
+                        </div>
+                        <div class="z-time-box">
+                            <div class="z-targ">${tTarg} <span id="z-targ-${i}">${targetStr}</span></div>
+                            <div id="z-time-${i}" class="z-time" style="color:${timeColor}">${tStr}</div>
+                            <div id="z-last-${i}" style="font-size:0.8rem; color:var(--text-muted); margin-top:2px;">${lastTimeTxt}</div>
+                        </div>
+                    </div>`);
+                } 
+                else {
+                    if (rowEl.className !== rowClass) rowEl.className = rowClass;
+                    rowEl.style.gridTemplateColumns = gridCols;
+                    document.getElementById(`z-rnd-${i}`).innerText = g.rnd;
+                    
+                    let btn = document.getElementById(`z-btn-${i}`);
+                    if (btn.className !== actionClass) btn.className = actionClass;
+                    if (btn.getAttribute('data-cmd') !== actionCmd) btn.setAttribute('data-cmd', actionCmd);
+                    if (btn.innerText !== actionText) btn.innerText = actionText;
+
+                    document.getElementById(`z-status-${i}`).innerText = icon;
+                    document.getElementById(`z-targ-${i}`).innerText = targetStr;
+
+                    let timeEl = document.getElementById(`z-time-${i}`);
+                    timeEl.innerText = tStr;
+                    timeEl.style.color = timeColor;
+
+                    document.getElementById(`z-last-${i}`).innerText = lastTimeTxt;
+
+                    if (isShuttle) {
+                        let lapsBox = document.getElementById(`z-laps-box-${i}`);
+                        lapsBox.style.display = '';
+                        document.getElementById(`z-laps-${i}`).innerText = g.shl || 0;
+                    } else {
+                        document.getElementById(`z-laps-box-${i}`).style.display = 'none';
+                    }
+                }
+
+                // === ZOMBIE CHASE ANIMATION ===
+                let chaseEl = document.getElementById(`z-chase-${i}`);
+                let zombieEl = document.getElementById(`z-zombie-${i}`);
+                let runnerEl = document.getElementById(`z-runner-${i}`);
+
+                if (g.st === 4) { // RUNNING
+                    chaseEl.style.display = '';
+                    let progress = Math.min(g.time / g.targ, 1.0);
+                    let flip = isShuttle && g.exp === 1;
+
+                    // NEU: Wenn die Zeit abgelaufen ist, sofort Explosion zeigen, 
+                    // auch wenn der ESP32 den Status noch auf 4 (RUNNING) hat.
+                    if (progress >= 1.0) {
+                        chaseEl.classList.add('z-chase-caught');
+                        runnerEl.innerText = '💥';
+                        zombieEl.className = flip ? 'z-emoji zombie flip' : 'z-emoji zombie';
+                        runnerEl.className = flip ? 'z-emoji runner flip' : 'z-emoji runner';
+                        if (flip) {
+                            zombieEl.style.left = 'auto';
+                            zombieEl.style.right = '80%';
+                        } else {
+                            zombieEl.style.right = 'auto';
+                            zombieEl.style.left = '80%';
+                        }
+                    } else {
+                        chaseEl.classList.remove('z-chase-caught');
+                        runnerEl.innerText = '🏃';
+                        if (flip) {
+                            zombieEl.className = 'z-emoji zombie flip';
+                            runnerEl.className = 'z-emoji runner flip';
+                            zombieEl.style.left = 'auto';
+                            zombieEl.style.right = (progress * 85) + '%';
+                        } else {
+                            zombieEl.className = 'z-emoji zombie';
+                            runnerEl.className = 'z-emoji runner';
+                            zombieEl.style.right = 'auto';
+                            zombieEl.style.left = (progress * 85) + '%';
+                        }
+                    }
+                } else if (g.st === 5) { // EVALUATE
+                    chaseEl.style.display = '';
+                    let flip = isShuttle && g.exp === 1;
+
+                    if (g.time > g.targ) {
+                        chaseEl.classList.add('z-chase-caught');
+                        runnerEl.innerText = '💥';
+                        zombieEl.className = flip ? 'z-emoji zombie flip' : 'z-emoji zombie';
+                        runnerEl.className = flip ? 'z-emoji runner flip' : 'z-emoji runner';
+                        if (flip) {
+                            zombieEl.style.left = 'auto';
+                            zombieEl.style.right = '80%';
+                        } else {
+                            zombieEl.style.right = 'auto';
+                            zombieEl.style.left = '80%';
+                        }
+                    } else {
+                        chaseEl.classList.remove('z-chase-caught');
+                        runnerEl.innerText = '🏃';
+                        zombieEl.className = flip ? 'z-emoji zombie flip' : 'z-emoji zombie';
+                        runnerEl.className = flip ? 'z-emoji runner flip' : 'z-emoji runner';
+                        
+                        let progress = Math.min(g.time / g.targ, 1.0);
+                        if (flip) {
+                            zombieEl.style.left = 'auto';
+                            zombieEl.style.right = (progress * 85) + '%';
+                        } else {
+                            zombieEl.style.right = 'auto';
+                            zombieEl.style.left = (progress * 85) + '%';
+                        }
+                    }
+                } else if (g.st >= 1 && g.st <= 3) { // Waiting/Countdown/FalseStart
+                    chaseEl.style.display = '';
+                    chaseEl.classList.remove('z-chase-caught');
+                    zombieEl.className = 'z-emoji zombie';
+                    zombieEl.style.right = 'auto';
+                    zombieEl.style.left = '0%';
+                    runnerEl.className = 'z-emoji runner';
+                } else {
+                    chaseEl.style.display = 'none';
+                }
+            });
+        }
+
+        function doStart() {
+            if (!isSetupState) {
+                if(!confirm("Restart game and reset all stats?")) return;
+            }
+            doAction('start');
+        }
+
+        function doAction(act) { fetch(`/api/game/action?cmd=${act}`); }
+        function goBack() { doAction('reset'); location.href = 'game_zombie_names.html'; }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+</body>
+</html>

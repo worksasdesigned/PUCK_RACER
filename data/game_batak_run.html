@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batak Live</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 15px; border: 1px solid var(--border-color);}
+        .big-time { font-size: 4rem; font-family: monospace; color: var(--text-main); font-weight: bold; line-height:1;}
+        .status-txt { font-size: 1.2rem; color: var(--warning); text-transform: uppercase; margin-top:5px; font-weight:bold;}
+
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
+
+        .score-board { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;}
+        .score-box { background: var(--bg-color); padding: 20px 10px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);}
+        .score-lbl { color: var(--text-muted); font-size: 1rem; text-transform: uppercase; margin-bottom: 5px; font-weight:bold;}
+        .score-val { color: var(--text-main); font-size: 4rem; font-weight: bold; font-family: monospace; line-height:1;}
+        .val-hit { color: var(--success); text-shadow: 0 0 15px rgba(0,255,0,0.3);}
+        .val-miss { color: var(--danger); font-size:2.5rem; }
+
+        .avg-box { background: var(--card-hover); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--primary); margin-bottom: 20px;}
+        .avg-val { font-size: 2.5rem; font-weight: bold; color: var(--primary); font-family: monospace; }
+
+        .res-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top: 15px;}
+        .res-card { display:flex; flex-direction:column; align-items:center; gap:5px; background:var(--card-hover); padding:10px; border-radius:8px; border:1px solid var(--border-color); width:70px;}
+        
+        .puck-node {
+            width: 45px; height: 45px; border-radius: 50%; 
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.1rem; font-weight: bold; color: white; text-shadow: 1px 1px 2px #000;
+        }
+
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="g_batak">Batak Pro ⚡</div>
+     <div class="status-bar">
+    <div class="status-dot dot-green" id="cnt-green">0</div>
+    <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+    <div class="status-dot dot-red" id="cnt-red">0</div>
+</div>
+    </header>
+
+    <main>
+        <div class="top-info">
+            <div class="big-time" id="globalTime">00:00</div>
+            <div class="status-txt" id="stateInfo">WAITING</div>
+        </div>
+
+        <div class="score-board">
+            <div class="score-box">
+                <div class="score-lbl" data-i18n="bat_run_hits">Hits</div>
+                <div class="score-val val-hit" id="valHit">0</div>
+            </div>
+            <div class="score-box">
+                <div class="score-lbl" data-i18n="bat_run_miss">Misses</div>
+                <div class="score-val val-miss" id="valMiss">0</div>
+            </div>
+        </div>
+
+        <div class="avg-box">
+            <div style="color:var(--text-muted); font-size:0.9rem; text-transform:uppercase; margin-bottom:5px;" data-i18n="bat_run_avg">Average Reaction Time</div>
+            <div class="avg-val" id="valAvg">-- ms</div>
+        </div>
+
+        <div class="controls">
+            <button onclick="goBack()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
+            <button onclick="doAction('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
+            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
+        </div>
+
+        <div id="resultsArea" style="display:none; background:var(--bg-color); padding:15px; border-radius:8px; border:1px solid var(--border-color);">
+            <h3 style="margin-top:0; border-bottom:1px solid var(--border-color); padding-bottom:5px; text-align:center; color:var(--text-main);" data-i18n="bat_run_ana">Puck Analysis</h3>
+            <div class="res-grid" id="resGrid"></div>
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const BLOCK_COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FF1493'];
+        const STATES = ["SETUP", "HOLD START!", "COUNTDOWN", "FALSE START", "RUNNING", "FINISHED"];
+
+        setInterval(update, 150); 
+
+        function update() {
+            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                 
+                render(data);
+            }).catch(e => {});
+        }
+
+        function formatTime(ms) {
+            let sec = Math.ceil(ms / 1000); 
+            let m = Math.floor(sec / 60);
+            let s = sec % 60;
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        function render(data) {
+            document.getElementById('globalTime').innerText = formatTime(data.t);
+            document.getElementById('valHit').innerText = data.hits;
+            document.getElementById('valMiss').innerText = data.miss;
+            document.getElementById('valAvg').innerText = data.avg > 0 ? `${data.avg} ms` : "-- ms";
+            
+            let stTxt = STATES[data.st] || "UNKNOWN";
+            let stCol = "var(--warning)";
+            if(data.st === 3) { stCol = "var(--danger)"; stTxt = getTranslation("sr_st_false") || stTxt; }
+            if(data.st === 4) { stCol = "var(--success)"; stTxt = getTranslation("btn_running") || stTxt; }
+            if(data.st === 5) { stCol = "gold"; stTxt = getTranslation("whac_st_5") || stTxt; }
+            
+            let infoEl = document.getElementById('stateInfo');
+            infoEl.innerText = stTxt;
+            infoEl.style.color = stCol;
+            
+            let btn = document.getElementById('btnStart');
+            if (data.st === 0 || data.st === 5 || data.st === 3) { 
+                btn.innerText = (data.st === 3 || data.st === 5) ? getTranslation('btn_reset') : getTranslation('btn_start'); 
+                btn.style.background = "var(--primary)"; 
+            } else { 
+                btn.innerText = getTranslation('btn_running'); 
+                btn.style.background = "var(--card-hover)"; 
+            }
+
+            let resArea = document.getElementById('resultsArea');
+            let resGrid = document.getElementById('resGrid');
+
+            if (data.st === 5 && data.pucks) {
+                resArea.style.display = "block";
+                data.pucks.forEach(p => {
+                    let colHex = BLOCK_COLORS[Math.floor(p.id / 4) % 8];
+                    let fillPercent = ((p.id % 4) + 1) * 25; 
+                    
+                    let bgStyle = `background: conic-gradient(${colHex} 0% ${fillPercent}%, var(--border-color) ${fillPercent}% 100%); border: 2px solid ${colHex};`;
+                    if (fillPercent === 100) bgStyle = `background: ${colHex}; border: 2px solid #fff;`;
+                    
+                    let rt = p.a > 0 ? `${p.a}ms` : "-";
+                    let cardId = `res-card-${p.id}`;
+                    let cardEl = document.getElementById(cardId);
+
+                    if (!cardEl) {
+                        resGrid.insertAdjacentHTML('beforeend', `
+                        <div id="${cardId}" class="res-card">
+                            <div class="puck-node" style="${bgStyle}">${p.id + 1}</div>
+                            <div style="font-size:0.8rem; color:var(--text-muted); font-weight:bold;"><span style="color:var(--success)">${p.h}</span> | <span style="color:var(--danger)">${p.m}</span></div>
+                            <div style="font-family:monospace; color:var(--primary); font-weight:bold; font-size:1rem;" id="rt-${p.id}">${rt}</div>
+                        </div>`);
+                    } else {
+                        document.getElementById(`rt-${p.id}`).innerText = rt;
+                    }
+                });
+            } else {
+                resArea.style.display = "none";
+                resGrid.innerHTML = ""; 
+            }
+        }
+
+        function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
+        function goBack() { doAction('reset'); location.href = 'game_batak_names.html'; }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+</body>
+</html>

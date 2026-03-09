@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Impressum – Puck Racer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        main { max-width: 700px; }
+
+        .section-title {
+            font-family: 'puckracer', sans-serif;
+            font-size: 1.3rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--primary);
+            margin: 35px 0 12px 0;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .section-title:first-of-type { margin-top: 10px; }
+
+        .imp-text {
+            font-size: 0.95rem;
+            line-height: 1.7;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
+        .imp-text strong { color: var(--text-main); }
+        .imp-muted { color: var(--text-muted); font-style: italic; }
+
+        .highlight-box {
+            background: var(--card-bg);
+            border-left: 4px solid var(--primary);
+            padding: 14px 18px;
+            border-radius: 0 8px 8px 0;
+            margin: 15px 0;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        .highlight-box.warn {
+            border-left-color: var(--warning);
+        }
+        .highlight-box.danger {
+            border-left-color: var(--danger);
+        }
+
+        .license-badge {
+            display: inline-block;
+            background: var(--card-hover);
+            border: 1px solid var(--border-color);
+            padding: 6px 14px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--primary);
+            margin: 8px 0;
+        }
+
+        /* Liste für Bibliotheken */
+        .lib-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+        .lib-list li {
+            background: var(--card-bg);
+            margin-bottom: 8px;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+        .lib-name {
+            font-weight: bold;
+            color: var(--primary);
+            display: block;
+        }
+        .lib-license {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Puck Racer</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main>
+
+        <h2 class="section-title">⚖️ Legal Notice & Philosophy</h2>
+
+        <p class="imp-text">
+            <strong>Developed by:</strong> WorksAsDesigned<br>
+            <span class="imp-muted">(Full address and contact details to be added)</span>
+        </p>
+
+        <h2 class="section-title">⚠️ Disclaimer</h2>
+
+        <div class="highlight-box danger">
+            <strong>Use at your own risk!</strong>
+        </div>
+
+        <p class="imp-text">
+            This project is 100% open-source and is provided <strong>"as is"</strong>, without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement.
+        </p>
+        <p class="imp-text">
+            I take absolutely no responsibility or liability for any fried microcontrollers, short-circuited batteries, or kids tripping over the pucks in the gym.
+        </p>
+        <p class="imp-text">
+            <strong>You build it, you use it, you take the risk.</strong> Please act responsibly and be safe, especially when soldering and handling Li-Ion batteries!
+        </p>
+
+        <h2 class="section-title">📄 License</h2>
+
+        <div class="license-badge">CC BY-NC-SA 4.0 – Non-Commercial, Share-Alike</div>
+
+        <p class="imp-text">
+            You are free to <strong>use, copy, modify, and redistribute</strong> the source code of this project, under the following conditions:
+        </p>
+
+        <div class="highlight-box">
+            <strong>✅ You may:</strong><br>
+            • Use Puck Racer privately, in schools, clubs, and organizations<br>
+            • Modify the source code to your heart's content<br>
+            • Share your modified version with others<br>
+            • Build and assemble Puck Racer systems for personal use or as a gift<br>
+            • Charge a fair assembly fee if you build systems for others (covering parts + your time)
+        </div>
+
+        <div class="highlight-box danger">
+            <strong>🚫 You may NOT:</strong><br>
+            • Sell the software or any derivative of it commercially<br>
+            • Bundle the software with hardware and charge a premium for the software itself<br>
+            • Remove or alter this copyright notice<br>
+            • Present the work as your own without attribution
+        </div>
+
+        <h2 class="section-title">🛠️ Credits & Libraries</h2>
+        <p class="imp-text">
+            Puck Racer is built upon the incredible work of the open-source community. This project would not be possible without these essential libraries:
+        </p>
+        
+        <ul class="lib-list">
+            <li>
+                <span class="lib-name">FastLED</span>
+                <span class="lib-text">The backbone of all lighting effects. Unbeatable performance for WS2812B LEDs.</span><br>
+                <span class="lib-license">License: MIT License</span>
+            </li>
+            <li>
+                <span class="lib-name">ESPAsyncWebServer & AsyncTCP</span>
+                <span class="lib-text">Providing the high-performance web interface on the ESP32 Coordinator.</span><br>
+                <span class="lib-license">License: LGPL-3.0</span>
+            </li>
+            <li>
+                <span class="lib-name">Arduino JSON</span>
+                <span class="lib-text">For efficient data handling between the web interface and the controller.</span><br>
+                <span class="lib-license">License: MIT License</span>
+            </li>
+        </ul>
+
+        <h2 class="section-title">💸 A Quick Word on Money & Donations</h2>
+
+        <p class="imp-text">
+            First of all: A massive <strong>THANK YOU</strong> to everyone who supported this project with a tip or donation on Makerworld! It really means a lot and keeps the soldering iron hot. 🔥
+        </p>
+
+        <div class="highlight-box warn">
+            <strong>Got ripped off?</strong> If you bought this system from someone and paid a premium for the software (meaning you paid significantly more than the raw hardware costs and a fair assembly fee) — you got scammed. Please go back to your seller and kindly point them to the open-source license of this project. <strong>Puck Racer is free!</strong>
+        </div>
+
+        <h2 class="section-title">🧠 Developer Philosophy</h2>
+
+        <p class="imp-text">
+            I strongly believe that hobby software should be free. At most, it should reimburse the developer for their prototyping costs. If a pizza or a crate of beer comes out of it eventually, that's awesome — hobbies should fund hobbies. 🍕🍺
+        </p>
+        <p class="imp-text">
+            Obviously, professional enterprise software needs to be paid for professionally, but this is a community project built by a maker, for makers.
+        </p>
+
+        <h2 class="section-title">📖 The Story: Why This Exists</h2>
+
+        <p class="imp-text">
+            Let's be real for a second: I built this because I was simply too stingy to drop 300–400 € on a commercial reaction light system that consists of only 4 pucks, runs closed-source software and provides 200 extremely similar "games" — which can be summarized in about 5 different game modes.
+        </p>
+        <p class="imp-text">
+            Puck Racer now has <strong>23 games</strong>. Highly adjustable. Multi-player, multi-group support. All options combined easily provide 200+ "games". 😉
+        </p>
+        <p class="imp-text">
+            I also noticed that the PE equipment at my kids' elementary school hasn't really changed in 40 years. It was time for an upgrade.
+        </p>
+
+        <div class="highlight-box">
+            <strong>Puck Racer is the answer.</strong> It's perfect for professional training support in sports clubs, spicing up PE lessons in schools, or just being the absolute highlight of the next kids' birthday party. I would describe it as a blazingPOD – DIY solution.
+        </div>
+
+        <p class="imp-text">
+            <strong>The Trade-off:</strong> Yes, building 4–10 Pucks and a Coordinator is a bit of a grind. It takes time and patience.
+        </p>
+        <p class="imp-text">
+            <strong>The Reward:</strong> You get a fully customizable system where the hardware cost per Puck can be pushed under 20 €. You do the math. 😉
+        </p>
+        <p class="imp-text">
+            Nice side effect: Teach your kids how to solder. It's easy to medium difficulty. My 9-year-old twins built 5 pucks by themselves with very little help. 🧒🔧
+        </p>
+
+        <br>
+        <button onclick="location.href='/'" class="btn-back" style="margin-top:20px;">🏠 Home</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+    </script>
+</body>
+</html>

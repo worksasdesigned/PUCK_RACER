@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Pacemaker</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        .sub-text { font-size: 0.9rem; color: var(--text-muted); text-align: right; margin-top: 2px;}
+        .mode-tabs { display:flex; gap:10px; margin-bottom:15px; }
+        .mode-tab { 
+            flex:1; padding:10px; text-align:center; background:var(--bg-color); 
+            border-radius:6px; cursor:pointer; font-weight:bold; border:2px solid transparent;
+        }
+        .mode-tab.active { background: var(--primary); color:white; border-color:#fff; }
+        .mode-tab.disabled { opacity: 0.4; cursor: not-allowed; }
+        .hint-box { 
+            background: rgba(0,0,0,0.2); border:1px solid var(--border-color); 
+            padding:15px; border-radius:6px; font-size:0.9rem; color:var(--text-muted); 
+            margin-top:20px; text-align:center;
+        }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_pacemaker">The Pacemaker 🏃⏱️</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="pm_setup_route">📍 Route Layout</h3>
+            <div class="mode-tabs">
+                <div id="tabCircle" class="mode-tab active" onclick="setMode(0)" data-i18n="pm_lbl_circle">⭕ Circle Mode</div>
+                <div id="tabShuttle" class="mode-tab" onclick="setMode(1)" data-i18n="pm_lbl_shuttle">↔️ Shuttle Mode</div>
+            </div>
+            
+            <div class="mode-tabs" style="margin-top:10px;">
+                <div id="tab1Grp" class="mode-tab active" onclick="setGroups(1)" data-i18n="pm_lbl_1grp">🏃 1 Runner</div>
+                <div id="tab2Grp" class="mode-tab" onclick="setGroups(2)" data-i18n="pm_lbl_2grp">🏃🏃 2 Runners</div>
+            </div>
+            <p style="font-size:0.8rem; color:var(--text-muted); text-align:center; margin-top:0;" data-i18n="pm_hint_2grp">2 Runners starten gegenüberliegend (nur Circle Mode).</p>
+        </div>
+
+        <div class="card">
+            <h3>⚙️ Pacing Method</h3>
+            <div class="mode-tabs">
+                <div id="tabPace" class="mode-tab active" onclick="setInput(0)">⏱️ Pace (min/km)</div>
+                <div id="tabLap" class="mode-tab" onclick="setInput(1)" data-i18n="pm_lbl_lap">🔄 Lap Time</div>
+            </div>
+
+            <div id="blockPace">
+                <div class="slider-header" style="margin-top:15px;">
+                    <span data-i18n="pm_lbl_dist">Distance between Pucks:</span>
+                    <span id="distDisp" class="slider-val">10m</span>
+                </div>
+                <input type="range" id="distSlider" min="5" max="50" value="10" step="1" oninput="document.getElementById('distDisp').innerText=this.value+'m'">
+                
+                <div class="slider-header" style="align-items: flex-end; margin-top:15px;">
+                    <span data-i18n="pm_lbl_pace">Running Pace:</span>
+                    <div style="text-align: right;">
+                        <div id="paceDisp" class="slider-val">5:00 min/km</div>
+                        <div id="kmhDisp" class="sub-text">12.0 km/h</div>
+                    </div>
+                </div>
+                <input type="range" id="paceSlider" min="0" max="33" value="15" oninput="updatePace()">
+            </div>
+
+            <div id="blockLap" style="display:none; padding-top: 15px;">
+                <div class="slider-header">
+                    <span data-i18n="pm_lbl_lap">Lap Time:</span>
+                    <span id="lapDisp" class="slider-val">1m 00s</span>
+                </div>
+                <input type="range" id="lapSlider" min="5" max="240" value="60" oninput="updateLap()">
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="pm_setup_dur">⏱️ Workout Duration</h3>
+            <div class="slider-header">
+                <span data-i18n="pm_lbl_time">Total Time:</span>
+                <span id="timeDisp" class="slider-val">2m 00s</span>
+            </div>
+            <input type="range" id="timeSlider" min="0" max="136" value="9" oninput="updateTime()">
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="tgt_setup_rules">⚙️ Rules</h3>
+            <div class="toggle-row">
+                <span data-i18n="pm_lbl_hold">Hold Start Puck to begin</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkHold" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="pm_btn_track">BUILD TRACK ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        let currentMode = 0;   // 0=Circle, 1=Shuttle
+        let currentGroups = 1; // 1 oder 2
+        let currentInput = 0;  // 0=Pace, 1=Lap
+
+        function setMode(m) {
+            currentMode = m;
+            document.getElementById('tabCircle').className = (m === 0) ? "mode-tab active" : "mode-tab";
+            document.getElementById('tabShuttle').className = (m === 1) ? "mode-tab active" : "mode-tab";
+            // Shuttle erlaubt keine 2 Gruppen
+            if (m === 1 && currentGroups === 2) {
+                setGroups(1); 
+            }
+        }
+
+        function setGroups(g) {
+            // Verhindere 2 Gruppen, wenn Shuttle aktiv ist
+            if (g === 2 && currentMode === 1) {
+                alert("2 Gruppen sind nur im Circle-Mode möglich.");
+                return;
+            }
+            currentGroups = g;
+            document.getElementById('tab1Grp').className = (g === 1) ? "mode-tab active" : "mode-tab";
+            document.getElementById('tab2Grp').className = (g === 2) ? "mode-tab active" : "mode-tab";
+        }
+
+        function setInput(i) {
+            currentInput = i;
+            document.getElementById('tabPace').className = (i === 0) ? "mode-tab active" : "mode-tab";
+            document.getElementById('tabLap').className = (i === 1) ? "mode-tab active" : "mode-tab";
+            
+            document.getElementById('blockPace').style.display = (i === 0) ? 'block' : 'none';
+            document.getElementById('blockLap').style.display = (i === 1) ? 'block' : 'none';
+        }
+
+        function updateLap() {
+            let val = parseInt(document.getElementById('lapSlider').value);
+            let m = Math.floor(val / 60);
+            let s = val % 60;
+            document.getElementById('lapDisp').innerText = (m>0 ? `${m}m ` : "") + `${s.toString().padStart(2,'0')}s`;
+            return val;
+        }
+
+        function updatePace() {
+            let val = parseInt(document.getElementById('paceSlider').value);
+            let totalSeconds = 150 + (val * 10); 
+            
+            let m = Math.floor(totalSeconds / 60);
+            let s = totalSeconds % 60;
+            document.getElementById('paceDisp').innerText = `${m}:${s.toString().padStart(2,'0')} min/km`;
+            
+            let kmh = 3600 / totalSeconds;
+            document.getElementById('kmhDisp').innerText = `${kmh.toFixed(1)} km/h`;
+            
+            return totalSeconds;
+        }
+
+        function updateTime() {
+            let val = parseInt(document.getElementById('timeSlider').value);
+            let secs = 0;
+            
+            if (val <= 15) secs = 30 + (val * 10);
+            else if (val <= 36) secs = 180 + ((val - 15) * 20);
+            else secs = 600 + ((val - 36) * 30);
+            
+            let m = Math.floor(secs / 60);
+            let s = secs % 60;
+            document.getElementById('timeDisp').innerText = (m > 0 ? `${m}m ` : "") + `${s.toString().padStart(2,'0')}s`;
+            
+            return secs;
+        }
+
+		function nextStep() {
+			sessionStorage.setItem('pm_pace', updatePace());
+			sessionStorage.setItem('pm_dist', document.getElementById('distSlider').value);
+			sessionStorage.setItem('pm_dur', updateTime());
+			sessionStorage.setItem('pm_shut', currentMode);
+            sessionStorage.setItem('pm_grp', currentGroups);
+            sessionStorage.setItem('pm_inpt', currentInput);
+            sessionStorage.setItem('pm_lapt', updateLap());
+			sessionStorage.setItem('pm_hold', document.getElementById('chkHold').checked ? 1 : 0);
+			
+			location.href = 'game_pacemaker_names.html';
+		}
+
+        function cancelSetup() {
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/');
+        }
+        
+        updatePace();
+        updateTime();
+        updateLap();
+    </script>
+</body>
+</html>

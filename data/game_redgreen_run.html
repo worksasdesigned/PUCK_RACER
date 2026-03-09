@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RLGL Run</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .timer-box { text-align: center; margin-bottom: 20px; }
+        .big-time { font-size: 5rem; font-weight: bold; color: var(--text-main); font-family: 'Courier New', monospace; line-height: 1; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        .limit { text-align:center; color:var(--text-muted); margin-bottom:10px; }
+        
+        .grp-grid { display:flex; flex-direction:column; gap:10px; }
+        .grp-card { 
+            display:grid; grid-template-columns: 2fr 1fr 1fr; align-items:center;
+            padding:15px; border-radius:8px; font-weight:bold; transition: background 0.3s, box-shadow 0.3s;
+            border: 1px solid var(--border-color);
+        }
+        
+        .bg-red { background: rgba(220, 53, 69, 0.2); border-color: var(--danger); }
+        .bg-green { background: rgba(0, 255, 0, 0.2); border-color: var(--success); }
+        .bg-yellow { background: rgba(255, 200, 0, 0.2); border-color: var(--warning); }
+        
+        .score { font-size:2.5rem; text-align:right; font-family:monospace;}
+        
+        .man-btn { 
+            border:2px solid rgba(255,255,255,0.3); background:var(--card-hover); 
+            font-weight:bold; cursor:pointer; padding:10px; border-radius:5px;
+            text-align:center; margin-left:5px; user-select: none; color:var(--text-main);
+        }
+        .man-btn:active { background:var(--border-color); transform: translateY(2px); }
+
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
+        .global-ctrl { display:flex; gap:10px; margin-bottom:20px; }
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="g_redgreen">🚦 Red Light Green Light</div>
+        <div class="status-bar"><div class="status-dot dot-green" id="conn"></div></div>
+    </header>
+    <main>
+        <div class="timer-box">
+            <div class="big-time" id="time">00:00</div>
+            <div class="limit" id="limit">Limit: --</div>
+        </div>
+        
+        <div class="global-ctrl">
+            <button onclick="cmd('man_g_all')" class="btn-primary" style="background:var(--success); color:black; flex:1;" data-i18n="rg_run_allg">ALL GREEN</button>
+            <button onclick="cmd('man_r_all')" class="btn-danger" style="flex:1;" data-i18n="rg_run_allr">ALL RED</button>
+        </div>
+
+        <div class="controls">
+            <button onclick="back()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
+            <button onclick="cmd('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
+            <button onclick="cmd('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
+        </div>
+
+        <div id="groups" class="grp-grid">
+            <div style="text-align:center; color:var(--text-muted); padding:20px;" data-i18n="loading">Loading...</div>
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="home()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+<script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        let limit = 0;
+        
+        let tState = getTranslation('rg_run_state');
+        let tRem = getTranslation('rg_run_rem');
+        let btnGo = getTranslation('rg_btn_go');
+        let btnStop = getTranslation('rg_btn_stop');
+        let stGo = getTranslation('rg_st_go');
+        let stStop = getTranslation('rg_st_stop');
+        let stWait = getTranslation('rg_st_wait');
+
+        document.getElementById('groups').addEventListener('click', function(e) {
+            if(e.target.classList.contains('man-btn')) {
+                let action = e.target.getAttribute('data-cmd');
+                if(action) cmd(action);
+            }
+        });
+
+        setInterval(upd, 400);
+        
+        function upd() {
+            fetch('/api/game/status').then(r=>r.json()).then(d => {
+                document.getElementById('conn').style.opacity=1;
+                limit = d.limit;
+                
+                // Timer Logic
+                let t = Math.floor(d.time/1000);
+                if(d.state == 2 && limit > 0) { 
+                    t = limit - t;
+                    if(t<0) t=0;
+                }
+                let m=Math.floor(t/60), s=t%60;
+                document.getElementById('time').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+                document.getElementById('limit').innerText = d.state==2 ? tRem : `${getTranslation('lbl_time_limit')} ${limit}s`;
+                
+                let b = document.getElementById('btnStart');
+                if(d.state==0) { b.innerText = getTranslation('btn_start'); b.style.background = "var(--primary)"; }
+                else if(d.state==3) { b.innerText = getTranslation('btn_reset'); b.style.background = "var(--success)"; }
+                else { b.innerText = getTranslation('btn_running'); b.style.background = "var(--card-hover)"; }
+
+                renderGroups(d.groups);
+                
+            }).catch(()=>document.getElementById('conn').style.opacity=0.2);
+        }
+
+        // DOM In-Place Update gegen Flackern
+        function renderGroups(groupsData) {
+            let container = document.getElementById('groups');
+            if (container.innerHTML.includes('Loading')) container.innerHTML = '';
+
+            groupsData.forEach(g => {
+                let n = sessionStorage.getItem(`p_name_${g.id}`) || `Group ${g.id+1}`;
+                let bgClass = "bg-red";
+                let stTxt = stStop;
+                
+                if(g.light==1) { bgClass="bg-green"; stTxt = stGo; }
+                if(g.light==2) { bgClass="bg-yellow"; stTxt = stWait; }
+
+                let rowId = `rg-row-${g.id}`;
+                let rowEl = document.getElementById(rowId);
+
+                if (!rowEl) {
+                    container.insertAdjacentHTML('beforeend', `
+                    <div id="${rowId}" class="grp-card ${bgClass}">
+                        <div>
+                            <div style="font-size:1.2rem;">${n}</div>
+                            <div style="font-size:0.8rem; opacity:0.8;">${tState} <span id="stxt-${g.id}">${stTxt}</span></div>
+                        </div>
+                        <div class="score" id="score-${g.id}">${g.score}</div>
+                        <div style="display:flex;">
+                            <div class="man-btn" data-cmd="man_g_${g.id}" style="color:var(--success); border-color:var(--success);">${btnGo}</div>
+                            <div class="man-btn" data-cmd="man_r_${g.id}" style="color:var(--danger); border-color:var(--danger);">${btnStop}</div>
+                        </div>
+                    </div>`);
+                } else {
+                    if (rowEl.className !== `grp-card ${bgClass}`) rowEl.className = `grp-card ${bgClass}`;
+                    document.getElementById(`stxt-${g.id}`).innerText = stTxt;
+                    document.getElementById(`score-${g.id}`).innerText = g.score;
+                }
+            });
+        }
+        
+        function cmd(c) { fetch(`/api/game/action?cmd=${c}`); }
+        
+        function back() {
+            cmd('setup'); 
+            location.href='game_redgreen_names.html';
+        }
+
+        function home() { 
+            fetch('/api/game/action?cmd=exit');
+            setTimeout(() => { location.href='/'; }, 100); 
+        }
+    </script>
+</body>
+</html>

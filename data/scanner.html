@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RF Scanner // Puck Racer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+         
+        .scanner-page { font-family: 'Share Tech Mono', 'Courier New', monospace; }
+
+        /* --- OVERKILL BANNER --- */
+        .overkill-banner {
+            background: repeating-linear-gradient(45deg, #1a1a00, #1a1a00 10px, #222200 10px, #222200 20px);
+            border: 1px solid #555500; border-radius: 8px;
+            padding: 12px 16px; margin-bottom: 20px; text-align: center;
+            color: #aaaa44; font-size: 0.85rem; line-height: 1.5;
+        }
+        .overkill-banner .caution { color: #ffcc00; font-weight: bold; font-size: 1rem; }
+
+        /* --- KNIGHT RIDER SCANNER --- */
+        .kitt-container {
+            background: #0a0a0a; border: 2px solid #330000;
+            border-radius: 12px; padding: 20px 15px; margin-bottom: 20px;
+            box-shadow: inset 0 0 30px rgba(255,0,0,0.05);
+        }
+        .kitt-label {
+            text-align: center; color: #ff3333; font-size: 0.75rem;
+            letter-spacing: 6px; text-transform: uppercase; margin-bottom: 12px;
+            text-shadow: 0 0 8px rgba(255,50,50,0.5);
+        }
+        .kitt-bar { display: flex; gap: 3px; justify-content: center; height: 28px; align-items: center; }
+        .kitt-led {
+            width: 100%; max-width: 28px; height: 20px; flex: 1;
+            background: #1a0000; border-radius: 3px; border: 1px solid #220000;
+        }
+        .kitt-led.active {
+            background: #ff0000;
+            box-shadow: 0 0 12px #ff0000, 0 0 25px rgba(255,0,0,0.6), inset 0 0 5px rgba(255,200,200,0.3);
+            border-color: #ff3333;
+        }
+        .kitt-led.trail1 { background: #990000; box-shadow: 0 0 8px rgba(255,0,0,0.3); border-color: #550000; }
+        .kitt-led.trail2 { background: #440000; box-shadow: 0 0 4px rgba(255,0,0,0.1); border-color: #330000; }
+        .kitt-channel {
+            text-align: center; margin-top: 10px; font-size: 1.1rem;
+            color: #ff4444; letter-spacing: 3px; text-shadow: 0 0 10px rgba(255,50,50,0.4);
+        }
+
+        /* --- TERMINAL LOG --- */
+        .terminal {
+            background: #0a0a0a; border: 1px solid #1a3a1a;
+            border-radius: 8px; overflow: hidden; margin-bottom: 20px;
+            box-shadow: inset 0 0 40px rgba(0,255,0,0.02);
+        }
+        .terminal-header {
+            background: #0d1a0d; padding: 6px 12px;
+            border-bottom: 1px solid #1a3a1a;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .terminal-title { color: #33aa33; font-size: 0.75rem; letter-spacing: 3px; }
+        .terminal-dots { display: flex; gap: 5px; }
+        .terminal-dots span { width: 8px; height: 8px; border-radius: 50%; }
+        .terminal-body {
+            padding: 12px; min-height: 200px; max-height: 350px;
+            overflow-y: auto; scroll-behavior: smooth; position: relative;
+        }
+        .terminal-body::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+            pointer-events: none;
+        }
+        .log-line { color: #33ff33; font-size: 0.8rem; line-height: 1.7; margin: 0; white-space: pre-wrap; word-break: break-all; }
+        .log-line.dim { color: #1a6b1a; }
+        .log-line.bright { color: #66ff66; text-shadow: 0 0 5px rgba(100,255,100,0.3); }
+        .log-line.warn { color: #ffaa00; }
+        .log-line.hot { color: #ff4444; text-shadow: 0 0 5px rgba(255,50,50,0.3); }
+        .log-line.info { color: #44aaff; }
+        .log-line.comment { color: #888888; font-style: italic; }
+        .cursor-blink::after { content: '█'; animation: blink-cursor 0.7s infinite; }
+        @keyframes blink-cursor { 0%,49% { opacity:1; } 50%,100% { opacity:0; } }
+
+        /* --- RESULTS TABLE --- */
+        .results-panel {
+            background: #0a0a0a; border: 1px solid #1a3a1a;
+            border-radius: 8px; padding: 15px; margin-bottom: 20px; display: none;
+        }
+        .results-title {
+            color: #33ff33; font-size: 0.85rem; letter-spacing: 3px;
+            text-align: center; margin-bottom: 15px;
+            text-shadow: 0 0 8px rgba(100,255,100,0.2);
+        }
+        .ch-row {
+            display: grid; grid-template-columns: 55px 1fr 100px;
+            gap: 10px; align-items: center; padding: 6px 4px;
+            border-bottom: 1px solid #0d1a0d;
+        }
+        .ch-label { color: #33aa33; font-size: 0.85rem; display: flex; flex-direction: column; }
+        .ch-bar-bg { height: 16px; background: #111; border-radius: 3px; overflow: hidden; border: 1px solid #1a1a1a; }
+        .ch-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s ease; }
+        .ch-val { color: #aaa; font-size: 0.75rem; text-align: right; }
+        .ch-row.recommended { background: rgba(0,255,0,0.05); border-radius: 4px; }
+        .ch-row.recommended .ch-label { color: #66ff66; font-weight: bold; }
+        .recommend-tag {
+            display: inline-block; background: #33ff33; color: #000;
+            font-size: 0.65rem; padding: 1px 6px; border-radius: 3px;
+            margin-top: 2px; font-weight: bold; text-align: center;
+        }
+
+        /* --- CONTROLS --- */
+        .scan-controls { display: flex; gap: 10px; margin-bottom: 20px; justify-content: center; flex-wrap: wrap; }
+        .btn-scan {
+            background: #1a3a1a; color: #33ff33; border: 1px solid #33aa33;
+            padding: 12px 25px; border-radius: 6px; font-size: 1rem;
+            cursor: pointer; font-family: 'Share Tech Mono', monospace;
+            letter-spacing: 2px; transition: all 0.2s;
+        }
+        .btn-scan:hover { background: #224422; box-shadow: 0 0 15px rgba(50,255,50,0.2); }
+        .btn-scan:disabled { opacity: 0.3; cursor: not-allowed; }
+        .btn-scan.danger { background: #3a1a1a; color: #ff4444; border-color: #aa3333; }
+        .btn-scan.danger:hover { background: #442222; box-shadow: 0 0 15px rgba(255,50,50,0.2); }
+
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">📡 RF Scanner</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main class="scanner-page">
+        <div class="overkill-banner">
+            <div class="caution">⚠️ ABSOLUTELY OVERKILL WARNING ⚠️</div>
+            This is a 2.4GHz WiFi channel scanner built into a sports LED game system.<br>
+            No, this is not necessary. Yes, we built it anyway. You're welcome. <br>You can also use it for your private WiFi at home :-)
+        </div>
+
+        <div class="kitt-container" id="kittBox">
+            <div class="kitt-label">RF SPECTRUM ANALYZER</div>
+            <div class="kitt-bar" id="kittBar"></div>
+            <div class="kitt-channel" id="kittChannel">STANDBY</div>
+        </div>
+
+        <div class="scan-controls">
+            <button class="btn-scan" id="btnScanCurrent" onclick="scanCurrent()">SCAN CH 1</button>
+            <button class="btn-scan" id="btnScanAll" onclick="scanAll()">FULL SPECTRUM</button>
+            <button class="btn-scan danger" id="btnStop" onclick="stopScan()" disabled>ABORT</button>
+        </div>
+
+        <div class="terminal">
+            <div class="terminal-header">
+                <span class="terminal-title">SCAN LOG</span>
+                <div class="terminal-dots">
+                    <span style="background:#ff5555"></span>
+                    <span style="background:#ffaa00"></span>
+                    <span style="background:#55ff55"></span>
+                </div>
+            </div>
+            <div class="terminal-body" id="termBody">
+                <p class="log-line dim">PuckRacer RF Scanner v1.0</p>
+                <p class="log-line dim">ESP32-S3 Promiscuous Mode Engine</p>
+                <p class="log-line dim">────────────────────────────────────</p>
+                <p class="log-line comment">// Waiting for operator input...</p>
+                <p class="log-line cursor-blink"></p>
+            </div>
+        </div>
+
+        <div class="results-panel" id="resultsPanel">
+            <div class="results-title">▸ CHANNEL ANALYSIS RESULTS ◂</div>
+            <div id="resultsBody"></div>
+            <div id="recommendation" style="text-align:center; margin-top:15px; color:#33ff33; font-size:0.9rem; line-height:1.4;"></div>
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="location.href='/admin.html'" class="btn-back" style="width:100%;">⬅ Back to Admin</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        /* ═══════════════════ KITT SCANNER ═══════════════════ */
+        const NUM_LEDS = 15;
+        let kittPos = 0, kittDir = 1, kittRunning = false, kittInterval = null;
+        let scanning = false, aborted = false;
+
+        const SCAN_CHANNELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
+        const PREFERRED_CHANNELS = [1, 6, 11]; // Kanäle, die länger gescannt werden sollen
+        let scanResults = {};
+
+        function getScanDuration(ch) {
+            return PREFERRED_CHANNELS.includes(ch) ? 30 : 10;
+        }
+
+        const kittBar = document.getElementById('kittBar');
+        for (let i = 0; i < NUM_LEDS; i++) {
+            const led = document.createElement('div');
+            led.className = 'kitt-led'; led.id = `led-${i}`;
+            kittBar.appendChild(led);
+        }
+
+        function startKitt() {
+            if (kittRunning) return;
+            kittRunning = true; kittPos = 0; kittDir = 1;
+            kittInterval = setInterval(() => {
+                for (let i = 0; i < NUM_LEDS; i++) {
+                    const el = document.getElementById(`led-${i}`);
+                    el.className = 'kitt-led';
+                    if (i === kittPos) el.classList.add('active');
+                    else if (i === kittPos - kittDir) el.classList.add('trail1');
+                    else if (i === kittPos - kittDir * 2) el.classList.add('trail2');
+                }
+                kittPos += kittDir;
+                if (kittPos >= NUM_LEDS - 1 || kittPos <= 0) kittDir *= -1;
+            }, 60);
+        }
+
+        function stopKitt() {
+            kittRunning = false; clearInterval(kittInterval);
+            for (let i = 0; i < NUM_LEDS; i++) document.getElementById(`led-${i}`).className = 'kitt-led';
+            document.getElementById('kittChannel').innerText = 'STANDBY';
+        }
+
+        /* ═══════════════════ TERMINAL ═══════════════════ */
+        function log(text, cls = '') {
+            const body = document.getElementById('termBody');
+            const cursor = body.querySelector('.cursor-blink');
+            if (cursor) cursor.remove();
+            const p = document.createElement('p');
+            p.className = `log-line ${cls}`;
+            p.textContent = text;
+            body.appendChild(p);
+            const c = document.createElement('p');
+            c.className = 'log-line cursor-blink';
+            body.appendChild(c);
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('termBody').innerHTML = '';
+            const c = document.createElement('p');
+            c.className = 'log-line cursor-blink';
+            document.getElementById('termBody').appendChild(c);
+        }
+
+        function getComment(packets, busyMs, totalMs) {
+            const ratio = busyMs / totalMs;
+            if (packets === 0) return ["Dead silence. Is this thing even plugged in?", "comment"];
+            if (ratio < 0.05) return ["Quieter than a library at 3am. Perfect.", "comment"];
+            if (ratio < 0.10) return ["Almost nothing. Like WiFi on the moon.", "comment"];
+            if (ratio < 0.20) return ["Nice and calm. Sunday morning vibes.", "comment"];
+            if (ratio < 0.35) return ["Some chatter. A few neighbors saying hello.", ""];
+            if (ratio < 0.50) return ["Getting busy. Someone discovered Netflix.", "warn"];
+            if (ratio < 0.65) return ["Rush hour! Everyone and their smart fridge is here.", "warn"];
+            if (ratio < 0.80) return ["PACKED. This channel needs a traffic light.", "hot"];
+            if (ratio < 0.90) return ["CHAOS. I can hear the packets screaming.", "hot"];
+            return ["NUCLEAR MELTDOWN. Abandon all hope ye who transmit here.", "hot"];
+        }
+
+        function getBarColor(busyMs, totalMs) {
+            const r = busyMs / totalMs;
+            if (r < 0.15) return '#33ff33';
+            if (r < 0.35) return '#88cc33';
+            if (r < 0.55) return '#cccc33';
+            if (r < 0.75) return '#cc8833';
+            return '#ff3333';
+        }
+
+        /* ═══════════════════ ASYNC SCAN API ═══════════════════ */
+        function startChannelScan(ch, dur) {
+            return new Promise((resolve, reject) => {
+                fetch(`/api/scanner/start?ch=${ch}&dur=${dur}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.error) { reject(data.error); return; }
+                        const poll = setInterval(() => {
+                            fetch('/api/scanner/status').then(r => r.json()).then(s => {
+                                if (s.status === 'done') {
+                                    clearInterval(poll);
+                                    resolve(s);
+                                }
+                            }).catch(() => {
+                                clearInterval(poll);
+                                reject('connection lost');
+                            });
+                        }, 300);
+                    })
+                    .catch(e => reject(e));
+            });
+        }
+
+        function setButtons(active) {
+            scanning = active;
+            document.getElementById('btnScanCurrent').disabled = active;
+            document.getElementById('btnScanAll').disabled = active;
+            document.getElementById('btnStop').disabled = !active;
+        }
+
+        async function scanCurrent() {
+            aborted = false;
+            setButtons(true);
+            clearLog();
+            startKitt();
+
+            // Hole aktuellen Kanal vor dem Scan
+            let currentCh = 1;
+            try {
+                const sysData = await fetch('/api/sysinfo').then(r => r.json());
+                if (sysData && sysData.wifiCh) currentCh = sysData.wifiCh;
+            } catch (e) {}
+
+            const scanDur = 30; 
+            log('═══════════════════════════════════', 'dim');
+            log(`  SINGLE CHANNEL SCAN – CH ${currentCh}`, 'bright');
+            log('═══════════════════════════════════', 'dim');
+            log('');
+            document.getElementById('kittChannel').innerText = `SCANNING CH ${currentCh}`;
+            log(`[SCAN] Tuning to channel ${currentCh}...`, 'info');
+            log(`[SCAN] Promiscuous mode active for ${scanDur}s...`);
+            log('');
+
+            try {
+                const data = await startChannelScan(currentCh, scanDur);
+                const pct = Math.round(data.busy_ms / data.total_ms * 100);
+                log(`[DATA] Packets captured : ${data.packets}`, 'bright');
+                log(`[DATA] Estimated airtime: ${data.busy_ms}ms / ${data.total_ms}ms (${pct}%)`, 'bright');
+                const [comment, cls] = getComment(data.packets, data.busy_ms, data.total_ms);
+                log('');
+                log(`  → ${comment}`, cls);
+            } catch (e) {
+                log(`[ERROR] Scan failed: ${e}`, 'hot');
+            }
+
+            log('');
+            log('[DONE] Single channel scan complete.', 'info');
+            fetch('/api/scanner/restore');
+            stopKitt();
+            setButtons(false);
+        }
+
+        async function scanAll() {
+            aborted = false;
+            setButtons(true);
+            clearLog();
+            scanResults = {};
+            document.getElementById('resultsPanel').style.display = 'none';
+            startKitt();
+
+            let totalTime = 0;
+            SCAN_CHANNELS.forEach(ch => totalTime += getScanDuration(ch) + 1);
+
+            log('═══════════════════════════════════════', 'dim');
+            log('  FULL 2.4GHz SPECTRUM ANALYSIS', 'bright');
+            log('═══════════════════════════════════════', 'dim');
+            log('');
+            log(`[INIT] ${SCAN_CHANNELS.length} channels = ~${totalTime}s total`, 'info');
+            log('[WARN] Puck connections paused during scan!', 'warn');
+            log('');
+
+            for (let i = 0; i < SCAN_CHANNELS.length; i++) {
+                if (aborted) {
+                    log('');
+                    log('[ABORT] Scan terminated by operator.', 'hot');
+                    break;
+                }
+
+                const ch = SCAN_CHANNELS[i];
+                const dur = getScanDuration(ch);
+                const tag = `[${String(i+1).padStart(2,'0')}/${SCAN_CHANNELS.length}]`;
+                
+                document.getElementById('kittChannel').innerText = `CH ${ch} · ${i+1}/${SCAN_CHANNELS.length}`;
+                log(`${tag} Scanning channel ${ch} for ${dur}s...`);
+
+                try {
+                    const data = await startChannelScan(ch, dur);
+                    const pct = Math.round(data.busy_ms / data.total_ms * 100);
+                    scanResults[ch] = data;
+
+                    log(`${tag} CH${String(ch).padStart(2,' ')}: ${String(data.packets).padStart(5,' ')} pkts │ ${String(data.busy_ms).padStart(4,' ')}ms/${data.total_ms}ms (${String(pct).padStart(2,' ')}%)`, 'bright');
+                    const [comment, cls] = getComment(data.packets, data.busy_ms, data.total_ms);
+                    log(`       → ${comment}`, cls);
+                } catch (e) {
+                    log(`${tag} FAILED: ${e}`, 'hot');
+                    scanResults[ch] = { packets: 0, busy_ms: 0, total_ms: dur * 1000 };
+                }
+                log('');
+            }
+
+            if (!aborted) {
+                // Wir warten hier explizit auf showResults, da es nun async ist
+                await showResults();
+                log('[DONE] Full spectrum analysis complete.', 'info');
+                log('[INFO] Restoring original channel...', 'info');
+            }
+            fetch('/api/scanner/restore');
+            stopKitt();
+            setButtons(false);
+        }
+
+        function stopScan() {
+            aborted = true;
+            log('');
+            log('[OPERATOR] Abort requested... finishing current channel.', 'warn');
+        }
+
+        /* ═══════════════════ RESULTS CHART & LOGIC ═══════════════════ */
+        async function showResults() {
+            const panel = document.getElementById('resultsPanel');
+            const body = document.getElementById('resultsBody');
+            const reco = document.getElementById('recommendation');
+            panel.style.display = 'block';
+            body.innerHTML = '';
+
+            // 1. Aktuellen Kanal abfragen, um ihn als Basis zu nehmen
+            let currentCh = 1;
+            try {
+                const sysData = await fetch('/api/sysinfo').then(r => r.json());
+                if (sysData && sysData.wifiCh) {
+                    currentCh = sysData.wifiCh;
+                }
+            } catch (e) {
+                console.warn("Konnte aktuellen Kanal nicht abrufen. Gehe von Kanal 1 aus.");
+            }
+
+            let bestCh = currentCh;
+            let currentBusyPct = 0;
+            let bestBusyPct = 100;
+
+            // 2. Alle Daten auswerten
+            SCAN_CHANNELS.forEach(ch => {
+                const d = scanResults[ch] || { packets: 0, busy_ms: 0, total_ms: getScanDuration(ch) * 1000 };
+                const pct = Math.round((d.busy_ms / d.total_ms) * 100);
+
+                if (ch === currentCh) {
+                    currentBusyPct = pct;
+                }
+
+                // Suche den besten der priorisierten Kanäle
+                if (PREFERRED_CHANNELS.includes(ch) && pct < bestBusyPct) {
+                    bestBusyPct = pct;
+                    bestCh = ch;
+                }
+
+                const row = document.createElement('div');
+                row.className = 'ch-row';
+                row.id = `row-ch-${ch}`;
+                row.innerHTML = `
+                    <div class="ch-label">CH ${String(ch).padStart(2,' ')}</div>
+                    <div class="ch-bar-bg">
+                        <div class="ch-bar-fill" style="width:${pct}%; background:${getBarColor(d.busy_ms, d.total_ms)};"></div>
+                    </div>
+                    <div class="ch-val">${pct}% · ${d.packets}p</div>`;
+                body.appendChild(row);
+            });
+
+            // 3. Empfehlung aussprechen (Hysterese implementiert)
+            let recommendationText = "";
+            
+            // Regel 1: Unter 40 % ist der Kanal unbedenklich.
+            if (currentBusyPct <= 40) {
+                recommendationText = `SYSTEM STABIL: Aktueller Kanal ${currentCh} hat nur ${currentBusyPct}% Auslastung.<br><span style="color:#aaa;">Kein Wechsel nötig. In diesem Bereich gibt es keine spürbaren ESP-NOW Latenzen.</span>`;
+                bestCh = currentCh; // Wir überschreiben bestCh, um den Stern im UI richtig zu setzen
+            } 
+            // Regel 2: Signifikanzprüfung - 20 % besser?
+            else if ((currentBusyPct - bestBusyPct) < 20) {
+                recommendationText = `KEIN WECHSEL EMPFOHLEN: Kanal ${currentCh} ist belastet (${currentBusyPct}%), aber der beste Alternativkanal (${bestCh} mit ${bestBusyPct}%) bietet keine ausreichende Verbesserung.<br><span style="color:#aaa;">Das Risiko eines Verbindungsabbruchs beim Wechsel ist höher als der Nutzen.</span>`;
+                bestCh = currentCh;
+            } 
+            // Regel 3: Kanal ist schlecht und es gibt eine deutlich bessere Alternative
+            else {
+                recommendationText = `WECHSEL EMPFOHLEN: Wechsle von Kanal ${currentCh} auf Kanal ${bestCh}.<br><span style="color:#33ff33;">Deutliche Verbesserung erwartet (${currentBusyPct}% ➔ ${bestBusyPct}%).</span>`;
+            }
+
+            reco.innerHTML = recommendationText + `<br><br><span style="color:#888; font-size:0.75rem;">* = Überlappungsfreie Kanäle (1, 6, 11) – Bieten die geringste Störanfälligkeit</span>`;
+
+            // 4. Optische Markierungen im UI anwenden
+            const rows = body.querySelectorAll('.ch-row');
+            rows.forEach((row) => {
+                const ch = parseInt(row.id.replace('row-ch-', ''));
+                let labelHtml = `CH ${String(ch).padStart(2,' ')}`;
+
+                if (ch === currentCh) {
+                    labelHtml += ' <span style="font-size:0.65rem; color:#aaa;">(AKTUELL)</span>';
+                } else if (PREFERRED_CHANNELS.includes(ch)) {
+                    labelHtml += ' *';
+                }
+
+                if (ch === bestCh && recommendationText.includes("WECHSEL EMPFOHLEN")) {
+                    row.classList.add('recommended');
+                    labelHtml += '<span class="recommend-tag">★ WECHSELN</span>';
+                } else if (ch === currentCh && !recommendationText.includes("WECHSEL EMPFOHLEN")) {
+                    row.classList.add('recommended');
+                    labelHtml += '<span class="recommend-tag" style="background:#555; color:#fff;">★ BEHALTEN</span>';
+                }
+
+                row.querySelector('.ch-label').innerHTML = labelHtml;
+            });
+        }
+    </script>
+</body>
+</html>

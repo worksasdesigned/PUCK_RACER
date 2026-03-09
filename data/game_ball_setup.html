@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Ball Prellen</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    </head>
+<body>
+    <header><div class="logo" data-i18n="g_ball">Ball Prellen 🏀</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="bal_setup_time">⏱️ Time Limit</h3>
+            <div class="slider-header">
+                <span data-i18n="lbl_time_limit">Duration:</span>
+                <span id="timeDisp" class="slider-val">60s</span>
+            </div>
+            <input type="range" id="timeSlider" min="30" max="300" step="10" value="60" oninput="updTime()">
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="bal_setup_pucks">👥 Pucks & Groups</h3>
+            <div class="slider-header">
+                <span data-i18n="bal_lbl_ppg">Pucks per Group:</span>
+                <span id="ppgDisp" class="slider-val">3</span>
+            </div>
+            <input type="range" id="ppgSlider" min="3" max="5" value="3" oninput="updLimits()">
+            
+            <div class="slider-header" style="margin-top:15px;">
+                <span data-i18n="bal_lbl_grp">Active Groups:</span>
+                <span id="grpDisp" class="slider-val">1</span>
+            </div>
+            <input type="range" id="grpSlider" min="1" max="4" value="1" oninput="updLimits()">
+            
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="bal_setup_rules">⚙️ Game Rules</h3>
+            <div class="toggle-row">
+                <span data-i18n="bal_lbl_mode">Lighting Mode</span>
+                <select id="selMode" style="width:50%; margin-top:0;">
+                    <option value="0" selected data-i18n="bal_opt_seq">Sequence</option>
+                    <option value="1" data-i18n="bal_opt_rnd">Random</option>
+                </select>
+            </div>
+            
+            <div class="toggle-row">
+                <span data-i18n="bal_lbl_auto">Auto Restart Group</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkAuto">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span data-i18n="bal_lbl_sound">Sound Effects</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkSound" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        let connPucks = 0;
+
+        fetch('/api/game/load?id=23'); 
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connPucks = data.filter(p => p.active).length;
+            updLimits();
+        });
+
+        function updTime() {
+            let s = parseInt(document.getElementById('timeSlider').value);
+            let m = Math.floor(s / 60);
+            let sec = s % 60;
+            document.getElementById('timeDisp').innerText = `${m}m ${sec.toString().padStart(2,'0')}s`;
+        }
+
+        function updLimits() {
+            let ppg = parseInt(document.getElementById('ppgSlider').value);
+            let grp = parseInt(document.getElementById('grpSlider').value);
+            document.getElementById('ppgDisp').innerText = ppg;
+            document.getElementById('grpDisp').innerText = grp;
+            
+            let req = ppg * grp;
+            let info = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+            
+            // Text zusammensetzen
+            info.innerHTML = `${getTranslation('req_pucks')} ${req} | ${getTranslation('conn_pucks')} ${connPucks}`;
+            
+            // Einfärbung prüfen und CSS Klassen anwenden
+            if (req > connPucks) {
+                info.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                info.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+        }
+
+        function nextStep() {
+            let ppg = parseInt(document.getElementById('ppgSlider').value);
+            let grp = parseInt(document.getElementById('grpSlider').value);
+            if (ppg * grp > connPucks) {
+                if(!confirm("Not enough pucks connected! Continue anyway?")) return;
+            }
+            
+            sessionStorage.setItem('ball_grp', grp);
+            sessionStorage.setItem('ball_ppg', ppg);
+            sessionStorage.setItem('ball_time', document.getElementById('timeSlider').value);
+            sessionStorage.setItem('ball_auto', document.getElementById('chkAuto').checked ? 1 : 0);
+            sessionStorage.setItem('ball_snd', document.getElementById('chkSound').checked ? 1 : 0);
+            sessionStorage.setItem('ball_rnd', document.getElementById('selMode').value);
+            location.href = 'game_ball_names.html';
+        }
+
+        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        
+        updTime();
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'timeSlider', el:'timeSlider' },
+        { key:'ppgSlider',  el:'ppgSlider' },
+        { key:'grpSlider',  el:'grpSlider' },
+        { key:'selMode',    el:'selMode',  type:'select' },
+        { key:'chkAuto',    el:'chkAuto',  type:'check' },
+        { key:'chkSound',   el:'chkSound', type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

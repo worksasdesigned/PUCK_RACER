@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RUN - Simple Counter</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .timer-box { text-align: center; margin-bottom: 20px; }
+        .big-time { font-size: 5rem; font-weight: bold; color: var(--text-main); font-family: 'Courier New', monospace; line-height: 1; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        .target-time { color: var(--text-muted); font-size: 1.2rem; margin-top: 5px; }
+        
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; height: 100%; }
+        
+        .score-row { display: flex; align-items: center; justify-content: space-between; background: var(--card-hover); margin-bottom: 8px; padding: 10px 15px; border-radius: 8px; border-left: 10px solid var(--border-color); transition: background 0.2s;}
+        .score-val { font-size: 2.5rem; font-weight: bold; color: var(--text-main); }
+        .score-name { font-size: 1.2rem; color: var(--text-main); opacity: 0.8; }
+        .rank { font-size: 1.5rem; margin-right: 10px; width: 30px; text-align:center;}
+        
+        #scoreboard { display: flex; flex-direction: column; }
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="g_counter">Simple Counter</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="timer-box">
+            <div class="big-time" id="timer">00:00.0</div>
+            <div class="target-time">
+                <span data-i18n="cnt_run_limit_lbl">Limit:</span>
+                <span id="targetValue">∞</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button onclick="doAction('reset')" class="btn-warn btn-ctrl" data-i18n="btn_back">BACK</button>
+            <button onclick="doAction('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
+            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
+        </div>
+
+        <div id="scoreboard">
+            <div id="loadingTxt" style="text-align:center; color:var(--text-muted); padding:20px;" data-i18n="cnt_run_wait">Waiting for data...</div>
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FFFFFF', '#800080', '#FFC0CB'];
+        const MEDALS = ['🥇','🥈','🥉'];
+        
+        let targetTime = parseInt(sessionStorage.getItem('cnt_time') || 0);
+
+        // Diese Funktion zwingt den berechneten Zeitwert hart in das HTML-Element
+        function enforceLimitText() {
+            let targetValEl = document.getElementById('targetValue');
+            if(targetTime > 0) {
+                targetValEl.innerText = formatTime(targetTime * 1000);
+            } else {
+                targetValEl.innerText = "∞";
+            }
+        }
+
+        // 1. Initiale Zuweisung beim Laden der Seite
+        document.addEventListener('DOMContentLoaded', enforceLimitText);
+
+        setInterval(updateStatus, 400);
+
+        function updateStatus() {
+            // 2. Garantierte Wiederholung alle 400ms: Falls lang.js das Element manipuliert haben sollte, 
+            // schreiben wir unseren Wert gnadenlos wieder rein.
+            enforceLimitText();
+
+            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                
+                let currentT = data.time !== undefined ? data.time : (data.timeLeft !== undefined ? data.timeLeft : 0);
+                document.getElementById('timer').innerText = formatTime(currentT);
+                
+                let btnStart = document.getElementById('btnStart');
+                if (data.state == 2) btnStart.innerText = "RUNNING"; 
+                else if (data.state == 3) btnStart.innerText = getTranslation('btn_reset') || "RESET"; 
+                else btnStart.innerText = getTranslation('btn_start') || "START";
+
+                let arr = data.scores || data.players || data.pucks;
+                if(arr && Array.isArray(arr)) {
+                    renderScores(arr, data.state);
+                } else {
+                    let loadingTxt = document.getElementById('loadingTxt');
+                    if (loadingTxt) loadingTxt.style.display = 'none';
+                }
+            }).catch(e => {
+                let dot = document.getElementById('cnt-green');
+                if(dot) dot.style.opacity = 0.2;
+            });
+        }
+
+        function renderScores(scoresArray, gameState) {
+            let container = document.getElementById('scoreboard');
+            let loadingTxt = document.getElementById('loadingTxt');
+            if (loadingTxt) loadingTxt.style.display = 'none';
+
+            if (scoresArray.length === 0) return;
+
+            let mappedScores = scoresArray.map((s, i) => {
+                let pId = (s.id !== undefined) ? s.id : i;
+                let pSc = (s.sc !== undefined) ? s.sc : ((s.points !== undefined) ? s.points : ((s.score !== undefined) ? s.score : 0));
+                return { id: pId, sc: pSc };
+            });
+
+            let sortedScores = [...mappedScores].sort((a, b) => b.sc - a.sc);
+            
+            sortedScores.forEach((s, idx) => {
+                let name = sessionStorage.getItem(`p_name_${s.id}`) || `Player ${s.id+1}`;
+                let color = COLORS[s.id % COLORS.length];
+                let rank = (idx + 1) + '.';
+                
+                if (gameState === 3 && s.sc > 0) { 
+                    if (idx === 0) rank = MEDALS[0];
+                    else if (idx === 1) rank = MEDALS[1];
+                    else if (idx === 2) rank = MEDALS[2];
+                }
+                
+                let rowId = `score-row-${s.id}`;
+                let rowEl = document.getElementById(rowId);
+
+                if (!rowEl) {
+                    container.insertAdjacentHTML('beforeend', `
+                    <div id="${rowId}" class="score-row" style="border-left-color: ${color}; order: ${idx};">
+                        <div style="display:flex; align-items:center;">
+                            <span class="rank" id="rank-${s.id}">${rank}</span>
+                            <span class="score-name">${name}</span>
+                        </div>
+                        <span class="score-val" id="val-${s.id}">${s.sc}</span>
+                    </div>`);
+                } else {
+                    rowEl.style.order = idx;
+                    document.getElementById(`rank-${s.id}`).innerText = rank;
+                    document.getElementById(`val-${s.id}`).innerText = s.sc;
+                }
+            });
+        }
+
+        function doAction(act) {
+            if(act === 'reset') {
+                fetch(`/api/game/action?cmd=reset`);
+                location.href = 'game_counter_names.html'; 
+            } else {
+                fetch(`/api/game/action?cmd=${act}`);
+            }
+        }
+
+        function goHome() {
+            fetch('/api/game/action?cmd=exit')
+                .then(() => location.href = '/')
+                .catch(() => location.href = '/');
+        }
+
+        function formatTime(ms) {
+            let totalSec = Math.floor(ms / 1000);
+            let m = Math.floor(totalSec / 60);
+            let s = totalSec % 60;
+            let z = Math.floor((ms % 1000) / 100); 
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}.${z}`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Simon</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_simon">Setup Simon</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="sim_setup_grp">👥 Groups / Players</h3>
+            <div class="slider-header">
+                <span></span>
+                <span id="grpDisp" class="slider-val">1</span>
+            </div>
+            <input type="range" id="grpSlider" min="1" max="3" value="1" oninput="updateGroups(this.value)">
+            <p id="connInfo" class="info-txt" style="margin-top:10px; font-weight:bold; color:var(--primary);" data-i18n="loading">Loading...</p>
+        </div>
+
+        <div class="card" id="puckConfig">
+            <h3 data-i18n="sim_setup_pucks">🔴 Pucks per Group</h3>
+            <div class="slider-header">
+                <span></span>
+                <span id="puckDisp" class="slider-val">4</span>
+            </div>
+            <input type="range" id="puckSlider" min="2" max="10" value="4" oninput="updatePucks()">
+            <p id="puckWarn" class="info-txt warn-txt" style="display:none; text-align:left;"></p>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="sim_setup_set">⚙️ Settings</h3>
+            
+            <div class="slider-header">
+                <span data-i18n="sim_lbl_len">Sequence Length:</span>
+                <span id="lenDisp" class="slider-val">15</span>
+            </div>
+            <input type="range" id="lenSlider" min="5" max="25" value="15" oninput="document.getElementById('lenDisp').innerText=this.value">
+            
+            <div class="slider-header" style="margin-top:15px;">
+                <span data-i18n="sim_lbl_spd">Speed:</span>
+                <span id="spdDisp" class="slider-val">Medium</span>
+            </div>
+            <input type="range" id="spdSlider" min="0" max="2" value="1" oninput="updateSpeed(this.value)">
+            
+            <div class="toggle-row" style="margin-top:20px;">
+                <span data-i18n="sim_lbl_blind">Color Blind Mode</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkBlind">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span data-i18n="sim_lbl_auto">Auto Restart</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkAuto" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span data-i18n="sim_lbl_snd">Sound On</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkSound" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button onclick="nextStep()" id="btnNext" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        let connectedPucks = 10; // Fallback
+        let activeGroups = 1;
+        let pucksPerGroup = 4;
+        let pucksPerGroupArr = [];
+
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connectedPucks = data.filter(p => p.active).length;
+            document.getElementById('connInfo').innerText = `${getTranslation('conn_pucks') || 'Connected Pucks:'} ${connectedPucks}`;
+            
+            // Slider Maximum auf verbundene Pucks setzen (mindestens aber 2)
+            let pSlider = document.getElementById('puckSlider');
+            pSlider.max = Math.max(2, connectedPucks);
+            
+            // Startwerte initialisieren
+            updateGroups(document.getElementById('grpSlider').value);
+            updatePucks();
+            updateSpeed(document.getElementById('spdSlider').value);
+        }).catch(e => {
+            // Fallback Init falls offline
+            updateGroups(document.getElementById('grpSlider').value);
+            updatePucks();
+            updateSpeed(document.getElementById('spdSlider').value);
+        });
+
+        function updateGroups(val) {
+            activeGroups = parseInt(val);
+            document.getElementById('grpDisp').innerText = val;
+            validateSetup();
+        }
+
+        function updatePucks() {
+            pucksPerGroup = parseInt(document.getElementById('puckSlider').value);
+            document.getElementById('puckDisp').innerText = pucksPerGroup;
+            validateSetup();
+        }
+
+        function validateSetup() {
+            let needed = activeGroups * pucksPerGroup;
+            let warnEl = document.getElementById('puckWarn');
+            let btn = document.getElementById('btnNext');
+            
+            if (needed > connectedPucks) {
+                let warnTxt = (typeof getTranslation === 'function') ? getTranslation('sim_warn_pucks') : "⚠️ <b>Warning:</b> {0} pucks needed, but only {1} connected!";
+                if(warnTxt) {
+                    warnTxt = warnTxt.replace('{0}', needed).replace('{1}', connectedPucks);
+                } else {
+                    warnTxt = `⚠️ <b>Achtung:</b> ${needed} Pucks benötigt, aber nur ${connectedPucks} verbunden!`;
+                }
+                warnEl.innerHTML = warnTxt;
+                warnEl.style.display = 'block';
+                btn.disabled = true;
+                btn.style.opacity = 0.5;
+            } else {
+                warnEl.style.display = 'none';
+                btn.disabled = false;
+                btn.style.opacity = 1;
+            }
+            
+            // Array für das Backend vorbereiten (z.B. [4, 4] bei 2 Gruppen)
+            pucksPerGroupArr = [];
+            for(let i=0; i<activeGroups; i++) {
+                pucksPerGroupArr.push(pucksPerGroup);
+            }
+        }
+
+        function updateSpeed(val) {
+            let txt = [getTranslation('disp_opt_slow'), getTranslation('disp_opt_norm'), getTranslation('disp_opt_fast')];
+            document.getElementById('spdDisp').innerText = txt[val] || "Medium";
+        }
+
+        function nextStep() {
+            if (activeGroups * pucksPerGroup > connectedPucks) {
+                if(!confirm("Nicht genug Pucks verbunden! Trotzdem fortfahren?")) return;
+            }
+
+            sessionStorage.setItem('sim_groups', activeGroups);
+            sessionStorage.setItem('sim_pucks', JSON.stringify(pucksPerGroupArr));
+            sessionStorage.setItem('sim_len', document.getElementById('lenSlider').value);
+            sessionStorage.setItem('sim_spd', document.getElementById('spdSlider').value);
+            sessionStorage.setItem('sim_blind', document.getElementById('chkBlind').checked ? 1 : 0);
+            sessionStorage.setItem('sim_auto', document.getElementById('chkAuto').checked ? 1 : 0);
+            sessionStorage.setItem('sim_sound', document.getElementById('chkSound').checked ? 1 : 0);
+            
+            location.href = 'game_simon_names.html';
+        }
+
+        function cancelSetup() {
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
+        }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'grpSlider', el:'grpSlider' },
+        { key:'puckSlider', el:'puckSlider' },
+        { key:'lenSlider', el:'lenSlider' },
+        { key:'spdSlider', el:'spdSlider' },
+        { key:'chkBlind',  el:'chkBlind',  type:'check' },
+        { key:'chkAuto',   el:'chkAuto',   type:'check' },
+        { key:'chkSound',  el:'chkSound',  type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

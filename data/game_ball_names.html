@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Layout - Ball Prellen</title>
+    <link rel="stylesheet" href="style.css?v=4">
+    <style>
+        .hidden { display: none; }
+        #toggleIcon { transition: transform 0.3s; display: inline-block; }
+        .rotate { transform: rotate(-90deg); }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="bal_names_title">Build the Stations</div></header>
+    <main>
+        <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">Initializing...</div>
+        
+        <div id="content" style="display:none;">
+            <div class="layout-card">
+                <div class="layout-header" onclick="toggleLayout()">
+                    <span data-i18n="bat_layout_title">Stationen Aufbau</span>
+                    <span id="toggleIcon">▼</span>
+                </div>
+                <div class="layout-body" id="layoutBody" style="flex-direction: column; align-items: center; gap: 20px;">
+                    <p style="font-size:0.8rem; color:var(--text-muted); text-align:center; margin:0;" data-i18n="bal_names_hint">
+                        Baue die Stationen für jede Gruppe wie folgt auf.
+                    </p>
+                    <div id="groupsList" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;"></div>
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_start_game">TO ARENA 🏁</button>
+            <button onclick="location.href='game_ball_setup.html'" class="btn-back" style="margin-top:10px;" data-i18n="btn_back">⬅ BACK</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        const COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF'];
+
+        const BALL_LAYOUTS = {
+            3: ["C1", "A5", "E5"],
+            4: ["A1", "E1", "A5", "E5"],
+            5: ["C1", "A3", "E3", "A5", "E5"]
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(initList, 500);
+        });
+
+        async function initList() {
+            await fetch('/api/game/load?id=23');
+            
+            let nGrp = parseInt(sessionStorage.getItem('ball_grp') || 1);
+            let nPpg = parseInt(sessionStorage.getItem('ball_ppg') || 3);
+            
+            await fetch(`/api/game/action?cmd=cfg_grp&val=${nGrp}`);
+            await fetch(`/api/game/action?cmd=cfg_ppg&val=${nPpg}`);
+            await fetch(`/api/game/action?cmd=cfg_time&val=${sessionStorage.getItem('ball_time')}`);
+            await fetch(`/api/game/action?cmd=cfg_auto&val=${sessionStorage.getItem('ball_auto')}`);
+            await fetch(`/api/game/action?cmd=cfg_snd&val=${sessionStorage.getItem('ball_snd')}`);
+            await fetch(`/api/game/action?cmd=cfg_rnd&val=${sessionStorage.getItem('ball_rnd')}`);
+            
+            await fetch('/api/game/action?cmd=setup');
+            await fetch('/api/game/action?cmd=show_layout'); 
+            
+            let container = document.getElementById('groupsList');
+            container.innerHTML = "";
+            let activeLayout = BALL_LAYOUTS[nPpg] || BALL_LAYOUTS[3];
+
+            for(let g = 0; g < nGrp; g++) {
+                let html = `<div><h4 style="margin:0 0 10px 0; text-align:center; color:${COLORS[g]}">Group ${g+1}</h4>`;
+                html += `<table class="arena-table">`;
+                const cols = ['A', 'B', 'C', 'D', 'E'];
+                for(let r = 1; r <= 5; r++) {
+                    html += `<tr>`;
+                    for(let c = 0; c < 5; c++) {
+                        html += `<td id="cell-${g}-${cols[c]}${r}"></td>`;
+                    }
+                    html += `</tr>`;
+                }
+                html += `</table></div>`;
+                container.innerHTML += html;
+            }
+
+            for(let g = 0; g < nGrp; g++) {
+                let centerCell = document.getElementById(`cell-${g}-C3`);
+                if(centerCell) centerCell.innerHTML = `<div style="font-size:1.5rem; white-space:nowrap;">🏀🏃</div>`;
+
+                for(let p = 0; p < nPpg; p++) {
+                    let coord = activeLayout[p];
+                    let cell = document.getElementById(`cell-${g}-${coord}`);
+                    let globalIdx = (g * nPpg) + p;
+                    if(cell) {
+                        cell.innerHTML = `<div class="puck-icon" id="puck_vis_${globalIdx}" style="background:${COLORS[g]}">${p+1}</div>`;
+                    }
+                }
+            }
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+
+            setInterval(pollPuckEffects, 1500);
+        }
+
+        async function pollPuckEffects() {
+            try {
+                let r = await fetch('/api/effects');
+                let data = await r.json();
+                data.forEach(eff => {
+                    let vis = document.getElementById(`puck_vis_${eff.id}`);
+                    if(vis) {
+                        const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
+                        vis.classList.remove('eff-breathe', 'eff-chase', 'eff-rainbow');
+                        if(eff.eff == 3 || eff.eff == 4 || eff.eff == 5) vis.classList.add('eff-breathe');
+                        if(eff.eff == 6 || eff.eff == 7) vis.classList.add('eff-chase');
+                        if(eff.eff == 9) vis.classList.add('eff-rainbow');
+                        
+                        if(eff.eff == 18) {
+                            let percent = Math.round(eff.dur / 2.55);
+                            vis.style.background = `conic-gradient(${rgb} ${percent}%, var(--border-color) ${percent}%)`;
+                            vis.style.border = `2px solid ${rgb}`;
+                        } else {
+                            vis.style.background = rgb;
+                            vis.style.border = `2px solid #fff`;
+                        }
+                        vis.style.boxShadow = `0 0 15px ${rgb}`;
+                    }
+                });
+            } catch(e) {}
+        }
+
+        function toggleLayout() {
+            document.getElementById('layoutBody').classList.toggle('hidden');
+            document.getElementById('toggleIcon').classList.toggle('rotate');
+        }
+
+        function startGame() {
+            setTimeout(() => { location.href = 'game_ball_run.html'; }, 200);
+        }
+    </script>
+</body>
+</html>

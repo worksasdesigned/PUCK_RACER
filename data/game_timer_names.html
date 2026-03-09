@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Names - Timer</title>
+    <link rel="stylesheet" href="style.css?v=4">
+    <style>
+        .player-row { background:var(--card-bg); padding:15px; border-radius:8px; border-left:5px solid #fff; margin-bottom:15px;}
+        .player-title { display:flex; align-items:center; gap:10px; font-weight:bold; }
+        .color-box { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #fff; display:inline-block; vertical-align:middle; transition: all 0.3s;}
+        input[type=text] { flex-grow: 1; padding: 10px; font-size: 1.1rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-main); }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="tmr_names_title">Students - Timer</div></header>
+    <main>
+        <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">Initializing...</div>
+        
+        <div id="pickerBar" style="display:none; margin-bottom:15px;">
+            <button onclick="loadFromPicker()" class="btn-primary" style="font-size:1.1rem; background:var(--card-hover); border:1px dashed var(--primary); color:var(--primary);">
+                👥 <span data-i18n="pp_load_players">Load Players from List</span>
+            </button>
+        </div>
+        
+        <div id="playerList" style="display:none;"></div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="location.href='game_timer_setup.html'" class="btn-warn" style="font-size:1.2rem;" data-i18n="btn_back">⬅ BACK</button>
+            <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">TO GAME 🏁</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="player_picker.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        const P_COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FFFFFF', '#800080', '#FFC0CB'];
+        let numPlayers = parseInt(sessionStorage.getItem('timer_players') || 1);
+
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(initList, 500);
+        });
+
+        async function initList() {
+            await fetch('/api/game/load?id=16');
+            
+            let timeVal = sessionStorage.getItem('timer_time') || 60;
+            await fetch(`/api/game/action?cmd=cfg_time&val=${timeVal}`);
+            await fetch(`/api/game/action?cmd=cfg_players&val=${numPlayers}`);
+            await fetch(`/api/game/action?cmd=setup`);
+
+            let container = document.getElementById('playerList');
+            container.innerHTML = "";
+            for(let i=0; i<numPlayers; i++) {
+                let pName = sessionStorage.getItem(`p_name_${i}`) || `Student ${i+1}`;
+                let col = P_COLORS[i % 10];
+                container.innerHTML += `
+                <div class="player-row" style="border-left-color:${col}">
+                    <div class="player-title">
+                        <div class="color-box" id="cb_${i}" style="background:${col}; box-shadow:0 0 10px ${col}"></div>
+                        <input type="text" id="name_${i}" value="${pName}" placeholder="Name">
+                    </div>
+                </div>`;
+            }
+            
+            document.getElementById('loading').style.display = 'none';
+            container.style.display = 'block';
+            document.getElementById('pickerBar').style.display = 'block';
+            
+            setInterval(pollPuckEffects, 1500);
+        }
+
+        async function pollPuckEffects() {
+            try {
+                let r = await fetch('/api/effects');
+                let data = await r.json();
+                data.forEach(eff => {
+                    let cb = document.getElementById(`cb_${eff.id}`);
+                    if(cb) {
+                        const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
+                        cb.style.background = rgb; 
+                        cb.style.boxShadow = `0 0 10px ${rgb}`;
+                        cb.style.borderColor = (eff.r === 0 && eff.g === 0 && eff.b === 0) ? '#444' : '#fff';
+                    }
+                });
+            } catch(e) {}
+        }
+
+        function loadFromPicker() {
+            openPlayerPicker(numPlayers, function(selected) {
+                selected.forEach((p, i) => {
+                    let inp = document.getElementById('name_' + i);
+                    if (inp) { inp.value = p.name; sessionStorage.setItem('p_name_' + i, p.name); }
+                });
+            });
+        }
+
+        function startGame() {
+            for(let i=0; i<numPlayers; i++) {
+                sessionStorage.setItem(`p_name_${i}`, document.getElementById(`name_${i}`).value);
+            }
+            setTimeout(() => { location.href = 'game_timer_run.html'; }, 200);
+        }
+    </script>
+</body>
+</html>

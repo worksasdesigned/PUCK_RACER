@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puck Fleet // Puck Racer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+         
+        .fleet-page { font-family: 'Share Tech Mono', 'Courier New', monospace; }
+
+        .fleet-summary {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;
+        }
+        .sum-box {
+            background: #0a0a0a; border: 1px solid #1a3a1a; border-radius: 8px;
+            padding: 12px; text-align: center;
+        }
+        .sum-num { font-size: 2rem; font-weight: bold; color: #33ff33; line-height: 1; }
+        .sum-lbl { color: #555; font-size: 0.65rem; letter-spacing: 2px; margin-top: 4px; }
+
+        .puck-card {
+            background: #0a0a0a; border: 1px solid #222; border-left: 4px solid #333;
+            border-radius: 8px; padding: 12px; margin-bottom: 10px;
+            display: grid; grid-template-columns: 50px 1fr; gap: 12px; align-items: start;
+        }
+        .puck-id-circle {
+            width: 45px; height: 45px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem; font-weight: bold; color: #000; text-shadow: none;
+        }
+        .puck-details { min-width: 0; }
+        .puck-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 6px;
+        }
+        .puck-name { color: #ddd; font-size: 1rem; font-weight: bold; }
+        .puck-fw { color: #555; font-size: 0.75rem; }
+
+        .puck-mac {
+            color: #33aa33; font-size: 0.7rem; letter-spacing: 1px;
+            background: #0d1a0d; padding: 2px 6px; border-radius: 3px;
+            display: inline-block; margin-bottom: 8px;
+        }
+
+        .puck-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 4px 15px;
+        }
+        .pg-row { display: flex; justify-content: space-between; padding: 2px 0; }
+        .pg-label { color: #666; font-size: 0.75rem; }
+        .pg-val { color: #aaa; font-size: 0.75rem; font-weight: bold; }
+        .pg-val.good { color: #33ff33; }
+        .pg-val.warn { color: #ffaa00; }
+        .pg-val.bad { color: #ff4444; }
+
+        .rssi-bar-bg {
+            height: 6px; background: #111; border-radius: 3px;
+            overflow: hidden; margin-top: 6px; border: 1px solid #1a1a1a;
+        }
+        .rssi-bar-fill { height: 100%; border-radius: 2px; transition: width 0.5s; }
+
+        .no-pucks {
+            text-align: center; padding: 40px; color: #333;
+            font-size: 0.9rem; letter-spacing: 2px;
+        }
+
+        .stat-card {
+            background: #0a0a0a; border: 1px solid #1a3a1a; border-radius: 8px;
+            padding: 15px; margin-bottom: 15px;
+        }
+        .stat-title {
+            color: #33aa33; font-size: 0.75rem; letter-spacing: 3px;
+            text-transform: uppercase; margin-bottom: 12px;
+            border-bottom: 1px solid #1a3a1a; padding-bottom: 8px;
+        }
+
+        .click-leader {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 6px 0; border-bottom: 1px solid #0d1a0d;
+        }
+        .cl-name { color: #aaa; font-size: 0.85rem; }
+        .cl-count { color: #33ff33; font-size: 1rem; font-weight: bold; }
+
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" style="font-size:1rem;">🟢 Puck Fleet</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main class="fleet-page">
+        <div class="fleet-summary">
+            <div class="sum-box">
+                <div class="sum-num" id="sumOnline">0</div>
+                <div class="sum-lbl">ONLINE</div>
+            </div>
+            <div class="sum-box">
+                <div class="sum-num" id="sumClicks" style="color:#44aaff;">0</div>
+                <div class="sum-lbl">TOTAL CLICKS</div>
+            </div>
+            <div class="sum-box">
+                <div class="sum-num" id="sumUptime" style="color:#ffaa00;">0</div>
+                <div class="sum-lbl">COMBINED HOURS</div>
+            </div>
+        </div>
+
+        <div id="puckList">
+            <div class="no-pucks" id="noPucks">SCANNING FOR PUCKS...</div>
+        </div>
+
+        <!-- Click Leaderboard -->
+        <div class="stat-card" id="leaderCard" style="display:none;">
+            <div class="stat-title">▸ CLICK LEADERBOARD</div>
+            <div id="leaderList"></div>
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="location.href='/admin.html'" class="btn-back" style="width:100%;">⬅ Back to Admin</button>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const COLORS = ['#0000FF','#00FF00','#FF0000','#FFFF00','#FF00FF','#00FFFF','#FFA500','#800080','#40E0D0','#FFC0CB','#FFFFFF','#00FF00'];
+
+        function rssiClass(rssi) {
+            if (rssi >= -65) return 'good';
+            if (rssi >= -80) return 'warn';
+            return 'bad';
+        }
+
+        function rssiPct(rssi) {
+            return Math.min(100, Math.max(0, (rssi + 95) * 2.5));
+        }
+
+        function rssiColor(rssi) {
+            if (rssi >= -65) return '#33ff33';
+            if (rssi >= -80) return '#ffaa00';
+            return '#ff4444';
+        }
+
+        function formatMac(macShort) {
+            // API sends shortened mac, display as-is with prefix
+            return macShort.toUpperCase();
+        }
+
+        function render(pucks) {
+            const container = document.getElementById('puckList');
+            const noPucks = document.getElementById('noPucks');
+
+            if (pucks.length === 0) {
+                noPucks.style.display = 'block';
+                return;
+            }
+            noPucks.style.display = 'none';
+
+            let totalClicks = 0;
+            let totalMinutes = 0;
+
+            pucks.forEach(p => {
+                const col = COLORS[p.id % COLORS.length];
+                const rc = rssiClass(p.rssi);
+                const rp = rssiPct(p.rssi);
+                const rCol = rssiColor(p.rssi);
+                const upH = Math.floor((p.time || 0) / 60);
+                const upM = (p.time || 0) % 60;
+                const clicks = p.clicks || 0;
+                const lastSeen = (p.lastSeen / 1000).toFixed(0);
+
+                totalClicks += clicks;
+                totalMinutes += (p.time || 0);
+
+                let cardId = `puck-${p.id}`;
+                let card = document.getElementById(cardId);
+
+                if (!card) {
+                    card = document.createElement('div');
+                    card.id = cardId;
+                    card.className = 'puck-card';
+                    card.style.borderLeftColor = col;
+                    card.innerHTML = `
+                        <div class="puck-id-circle" style="background:${col};">#${p.id}</div>
+                        <div class="puck-details">
+                            <div class="puck-header">
+                                <span class="puck-name">Puck #${p.id}</span>
+                                <span class="puck-fw" id="fw-${p.id}">v${p.ver}</span>
+                            </div>
+                            <div class="puck-mac" id="mac-${p.id}">MAC: ${p.mac}</div>
+                            <div class="puck-grid">
+                                <div class="pg-row"><span class="pg-label">Signal</span><span class="pg-val ${rc}" id="rssi-${p.id}">${p.rssi} dBm</span></div>
+                                <div class="pg-row"><span class="pg-label">Battery</span><span class="pg-val" id="bat-${p.id}">${(p.bat/1000).toFixed(2)}V</span></div>
+                                <div class="pg-row"><span class="pg-label">Clicks</span><span class="pg-val good" id="clk-${p.id}">${clicks}</span></div>
+                                <div class="pg-row"><span class="pg-label">Uptime</span><span class="pg-val" id="up-${p.id}">${upH}h ${upM}m</span></div>
+                                <div class="pg-row"><span class="pg-label">Last seen</span><span class="pg-val" id="ls-${p.id}">${lastSeen}s ago</span></div>
+                            </div>
+                            <div class="rssi-bar-bg">
+                                <div class="rssi-bar-fill" id="rbar-${p.id}" style="width:${rp}%; background:${rCol};"></div>
+                            </div>
+                        </div>`;
+                    container.appendChild(card);
+                } else {
+                    document.getElementById(`fw-${p.id}`).innerText = `v${p.ver}`;
+                    document.getElementById(`mac-${p.id}`).innerText = `MAC: ${p.mac}`;
+
+                    let rssiEl = document.getElementById(`rssi-${p.id}`);
+                    rssiEl.innerText = `${p.rssi} dBm`;
+                    rssiEl.className = `pg-val ${rc}`;
+
+                    document.getElementById(`bat-${p.id}`).innerText = `${(p.bat/1000).toFixed(2)}V`;
+                    document.getElementById(`clk-${p.id}`).innerText = clicks;
+                    document.getElementById(`up-${p.id}`).innerText = `${upH}h ${upM}m`;
+                    document.getElementById(`ls-${p.id}`).innerText = `${lastSeen}s ago`;
+
+                    let rbar = document.getElementById(`rbar-${p.id}`);
+                    rbar.style.width = `${rp}%`;
+                    rbar.style.background = rCol;
+                }
+            });
+
+            // Summary
+            document.getElementById('sumOnline').innerText = pucks.length;
+            document.getElementById('sumClicks').innerText = totalClicks;
+            document.getElementById('sumUptime').innerText = Math.floor(totalMinutes / 60);
+
+            // Leaderboard
+            let sorted = [...pucks].sort((a,b) => (b.clicks||0) - (a.clicks||0));
+            let leaderCard = document.getElementById('leaderCard');
+            let leaderList = document.getElementById('leaderList');
+
+            if (sorted.length > 1) {
+                leaderCard.style.display = 'block';
+                const medals = ['🥇','🥈','🥉'];
+                leaderList.innerHTML = sorted.map((p, i) => {
+                    const medal = i < 3 ? medals[i] : `#${i+1}`;
+                    const col = COLORS[p.id % COLORS.length];
+                    return `<div class="click-leader">
+                        <span class="cl-name">${medal} <span style="color:${col};">Puck #${p.id}</span></span>
+                        <span class="cl-count">${p.clicks || 0}×</span>
+                    </div>`;
+                }).join('');
+            }
+        }
+
+        function update() {
+            fetch('/api/status').then(r=>r.json()).then(render).catch(()=>{});
+        }
+
+        update();
+        setInterval(update, 2000);
+    </script>
+</body>
+</html>

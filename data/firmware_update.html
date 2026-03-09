@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Center</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .warning-box {
+            background: #440000; border: 1px solid red; padding: 15px; 
+            border-radius: 8px; margin-bottom: 20px; color: #ffcccc;
+        }
+        .step { font-weight:bold; color:var(--primary); margin-bottom:5px; display:block;}
+        hr { border: 0; border-top: 1px solid #444; margin: 20px 0; }
+
+        /* OTA Progress Panel */
+        #ota-panel {
+            display: none;
+            background: #0a1a0a;
+            border: 1px solid #0f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+        }
+        #ota-panel.visible { display: block; }
+
+        .ota-title {
+            font-weight: bold;
+            color: #0f0;
+            margin-bottom: 12px;
+            font-size: 1rem;
+        }
+
+        .ota-progress-bar-wrap {
+            background: #1a1a1a;
+            border-radius: 4px;
+            height: 20px;
+            width: 100%;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        .ota-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #0a0, #0f0);
+            border-radius: 4px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
+
+        .ota-info {
+            font-size: 0.85rem;
+            color: #aaa;
+            line-height: 1.6;
+        }
+        .ota-info span { color: #fff; }
+
+        .ota-log {
+            margin-top: 10px;
+            background: #000;
+            border: 1px solid #333;
+            border-radius: 4px;
+            padding: 8px;
+            max-height: 140px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+        .ota-log div { padding: 2px 0; border-bottom: 1px solid #111; }
+        .ota-log .ok  { color: #0f0; }
+        .ota-log .cur { color: #ff0; }
+        .ota-log .inf { color: #aaa; }
+
+        .ota-done-msg {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: #0a2a0a;
+            border: 1px solid #0f0;
+            border-radius: 6px;
+            color: #0f0;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Update Center 🛠️</div>
+    </header>
+
+    <main>
+        <button onclick="location.href='settings.html'" class="btn btn-back">⬅ Back to Settings</button>
+
+        <div class="warning-box">
+            <strong>SILENT MODE ACTIVE</strong><br>
+            Game Engine and RSSI updates have been stopped to ensure stable file transfers.
+        </div>
+
+        <div class="card">
+            <h3>1. Puck Firmware (OTA)</h3>
+            <p>Updates Pucks one at a time – sequential &amp; reliable.</p>
+            
+            <span class="step">Step A: Upload .bin to Coordinator</span>
+            <form method='POST' action='/upload_puck' enctype='multipart/form-data'>
+                <input type='file' name='data' accept=".bin" required>
+                <input type='submit' value='Upload to Flash' class='btn-primary'>
+            </form>
+            
+            <br>
+            
+            <span class="step">Step B: Trigger Sequential Distribution</span>
+            <p style="font-size:0.8rem; color:#aaa;">
+                Pucks are updated <strong>one at a time</strong> (~35 s per Puck).<br>
+                Make sure all Pucks are turned on and nearby.
+            </p>
+            <button id="btnStartOta" onclick="startSequentialOta()" class="btn-warn">🚀 FLASH ALL PUCKS (sequential)</button>
+
+            <!-- Live Progress Panel -->
+            <div id="ota-panel">
+                <div class="ota-title">🔄 OTA Update in progress...</div>
+
+                <div class="ota-progress-bar-wrap">
+                    <div class="ota-progress-bar" id="otaBar"></div>
+                </div>
+
+                <div class="ota-info">
+                    Puck: <span id="otaCurrent">–</span> &nbsp;|&nbsp;
+                    Progress: <span id="otaCount">0 / 0</span> &nbsp;|&nbsp;
+                    Next in: <span id="otaRemaining">–</span> s
+                </div>
+
+                <div class="ota-log" id="otaLog"></div>
+
+                <div class="ota-done-msg" id="otaDoneMsg">
+                    ✅ All Pucks triggered! Wait ~30 s for the last Puck to finish flashing.
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>2. Coordinator System</h3>
+            <p>Updates the ESP32-S3 Firmware itself.</p>
+            <form method='POST' action='/update_system' enctype='multipart/form-data'>
+                <input type='file' name='update' accept=".bin" required>
+                <input type='submit' value='Flash Coordinator' class='btn-danger'>
+            </form>
+        </div>
+        
+        <div class="card">
+            <h3>3. File System</h3>
+            <p>Upload HTML/CSS/JS files.</p>
+            <form method='POST' action='/upload_file' enctype='multipart/form-data'>
+                <input type='file' name='file' required>
+                <input type='submit' value='Upload File' class='btn-primary'>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        // --- QUIET MODE ---
+        console.log("Entering Maintenance Mode...");
+        fetch('/api/rssi_mode?val=0');
+        fetch('/api/game/action?cmd=stop');
+        fetch('/api/game/action?cmd=exit');
+
+        // --- OTA STATE ---
+        let otaPolling = null;
+        let lastTriggered = 0; // Wie viele Pucks haben wir zuletzt als "triggered" gesehen
+        let logLines = [];
+
+        function addLog(msg, cls = 'inf') {
+            logLines.push({ msg, cls });
+            if (logLines.length > 50) logLines.shift();
+            const log = document.getElementById('otaLog');
+            log.innerHTML = logLines.map(l => `<div class="${l.cls}">${l.msg}</div>`).join('');
+            log.scrollTop = log.scrollHeight;
+        }
+
+function startSequentialOta() {
+            if (!confirm(
+				"🚀 Start sequential OTA update?\n\n" +
+                "IMPORTANT PROCESS:\n" +
+                "• Pucks are updated ONE AT A TIME.\n" +
+                "• Duration: approx. 35 seconds per Puck.\n\n" +
+                "LED INDICATORS ON PUCKS:\n" +
+                "• 🟣 Purple: Wait mode (waiting for download).\n" +
+                "• 🟡 Yellow: Firmware is currently downloading via WiFi.\n" +
+                "• 🟢 Green: Update successful! The Puck is restarting.\n" +
+                "• 🔴 Red: Update failed (e.g., connection lost). The Puck remains on the old version.\n\n" +
+                "⚠️ WARNING:\n" +
+                "Do NOT close or reload this page DURING the entire update process!\n\n" +
+                "Do you want to start the update now?"
+            )) return;
+
+            document.getElementById('btnStartOta').disabled = true;
+            document.getElementById('btnStartOta').textContent = '⏳ Running...';
+            document.getElementById('ota-panel').classList.add('visible');
+            document.getElementById('otaDoneMsg').style.display = 'none';
+            logLines = [];
+            lastTriggered = 0;
+
+            addLog('Starting sequential OTA...', 'inf');
+
+            fetch('/api/trigger_ota')
+                .then(r => r.text())
+                .then(() => {
+                    addLog('Command sent to Coordinator.', 'inf');
+                    // Polling starten
+                    otaPolling = setInterval(pollOtaStatus, 1500);
+                })
+                .catch(e => {
+                    addLog('ERROR: ' + e, 'ok');
+                    document.getElementById('btnStartOta').disabled = false;
+                    document.getElementById('btnStartOta').textContent = '🚀 FLASH ALL PUCKS (sequential)';
+                });
+        }
+
+        function pollOtaStatus() {
+            fetch('/api/ota_status')
+                .then(r => r.json())
+                .then(s => updateOtaUI(s))
+                .catch(() => { /* Verbindungsfehler ignorieren */ });
+        }
+
+        function updateOtaUI(s) {
+            const total     = s.total     || 0;
+            const triggered = s.triggered || 0;
+            const current   = s.current   || '–';
+            const remaining = s.remaining_s != null ? s.remaining_s : '–';
+            const active    = s.active;
+            const done      = s.done;
+
+            // Progress Bar
+            const pct = total > 0 ? Math.round((triggered / total) * 100) : 0;
+            document.getElementById('otaBar').style.width = pct + '%';
+            document.getElementById('otaCount').textContent = triggered + ' / ' + total;
+            document.getElementById('otaCurrent').textContent = current;
+            document.getElementById('otaRemaining').textContent = active ? remaining : '–';
+
+            // Neuer Puck getriggert?
+            if (triggered > lastTriggered) {
+                for (let i = lastTriggered; i < triggered - 1; i++) {
+                    // Bereits abgeschlossene (alle außer dem aktuellen)
+                }
+                if (triggered > 1) {
+                    // Letzter getriggerter gilt als "sent" (nicht bestätigt fertig)
+                    addLog(`[${triggered-1}/${total}] Puck triggered, waiting...`, 'ok');
+                }
+                if (triggered > 0 && active) {
+                    addLog(`[${triggered}/${total}] Triggering: ${current}`, 'cur');
+                }
+                lastTriggered = triggered;
+            }
+
+            // Aktualisiere Remaining-Anzeige laufend ohne neuen Log-Eintrag
+            if (done) {
+                clearInterval(otaPolling);
+                otaPolling = null;
+                document.getElementById('otaBar').style.width = '100%';
+                document.getElementById('otaCount').textContent = total + ' / ' + total;
+                document.getElementById('otaCurrent').textContent = '–';
+                document.getElementById('otaRemaining').textContent = '–';
+                document.getElementById('otaDoneMsg').style.display = 'block';
+                document.querySelector('.ota-title').textContent = '✅ OTA Complete';
+                addLog('All ' + total + ' Pucks triggered successfully!', 'ok');
+                document.getElementById('btnStartOta').disabled = false;
+                document.getElementById('btnStartOta').textContent = '🚀 FLASH ALL PUCKS (sequential)';
+            }
+        }
+    </script>
+</body>
+</html>

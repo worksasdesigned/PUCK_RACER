@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hunt! Live</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color);}
+        .big-time { font-size: 4rem; font-family: monospace; color: var(--text-main); font-weight: bold; line-height:1;}
+        .status-txt { font-size: 1.2rem; color: var(--text-muted); text-transform: uppercase; margin-top:5px; font-weight:bold;}
+
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
+
+        .p-row { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 15px; background: var(--card-hover); margin-bottom: 10px; padding: 15px; border-radius: 8px; border-left: 8px solid var(--border-color); transition: background 0.3s, border-color 0.3s;}
+        .color-dot { width: 25px; height: 25px; border-radius: 50%; border: 2px solid #fff; }
+        .p-name { font-size: 1.5rem; font-weight: bold; color:var(--text-main);}
+        .p-score { font-family: monospace; font-size: 2.5rem; font-weight: bold; color: var(--text-main); text-align:right;}
+        
+        .row-win { background: rgba(255, 215, 0, 0.2); border-color: gold !important; }
+
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="g_hunt">Hunt! 🎯🏃</div>
+     <div class="status-bar">
+    <div class="status-dot dot-green" id="cnt-green">0</div>
+    <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+    <div class="status-dot dot-red" id="cnt-red">0</div>
+</div>
+    </header>
+
+    <main>
+        <div class="top-info">
+            <div class="big-time" id="globalTime">00:00.0</div>
+            <div class="status-txt" id="stateInfo">WAITING</div>
+        </div>
+
+        <div class="controls">
+            <button onclick="goBack()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
+            <button onclick="doAction('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
+            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
+        </div>
+
+        <div id="playerList"></div>
+
+        <div class="bottom-nav">
+            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+<script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FF1493', '#00FF00', '#800080'];
+
+        setInterval(update, 400); 
+
+        function update() {
+            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                 
+                render(data);
+            }).catch(e => {});
+        }
+
+        function formatTime(ms) {
+            let sec = Math.floor(ms / 1000);
+            let m = Math.floor(sec / 60);
+            let s = sec % 60;
+            let dec = Math.floor((ms % 1000) / 100);
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}.${dec}`;
+        }
+
+        function render(data) {
+            document.getElementById('globalTime').innerText = formatTime(data.t);
+            
+            let stTxt = getTranslation(`h_st_${data.st}`) || "UNKNOWN";
+            let stCol = "var(--text-muted)";
+            if(data.st === 1) stCol = "var(--warning)";
+            if(data.st === 2) stCol = "var(--success)";
+            if(data.st === 4) stCol = "gold";
+            
+            document.getElementById('stateInfo').innerText = stTxt;
+            document.getElementById('stateInfo').style.color = stCol;
+            
+            let btn = document.getElementById('btnStart');
+            if (data.st === 0 || data.st === 5) { 
+                btn.innerText = getTranslation('btn_start'); 
+                btn.style.background = "var(--primary)"; 
+            }
+            else if (data.st === 3 || data.st === 4) { 
+                btn.innerText = getTranslation('btn_reset'); 
+                btn.style.background = "var(--success)"; 
+            }
+            else { 
+                btn.innerText = getTranslation('btn_running'); 
+                btn.style.background = "var(--card-hover)"; 
+            }
+
+            let container = document.getElementById('playerList');
+            let plrs = [...data.pl];
+            if (data.st >= 3) plrs.sort((a,b) => b.sc - a.sc);
+            let maxScore = Math.max(...plrs.map(p => p.sc));
+
+            plrs.forEach((p, index) => {
+                let name = sessionStorage.getItem(`p_name_${p.id}`) || `Hunter ${p.id+1}`;
+                let col = COLORS[p.id % 10];
+                
+                let isWin = (data.st >= 3 && p.sc === maxScore && maxScore > 0);
+                let rowClass = "p-row";
+                if (isWin) rowClass += " row-win";
+
+                let rowId = `h-row-${p.id}`;
+                let rowEl = document.getElementById(rowId);
+
+                if (!rowEl) {
+                    container.insertAdjacentHTML('beforeend', `
+                    <div id="${rowId}" class="${rowClass}" style="border-left-color: ${col}; order:${index}">
+                        <div class="color-dot" style="background:${col}; box-shadow:0 0 10px ${col}"></div>
+                        <div class="p-name">${name}</div>
+                        <div class="p-score" id="sc-${p.id}">${p.sc}</div>
+                    </div>`);
+                } else {
+                    rowEl.className = rowClass;
+                    rowEl.style.order = index;
+                    document.getElementById(`sc-${p.id}`).innerText = p.sc;
+                }
+            });
+        }
+
+        function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
+        function goBack() { doAction('reset'); location.href = 'game_hunt_names.html'; }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+</body>
+</html>

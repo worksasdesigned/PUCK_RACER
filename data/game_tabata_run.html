@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HIIT Controller Live</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .global-time-box { text-align: center; margin-bottom: 20px; color: var(--text-muted); font-size: 1.2rem; text-transform:uppercase; font-weight:bold;}
+        .global-time { font-family: monospace; font-size: 2.5rem; color: var(--text-main);}
+        .target-time { font-size: 0.9rem; color: var(--text-muted); font-weight: normal; margin-top: 5px;}
+
+        .phase-card { background: var(--card-bg); border-radius: 12px; padding: 30px 15px; text-align: center; margin-bottom: 20px; border: 2px solid var(--border-color); transition: all 0.3s;}
+        .phase-title { font-size: 3.5rem; font-weight: bold; text-transform: uppercase; margin-bottom: 10px; letter-spacing: 2px; line-height: 1; color: var(--text-main);}
+        .phase-time { font-size: 6rem; font-family: monospace; font-weight: bold; color: var(--text-main); line-height: 1;}
+        
+        .phase-work { background: rgba(0, 255, 0, 0.1); border-color: var(--success); box-shadow: 0 0 20px rgba(0, 255, 0, 0.2); }
+        .phase-work .phase-title { color: var(--success); }
+        
+        .phase-rest { background: rgba(220, 53, 69, 0.1); border-color: var(--danger); box-shadow: 0 0 20px rgba(220, 53, 69, 0.2); }
+        .phase-rest .phase-title { color: var(--danger); }
+
+        .round-box { background: var(--bg-color); padding: 15px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color); margin-bottom: 20px;}
+        .round-val { font-size: 2.5rem; font-weight: bold; color: var(--primary); }
+
+        .controls { display: grid; grid-template-columns: 1fr 1.5fr 1.5fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .btn-ctrl { padding: 15px 5px; font-size: 1.1rem; font-weight: bold; }
+        .btn-pause { background: var(--warning); color: #000; transition: 0.2s;}
+
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="g_tabata">HIIT Controller ⏱️</div>
+     <div class="status-bar">
+    <div class="status-dot dot-green" id="cnt-green">0</div>
+    <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+    <div class="status-dot dot-red" id="cnt-red">0</div>
+</div>
+    </header>
+
+    <main>
+        <div class="global-time-box">
+            <span data-i18n="tab_run_glob">Total Workout Time</span>
+            <div class="global-time" id="globalTime">00:00</div>
+            <div class="target-time" id="targetInfo">--</div>
+        </div>
+
+        <div id="phaseCard" class="phase-card">
+            <div id="phaseTitle" class="phase-title" data-i18n="tab_st_1">READY</div>
+            <div id="phaseTime" class="phase-time">0.0</div>
+        </div>
+
+        <div class="round-box">
+            <div style="color:var(--text-muted); font-size:0.9rem; text-transform:uppercase; margin-bottom:5px;" data-i18n="tab_run_set">Workout Set</div>
+            <div class="round-val" id="roundVal">-</div>
+        </div>
+
+        <div class="controls">
+            <button onclick="goBack()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
+            <button onclick="doAction('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
+            <button onclick="doAction('pause')" class="btn-pause btn-ctrl" id="btnPause" disabled data-i18n="tab_btn_pause">PAUSE</button>
+            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+<script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        setInterval(update, 400); 
+
+        function update() {
+            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                 
+                render(data);
+            }).catch(e => {});
+        }
+
+        function formatTime(ms) {
+            let sec = Math.floor(ms / 1000); 
+            let m = Math.floor(sec / 60);
+            let s = sec % 60;
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
+
+        function formatPhaseTime(ms) {
+            let sec = Math.floor(ms / 1000); 
+            let dec = Math.floor((ms % 1000) / 100);
+            return `${sec}.${dec}`;
+        }
+
+        function render(data) {
+            document.getElementById('globalTime').innerText = formatTime(data.gT);
+            
+            let tgtText = "--";
+            if (data.lM === 0 && data.tR > 0) {
+                let estSec = data.tR * (data.wT + data.rT) - data.rT;
+                let m = Math.floor(estSec / 60);
+                let s = estSec % 60;
+                tgtText = `${getTranslation('tab_run_est')} ${m}m ${s.toString().padStart(2,'0')}s`;
+                document.getElementById('roundVal').innerText = data.rnd > 0 ? `${data.rnd} / ${data.tR}` : "-";
+            } else if (data.lM === 1 && data.tT > 0) {
+                let m = Math.floor(data.tT / 60);
+                let s = data.tT % 60;
+                tgtText = `${getTranslation('tab_run_def')} ${m}m ${s.toString().padStart(2,'0')}s`;
+                document.getElementById('roundVal').innerText = data.rnd > 0 ? data.rnd : "-";
+            }
+            document.getElementById('targetInfo').innerText = tgtText;
+            
+            let pCard = document.getElementById('phaseCard');
+            let pTitle = document.getElementById('phaseTitle');
+            let pTime = document.getElementById('phaseTime');
+            let btnPause = document.getElementById('btnPause');
+            
+            pCard.className = "phase-card";
+            pTitle.style.color = "";        
+            pCard.style.borderColor = "";   
+            
+            if (data.st === 0) {
+                pTitle.innerText = getTranslation('tab_st_0');
+                pTime.innerText = "--";
+            } else if (data.st === 1) {
+                pTitle.innerText = getTranslation('tab_st_1');
+                pTime.innerText = "👀";
+            } else if (data.st === 2) {
+                pTitle.innerText = getTranslation('tab_st_2');
+                pTime.innerText = formatPhaseTime(data.pT);
+                pCard.classList.add("phase-work");
+            } else if (data.st === 3) {
+                pTitle.innerText = getTranslation('tab_st_3');
+                pTime.innerText = formatPhaseTime(data.pT);
+                pCard.classList.add("phase-rest");
+            } else if (data.st === 4) {
+                pTitle.innerText = getTranslation('tab_st_4');
+                pTime.innerText = "🏁";
+            } else if (data.st === 5) { // PAUSED
+                pTitle.innerText = getTranslation('tab_st_5');
+                pTitle.style.color = "var(--warning)";
+                pCard.style.borderColor = "var(--warning)";
+                pTime.innerText = formatPhaseTime(data.pT); 
+            }
+            
+            let btnStart = document.getElementById('btnStart');
+            if (data.st === 0 || data.st === 4) { 
+                btnStart.innerText = getTranslation('btn_start'); 
+                btnStart.style.background = "var(--primary)"; 
+            } else { 
+                btnStart.innerText = getTranslation('btn_reset'); 
+                btnStart.style.background = "var(--card-hover)"; 
+            }
+
+            if (data.st === 5) {
+                btnPause.innerText = getTranslation('tab_btn_resume');
+                btnPause.style.background = "var(--success)";
+            } else {
+                btnPause.innerText = getTranslation('tab_btn_pause');
+                btnPause.style.background = "var(--warning)";
+            }
+            
+            btnPause.disabled = (data.st < 2 || data.st === 4);
+            btnPause.style.opacity = btnPause.disabled ? "0.3" : "1";
+        }
+
+        function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
+        function goBack() { doAction('reset'); location.href = 'game_tabata_setup.html'; }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+</body>
+</html>

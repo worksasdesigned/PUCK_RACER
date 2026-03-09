@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Stats // Puck Racer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+         
+        .stats-page { font-family: 'Share Tech Mono', 'Courier New', monospace; }
+
+        .stat-card {
+            background: #0a0a0a; border: 1px solid #1a3a1a; border-radius: 8px;
+            padding: 15px; margin-bottom: 15px;
+        }
+        .stat-title {
+            color: #33aa33; font-size: 0.75rem; letter-spacing: 3px;
+            text-transform: uppercase; margin-bottom: 12px;
+            border-bottom: 1px solid #1a3a1a; padding-bottom: 8px;
+        }
+        .game-row {
+            display: grid; grid-template-columns: 30px 40px 1fr 60px;
+            gap: 8px; align-items: center; padding: 8px 4px;
+            border-bottom: 1px solid #0d1a0d;
+        }
+        .game-rank { color: #555; font-size: 0.8rem; text-align: center; }
+        .game-icon { font-size: 1.3rem; text-align: center; }
+        .game-name { color: #ccc; font-size: 0.85rem; }
+        .game-count { color: #33ff33; font-size: 1rem; font-weight: bold; text-align: right; }
+        .game-count.zero { color: #333; }
+
+        .game-row:nth-child(1) .game-rank { color: #ffd700; font-weight: bold; font-size: 1rem; }
+        .game-row:nth-child(2) .game-rank { color: #c0c0c0; font-weight: bold; }
+        .game-row:nth-child(3) .game-rank { color: #cd7f32; font-weight: bold; }
+
+        .bar-mini {
+            height: 4px; background: #111; border-radius: 2px;
+            margin-top: 3px; overflow: hidden;
+        }
+        .bar-mini-fill { height: 100%; background: #33ff33; border-radius: 2px; transition: width 0.5s; }
+
+        .total-box {
+            text-align: center; padding: 15px;
+            border-top: 1px solid #1a3a1a; margin-top: 10px;
+        }
+        .total-num { font-size: 2.5rem; font-weight: bold; color: #33ff33; text-shadow: 0 0 10px rgba(50,255,50,0.2); }
+        .total-lbl { color: #555; font-size: 0.75rem; letter-spacing: 3px; margin-top: 3px; }
+
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" style="font-size:1rem;">🎮 Game Stats</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main class="stats-page">
+        <div class="stat-card">
+            <div class="stat-title">▸ GAMES RANKED BY POPULARITY</div>
+            <div id="gameList"></div>
+            <div class="total-box">
+                <div class="total-num" id="totalPlays">0</div>
+                <div class="total-lbl">TOTAL GAMES PLAYED</div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="location.href='/admin.html'" class="btn-back" style="width:100%;">⬅ Back to Admin</button>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const GAMES = {
+            1:'Shuttle Run', 2:'Simple Counter', 3:'Countdown', 4:'Simon Says',
+            5:'Display Mode', 6:'Simon Runs', 7:'Sorting Hat', 8:'Bomb Squad',
+            9:'Red Light Green Light', 10:'Stopwatch', 11:'Zombie Escape', 12:'Beep Test',
+            13:'React 2P', 14:'T-Test', 15:'Target', 16:'Timer',
+            17:'Hunt', 18:'Pacemaker', 19:'Memory', 20:'Domination',
+            21:'Batak Pro', 22:'Tabata', 23:'Ball', 24:'Whac-A-Mole'
+        };
+        const ICONS = {
+            1:'🏃‍♂️🔁', 2:'🔢', 3:'⏱️🧮', 4:'🔴🟢🔵🟡',
+            5:'▶️✨', 6:'🔴🟢🔵🏃‍♂️', 7:'🎩✨', 8:'💣⏰',
+            9:'🚦🛑', 10:'⏱⏱️', 11:'🧟🏃‍♂️', 12:'🏃‍♂️🔁⏱️',
+            13:'⚡🤜🤛', 14:'🏃‍♂️💨', 15:'🎯', 16:'⏱️',
+            17:'🏃‍♂️🎯🏃‍♀️', 18:'🏃‍♂️⏱️🟢', 19:'🧠🏃', 20:'🔴⚔🔵',
+            21:'⚡🎯👀', 22:'⏱️🥵', 23:'🏀🏃‍♂️', 24:'🔨🧠'
+        };
+
+        fetch('/api/stats/games').then(r=>r.json()).then(data => {
+            let entries = [];
+            let total = 0;
+            for (let id in data) {
+                entries.push({ id: parseInt(id), count: data[id], name: GAMES[id] || `Game ${id}`, icon: ICONS[id] || '🎮' });
+                total += data[id];
+            }
+            entries.sort((a,b) => b.count - a.count);
+
+            const maxCount = entries.length > 0 ? entries[0].count : 1;
+            const container = document.getElementById('gameList');
+
+            entries.forEach((g, i) => {
+                const barPct = maxCount > 0 ? (g.count / maxCount * 100) : 0;
+                const medals = ['🥇','🥈','🥉'];
+                const rank = i < 3 && g.count > 0 ? medals[i] : `${i+1}`;
+
+                container.innerHTML += `
+                    <div class="game-row">
+                        <div class="game-rank">${rank}</div>
+                        <div class="game-icon">${g.icon}</div>
+                        <div>
+                            <div class="game-name">${g.name}</div>
+                            <div class="bar-mini"><div class="bar-mini-fill" style="width:${barPct}%"></div></div>
+                        </div>
+                        <div class="game-count ${g.count === 0 ? 'zero' : ''}">${g.count}×</div>
+                    </div>`;
+            });
+
+            document.getElementById('totalPlays').innerText = total;
+        });
+    </script>
+</body>
+</html>

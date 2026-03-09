@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Batak Pro</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        /* Spezifische Klasse für diese Seite beibehalten */
+        .diff-text {
+            font-size: 0.9rem;
+            color: var(--text-main);
+            text-align: center;
+            margin-top: 10px;
+            font-weight: bold;
+            background: var(--card-hover);
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_batak">Batak Pro ⚡</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="bat_setup_time">⏱️ Duration</h3>
+            <div class="slider-header">
+                <span data-i18n="lbl_time_limit">Time Limit:</span>
+                <span id="timeDisp" class="slider-val">60s</span>
+            </div>
+            <input type="range" id="timeSlider" min="30" max="120" step="10" value="60" oninput="document.getElementById('timeDisp').innerText = this.value + 's'">
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="bat_setup_pucks">🎯 Pucks & Colors</h3>
+            <div class="slider-header">
+                <span data-i18n="bat_lbl_pucks">Active Pucks:</span>
+                <span id="puckDisp" class="slider-val">3</span>
+            </div>
+            <input type="range" id="puckSlider" min="3" max="20" value="6" oninput="updPucks()">
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
+            
+            <div style="margin-top:15px; font-weight:bold;" data-i18n="bat_lbl_col">Target Color:</div>
+            <select id="colSelect">
+                <option value="0" style="color:#ff4444;" data-i18n="sort_names_0">Red</option>
+                <option value="1" style="color:#4444ff;" data-i18n="sort_names_1">Blue</option>
+                <option value="2" style="color:#44ff44;" selected data-i18n="sort_names_2">Green</option>
+                <option value="3" style="color:#ffff44;" data-i18n="sort_names_3">Yellow</option>
+                <option value="4" style="color:#ff44ff;" data-i18n="sort_names_4">Pink</option>
+                <option value="5" style="color:#44ffff;" data-i18n="sort_names_5">Cyan</option>
+                <option value="6" style="color:#ffa500;" data-i18n="sort_names_6">Orange</option>
+                <option value="7" style="color:#ffffff;" data-i18n="sort_names_7">White</option>
+            </select>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="bat_setup_diff">🧠 Difficulty</h3>
+            <div class="slider-header">
+                <span data-i18n="bat_lbl_lvl">Level:</span>
+                <span id="diffDisp" class="slider-val">Medium</span>
+            </div>
+            <input type="range" id="diffSlider" min="1" max="3" value="2" oninput="updDiff()">
+            <div id="diffTxt" class="diff-text"></div>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="bat_setup_rules">⚙️ Rules</h3>
+            <div class="toggle-row">
+                <span data-i18n="bat_lbl_spd">Speedup Mode (Acceleration)</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkSpeedup" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            
+            <div class="toggle-row">
+                <span data-i18n="bat_lbl_snd">Sound Effects</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkSound" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            
+            <div class="toggle-row" style="align-items:flex-start;">
+                <div>
+                    <span style="display:block; font-weight:bold;" data-i18n="bat_lbl_fake">Fake Colors (No-Go)</span>
+                    <span style="font-size:0.8rem; color:var(--text-muted);" data-i18n="bat_hint_fake">Spawns wrong colors.</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="chkFake">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            
+            <div class="toggle-row" style="margin-top:10px; border-top:1px solid var(--border-color); padding-top:15px;">
+                <span data-i18n="bat_lbl_hold">Hold Start Puck to begin</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkHold">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="bat_btn_hint">LAYOUT HINT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        let connPucks = 0;
+
+        fetch('/api/game/load?id=21'); 
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connPucks = data.filter(p => p.active).length;
+            let slider = document.getElementById('puckSlider');
+            slider.max = Math.max(3, connPucks);
+            if(parseInt(slider.value) > connPucks) slider.value = Math.max(3, connPucks);
+            updPucks();
+            updDiff();
+        });
+
+        function updPucks() {
+            let p = parseInt(document.getElementById('puckSlider').value);
+            document.getElementById('puckDisp').innerText = p;
+            
+            let info = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+            
+            info.innerText = `${getTranslation('req_pucks')} ${p} | ${getTranslation('conn_pucks')} ${connPucks}`;
+            
+            if (p > connPucks) {
+                info.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                info.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+        }
+
+        function updDiff() {
+            let val = parseInt(document.getElementById('diffSlider').value);
+            document.getElementById('diffDisp').innerText = getTranslation(`bat_diff_${val}`);
+            document.getElementById('diffTxt').innerText = getTranslation(`bat_diff_${val}_d`);
+        }
+
+        function nextStep() {
+            let p = document.getElementById('puckSlider').value;
+            if (p > connPucks) {
+                if(!confirm("Not enough pucks connected! Continue anyway?")) return;
+            }
+            
+            sessionStorage.setItem('batak_pucks', p);
+            sessionStorage.setItem('batak_time', document.getElementById('timeSlider').value);
+            sessionStorage.setItem('batak_diff', document.getElementById('diffSlider').value);
+            sessionStorage.setItem('batak_color', document.getElementById('colSelect').value);
+            sessionStorage.setItem('batak_sound', document.getElementById('chkSound').checked ? 1 : 0);
+            sessionStorage.setItem('batak_fake', document.getElementById('chkFake').checked ? 1 : 0);
+            sessionStorage.setItem('batak_hold', document.getElementById('chkHold').checked ? 1 : 0);
+            sessionStorage.setItem('batak_speedup', document.getElementById('chkSpeedup').checked ? 1 : 0);
+            
+            location.href = 'game_batak_names.html';
+        }
+
+        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'timeSlider',  el:'timeSlider' },
+        { key:'puckSlider',  el:'puckSlider' },
+        { key:'diffSlider',  el:'diffSlider' },
+        { key:'colSelect',   el:'colSelect',   type:'select' },
+        { key:'chkSpeedup',  el:'chkSpeedup',  type:'check' },
+        { key:'chkSound',    el:'chkSound',    type:'check' },
+        { key:'chkFake',     el:'chkFake',     type:'check' },
+        { key:'chkHold',     el:'chkHold',     type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

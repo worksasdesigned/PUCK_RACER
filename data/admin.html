@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin // Puck Racer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+         
+        .admin-page { font-family: 'Share Tech Mono', 'Courier New', monospace; }
+
+        .access-banner {
+            background: #0a0a0a; border: 1px solid #1a3a1a; border-radius: 8px;
+            padding: 15px; text-align: center; margin-bottom: 25px;
+        }
+        .access-banner .granted {
+            color: #33ff33; font-size: 1.1rem; letter-spacing: 4px;
+            text-shadow: 0 0 10px rgba(50,255,50,0.3);
+        }
+        .access-banner .sub {
+            color: #1a6b1a; font-size: 0.75rem; margin-top: 5px;
+        }
+
+        .tool-grid { display: grid; gap: 12px; margin-bottom: 20px; }
+
+        .tool-btn {
+            display: flex; align-items: center; gap: 15px;
+            background: #0a0a0a; border: 1px solid #222;
+            border-left: 4px solid #333; border-radius: 8px;
+            padding: 18px 15px; cursor: pointer;
+            transition: all 0.2s; text-decoration: none;
+        }
+        .tool-btn:hover {
+            border-left-color: #33ff33; background: #111;
+            box-shadow: 0 0 15px rgba(50,255,50,0.05);
+        }
+        .tool-btn .tool-icon {
+            font-size: 1.8rem; width: 45px; text-align: center;
+            filter: grayscale(0.3);
+        }
+        .tool-btn .tool-info { flex: 1; }
+        .tool-btn .tool-name {
+            color: #33ff33; font-size: 1rem; letter-spacing: 2px;
+            font-weight: bold; margin-bottom: 3px;
+        }
+        .tool-btn .tool-desc {
+            color: #555; font-size: 0.75rem;
+        }
+        .tool-btn .tool-arrow { color: #333; font-size: 1.2rem; }
+        .tool-btn:hover .tool-arrow { color: #33ff33; }
+
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+
+        .quote-box {
+            text-align: center; padding: 20px; margin-top: 20px;
+            color: #333; font-size: 0.75rem; font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" style="font-size: 1rem;">⚙️ Admin Tools</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main class="admin-page">
+        <div class="access-banner">
+            <div class="granted">► ACCESS GRANTED ◄</div>
+            <div class="sub">Don't Panic.</div>
+        </div>
+
+        <div class="tool-grid">
+            <a href="/scanner.html" class="tool-btn">
+                <div class="tool-icon">📡</div>
+                <div class="tool-info">
+                    <div class="tool-name">RF CHANNEL SCANNER</div>
+                    <div class="tool-desc">Scan 2.4GHz spectrum, find the quietest channel for your pucks</div>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/netstats.html" class="tool-btn">
+                <div class="tool-icon">📊</div>
+                <div class="tool-info">
+                    <div class="tool-name">NETWORK STATS</div>
+                    <div class="tool-desc">Live packet loss, TX/RX quality, duplicate analysis</div>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/gamestats.html" class="tool-btn">
+                <div class="tool-icon">🎮</div>
+                <div class="tool-info">
+                    <div class="tool-name">GAME STATS</div>
+                    <div class="tool-desc">Play counts, popularity ranking, all-time leaderboard</div>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/puckfleet.html" class="tool-btn">
+                <div class="tool-icon">🟢</div>
+                <div class="tool-info">
+                    <div class="tool-name">PUCK FLEET</div>
+                    <div class="tool-desc">MAC addresses, click counts, battery, signal, uptime</div>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <a href="/sysinfo.html" class="tool-btn">
+                <div class="tool-icon">🖥️</div>
+                <div class="tool-info">
+                    <div class="tool-name">SYSTEM INFO</div>
+                    <div class="tool-desc">ESP32 chip details, RAM, flash, filesystem, WiFi status</div>
+                </div>
+                <div class="tool-arrow">→</div>
+            </a>
+
+            <!-- Future tools go here -->
+        </div>
+
+        <div class="quote-box">
+            "A common mistake that people make when trying to design something<br>
+            completely foolproof is to underestimate the ingenuity of complete fools."<br>
+            — Douglas Adams
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="location.href='/settings.html'" class="btn-back" style="width:100%;">⬅ Back to Settings</button>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+    </script>
+</body>
+</html>

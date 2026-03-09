@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - React 2-Player</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_react2p">React 2-Player ⚡</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="r2_setup_time">⏱️ Game Time</h3>
+            <div class="slider-header">
+                <span data-i18n="lbl_time_limit">Time Limit:</span>
+                <span id="timeDisp" class="slider-val">90s</span>
+            </div>
+            <input type="range" id="timeSlider" min="30" max="180" step="10" value="90" oninput="document.getElementById('timeDisp').innerText=this.value+'s'">
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="r2_setup_hw">🔴 Hardware Config</h3>
+            <div class="slider-header">
+                <span data-i18n="r2_setup_pucks">Pucks per Group (min 3):</span>
+                <span id="puckDisp" class="slider-val">3</span>
+            </div>
+            <input type="range" id="puckSlider" min="3" max="10" value="3" oninput="calcPucks()">
+            <br>
+            <div class="slider-header" style="margin-top:15px;">
+                <span data-i18n="r2_setup_grps">Number of Groups:</span>
+                <span id="grpDisp" class="slider-val">1</span>
+            </div>
+            <input type="range" id="grpSlider" min="1" max="5" value="1" oninput="calcPucks()">
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="r2_setup_diff">🧠 Difficulty</h3>
+            <div class="slider-header">
+                <span data-i18n="r2_setup_cols">Colors per Player:</span>
+                <span id="colDisp" class="slider-val">1</span>
+            </div>
+            <input type="range" id="colSlider" min="1" max="3" value="1" oninput="document.getElementById('colDisp').innerText=this.value">
+            <br>
+            <div class="toggle-row" style="margin-top:20px;">
+                <span data-i18n="r2_lbl_fake">Enable Fake Colors</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkFake">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        let connectedPucks = 0;
+
+        fetch('/api/game/load?id=13'); 
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connectedPucks = data.filter(p => p.active).length;
+            calcPucks(); 
+        });
+
+        function calcPucks() {
+            let pGrp = parseInt(document.getElementById('puckSlider').value);
+            let nGrp = parseInt(document.getElementById('grpSlider').value);
+            
+            document.getElementById('puckDisp').innerText = pGrp;
+            document.getElementById('grpDisp').innerText = nGrp;
+            
+            let needed = pGrp * nGrp;
+            let infoEl = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+
+            infoEl.innerHTML = `${getTranslation('req_pucks')} ${needed} | ${getTranslation('conn_pucks')} ${connectedPucks}`;
+            
+            if (needed > connectedPucks) {
+                infoEl.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                infoEl.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+        }
+
+        function nextStep() {
+            let pGrp = document.getElementById('puckSlider').value;
+            let nGrp = document.getElementById('grpSlider').value;
+            
+            if (pGrp * nGrp > connectedPucks) {
+                if(!confirm("Not enough pucks connected! Continue anyway?")) return;
+            }
+            
+            sessionStorage.setItem('r2_time', document.getElementById('timeSlider').value);
+            sessionStorage.setItem('r2_pucks', pGrp);
+            sessionStorage.setItem('r2_groups', nGrp);
+            sessionStorage.setItem('r2_cols', document.getElementById('colSlider').value);
+            sessionStorage.setItem('r2_fake', document.getElementById('chkFake').checked ? 1 : 0);
+            
+            location.href = 'game_react2p_names.html';
+        }
+
+        function cancelSetup() {
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
+        }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'timeSlider', el:'timeSlider' },
+        { key:'puckSlider', el:'puckSlider' },
+        { key:'grpSlider',  el:'grpSlider' },
+        { key:'colSlider',  el:'colSlider' },
+        { key:'chkFake',    el:'chkFake', type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

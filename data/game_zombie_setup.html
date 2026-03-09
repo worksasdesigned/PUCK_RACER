@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Zombie Escape</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        .info-box {
+            background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px;
+            margin-top: 20px; overflow: hidden; cursor: pointer; user-select: none;
+        }
+        .info-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 12px 16px; font-size: 1rem; font-weight: bold; color: var(--text-muted);
+        }
+        .info-header:active { background: var(--card-hover); }
+        .info-arrow { transition: transform 0.2s; font-size: 0.9rem; }
+        .info-box.open .info-arrow { transform: rotate(90deg); }
+        .info-body { display: none; padding: 0 16px 14px; font-size: 0.9rem; line-height: 1.6; color: var(--text-main); cursor: default; }
+        .info-box.open .info-body { display: block; }
+        .info-row { margin-bottom: 8px; border-left: 3px solid var(--primary); padding: 4px 0 4px 10px; }
+        .info-row.warn { border-left-color: var(--warning); }
+        .info-row.danger { border-left-color: var(--danger); }
+        .info-label { font-weight: bold; color: var(--primary); font-size: 0.8rem; text-transform: uppercase; }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_zombie">Zombie Escape 🧟</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="z_setup_plr">🏃 Players / Groups</h3>
+            <div class="slider-header">
+                <span></span>
+                <span id="playerDisplay" class="slider-val">1</span>
+            </div>
+            <input type="range" id="playerSlider" min="1" max="10" value="1" oninput="updatePlayers(this.value)">
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="z_setup_time">⏱️ Timings</h3>
+            <div class="slider-header">
+                <span data-i18n="z_lbl_start">Start Target Time:</span>
+                <span id="timeDisplay" class="slider-val">10.0 s</span>
+            </div>
+            <input type="range" id="timeSlider" min="3" max="20" value="10" oninput="updTime(this.value)">
+            
+            <div class="slider-header" style="margin-top:15px;">
+                <span data-i18n="z_lbl_red">Reduction per Round:</span>
+                <span id="redDisplay" class="slider-val">-0.5 s</span>
+            </div>
+            <input type="range" id="redSlider" min="1" max="20" value="5" oninput="updRed(this.value)">
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="z_setup_rules">⚙️ Game Rules</h3>
+            <div class="toggle-row">
+                <span data-i18n="z_lbl_team">Teamlauf (Trainer steuert Zeit)</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkTeam">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span data-i18n="z_lbl_sudden">Sudden Death (1 Fail = Out)</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkSudden">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span data-i18n="z_lbl_sync">Gruppenstart</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkSync" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            <div class="toggle-row">
+                <span data-i18n="z_lbl_shuttle">Pendellauf bis zum Biss 🔄</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkShuttle">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="info-box" onclick="if(event.target.closest('.info-body'))return; this.classList.toggle('open')">
+            <div class="info-header">
+                <span data-i18n="z_info_title">ℹ️ Setup & Rules</span> <span class="info-arrow">▶</span>
+            </div>
+            <div class="info-body" id="infoBody"></div>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        let connectedPucks = 0;
+
+        fetch('/api/game/load?id=11');
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connectedPucks = data.filter(p => p.active).length;
+            updatePlayers(document.getElementById('playerSlider').value); 
+        });
+
+        function updTime(val) { document.getElementById('timeDisplay').innerText = val + ".0 s"; }
+        function updRed(val) { document.getElementById('redDisplay').innerText = "-" + (val/10).toFixed(1) + " s"; }
+
+        function updatePlayers(val) {
+            let players = parseInt(val);
+            document.getElementById('playerDisplay').innerText = players;
+            
+            let needed = players * 2;
+            let infoEl = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+
+            infoEl.innerHTML = `${getTranslation('req_pucks')} ${needed} | ${getTranslation('conn_pucks')} ${connectedPucks}`;
+            
+            if (needed > connectedPucks) {
+                infoEl.classList.add('warn-txt');
+                btn.disabled = true;
+                btn.style.opacity = 0.4;
+            } else {
+                infoEl.classList.remove('warn-txt');
+                btn.disabled = false;
+                btn.style.opacity = 1;
+            }
+        }
+
+        function nextStep() {
+            let players = document.getElementById('playerSlider').value;
+            sessionStorage.setItem('z_players', players);
+            sessionStorage.setItem('z_time', document.getElementById('timeSlider').value);
+            sessionStorage.setItem('z_red', document.getElementById('redSlider').value);
+            sessionStorage.setItem('z_auto', document.getElementById('chkTeam').checked ? 0 : 1);
+            sessionStorage.setItem('z_sudden', document.getElementById('chkSudden').checked ? 1 : 0);
+            sessionStorage.setItem('z_sync', document.getElementById('chkSync').checked ? 1 : 0);
+            sessionStorage.setItem('z_shuttle', document.getElementById('chkShuttle').checked ? 1 : 0);
+            
+            location.href = 'game_zombie_names.html';
+        }
+
+        function cancelSetup() {
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/');
+        }
+
+        function buildInfoBox() {
+            let time = document.getElementById('timeSlider').value;
+            let red = document.getElementById('redSlider').value;
+            let isTeam = document.getElementById('chkTeam').checked;
+            let isSync = document.getElementById('chkSync').checked;
+            let isSudden = document.getElementById('chkSudden').checked;
+            let isShuttle = document.getElementById('chkShuttle').checked;
+            let redSec = (parseInt(red) / 10).toFixed(1);
+
+            let html = '';
+
+            let timesTxt = (getTranslation('z_info_times_txt') || 'Start: <b>{time}s</b> | Reduction per round: <b>-{red}s</b>')
+                .replace('{time}', time + '.0').replace('{red}', redSec);
+            html += `<div class="info-row"><div class="info-label">${getTranslation('z_info_times') || '⏱️ Times'}</div>${timesTxt}</div>`;
+
+            html += `<div class="info-row"><div class="info-label">${getTranslation('z_info_setup') || '🏗️ Setup'}</div>${getTranslation('z_info_setup_txt') || 'Per group: <b>2 Pucks</b> (Start + Target).<br>Hold Start-Puck → Countdown → <b>RUN!</b>'}</div>`;
+
+            if (isSync) {
+                html += `<div class="info-row"><div class="info-label">${getTranslation('z_info_sync') || '👥 Group Start'}</div>${getTranslation('z_info_sync_txt') || 'All Start-Pucks must be held before countdown begins.'}</div>`;
+            }
+
+            if (isTeam) {
+                html += `<div class="info-row warn"><div class="info-label">${getTranslation('z_info_team') || '🤝 Teamlauf'}</div>${getTranslation('z_info_team_txt') || 'You must reduce time <b>manually</b> (📉 button)!'}</div>`;
+            } else {
+                let autoTxt = (getTranslation('z_info_auto_txt') || 'Time reduces by <b>{red}s</b> after each round.').replace('{red}', redSec);
+                html += `<div class="info-row"><div class="info-label">${getTranslation('z_info_auto') || '⚡ Auto-Reduction'}</div>${autoTxt}</div>`;
+            }
+
+            if (isShuttle) {
+                html += `<div class="info-row warn"><div class="info-label">${getTranslation('z_info_shuttle') || '🔄 Shuttle Run'}</div>${getTranslation('z_info_shuttle_txt') || 'Player runs back and forth until the zombie catches them.'}</div>`;
+            }
+
+            if (isSudden) {
+                html += `<div class="info-row danger"><div class="info-label">${getTranslation('z_info_sudden') || '💀 Sudden Death'}</div>${getTranslation('z_info_sudden_txt') || 'If bitten, puck group is immediately deactivated!'}</div>`;
+            }
+
+            document.getElementById('infoBody').innerHTML = html;
+        }
+
+        // Update info box when any setting changes
+        buildInfoBox();
+        document.querySelectorAll('input[type=range], input[type=checkbox]').forEach(el => {
+            el.addEventListener('input', buildInfoBox);
+            el.addEventListener('change', buildInfoBox);
+        });
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'playerSlider', el:'playerSlider' },
+        { key:'timeSlider',   el:'timeSlider' },
+        { key:'redSlider',    el:'redSlider' },
+        { key:'chkTeam',      el:'chkTeam',    type:'check' },
+        { key:'chkSudden',    el:'chkSudden',  type:'check' },
+        { key:'chkSync',      el:'chkSync',    type:'check' },
+        { key:'chkShuttle',   el:'chkShuttle', type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

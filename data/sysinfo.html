@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Info // Puck Racer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+         
+        .sys-page { font-family: 'Share Tech Mono', 'Courier New', monospace; }
+
+        .stat-card {
+            background: #0a0a0a; border: 1px solid #1a3a1a; border-radius: 8px;
+            padding: 15px; margin-bottom: 15px;
+        }
+        .stat-title {
+            color: #33aa33; font-size: 0.75rem; letter-spacing: 3px;
+            text-transform: uppercase; margin-bottom: 12px;
+            border-bottom: 1px solid #1a3a1a; padding-bottom: 8px;
+        }
+        .info-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid #0d1a0d;
+        }
+        .info-label { color: #666; font-size: 0.8rem; }
+        .info-val { color: #ccc; font-size: 0.85rem; font-weight: bold; text-align: right; }
+        .info-val.good { color: #33ff33; }
+        .info-val.warn { color: #ffaa00; }
+        .info-val.bad { color: #ff4444; }
+        .info-val.accent { color: #44aaff; }
+
+        .usage-bar {
+            height: 16px; background: #111; border-radius: 4px;
+            overflow: hidden; margin: 8px 0; border: 1px solid #1a1a1a;
+        }
+        .usage-fill { height: 100%; border-radius: 3px; transition: width 0.5s; }
+        .usage-text { display: flex; justify-content: space-between; font-size: 0.7rem; color: #555; }
+
+        .uptime-box {
+            text-align: center; padding: 15px 0; margin-bottom: 10px;
+        }
+        .uptime-num {
+            font-size: 2.5rem; font-weight: bold; color: #33ff33;
+            text-shadow: 0 0 10px rgba(50,255,50,0.15); line-height: 1;
+        }
+        .uptime-lbl { color: #555; font-size: 0.7rem; letter-spacing: 3px; margin-top: 5px; }
+
+        .chip-ascii {
+            text-align: center; color: #1a3a1a; font-size: 0.6rem;
+            line-height: 1.2; margin-bottom: 10px; white-space: pre;
+        }
+
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" style="font-size:1rem;">🖥️ System Info</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main class="sys-page">
+        <div class="chip-ascii">
+  ┌──────────────────────┐
+  │    ESP32-S3  SoC     │
+  │   ┌──┐  ┌──┐  ┌──┐  │
+  │   │C0│  │C1│  │RF│  │
+  │   └──┘  └──┘  └──┘  │
+  └──────────────────────┘
+        </div>
+
+        <!-- UPTIME -->
+        <div class="stat-card">
+            <div class="stat-title">▸ COORDINATOR UPTIME</div>
+            <div class="uptime-box">
+                <div class="uptime-num" id="uptimeVal">--</div>
+                <div class="uptime-lbl">RUNNING SINCE BOOT</div>
+            </div>
+        </div>
+
+        <!-- CHIP INFO -->
+        <div class="stat-card">
+            <div class="stat-title">▸ HARDWARE</div>
+            <div class="info-row">
+                <span class="info-label">Chip</span>
+                <span class="info-val accent" id="chipModel">--</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Revision</span>
+                <span class="info-val" id="chipRev">--</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">CPU Cores</span>
+                <span class="info-val" id="cores">--</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">CPU Frequency</span>
+                <span class="info-val" id="cpuFreq">--</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Firmware</span>
+                <span class="info-val accent" id="fwVer">--</span>
+            </div>
+        </div>
+
+        <!-- MEMORY -->
+        <div class="stat-card">
+            <div class="stat-title">▸ MEMORY (HEAP)</div>
+            <div class="info-row">
+                <span class="info-label">Free Heap</span>
+                <span class="info-val" id="heapFree">--</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Min Free (since boot)</span>
+                <span class="info-val" id="heapMin">--</span>
+            </div>
+			<div class="info-row">
+                <span class="info-label">Lowest Heap (Game)</span>
+                <span class="info-val warn" id="lowHeap">--</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Total Heap</span>
+                <span class="info-val" id="heapTotal">--</span>
+            </div>
+            <div class="usage-bar">
+                <div class="usage-fill" id="heapBar" style="width:0%; background:#33ff33;"></div>
+            </div>
+            <div class="usage-text">
+                <span id="heapUsedTxt">-- used</span>
+                <span id="heapFreeTxt">-- free</span>
+            </div>
+        </div>
+
+        <!-- FLASH / FILESYSTEM -->
+        <div class="stat-card">
+            <div class="stat-title">▸ STORAGE (LittleFS)</div>
+            <div class="info-row">
+                <span class="info-label">Flash Chip Size</span>
+                <span class="info-val" id="flashSize">--</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Sketch Size</span>
+                <span class="info-val" id="sketchSize">--</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Filesystem Used</span>
+                <span class="info-val" id="fsUsed">--</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Filesystem Total</span>
+                <span class="info-val" id="fsTotal">--</span>
+            </div>
+            <div class="usage-bar">
+                <div class="usage-fill" id="fsBar" style="width:0%; background:#44aaff;"></div>
+            </div>
+            <div class="usage-text">
+                <span id="fsUsedTxt">-- used</span>
+                <span id="fsFreeTxt">-- free</span>
+            </div>
+        </div>
+
+        <!-- WIFI -->
+        <div class="stat-card">
+            <div class="stat-title">▸ WIFI</div>
+            <div class="info-row">
+                <span class="info-label">SSID</span>
+                <span class="info-val accent" id="wifiSsid">--</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Channel</span>
+                <span class="info-val" id="wifiCh">--</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Connected Clients</span>
+                <span class="info-val good" id="wifiClients">--</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">IP Address</span>
+                <span class="info-val" id="wifiIp">--</span>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="location.href='/admin.html'" class="btn-back" style="width:100%;">⬅ Back to Admin</button>
+        </div>
+    </main>
+
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        function fmtBytes(b) {
+            if (b >= 1048576) return (b / 1048576).toFixed(1) + ' MB';
+            if (b >= 1024) return (b / 1024).toFixed(0) + ' KB';
+            return b + ' B';
+        }
+
+        function fmtUptime(ms) {
+            let s = Math.floor(ms / 1000);
+            let d = Math.floor(s / 86400); s %= 86400;
+            let h = Math.floor(s / 3600); s %= 3600;
+            let m = Math.floor(s / 60); s %= 60;
+            if (d > 0) return `${d}d ${h}h ${m}m`;
+            if (h > 0) return `${h}h ${m}m ${s}s`;
+            return `${m}m ${s}s`;
+        }
+
+        function barColor(pct) {
+            if (pct < 60) return '#33ff33';
+            if (pct < 80) return '#ffaa00';
+            return '#ff4444';
+        }
+
+        function render(d) {
+            // Uptime
+            document.getElementById('uptimeVal').innerText = fmtUptime(d.uptime);
+
+            // Hardware
+            document.getElementById('chipModel').innerText = d.chip || '--';
+            document.getElementById('chipRev').innerText = d.chipRev || '--';
+            document.getElementById('cores').innerText = d.cores || '--';
+            document.getElementById('cpuFreq').innerText = d.cpuMhz ? `${d.cpuMhz} MHz` : '--';
+            document.getElementById('fwVer').innerText = d.fw || '--';
+
+            // Heap
+            const heapUsed = (d.heapTotal || 0) - (d.heapFree || 0);
+            const heapPct = d.heapTotal > 0 ? Math.round(heapUsed / d.heapTotal * 100) : 0;
+            document.getElementById('heapFree').innerText = fmtBytes(d.heapFree || 0);
+            document.getElementById('heapMin').innerText = fmtBytes(d.heapMin || 0);
+            document.getElementById('heapTotal').innerText = fmtBytes(d.heapTotal || 0);
+            document.getElementById('heapBar').style.width = heapPct + '%';
+            document.getElementById('heapBar').style.background = barColor(heapPct);
+            document.getElementById('heapUsedTxt').innerText = fmtBytes(heapUsed) + ' used';
+            document.getElementById('heapFreeTxt').innerText = fmtBytes(d.heapFree || 0) + ' free';
+
+            let heapMinEl = document.getElementById('heapMin');
+            heapMinEl.className = 'info-val ' + (d.heapMin > 30000 ? 'good' : d.heapMin > 15000 ? 'warn' : 'bad');
+			
+			// Lowest heap per game
+            if (d.lowHeapVal < 999999) {
+                document.getElementById('lowHeap').innerText = 
+                    Math.round(d.lowHeapVal/1024) + 'KB during Game #' + d.lowHeapGame;
+            }
+
+            // Flash/FS
+            document.getElementById('flashSize').innerText = fmtBytes(d.flashSize || 0);
+            document.getElementById('sketchSize').innerText = fmtBytes(d.sketchSize || 0);
+            document.getElementById('fsUsed').innerText = fmtBytes(d.fsUsed || 0);
+            document.getElementById('fsTotal').innerText = fmtBytes(d.fsTotal || 0);
+
+            const fsPct = d.fsTotal > 0 ? Math.round(d.fsUsed / d.fsTotal * 100) : 0;
+            document.getElementById('fsBar').style.width = fsPct + '%';
+            document.getElementById('fsBar').style.background = barColor(fsPct);
+            document.getElementById('fsUsedTxt').innerText = fmtBytes(d.fsUsed || 0) + ' used';
+            document.getElementById('fsFreeTxt').innerText = fmtBytes((d.fsTotal || 0) - (d.fsUsed || 0)) + ' free';
+
+            // WiFi
+            document.getElementById('wifiSsid').innerText = d.ssid || '--';
+            document.getElementById('wifiCh').innerText = d.wifiCh || '--';
+            document.getElementById('wifiClients').innerText = d.clients || '0';
+            document.getElementById('wifiIp').innerText = d.ip || '--';
+        }
+
+        function refresh() {
+            fetch('/api/sysinfo').then(r=>r.json()).then(render).catch(()=>{});
+        }
+
+        refresh();
+        setInterval(refresh, 3000);
+    </script>
+</body>
+</html>

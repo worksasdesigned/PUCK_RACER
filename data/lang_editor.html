@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Translation Editor - PuckRacer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; background: #121212; color: #e0e0e0; font-family: sans-serif;}
+        
+        header { background: #1a1a1a; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        header h1 { margin: 0; font-size: 1.5rem; color: var(--primary); }
+        .head-controls { display: flex; gap: 15px; align-items: center; }
+        
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        
+        .sidebar { width: 250px; background: #1a1a1a; border-right: 1px solid #333; overflow-y: auto; padding: 10px 0; }
+        .cat-btn { display: block; width: 100%; text-align: left; padding: 12px 20px; background: none; border: none; color: #aaa; cursor: pointer; border-left: 3px solid transparent; font-size: 1rem; transition: 0.2s;}
+        .cat-btn:hover { background: #222; color: #fff; }
+        .cat-btn.active { background: #2a2a2a; border-left-color: var(--primary); color: #fff; font-weight: bold; }
+
+        .editor-area { flex: 1; padding: 20px; overflow-y: auto; background: #121212; }
+        
+        .trans-row { background: #1e1e1e; padding: 15px; border-radius: 8px; border: 1px solid #333; margin-bottom: 15px; display: flex; flex-direction: column; gap: 10px;}
+        .trans-key { font-family: monospace; color: var(--primary); font-size: 0.85rem; margin-bottom: 5px; font-weight: bold;}
+        
+        .trans-cols { display: flex; gap: 20px; }
+        .col { flex: 1; display: flex; flex-direction: column; }
+        .col label { font-size: 0.8rem; color: #888; margin-bottom: 5px; text-transform: uppercase; }
+        
+        .ref-text { background: #111; border: 1px solid #333; padding: 10px; border-radius: 4px; color: #999; font-size: 0.95rem; min-height: 40px; word-wrap: break-word;}
+        textarea { background: #222; border: 1px solid #444; padding: 10px; border-radius: 4px; color: #fff; font-size: 0.95rem; font-family: inherit; resize: vertical; min-height: 40px;}
+        textarea:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 5px rgba(0, 255, 0, 0.3); }
+
+        select { background: #333; color: #fff; border: 1px solid #444; padding: 8px; border-radius: 4px; font-size: 1rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌍 Translation Editor</h1>
+        <div class="head-controls">
+            <button class="btn-danger" id="btnReset" onclick="restoreFactory()" style="padding: 10px; margin-right: 20px;" title="Benötigt lang.bac auf dem System">↺ Factory Reset</button>
+            <label style="color:#aaa;">Edit Language:</label>
+            <select id="langSelect" onchange="renderEditor()"></select>
+            <button class="btn-warn" onclick="location.href='/settings.html'" style="padding: 10px;">⬅ BACK</button>
+            <button class="btn-primary" id="btnSave" onclick="saveTranslations()" style="padding: 10px 20px; font-weight:bold;">💾 SAVE TO COORDINATOR</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <div class="sidebar" id="sidebar">
+            </div>
+        <div class="editor-area" id="editorArea">
+            <h2 id="catTitle" style="margin-top:0; color:#fff;">Select a Category</h2>
+            <div id="editorRows"></div>
+        </div>
+    </div>
+
+    <script src="lang.js"></script>
+    
+    <script>
+        const CATEGORIES = [
+            { name: "General UI", prefixes: ["btn_", "lbl_", "loading", "conn_", "req_", "filter_"] },
+            { name: "Dashboard / Menu", prefixes: ["g_", "desc_", "setup_", "ex_", "img_", "help_"] },
+            { name: "Stopwatch", prefixes: ["sw_"] },
+            { name: "Timer", prefixes: ["tmr_"] },
+            { name: "Countdown", prefixes: ["cd_"] },
+            { name: "Simple Counter", prefixes: ["cnt_"] },
+            { name: "Shuttle Run", prefixes: ["sr_"] },
+            { name: "Beep Test", prefixes: ["bp_"] },
+            { name: "Simon Says", prefixes: ["sim_"] },
+            { name: "Simon Runs", prefixes: ["simr_"] },
+            { name: "Zombie Escape", prefixes: ["z_"] },
+            { name: "Whac-A-Mole", prefixes: ["whac_"] },
+            { name: "React 2-Player", prefixes: ["r2_"] },
+            { name: "Target Touch", prefixes: ["tgt_"] },
+            { name: "Ball Prellen", prefixes: ["bal_"] },
+            { name: "Agility T-Test", prefixes: ["tt_"] },
+            { name: "Domination", prefixes: ["dom_"] },
+            { name: "Red Green Light", prefixes: ["rg_"] },
+            { name: "Sorting Hat", prefixes: ["sort_"] },
+            { name: "Bomb Squad", prefixes: ["bomb_"] },
+            { name: "Pacemaker", prefixes: ["pm_"] },
+            { name: "Memory Sprint", prefixes: ["mem_"] },
+            { name: "Tabata", prefixes: ["tab_"] },
+            { name: "Hunt!", prefixes: ["h_"] },
+            { name: "Batak Pro", prefixes: ["bat_"] },
+            { name: "Display Mode", prefixes: ["disp_"] }
+        ];
+
+        let currentCatIndex = 0;
+        let activeLang = 'de'; 
+
+        window.onload = () => {
+            initLangSelect();
+            initSidebar();
+            renderEditor();
+        };
+
+        function initLangSelect() {
+            const select = document.getElementById('langSelect');
+            select.innerHTML = '';
+            for (let lang in TRANSLATIONS) {
+                if (lang !== 'en') {
+                    let opt = document.createElement('option');
+                    opt.value = lang;
+                    opt.innerText = lang.toUpperCase();
+                    if (lang === activeLang) opt.selected = true;
+                    select.appendChild(opt);
+                }
+            }
+        }
+
+        function initSidebar() {
+            const sb = document.getElementById('sidebar');
+            sb.innerHTML = '';
+            
+            CATEGORIES.forEach((cat, index) => {
+                let btn = document.createElement('button');
+                btn.className = 'cat-btn' + (index === currentCatIndex ? ' active' : '');
+                btn.innerText = cat.name;
+                btn.onclick = () => {
+                    document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentCatIndex = index;
+                    renderEditor();
+                };
+                sb.appendChild(btn);
+            });
+            
+            let btn = document.createElement('button');
+            btn.className = 'cat-btn' + (CATEGORIES.length === currentCatIndex ? ' active' : '');
+            btn.innerText = "Uncategorized";
+            btn.onclick = () => {
+                document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentCatIndex = CATEGORIES.length;
+                renderEditor();
+            };
+            sb.appendChild(btn);
+        }
+
+        function renderEditor() {
+            activeLang = document.getElementById('langSelect').value;
+            const enKeys = Object.keys(TRANSLATIONS['en']);
+            
+            let targetCategory = CATEGORIES[currentCatIndex];
+            document.getElementById('catTitle').innerText = targetCategory ? targetCategory.name : "Uncategorized";
+            
+            const container = document.getElementById('editorRows');
+            container.innerHTML = '';
+
+            let matchedKeys = [];
+            enKeys.forEach(key => {
+                let isMatch = false;
+                if (targetCategory) {
+                    isMatch = targetCategory.prefixes.some(p => key.startsWith(p));
+                } else {
+                    isMatch = !CATEGORIES.some(cat => cat.prefixes.some(p => key.startsWith(p)));
+                }
+                if (isMatch) matchedKeys.push(key);
+            });
+
+            if(matchedKeys.length === 0) {
+                container.innerHTML = "<p style='color:#666;'>No translations found for this category.</p>";
+                return;
+            }
+
+            matchedKeys.forEach(key => {
+                let enText = TRANSLATIONS['en'][key];
+                let targetText = TRANSLATIONS[activeLang][key] || ""; 
+
+                let row = document.createElement('div');
+                row.className = 'trans-row';
+                
+                row.innerHTML = `
+                    <div class="trans-key">${key}</div>
+                    <div class="trans-cols">
+                        <div class="col">
+                            <label>English (Reference)</label>
+                            <div class="ref-text">${enText}</div>
+                        </div>
+                        <div class="col">
+                            <label>${activeLang.toUpperCase()} Translation</label>
+                            <textarea id="inp-${key}" onchange="updateValue('${key}', this.value)">${targetText}</textarea>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(row);
+                
+                let ta = document.getElementById(`inp-${key}`);
+                ta.style.height = 'auto';
+                ta.style.height = (ta.scrollHeight) + 'px';
+            });
+        }
+
+        function updateValue(key, value) {
+            TRANSLATIONS[activeLang][key] = value;
+        }
+
+        async function saveTranslations() {
+            let btn = document.getElementById('btnSave');
+            btn.innerText = "⏳ SAVING...";
+            btn.style.opacity = 0.7;
+            btn.style.pointerEvents = "none";
+
+            let jsContent = "const TRANSLATIONS = " + JSON.stringify(TRANSLATIONS, null, 4) + ";\n\n";
+            
+            jsContent += `
+let currentLang = localStorage.getItem('puck_lang') || 'en';
+
+function setLanguage(langCode) {
+    currentLang = langCode;
+    localStorage.setItem('puck_lang', currentLang);
+    applyTranslations();
+}
+
+function getTranslation(key) {
+    if (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) return TRANSLATIONS[currentLang][key];
+    if (TRANSLATIONS['en'] && TRANSLATIONS['en'][key]) return TRANSLATIONS['en'][key];
+    return key; 
+}
+
+function applyTranslations() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+        let key = el.getAttribute('data-i18n');
+        let text = getTranslation(key);
+        if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
+            el.setAttribute('placeholder', text);
+        } else {
+            el.innerHTML = text;
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', applyTranslations);
+`;
+
+            const file = new File([jsContent], "lang.js", { type: "application/javascript" });
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch('/upload_file', { method: 'POST', body: formData });
+                
+                if(response.ok) {
+                    btn.innerText = "✅ SAVED!";
+                    btn.style.background = "#0f0";
+                    btn.style.color = "#000";
+                    setTimeout(() => {
+                        btn.innerText = "💾 SAVE TO COORDINATOR";
+                        btn.style.background = "var(--primary)";
+                        btn.style.opacity = 1;
+                        btn.style.pointerEvents = "auto";
+                    }, 2000);
+                } else {
+                    alert("Error saving file to ESP32!");
+                    btn.innerText = "❌ ERROR";
+                }
+            } catch (e) {
+                alert("Network error: " + e);
+                btn.innerText = "❌ ERROR";
+            }
+        }
+
+        // --- NEU: FACTORY RESET LOGIK ---
+        async function restoreFactory() {
+            if (!confirm("⚠️ WARNING: Do you really want to restore the factory settings?\n\nAll your custom translations will be permanently lost!\n(Requires a 'lang.bac' file on the ESP32)")) {
+                return;
+            }
+
+            let btn = document.getElementById('btnReset');
+            let oldText = btn.innerText;
+            btn.innerText = "⏳ ...";
+            btn.style.pointerEvents = "none";
+
+            try {
+                // 1. Lade das Backup vom Server
+                const resBac = await fetch('/lang.bac');
+                if (!resBac.ok) {
+                    alert("❌ Error: No 'lang.bac' file found on the system!\n\nPlease upload a copy of your original lang.js named 'lang.bac' via the Update Center to use this feature.");
+                    btn.innerText = oldText;
+                    btn.style.pointerEvents = "auto";
+                    return;
+                }
+                
+                const bacContent = await resBac.text();
+
+                // 2. Erstelle eine neue Datei mit dem Inhalt und lade sie als lang.js hoch
+                const file = new File([bacContent], "lang.js", { type: "application/javascript" });
+                const formData = new FormData();
+                formData.append("file", file);
+
+                const resUpload = await fetch('/upload_file', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (resUpload.ok) {
+                    alert("✅ Factory settings successfully restored!\nThe page will now reload.");
+                    location.reload();
+                } else {
+                    alert("❌ Failed to overwrite lang.js!");
+                    btn.innerText = oldText;
+                    btn.style.pointerEvents = "auto";
+                }
+            } catch (e) {
+                alert("Network error: " + e);
+                btn.innerText = oldText;
+                btn.style.pointerEvents = "auto";
+            }
+        }
+    </script>
+</body>
+</html>

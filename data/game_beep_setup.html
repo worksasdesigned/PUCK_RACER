@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Luc Léger</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        /* Spezifische Warnbox für diesen Test bleibt lokal */
+        .warn-box { 
+            background: rgba(220,53,69,0.2); 
+            border: 1px solid var(--danger);
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            color: var(--text-main); 
+            text-align:center;
+        }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_beep">Luc Léger Test ⏱️</div></header>
+    <main>
+        <div class="warn-box">
+            <strong data-i18n="bp_setup_warn" style="color:var(--danger)">⚠️ IMPORTANT WARNING ⚠️</strong><br>
+            <span data-i18n="bp_setup_warn_txt">For the VO²max and speed levels to be accurate, the distance between the pucks MUST be exactly <b>20 meters</b>!</span>
+        </div>
+
+        <div class="card">
+            <div class="slider-header">
+                <span data-i18n="bp_setup_players">🏃 Players / Lanes</span>
+                <span id="playerDisplay" class="slider-val">1</span>
+            </div>
+            <input type="range" id="playerSlider" min="1" max="6" value="1" oninput="updatePlayers(this.value)">
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        let connectedPucks = 0;
+
+        fetch('/api/game/load?id=12');
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connectedPucks = data.filter(p => p.active).length;
+            // Dynamische Begrenzung entfernt - stattdessen wird nur gewarnt
+            updatePlayers(document.getElementById('playerSlider').value); 
+        });
+
+        function updatePlayers(val) {
+            let players = parseInt(val);
+            document.getElementById('playerDisplay').innerText = players;
+            
+            let needed = players * 2;
+            let infoEl = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+
+            infoEl.innerText = `${getTranslation('req_pucks')} ${needed} | ${getTranslation('conn_pucks')} ${connectedPucks}`;
+            
+            // Warn-Logik
+            if (needed > connectedPucks) {
+                infoEl.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                infoEl.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+        }
+
+        function nextStep() {
+            let players = parseInt(document.getElementById('playerSlider').value);
+            if (players * 2 > connectedPucks) {
+                if(!confirm("Not enough pucks connected! Continue anyway?")) return;
+            }
+            sessionStorage.setItem('beep_players', players);
+            location.href = 'game_beep_names.html';
+        }
+
+        function cancelSetup() {
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
+        }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'playerSlider', el:'playerSlider' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stopwatch Run</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+
+        .p-card { 
+            background: var(--card-hover); border-radius: 8px; padding: 10px; margin-bottom: 10px; 
+            border-left: 5px solid #fff; position: relative; cursor: pointer; transition: background 0.1s;
+        }
+        .p-card:active { background: var(--border-color); transform: scale(0.98); }
+        .row-false-start { border: 2px solid var(--danger) !important; background: rgba(220, 53, 69, 0.2); }
+        
+        .top-line { display: flex; justify-content: space-between; align-items: center; pointer-events: none;}
+        .p-name { font-weight:bold; font-size:1.1rem; color: var(--text-main);}
+        .p-time { font-family:monospace; font-size:1.8rem; color:var(--text-main); }
+        .p-status { font-size:1.5rem; }
+        
+        .lap-table { width: 100%; margin-top: 10px; border-collapse: collapse; font-size: 0.85rem; color: var(--text-muted); pointer-events: none;}
+        .lap-table td { padding: 3px 5px; border-bottom: 1px solid var(--border-color); }
+        .lap-table th { text-align: left; border-bottom: 1px solid var(--text-muted); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="g_stopwatch">Stopwatch ⏱️</div>
+        <div class="status-bar"><div class="status-dot dot-green" id="conn"></div></div>
+    </header>
+    <main>
+        <div class="controls">
+            <button onclick="back()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
+            <button id="btnStart" onclick="cmd('start_all')" class="btn-primary btn-ctrl" data-i18n="btn_start_all">START ALL</button>
+            <button onclick="cmd('stop_all')" class="btn-danger btn-ctrl" data-i18n="btn_stop_all">STOP ALL</button>
+        </div>
+
+        <div id="list">
+            <div id="loadingTxt" style="text-align:center; color:var(--text-muted); padding:20px;" data-i18n="loading">Loading...</div>
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="home()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+<script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const COLORS = ['blue','red','green','yellow','magenta','cyan','orange','purple','white','lime'];
+        let isLapMode = false;
+        
+        let tLap = getTranslation('sw_run_lap');
+        let tTime = getTranslation('sw_run_time');
+        let tSplit = getTranslation('sw_run_split');
+
+        document.getElementById('list').addEventListener('click', function(e) {
+            let card = e.target.closest('.action-card');
+            if(card) {
+                let actionCmd = card.getAttribute('data-cmd');
+                if(actionCmd) fetch(`/api/game/action?cmd=${actionCmd}`);
+            }
+        });
+
+        setInterval(upd, 100);
+        
+        function upd() {
+            fetch('/api/game/status').then(r=>r.json()).then(d => {
+                document.getElementById('conn').style.opacity = 1;
+                isLapMode = (d.lap === 1);
+                
+                let showStart = (d.central == 1);
+                let btnStart = document.getElementById('btnStart');
+                
+                if(!showStart) {
+                    btnStart.innerText = getTranslation('btn_reset');
+                    btnStart.style.background = "var(--success)";
+                    btnStart.setAttribute('onclick', "cmd('reset')");
+                } else {
+                    btnStart.setAttribute('onclick', "cmd('start_all')");
+                    if (d.state == 5) { btnStart.innerText = getTranslation('btn_reset'); btnStart.style.background = "var(--success)"; }
+                    else if (d.state == 3) { btnStart.innerText = getTranslation('btn_reset'); btnStart.style.background = "var(--danger)"; }
+                    else if (d.state == 0) { btnStart.innerText = getTranslation('btn_start_all'); btnStart.style.background = "var(--primary)"; }
+                    else { btnStart.innerText = getTranslation('btn_running'); btnStart.style.background = "var(--card-hover)"; }
+                }
+                
+                let container = document.getElementById('list');
+                let loadingTxt = document.getElementById('loadingTxt');
+                if (loadingTxt && d.players && d.players.length > 0) loadingTxt.style.display = 'none';
+
+                d.players.forEach(p => {
+                    let n = sessionStorage.getItem(`p_name_${p.id}`) || `Player ${p.id+1}`;
+                    let col = COLORS[p.id%10];
+                    let tStr = fmt(p.t);
+                    let icon = "";
+                    
+                    if(d.state==1 || d.state==2) { if(p.hld) icon = "🖐️"; }
+                    if(p.st==3) icon = "🏁"; 
+                    if(p.fs) icon = "⚠️";
+                    
+                    let cardClass = "p-card action-card";
+                    if(p.fs) cardClass += " row-false-start";
+                    
+                    let lapHtml = "";
+                    if(isLapMode && p.laps && p.laps.length > 0) {
+                        lapHtml = `<table class="lap-table"><tr><th>${tLap}</th><th>${tTime}</th><th>${tSplit}</th></tr>`;
+                        let prev = 0;
+                        p.laps.forEach((l, idx) => {
+                            let split = l - prev;
+                            lapHtml += `<tr><td>${idx+1}</td><td>${fmt(l)}</td><td>+${fmt(split)}</td></tr>`;
+                            prev = l;
+                        });
+                        lapHtml += "</table>";
+                    }
+                    
+                    let rowId = `p-card-${p.id}`;
+                    let rowEl = document.getElementById(rowId);
+
+                    if (!rowEl) {
+                        container.insertAdjacentHTML('beforeend', `
+                        <div id="${rowId}" class="${cardClass}" style="border-left-color:${col}" data-cmd="stop_one&val=${p.id}">
+                            <div class="top-line">
+                                <div>
+                                    <div class="p-name">${n}</div>
+                                    <div class="p-time" id="time-${p.id}">${tStr}</div>
+                                </div>
+                                <div class="p-status" id="icon-${p.id}">${icon}</div>
+                            </div>
+                            <div id="laps-${p.id}">${lapHtml}</div>
+                        </div>`);
+                    } else {
+                        rowEl.className = cardClass;
+                        document.getElementById(`time-${p.id}`).innerText = tStr;
+                        document.getElementById(`icon-${p.id}`).innerText = icon;
+                        document.getElementById(`laps-${p.id}`).innerHTML = lapHtml;
+                    }
+                });
+            }).catch(()=>document.getElementById('conn').style.opacity=0.2);
+        }
+        
+        function fmt(ms) {
+            let s = Math.floor(ms/1000);
+            let m = Math.floor(s/60);
+            s = s % 60;
+            let z = Math.floor((ms%1000)/100);
+            return `${m}:${s.toString().padStart(2,'0')}.${z}`;
+        }
+        
+        function cmd(c) { fetch(`/api/game/action?cmd=${c}`); }
+        function back() { cmd('setup'); location.href='game_stopwatch_names.html'; }
+        function home() { fetch('/api/game/action?cmd=exit'); setTimeout(()=>{location.href='/'},100); }
+    </script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Names - Hunt!</title>
+    <link rel="stylesheet" href="style.css?v=4">
+    <style>
+        .player-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background:var(--card-bg); padding:10px; border-radius:8px; border-left: 5px solid #fff; }
+        .color-box { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; flex-shrink: 0; transition: all 0.3s;}
+        input[type=text] { flex-grow: 1; padding: 12px; font-size: 1.1rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-main); }
+        .hidden { display: none; }
+        #toggleIcon { transition: transform 0.3s; display: inline-block; }
+        .rotate { transform: rotate(-90deg); }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="h_names_title">Hunt! Players</div></header>
+    <main>
+        <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">Initializing...</div>
+        
+        <div id="content" style="display:none;">
+            <div class="layout-card">
+                <div class="layout-header" onclick="toggleLayout()">
+                    <span data-i18n="h_layout_title">Hunting Grounds Setup</span>
+                    <span id="toggleIcon">▼</span>
+                </div>
+                <div class="layout-body" id="layoutBody">
+                    <div style="text-align:center; width:100%;">
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:15px;" data-i18n="h_layout_desc">
+                            Place the pucks as shown in the room. The hunters start in the center.
+                        </p>
+                        <div id="arenaContainer" style="overflow-x: auto;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pickerBar" style="margin-bottom:15px;">
+                <button onclick="loadFromPicker()" class="btn-primary" style="font-size:1.1rem; background:var(--card-hover); border:1px dashed var(--primary); color:var(--primary);">
+                    👥 <span data-i18n="pp_load_players">Load Players from List</span>
+                </button>
+            </div>
+            
+            <div id="playerList" class="card"></div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">TO GAME 🏁</button>
+                <button onclick="goBack()" class="btn-back" data-i18n="btn_back">⬅ BACK</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="player_picker.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        const COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FF1493', '#00FF00', '#800080'];
+        const HUNT_LAYOUTS = {
+            12: ["B1","C1","D1","A2","E2","A3","E3","A4","E4","B5","C5","D5"],
+            11: ["B1","C1","D1","A2","E2","A3","A4","E4","B5","C5","D5"],
+            10: ["B1","C1","D1","A2","E2","A4","E4","B5","C5","D5"],
+            9:  ["B1","C1","D1","A2","E2","A4","E4","B5","D5"],
+            8:  ["B1","D1","A2","E2","A4","E4","B5","D5"],
+            7:  ["C1","A2","E2","A4","E4","B5","D5"],
+            6:  ["C1","A2","E2","A4","E4","C5"],
+            5:  ["C1","A3","E3","B5","D5"],
+            4:  ["A1","E1","A5","E5"],
+            3:  ["C1","A5","E5"]
+        };
+        let nPlr = parseInt(sessionStorage.getItem('h_plr') || 1);
+        let nPucks = parseInt(sessionStorage.getItem('h_pucks') || 3);
+
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(initList, 500);
+        });
+
+        async function initList() {
+            // 1. ESP Laden und Configs senden
+            await fetch('/api/game/load?id=17');
+            
+            await fetch(`/api/game/action?cmd=cfg_players&val=${nPlr}`);
+            await fetch(`/api/game/action?cmd=cfg_pucks&val=${nPucks}`);
+            await fetch(`/api/game/action?cmd=cfg_time&val=${sessionStorage.getItem('h_time')}`);
+            await fetch(`/api/game/action?cmd=cfg_radius&val=${sessionStorage.getItem('h_rad')}`);
+            await fetch(`/api/game/action?cmd=cfg_diff&val=${sessionStorage.getItem('h_diff')}`);
+            await fetch(`/api/game/action?cmd=cfg_sound&val=${sessionStorage.getItem('h_snd')}`);
+            
+            await fetch('/api/game/action?cmd=setup'); 
+            await fetch('/api/game/action?cmd=show_colors');
+            
+            // 2. Tabelle generieren
+            let tableHtml = `<table class="arena-table">`;
+            const cols = ['A', 'B', 'C', 'D', 'E'];
+            for(let r = 1; r <= 5; r++) {
+                tableHtml += `<tr>`;
+                for(let c = 0; c < 5; c++) {
+                    tableHtml += `<td id="cell-${cols[c]}${r}"></td>`;
+                }
+                tableHtml += `</tr>`;
+            }
+            tableHtml += `</table>`;
+            document.getElementById('arenaContainer').innerHTML = tableHtml;
+
+            // 3. Pucks und Läufer setzen
+            let layoutKey = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12].find(n => n >= nPucks) || 12;
+            let activeLayout = HUNT_LAYOUTS[layoutKey];
+
+            for(let i = 0; i < nPucks && i < activeLayout.length; i++) {
+                let coord = activeLayout[i];
+                let cell = document.getElementById(`cell-${coord}`);
+                if(cell) {
+                    cell.innerHTML = `<div class="puck-icon" id="puck_vis_${i}">${i+1}</div>`;
+                }
+            }
+            
+            // Hunter Zentrum
+            let centerCell = document.getElementById('cell-C3');
+            if(centerCell) centerCell.innerHTML = `<div style="font-size:1.5rem; white-space:nowrap;">🏃‍♂️🏃🏻</div>`;
+            
+            // 4. Spielerliste generieren
+            let container = document.getElementById('playerList');
+            container.innerHTML = "";
+            for(let i=0; i<nPlr; i++) {
+                let color = COLORS[i % 10];
+                let name = sessionStorage.getItem(`p_name_${i}`) || `Hunter ${i+1}`;
+                container.innerHTML += `
+                <div class="player-row" style="border-left-color: ${color}">
+                    <div class="color-box" id="cb_${i}" style="background:${color}; box-shadow:0 0 10px ${color}"></div>
+                    <input type="text" id="name_${i}" value="${name}" placeholder="Name">
+                </div>`;
+            }
+            
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+
+            setInterval(pollPuckEffects, 1500);
+        }
+
+        async function pollPuckEffects() {
+            try {
+                let r = await fetch('/api/effects');
+                let data = await r.json();
+                data.forEach(eff => {
+                    const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
+                    
+                    // Farb-Kästchen beim Hunter in der Liste animieren
+                    let cb = document.getElementById(`cb_${eff.id}`);
+                    if(cb) { cb.style.background = rgb; cb.style.boxShadow = `0 0 10px ${rgb}`; }
+
+                    // Puck in der Arena animieren
+                    let vis = document.getElementById(`puck_vis_${eff.id}`);
+                    if(vis) {
+                        vis.classList.remove('eff-breathe', 'eff-chase', 'eff-rainbow');
+                        if(eff.eff == 3 || eff.eff == 4 || eff.eff == 5) vis.classList.add('eff-breathe');
+                        if(eff.eff == 6 || eff.eff == 7) vis.classList.add('eff-chase');
+                        if(eff.eff == 9) vis.classList.add('eff-rainbow');
+                        
+                        if(eff.eff == 18) {
+                            let percent = Math.round(eff.dur / 2.55);
+                            vis.style.background = `conic-gradient(${rgb} ${percent}%, var(--border-color) ${percent}%)`;
+                            vis.style.border = `2px solid ${rgb}`;
+                        } else {
+                            vis.style.background = rgb;
+                            vis.style.border = `2px solid #fff`;
+                        }
+                        vis.style.boxShadow = `0 0 15px ${rgb}`;
+                    }
+                });
+            } catch(e) {}
+        }
+
+        function toggleLayout() {
+            document.getElementById('layoutBody').classList.toggle('hidden');
+            document.getElementById('toggleIcon').classList.toggle('rotate');
+        }
+
+        function loadFromPicker() {
+            openPlayerPicker(nPlr, function(selected) {
+                selected.forEach((p, i) => {
+                    let inp = document.getElementById('name_' + i);
+                    if (inp) { inp.value = p.name; sessionStorage.setItem('p_name_' + i, p.name); }
+                });
+            });
+        }
+
+        function startGame() {
+            for(let i=0; i<nPlr; i++) {
+                sessionStorage.setItem(`p_name_${i}`, document.getElementById(`name_${i}`).value);
+            }
+            setTimeout(() => { location.href = 'game_hunt_run.html'; }, 200);
+        }
+
+        function goBack() {
+            fetch('/api/game/action?cmd=exit').then(() => {
+                location.href = 'game_hunt_setup.html';
+            });
+        }
+    </script>
+</body>
+</html>

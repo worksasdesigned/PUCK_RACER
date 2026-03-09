@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="tour.js"></script> 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Cat Reflex</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo">Katzenreflexe</div></header>
+    <main>
+        <div class="card">
+            <h3>🏃 <span data-i18n="cr_setup_players">Spieler</span></h3>
+            <div class="slider-header">
+                <span></span>
+                <span id="playerDisplay" class="slider-val">1</span>
+            </div>
+            <input type="range" id="playerSlider" min="1" max="11" value="1" oninput="updatePlayers(this.value)">
+            <p id="puckInfo" class="info-txt">Loading...</p>
+        </div>
+
+        <div class="card">
+            <h3>⏱️ <span data-i18n="cr_setup_time">Spielzeit</span></h3>
+            <div class="slider-header">
+                <span class="info-txt" data-i18n="cr_time_desc" style="margin:0;">Gesamtdauer in Sekunden</span>
+                <span id="timeDisplay" class="slider-val">1:00</span>
+            </div>
+            <input type="range" id="timeSlider" min="10" max="300" step="10" value="60" oninput="updateTime(this.value)">
+        </div>
+
+        <div class="card">
+            <h3>⚙️ <span data-i18n="cr_setup_rules">Spielregeln</span></h3>
+          
+            <div class="toggle-row">
+                <span style="font-weight:bold; font-size:1.1rem;" data-i18n="cr_hl_mode">Highlander Modus</span>
+                <label class="switch">
+                    <input type="checkbox" id="toggleHighlander" checked onchange="toggleDifficultyVis()">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            <p class="info-txt" id="highlanderDesc" style="text-align:left; margin-top:0;" data-i18n="cr_hl_on">Nur der schnellste Spieler erhält einen Punkt.</p>
+
+            <div id="difficultyBox" style="display:none; margin-top:15px; background:var(--bg-color); padding:10px; border-radius:8px; border:1px dashed var(--border-color);">
+                <h4 style="margin-top:0;" data-i18n="cr_diff">Zeitfenster (Schwierigkeit)</h4>
+                <div class="slider-header">
+                    <span></span>
+                    <span id="diffDisplay" class="slider-val" style="font-size:1.2rem;">Mittel (1.0s)</span>
+                </div>
+                <input type="range" id="diffSlider" min="0.5" max="2.0" step="0.5" value="1.0" oninput="updateDifficulty(this.value)">
+            </div>
+
+            <div class="toggle-row" style="margin-top:15px;">
+                <span style="font-weight:bold; font-size:1.1rem;" data-i18n="cr_chaos_mode">Farbchaos Modus</span>
+                <label class="switch">
+                    <input type="checkbox" id="toggleChaos">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+            <p class="info-txt" style="text-align:left; margin-top:0;" data-i18n="cr_chaos_desc">Anzeigepuck flackert bunt vor dem grünen Signal.</p>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        
+        let players = 1;
+        let gameTimeSec = 60;
+        let diffMs = 1000;
+        let connectedPucks = 0;
+
+        fetch('/api/game/load?id=25'); 
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connectedPucks = data.filter(p => p.active).length;
+            updatePlayers(document.getElementById('playerSlider').value); 
+        });
+
+		function updatePlayers(val) {
+            players = parseInt(val);
+            document.getElementById('playerDisplay').innerText = players;
+            
+            let needed = players + 1; 
+            let infoEl = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+            
+            infoEl.innerHTML = `${getTranslation('req_pucks')} ${needed} | ${getTranslation('conn_pucks')} ${connectedPucks}`;
+            
+            if (needed > connectedPucks) {
+                infoEl.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                infoEl.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+        }
+
+        function updateTime(val) {
+            gameTimeSec = parseInt(val);
+            let m = Math.floor(gameTimeSec / 60);
+            let s = gameTimeSec % 60;
+            document.getElementById('timeDisplay').innerText = `${m}:${s.toString().padStart(2, '0')}`;
+        }
+
+		function toggleDifficultyVis() {
+            let isHighlander = document.getElementById('toggleHighlander').checked;
+            document.getElementById('difficultyBox').style.display = isHighlander ? 'none' : 'block';
+            
+            let descEl = document.getElementById('highlanderDesc');
+            if(isHighlander) {
+                descEl.innerText = getTranslation('cr_hl_on') || "Nur der schnellste Spieler erhält einen Punkt.";
+            } else {
+                descEl.innerText = getTranslation('cr_hl_off') || "Alle Spieler im Reaktionszeitfenster erhalten Punkte (Gewinner 2 Punkte).";
+            }
+        }
+
+        function updateDifficulty(val) {
+            diffMs = parseFloat(val) * 1000;
+            let label = "Mittel";
+            if (val == 0.5) label = "Schwer";
+            if (val >= 1.5) label = "Leicht";
+            document.getElementById('diffDisplay').innerText = `${label} (${parseFloat(val).toFixed(1)}s)`;
+        }
+
+		function nextStep() {
+			let needed = players + 1;
+			if (needed > connectedPucks) {
+				if(!confirm("Nicht genug Pucks verbunden! Trotzdem fortfahren?")) return;
+			}
+			
+			let highlander = document.getElementById('toggleHighlander').checked ? 1 : 0;
+			let chaos = document.getElementById('toggleChaos').checked ? 1 : 0;
+
+			// Alle Werte lokal speichern
+			sessionStorage.setItem('cr_players', players);
+			sessionStorage.setItem('cr_highlander', highlander);
+			sessionStorage.setItem('cr_time', gameTimeSec);
+			sessionStorage.setItem('cr_diff', diffMs);
+			sessionStorage.setItem('cr_chaos', chaos);
+			
+			location.href = 'game_cat_names.html';
+		}
+
+        function cancelSetup() {
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
+        }
+    </script>
+	<script>
+    window.TRAINING_FIELDS = [
+        { key:'playerSlider',     el:'playerSlider' },
+        { key:'timeSlider',       el:'timeSlider' },
+        { key:'toggleHighlander', el:'toggleHighlander', type:'check' },
+        { key:'diffSlider',       el:'diffSlider' },
+        { key:'toggleChaos',      el:'toggleChaos', type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

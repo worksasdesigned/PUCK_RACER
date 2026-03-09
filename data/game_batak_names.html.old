@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Batak Aufbau - PuckRacer</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        /* Hilfsklassen für das Auf- und Zuklappen des Layouts */
+        .hidden { display: none; }
+        #toggleIcon { transition: transform 0.3s; display: inline-block; }
+        .rotate { transform: rotate(-90deg); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="bat_names_title">Batak Pro</div>
+    </header>
+    <main>
+        <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">
+            Initialisierung...
+        </div>
+        
+        <div id="content" style="display:none;">
+            
+            <div class="layout-card">
+                <div class="layout-header" onclick="toggleLayout()">
+                    <span data-i18n="bat_layout_title">Puck-Wandaufbau</span>
+                    <span id="toggleIcon">▼</span>
+                </div>
+                
+                <div class="layout-body" id="layoutBody">
+                    <div style="text-align:center; width:100%;">
+                        <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:15px;" data-i18n="bat_layout_desc">
+                            Befestige die Pucks im Spinnennetz-Muster an der Wand.
+                        </p>
+                        
+                        <div class="puck-arena" id="arenaGrid" style="margin: 0 auto;">
+                            </div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
+                <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">
+                    START 🏁
+                </button>
+                <button onclick="location.href='game_batak_setup.html'" class="btn-back" data-i18n="btn_back">
+                    ⬅ ZURÜCK
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        // Definition der CSS-Grid Positionen nach dem Excel-Muster (Spalte A-E, Zeile 1-5)
+        const COORDS = {
+            "A1": "grid-column:1; grid-row:1;", "B1": "grid-column:2; grid-row:1;", "C1": "grid-column:3; grid-row:1;", "D1": "grid-column:4; grid-row:1;", "E1": "grid-column:5; grid-row:1;",
+            "A2": "grid-column:1; grid-row:2;", "B2": "grid-column:2; grid-row:2;", "C2": "grid-column:3; grid-row:2;", "D2": "grid-column:4; grid-row:2;", "E2": "grid-column:5; grid-row:2;",
+            "A3": "grid-column:1; grid-row:3;", "B3": "grid-column:2; grid-row:3;", "C3": "grid-column:3; grid-row:3;", "D3": "grid-column:4; grid-row:3;", "E3": "grid-column:5; grid-row:3;",
+            "A4": "grid-column:1; grid-row:4;", "B4": "grid-column:2; grid-row:4;", "C4": "grid-column:3; grid-row:4;", "D4": "grid-column:4; grid-row:4;", "E4": "grid-column:5; grid-row:4;",
+            "A5": "grid-column:1; grid-row:5;", "B5": "grid-column:2; grid-row:5;", "C5": "grid-column:3; grid-row:5;", "D5": "grid-column:4; grid-row:5;", "E5": "grid-column:5; grid-row:5;"
+        };
+
+        // Layout-Varianten basierend auf der Anzahl der verbundenen Pucks (deine Vorgaben)
+        const LAYOUTS = {
+            12: ["A1","C1","E1","B2","D2","A3","E3","B4","D4","A5","C5","E5"],
+            10: ["A1","C1","E1","B2","D2","A3","E3","A5","C5","E5"],
+            8:  ["A1","C1","E1","A3","E3","A5","C5","E5"],
+            7:  ["A1","C1","E1","C3","A5","C5","E5"],
+			6:  ["A1","C1","E1","A5","C5","E5"],
+			5:  ["A1","E1","C3","A5","E5"], 
+            4:  ["A1","E1","A5","E5"]
+        };
+
+        // Initialisierungsfunktion, wird beim Laden der Seite aufgerufen
+        async function initList() {
+            // Helles Theme anwenden, falls im lokalen Speicher konfiguriert
+            if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+            
+            // Anzahl der Pucks aus dem SessionStorage laden (Standard: 4)
+            let numPucks = parseInt(sessionStorage.getItem('batak_pucks') || 4);
+            
+            // Backend-Konfiguration aufrufen. Dies triggert im C++ Code auch die showLayout() Funktion
+            await fetch(`/api/game/action?cmd=cfg_pucks&val=${numPucks}`);
+            await fetch('/api/game/action?cmd=setup'); 
+
+            // Das passende Layout für die Puck-Anzahl ermitteln
+            // Wir suchen die erste Zahl im Array [12, 10, 8, 6, 4], die größer oder gleich numPucks ist
+            let layoutKey = [12, 10, 8, 6, 4].find(n => n >= numPucks) || 4;
+            let activeLayout = LAYOUTS[layoutKey];
+
+            // HTML für die Pucks im 5x5 Raster generieren
+            let gridHtml = "";
+            for(let i = 0; i < numPucks; i++) {
+                let coord = activeLayout[i] || "C3"; // Fallback auf C3, falls Koordinate fehlt
+                
+                // Wir erzeugen ein div mit der entsprechenden CSS-Grid-Position
+                gridHtml += `<div class="puck-icon" id="puck_vis_${i}" style="${COORDS[coord]}">${i+1}</div>`;
+            }
+
+            // Grid in das DOM einfügen und Ladebildschirm ausblenden
+            document.getElementById('arenaGrid').innerHTML = gridHtml;
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+
+            // Starte das Polling für die Puck-Effekte alle 1,5 Sekunden
+            setInterval(pollPuckEffects, 1500);
+        }
+
+        // Fragt das Backend nach den aktuellen Effekten der Pucks ab und aktualisiert die Anzeige
+        function pollPuckEffects() {
+            fetch('/api/effects')
+                .then(response => response.json())
+                .then(data => {
+                    // Gehe durch jeden Puck, der vom ESP32 gemeldet wird
+                    data.forEach(eff => {
+                        let vis = document.getElementById(`puck_vis_${eff.id}`);
+                        
+                        if(vis) {
+                            // RGB Farbe als String zusammenbauen
+                            const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
+                            
+                            // Reset der Effekt-Klassen auf den Standardwert
+                            vis.className = "puck-icon"; 
+                            
+                            // Spezifische Effekt-Klassen hinzufügen (IDs aus dem C++ enum)
+                            if(eff.eff == 3 || eff.eff == 4 || eff.eff == 5) vis.classList.add('eff-breathe');
+                            if(eff.eff == 6 || eff.eff == 7) vis.classList.add('eff-chase');
+                            if(eff.eff == 9) vis.classList.add('eff-rainbow');
+                            
+                            // Sonderfall: EFF_PROGRESS (ID 18)
+                            if(eff.eff == 18) {
+                                // Der ESP32 sendet den Wert (eff.ex) in einer Skala von 0 bis 255.
+                                // Wir rechnen das in Prozent (0 - 100) um, damit CSS 'conic-gradient' funktioniert.
+                                let percent = Math.round(eff.ex / 2.55);
+                                
+                                vis.style.background = `conic-gradient(${rgb} ${percent}%, var(--border-color) ${percent}%)`;
+                                vis.style.border = `2px solid ${rgb}`;
+                            } else {
+                                // Standard-Hintergrundfarbe setzen, wenn es kein Progress-Effekt ist
+                                vis.style.background = rgb;
+                                vis.style.border = `2px solid #fff`;
+                            }
+                            
+                            // Leuchteffekt (Box-Shadow) passend zur Puck-Farbe setzen
+                            vis.style.boxShadow = `0 0 15px ${rgb}`;
+                        }
+                    });
+                })
+                .catch(err => console.log("Fehler beim Abrufen der Effekte", err));
+        }
+
+        // Klappt das Puck-Layout auf und zu
+        function toggleLayout() {
+            document.getElementById('layoutBody').classList.toggle('hidden');
+            document.getElementById('toggleIcon').classList.toggle('rotate');
+        }
+
+        // Startet das Spiel und wechselt zur Run-Ansicht
+        function startGame() { 
+            location.href = 'game_batak_run.html'; 
+        }
+        
+        // initList beim Laden der Seite ausführen
+        window.onload = initList;
+    </script>
+</body>
+</html>

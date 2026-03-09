@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puck Racer Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Header Layout */
+        header { justify-content: flex-start; padding: 15px 20px; position: relative; z-index: 1000; }
+        .top-tools { margin-right: 20px; }
+        .logo { margin-right: auto; cursor: pointer; user-select: none; transition: transform 0.2s; }
+        .logo:active { transform: scale(0.95); }
+        
+        /* Dropdown Menü Styling */
+        .dropdown { position: relative; display: inline-block; }
+        .btn-menu { background: none; border: 1px solid var(--border-color); color: #fff; border-radius: 4px; padding: 4px 12px; cursor: pointer; font-size: 1.5rem; font-weight: bold; line-height: 1; transition: 0.2s; }
+        .btn-menu:hover { border-color: var(--primary); color: var(--primary); }
+        
+        .dropdown-content {
+            display: none; position: absolute; background-color: #1a1a1a; min-width: 230px; 
+            box-shadow: 0px 10px 25px rgba(0,0,0,0.8); border: 1px solid #333; border-radius: 8px; 
+            z-index: 2000; left: 0; top: 45px; overflow: hidden;
+        }
+        .dropdown-content.show { display: block; animation: fade 0.2s; }
+        .dropdown-content a, .dropdown-content .menu-item {
+            color: #e0e0e0; padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid #222; font-size: 1rem; cursor: pointer;
+        }
+        .dropdown-content a:hover, .dropdown-content .menu-item:hover { background-color: #2a2a2a; color: var(--primary); }
+        .dropdown-content select { background: #111; color: #fff; border: 1px solid #444; padding: 4px; border-radius: 4px; font-size: 0.9rem; float: right; outline: none;}
+
+        @keyframes fade { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Stats Counter */
+        .play-count { 
+            position: absolute; bottom: 8px; right: 8px; font-size: 0.8rem; color: #aaa; font-weight: bold; 
+            background: rgba(0,0,0,0.7); padding: 2px 6px; border-radius: 4px; pointer-events: none; display: none; 
+        }
+        body.show-stats .play-count { display: block; }
+
+        /* Favoriten Stern Styling */
+        .fav-btn { position: absolute; top: 5px; left: 8px; font-size: 1.4rem; color: #444; cursor: pointer; z-index: 10; transition: all 0.2s; user-select: none; }
+        .fav-btn:hover { transform: scale(1.2); color: #888; }
+        .fav-btn.is-fav { color: #ffc107; text-shadow: 0 0 8px rgba(255,193,7,0.5); }
+
+        /* -----------------------------------------------------
+           Puck Racer Easter Egg (ECHTES 3D CSS MODELL)
+           ----------------------------------------------------- */
+        #puckEasterEggOverlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center;
+            flex-direction: column; opacity: 0; transition: opacity 0.5s ease; cursor: pointer;
+        }
+        #puckEasterEggOverlay.active { display: flex; opacity: 1; }
+        .puck-scene { width: 300px; height: 300px; perspective: 1200px; display: flex; justify-content: center; align-items: center; }
+        .puck-assembly { position: relative; width: 180px; height: 180px; transform-style: preserve-3d; transform: rotateX(70deg) rotateZ(0deg); transition: transform 2s cubic-bezier(0.25, 1, 0.5, 1); }
+        .puck-part { position: absolute; border-radius: 50%; top: 0; left: 0; right: 0; bottom: 0; margin: auto; opacity: 0; transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .puck-base { width: 180px; height: 180px; background: rgba(180, 180, 180, 0.15); border: 2px solid rgba(200, 200, 200, 0.4); transform: translateZ(-400px); }
+        .puck-base:first-of-type { box-shadow: 0 30px 60px 10px rgba(0,0,0,0.9); } 
+        .puck-base:last-of-type { background: rgba(220, 220, 220, 0.3); }
+        .puck-led { width: 160px; height: 160px; background: #87ceeb; border: 1px solid rgba(255,255,255,0.5); transform: translateZ(0px) scale(0.1); }
+        .puck-button { width: 110px; height: 110px; background: #1a1a1a; border: 2px solid #050505; transform: translateZ(400px); }
+        .puck-button:last-of-type { background: radial-gradient(circle at 30% 30%, #555, #0a0a0a); box-shadow: inset 0 -5px 15px rgba(0,0,0,0.9); }
+        .puck-assembly.assembled { transform: rotateX(65deg) rotateZ(360deg); }
+        .puck-assembly.assembled .puck-base { transform: translateZ(var(--z)); opacity: 1; transition-delay: 0.1s;}
+        .puck-assembly.assembled .puck-led { transform: translateZ(var(--z)); opacity: 1; transition-delay: 0.3s;}
+        .puck-assembly.assembled .puck-button { transform: translateZ(var(--z)); opacity: 1; transition-delay: 0.5s;}
+        .puck-assembly.glowing .puck-led { animation: rgb-color 3s linear infinite; }
+        .puck-assembly.glowing .puck-led:last-of-type { animation: rgb-pulse 3s linear infinite; }
+        .puck-assembly.glowing .puck-button { animation: ee-button-press 2.5s ease-in-out infinite; }
+        @keyframes rgb-color { 0% { background: #ff0000; border-color: #ffaa00; filter: blur(1px) brightness(1.5); } 33% { background: #00ff00; border-color: #aaffaa; filter: blur(1px) brightness(1.5); } 66% { background: #0000ff; border-color: #aaaaff; filter: blur(1px) brightness(1.5); } 100% { background: #ff0000; border-color: #ffaa00; filter: blur(1px) brightness(1.5); } }
+        @keyframes rgb-pulse { 0% { box-shadow: 0 0 50px 20px rgba(255,0,0,0.8), inset 0 0 20px rgba(255,0,0,0.9); filter: blur(2px) brightness(2); } 33% { box-shadow: 0 0 50px 20px rgba(0,255,0,0.8), inset 0 0 20px rgba(0,255,0,0.9); filter: blur(2px) brightness(2); } 66% { box-shadow: 0 0 50px 20px rgba(0,0,255,0.8), inset 0 0 20px rgba(0,0,255,0.9); filter: blur(2px) brightness(2); } 100% { box-shadow: 0 0 50px 20px rgba(255,0,0,0.8), inset 0 0 20px rgba(255,0,0,0.9); filter: blur(2px) brightness(2); } }
+        @keyframes ee-button-press { 0%, 100% { transform: translateZ(var(--z)); } 50% { transform: translateZ(calc(var(--z) - 4px)); } }
+        .core-ver-text { color: var(--primary); font-size: 1.2rem; font-family: 'puckracer', monospace; font-weight: bold; margin-top: 50px; letter-spacing: 3px; opacity: 0; transform: translateY(20px); transition: all 1s ease 1.5s; }
+        #puckEasterEggOverlay.active .core-ver-text { opacity: 1; transform: translateY(0); }
+    </style>
+	<script src="tour.js"></script>
+</head>
+<body>
+    <!-- SPLASH SCREEN -->
+    <div id="splashScreen" style="
+        position:fixed; top:0; left:0; width:100%; height:100%;
+        background:#000; z-index:99999;
+        display:flex; flex-direction:column; justify-content:center; align-items:center;
+        opacity:1; transition: opacity 0.6s ease;
+    ">
+        <div style="
+            font-family:'puckracer', sans-serif;
+            font-size: clamp(2.5rem, 10vw, 5rem);
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            color: #fff;
+            opacity:0;
+            transform: scale(0.8);
+            animation: splashReveal 1s ease-out 0.3s forwards, neon-rainbow 3s linear infinite;
+        ">PUCK RACER</div>
+        <div style="
+            font-size: 0.85rem;
+            color: #555;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            margin-top: 16px;
+            opacity:0;
+            animation: splashFadeIn 0.8s ease-out 0.9s forwards;
+        ">by WorksAsDesigned</div>
+    </div>
+    <style>
+        @keyframes splashReveal {
+            0%   { opacity:0; transform: scale(0.8); text-shadow: none; }
+            60%  { opacity:1; transform: scale(1.03); }
+            100% { opacity:1; transform: scale(1); }
+        }
+        @keyframes splashFadeIn {
+            from { opacity:0; transform: translateY(8px); }
+            to   { opacity:1; transform: translateY(0); }
+        }
+    </style>
+    <script>
+    (function() {
+        if (sessionStorage.getItem('splashShown')) {
+            document.getElementById('splashScreen').style.display = 'none';
+            return;
+        }
+        sessionStorage.setItem('splashShown', '1');
+        setTimeout(function() {
+            let s = document.getElementById('splashScreen');
+            s.style.opacity = '0';
+            setTimeout(function() { s.style.display = 'none'; }, 600);
+        }, 2200);
+    })();
+    </script>
+    <header>
+        <div class="top-tools">
+            <div class="dropdown">
+                <button class="btn-menu" id="btnMenu" onclick="toggleMenu()" title="Tools & Einstellungen">⋮</button>
+                <div class="dropdown-content" id="mainMenu">
+                    <a id="btnTheme" onclick="toggleTheme(); toggleMenu();">🌙 Dark Mode umschalten</a>
+                    <a id="btnStats" onclick="toggleStats(); toggleMenu();">🧮 Statistiken umschalten</a>
+                    <div class="menu-item" style="display:flex; justify-content:space-between; align-items:center;" onclick="event.stopPropagation();">
+                        🌍 Sprache
+                        <select class="lang-select" id="langSelect" onchange="changeLangUI()"></select>
+                    </div>
+					<a onclick="goFullscreen(); toggleMenu();">📲 Fullscreen</a>
+                    <hr style="border: 0; border-top: 1px solid #333; margin: 0;">
+                    <a onclick="startTutorial(); toggleMenu();" style="color: var(--primary); font-weight: bold;">🎓 Tutorial starten</a>
+                    <a style="color: #666; cursor: default;">📖 Handbuch (In Kürze)</a>
+                    <a href="/impressum.html">📜 Impressum</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="logo">
+            <span onclick="triggerPuckEasterEgg()" title="Puck Racer">Puck Racer</span>
+        </div>
+
+        <div class="status-bar" id="statusBarGroup">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="filter-bar" id="filterBar">
+            <button class="filter-btn" data-filter="fav" data-i18n="filter_fav">Favorites</button>
+            <button class="filter-btn" data-filter="all" data-i18n="filter_all">All Games</button>
+            <button class="filter-btn" data-filter="reaction" data-i18n="filter_reaction">Reaction & Speed</button>
+            <button class="filter-btn" data-filter="brain" data-i18n="filter_brain">Brain & Memory</button>
+            <button class="filter-btn" data-filter="sport" data-i18n="filter_sport">Workout</button>
+            <button class="filter-btn" data-filter="tool" data-i18n="filter_tools">Tools</button>
+        </div>
+
+        <div class="grid" id="gameGrid"></div>
+    </main>
+
+    <div id="helpModal" class="modal-overlay" onclick="closeHelp(event)">
+        <div class="modal-content" onclick="event.stopPropagation()"> 
+            <div class="modal-header">
+                <h2 id="modalTitle">Game Title</h2>
+                <button class="close-modal" onclick="closeHelpForce()">×</button>
+            </div>
+            <div class="modal-body">
+                <h4 data-i18n="help_desc">Description</h4>
+                <p id="modalDesc">...</p>
+                <h4 data-i18n="help_setup">Setup</h4>
+                <p id="modalSetup">...</p>
+                <h4 data-i18n="help_example">Example</h4>
+                <p id="modalExample" style="font-style: italic; color: var(--text-muted);">...</p>
+                <img id="modalImg" src="" alt="Game Example" style="display:none; max-width: 100%; border-radius: 6px; margin-top: 10px; border: 1px solid var(--border-color);">
+            </div>
+        </div>
+    </div>
+
+    <div id="easterEggOverlay" class="easter-egg-overlay">
+        <h1 class="easter-egg-text" style="color:#fff; font-size:1.5rem; padding:20px; text-align:center;">Idea and developed by WorksAsDesigned - PuckRacer DIY agility system for better training</h1>
+    </div>
+
+    <div id="puckEasterEggOverlay" onclick="closePuckEasterEgg()">
+        <div class="puck-scene">
+            <div class="puck-assembly" id="puckAssembly">
+                <div class="puck-part puck-base" style="--z:0px;"></div><div class="puck-part puck-base" style="--z:2px;"></div><div class="puck-part puck-base" style="--z:4px;"></div><div class="puck-part puck-base" style="--z:6px;"></div><div class="puck-part puck-base" style="--z:8px;"></div><div class="puck-part puck-base" style="--z:10px;"></div><div class="puck-part puck-base" style="--z:12px;"></div><div class="puck-part puck-base" style="--z:14px;"></div><div class="puck-part puck-base" style="--z:16px;"></div><div class="puck-part puck-base" style="--z:18px;"></div><div class="puck-part puck-base" style="--z:20px;"></div><div class="puck-part puck-base" style="--z:22px;"></div><div class="puck-part puck-base" style="--z:24px;"></div><div class="puck-part puck-base" style="--z:26px;"></div><div class="puck-part puck-base" style="--z:28px;"></div><div class="puck-part puck-base" style="--z:30px;"></div><div class="puck-part puck-base" style="--z:32px;"></div><div class="puck-part puck-base" style="--z:34px;"></div><div class="puck-part puck-base" style="--z:36px;"></div><div class="puck-part puck-base" style="--z:38px;"></div><div class="puck-part puck-base" style="--z:40px;"></div><div class="puck-part puck-base" style="--z:42px;"></div><div class="puck-part puck-base" style="--z:44px;"></div><div class="puck-part puck-base" style="--z:46px;"></div><div class="puck-part puck-base" style="--z:48px;"></div><div class="puck-part puck-base" style="--z:50px;"></div><div class="puck-part puck-base" style="--z:52px;"></div><div class="puck-part puck-base" style="--z:54px;"></div><div class="puck-part puck-base" style="--z:56px;"></div><div class="puck-part puck-base" style="--z:58px;"></div><div class="puck-part puck-base" style="--z:60px;"></div><div class="puck-part puck-base" style="--z:62px;"></div>
+                <div class="puck-part puck-led" style="--z:64px;"></div><div class="puck-part puck-led" style="--z:66px;"></div><div class="puck-part puck-led" style="--z:68px;"></div><div class="puck-part puck-led" style="--z:70px;"></div>
+                <div class="puck-part puck-button" style="--z:72px;"></div><div class="puck-part puck-button" style="--z:74px;"></div><div class="puck-part puck-button" style="--z:76px;"></div><div class="puck-part puck-button" style="--z:78px;"></div><div class="puck-part puck-button" style="--z:80px;"></div><div class="puck-part puck-button" style="--z:82px;"></div>
+            </div>
+        </div>
+        <div class="core-ver-text">CORE <span id="easterEggSysVer">Loading...</span></div>
+    </div>
+
+    <footer>
+        <span onclick="triggerEasterEgg()" style="cursor:pointer; user-select:none;" title="Click me!">by WorksAsDesigned</span>
+    </footer>
+    
+    <script src="script.js"></script>
+    <script src="lang.js"></script> 
+    <script>
+        let currentCoreVersion = "v2.60.0";
+
+        const gamesList = [
+            { id: 'counter', numId: 2, icon: '🔢', url: '/game_counter_setup.html', tags: ['tool', 'sport'], key: 'g_counter' },
+            { id: 'timer', numId: 16, icon: '⏱️', url: '/game_timer_setup.html', tags: ['tool'], key: 'g_timer' },
+            { id: 'stopwatch', numId: 10, icon: '⏱⏱️', url: '/game_stopwatch_setup.html', tags: ['tool', 'sport'], key: 'g_stopwatch' },
+            { id: 'countdown', numId: 3, icon: '⏱️🧮', url: '/game_countdown_setup.html', tags: ['tool', 'sport'], key: 'g_countdown' },
+            { id: 'shuttle', numId: 1, icon: '🏃‍♂️🔁', url: '/game_shuttle_setup.html', tags: ['sport'], key: 'g_shuttle' },
+            { id: 'simon', numId: 4, icon: '🔴🟢🔵🟡', url: '/game_simon_setup.html', tags: ['brain'], key: 'g_simon' },
+            { id: 'simonruns', numId: 6, icon: '🔴🟢🔵🏃‍♂️', url: '/game_simonruns_setup.html', tags: ['brain', 'sport'], key: 'g_simonruns' },
+            { id: 'zombie', numId: 11, icon: '🧟🏃‍♂️', url: '/game_zombie_setup.html', tags: ['sport', 'reaction'], key: 'g_zombie' },
+            { id: 'whac', numId: 24, icon: '🔨🧠', url: '/game_whac_setup.html', tags: ['reaction', 'brain'], key: 'g_whac' },
+            { id: 'sorting', numId: 7, icon: '🎩✨', url: '/game_sorting_setup.html', tags: ['tool'], key: 'g_sorting' },
+            { id: 'bomb', numId: 8, icon: '💣⏰', url: '/game_bomb_setup.html', tags: ['reaction'], key: 'g_bomb' },
+            { id: 'redgreen', numId: 9, icon: '🚦🛑', url: '/game_redgreen_setup.html', tags: ['reaction', 'sport'], key: 'g_redgreen' },
+            { id: 'beep', numId: 12, icon: '🏃‍♂️🔁⏱️', url: '/game_beep_setup.html', tags: ['sport'], key: 'g_beep' },
+            { id: 'react2p', numId: 13, icon: '⚡🤜🤛', url: '/game_react2p_setup.html', tags: ['reaction'], key: 'g_react2p' },
+            { id: 'target', numId: 15, icon: '🎯', url: '/game_target_setup.html', tags: ['reaction', 'sport'], key: 'g_target' },
+            { id: 'ball', numId: 23, icon: '🏀🏃‍♂️', url: '/game_ball_setup.html', tags: ['sport'], key: 'g_ball' },
+            { id: 'ttest', numId: 14, icon: '🏃‍♂️💨', url: '/game_ttest_setup.html', tags: ['sport'], key: 'g_ttest' },
+            { id: 'hunt', numId: 17, icon: '🏃‍♂️🎯🏃‍♀️', url: '/game_hunt_setup.html', tags: ['reaction', 'sport', 'brain'], key: 'g_hunt' },
+            { id: 'pacemaker', numId: 18, icon: '🏃‍♂️⏱️🟢', url: '/game_pacemaker_setup.html', tags: ['sport'], key: 'g_pacemaker' },
+            { id: 'memory', numId: 19, icon: '🧠🏃', url: '/game_memory_setup.html', tags: ['brain', 'sport'], key: 'g_memory' },
+            { id: 'domination', numId: 20, icon: '🔴⚔🔵', url: '/game_domination_setup.html', tags: ['sport', 'reaction'], key: 'g_domination' },
+            { id: 'batak', numId: 21, icon: '⚡🎯👀', url: '/game_batak_setup.html', tags: ['reaction', 'sport'], key: 'g_batak' },
+            { id: 'tabata', numId: 22, icon: '⏱️🥵', url: '/game_tabata_setup.html', tags: ['tool', 'sport'], key: 'g_tabata' },
+			{ id: 'catreflex', numId: 25, icon: '🐈⚡', url: '/game_cat_setup.html', tags: ['reaction'], key: 'g_cat' },
+			{ id: 'musical', numId: 0, icon: '🎵🪑🏃', url: '/game_musical_setup.html', tags: ['reaction'], key: 'g_musical' },
+            { id: 'tttt', numId: 0, icon: '❌⭕', url: '/game_tttt_setup.html', tags: ['reaction'], key: 'g_tttt' },
+            { id: 'display', numId: 5, icon: '▶️✨', url: '/game_display_setup.html', tags: ['tool'], key: 'g_display' },
+            { id: 'players', numId: 0, icon: '👥', url: '/player_manager.html', tags: ['tool'], key: 'g_players' },
+            { id: 'training', numId: 0, icon: '📋', url: '/training.html', tags: ['tool'], key: 'g_training' },
+            { id: 'settings', numId: 0, icon: '⚙️', url: '/settings.html', tags: ['tool'], key: 'g_settings', specialClass: 'tile-settings' }
+        ];
+
+        let currentTheme = localStorage.getItem('puck_theme') || 'dark';
+        let customOrder = JSON.parse(localStorage.getItem('puck_order')) || [];
+        let gameStats = {}; 
+        let statsVisible = localStorage.getItem('puck_stats_vis') === 'true';
+
+        let favorites = JSON.parse(localStorage.getItem('puck_favs')) || [];
+        let currentFilter = favorites.length > 0 ? 'fav' : 'all';
+
+        // --- MENU LOGIK ---
+        function toggleMenu() {
+            document.getElementById("mainMenu").classList.toggle("show");
+        }
+        
+        // Menü schließen, wenn außerhalb geklickt wird
+        document.addEventListener('click', function(e) {
+            let menu = document.getElementById("mainMenu");
+            let btn = document.getElementById("btnMenu");
+            if(e.target !== btn && !menu.contains(e.target)) {
+                menu.classList.remove("show");
+            }
+        });
+
+        applyTheme();
+        applyStatsVis(); 
+        
+        function renderGrid() {
+            const grid = document.getElementById('gameGrid');
+            grid.innerHTML = '';
+
+            let sortedGames = [...gamesList];
+            if (customOrder.length > 0) {
+                sortedGames.sort((a, b) => {
+                    let idxA = customOrder.indexOf(a.id);
+                    let idxB = customOrder.indexOf(b.id);
+                    if (idxA === -1) idxA = 999;
+                    if (idxB === -1) idxB = 999;
+                    return idxA - idxB;
+                });
+            }
+
+            sortedGames.forEach(game => {
+                if (currentFilter === 'fav' && !favorites.includes(game.id)) return;
+                if (currentFilter !== 'all' && currentFilter !== 'fav' && !game.tags.includes(currentFilter)) return;
+
+                let specialClass = game.specialClass ? game.specialClass : '';
+                let tile = document.createElement('div');
+                tile.className = `tile ${specialClass}`;
+                tile.draggable = true; 
+                tile.dataset.id = game.id;
+                
+                tile.onclick = (e) => {
+                    if(e.target.classList.contains('help-btn') || e.target.classList.contains('fav-btn')) return;
+                    location.href = game.url;
+                };
+
+                let statBadge = '';
+                if(game.numId > 0 && gameStats[game.numId]) {
+                    statBadge = `<div class="play-count">▶ ${gameStats[game.numId]}</div>`;
+                }
+
+                let isFav = favorites.includes(game.id);
+
+                tile.innerHTML = `
+                    <div class="fav-btn ${isFav ? 'is-fav' : ''}" onclick="toggleFav(event, '${game.id}')" title="Add to Favorites">★</div>
+                    <div class="help-btn" onclick="openHelp(event, '${game.id}')">?</div>
+                    <div class="tile-icon">${game.icon}</div>
+                    <h3 data-i18n="${game.key}"></h3>
+                    ${statBadge}
+                `;
+
+                addDragEvents(tile);
+                grid.appendChild(tile);
+            });
+            applyTranslations(); 
+        }
+
+        function toggleFav(e, gameId) {
+            e.stopPropagation();
+            let idx = favorites.indexOf(gameId);
+            if (idx === -1) favorites.push(gameId);
+            else {
+                favorites.splice(idx, 1); 
+                if (currentFilter === 'fav' && favorites.length === 0) {
+                    currentFilter = 'all';
+                    updateFilterUI();
+                }
+            }
+            localStorage.setItem('puck_favs', JSON.stringify(favorites));
+            renderGrid();
+        }
+
+        function updateFilterUI() {
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                if (b.getAttribute('data-filter') === currentFilter) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+        }
+
+        function toggleStats() {
+            statsVisible = !statsVisible;
+            localStorage.setItem('puck_stats_vis', statsVisible);
+            applyStatsVis();
+        }
+
+        function applyStatsVis() {
+            if (statsVisible) document.body.classList.add('show-stats');
+            else document.body.classList.remove('show-stats');
+        }
+
+        function toggleTheme() {
+            currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+            localStorage.setItem('puck_theme', currentTheme);
+            applyTheme();
+        }
+
+        function applyTheme() {
+            if (currentTheme === 'light') document.body.classList.add('theme-light');
+            else document.body.classList.remove('theme-light');
+        }
+
+        function initLangSelect() {
+            const select = document.getElementById('langSelect');
+            select.innerHTML = '';
+            const flagMap = { 'en': '🇬🇧', 'de': '🇩🇪', 'it': '🇮🇹', 'sp': '🇪🇸', 'es': '🇪🇸', 'fr': '🇫🇷', 'hi': '🇮🇳', 'hindi': '🇮🇳', 'zh': '🇨🇳', 'chinesisch': '🇨🇳', 'cn': '🇨🇳', 'pt': '🇵🇹' };
+            if (typeof TRANSLATIONS !== 'undefined') {
+                for (let lang in TRANSLATIONS) {
+                    let opt = document.createElement('option');
+                    opt.value = lang;
+                    opt.innerText = `${flagMap[lang.toLowerCase()] || '🌍'} ${lang.toUpperCase()}`;
+                    if (lang === currentLang) opt.selected = true;
+                    select.appendChild(opt);
+                }
+            }
+        }
+
+        function changeLangUI() {
+            let newLang = document.getElementById('langSelect').value;
+            setLanguage(newLang); 
+            renderGrid();
+        }
+
+        document.getElementById('filterBar').addEventListener('click', (e) => {
+            if(e.target.tagName === 'BUTTON') {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentFilter = e.target.getAttribute('data-filter');
+                renderGrid();
+            }
+        });
+
+        let dragSrcEl = null;
+
+        function addDragEvents(tile) {
+            tile.addEventListener('dragstart', handleDragStart, false);
+            tile.addEventListener('dragenter', handleDragEnter, false);
+            tile.addEventListener('dragover', handleDragOver, false);
+            tile.addEventListener('dragleave', handleDragLeave, false);
+            tile.addEventListener('drop', handleDrop, false);
+            tile.addEventListener('dragend', handleDragEnd, false);
+        }
+
+        function handleDragStart(e) {
+            if(currentFilter !== 'all' && currentFilter !== 'fav') { e.preventDefault(); return; }
+            dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', this.dataset.id); this.classList.add('dragging');
+        }
+        function handleDragOver(e) { if (e.preventDefault) { e.preventDefault(); } e.dataTransfer.dropEffect = 'move'; return false; }
+        function handleDragEnter(e) { this.classList.add('drag-over'); }
+        function handleDragLeave(e) { this.classList.remove('drag-over'); }
+        function handleDrop(e) {
+            if (e.stopPropagation) { e.stopPropagation(); }
+            if (dragSrcEl !== this) {
+                let grid = document.getElementById('gameGrid');
+                let allTiles = Array.from(grid.children);
+                let srcIndex = allTiles.indexOf(dragSrcEl);
+                let destIndex = allTiles.indexOf(this);
+                if (srcIndex < destIndex) { this.parentNode.insertBefore(dragSrcEl, this.nextSibling); } else { this.parentNode.insertBefore(dragSrcEl, this); }
+                saveOrder();
+            }
+            return false;
+        }
+        function handleDragEnd(e) { this.classList.remove('dragging'); document.querySelectorAll('.tile').forEach(t => t.classList.remove('drag-over')); }
+        function saveOrder() {
+            let tiles = document.querySelectorAll('.tile');
+            let newOrder = [];
+            tiles.forEach(t => newOrder.push(t.dataset.id));
+            localStorage.setItem('puck_order', JSON.stringify(newOrder));
+        }
+
+        function openHelp(e, gameId) {
+            e.stopPropagation(); 
+            document.getElementById('modalTitle').innerText = getTranslation('g_' + gameId);
+            document.getElementById('modalDesc').innerHTML = getTranslation('desc_' + gameId); 
+            document.getElementById('modalSetup').innerHTML = getTranslation('setup_' + gameId);
+            document.getElementById('modalExample').innerHTML = getTranslation('ex_' + gameId);
+            const img = document.getElementById('modalImg');
+            let imgPath = getTranslation('img_' + gameId);
+            if(imgPath !== ('img_' + gameId) && imgPath !== "") { img.src = imgPath; img.style.display = 'block'; } else { img.style.display = 'none'; }
+            document.getElementById('helpModal').style.display = 'flex';
+        }
+        function closeHelpForce() { document.getElementById('helpModal').style.display = 'none'; }
+        function closeHelp(e) { if(e.target.id === 'helpModal') closeHelpForce(); }
+
+        function triggerEasterEgg() {
+            const overlay = document.getElementById('easterEggOverlay');
+            const tiles = document.querySelectorAll('.tile');
+            if(overlay.style.display === 'flex') return; 
+            overlay.style.display = 'flex';
+            tiles.forEach(tile => {
+                tile.style.order = Math.floor(Math.random() * 100);
+                let delay = (Math.random() * -2).toFixed(2) + 's';
+                tile.style.animationDelay = delay;
+                tile.classList.add('dance');
+            });
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                tiles.forEach(tile => { tile.classList.remove('dance'); tile.style.order = ''; tile.style.animationDelay = ''; });
+                renderGrid(); 
+            }, 5000);
+        }
+
+        function triggerPuckEasterEgg() {
+            const overlay = document.getElementById('puckEasterEggOverlay');
+            const assembly = document.getElementById('puckAssembly');
+            document.getElementById('easterEggSysVer').innerText = currentCoreVersion;
+            overlay.classList.add('active');
+            setTimeout(() => { assembly.classList.add('assembled'); }, 100);
+            setTimeout(() => { assembly.classList.add('glowing'); }, 1300);
+        }
+
+        function closePuckEasterEgg() {
+            const overlay = document.getElementById('puckEasterEggOverlay');
+            const assembly = document.getElementById('puckAssembly');
+            overlay.classList.remove('active');
+            setTimeout(() => { assembly.classList.remove('assembled'); assembly.classList.remove('glowing'); }, 500);
+        }
+
+        // --- INIT Block ---
+        fetch('/api/game/action?cmd=exit'); 
+        fetch('/api/rssi_mode?val=0');
+
+        // --- TRAINING REDIRECT ---
+        // Wenn ein aktives Training läuft und wir von einem Spiel zurückkommen,
+        // direkt weiter zur training.html (Game-Exit ist oben bereits ausgelöst).
+        (function checkTrainingRedirect() {
+            let activeId = sessionStorage.getItem('training_active_id');
+            let activeTs = parseInt(sessionStorage.getItem('training_active_ts') || '0');
+            let now = Date.now();
+            if (!activeId || (now - activeTs > 4 * 60 * 60 * 1000)) {
+                sessionStorage.removeItem('training_active_id');
+                sessionStorage.removeItem('training_active_ts');
+                sessionStorage.removeItem('training_step');
+                return;
+            }
+            // Spiel wurde beendet → markieren & redirect
+            sessionStorage.setItem('training_game_finished', '1');
+            location.href = '/training.html';
+        })();
+
+        startStatusLoop();
+        
+        updateFilterUI();
+        fetch('/api/version').then(r=>r.text()).then(v => { currentCoreVersion = v; });
+        
+        fetch('/api/stats/games').then(r=>r.json()).then(d => { 
+            gameStats = d; 
+            renderGrid(); 
+        }).catch(e => { renderGrid(); });
+
+        setTimeout(initLangSelect, 100); 
+
+        // Tutorial wird jetzt komplett von tour.js gesteuert (DOMContentLoaded).
+        // Auto-Start beim ersten Besuch + Fortsetzung bei Seitenwechsel.
+		
+		function goFullscreen() {
+    // Already standalone (PWA)?
+    if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+        return;
+    }
+    // Android/Chrome: native fullscreen
+    if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+    }
+    // iOS: show install hint
+    else if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+        showIosHint();
+    }
+}
+
+	function showIosHint() {
+    if (document.getElementById('iosHint')) return;
+    let hint = document.createElement('div');
+    hint.id = 'iosHint';
+    hint.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;border-top:2px solid var(--primary);padding:16px 20px;z-index:9999;text-align:center;font-size:0.9rem;color:#ddd;animation:fade 0.3s;';
+    hint.innerHTML = `
+        <div style="margin-bottom:8px;font-weight:bold;color:var(--primary);">📲 Add this page to your Homescreen for fullscreen under iOS.</div>
+        <div>Tap <b style="font-size:1.3rem;vertical-align:middle;">⬆</b> (Share) at the bottom of Safari</div>
+        <div style="margin-top:4px;">then tap <b>"Add to Home Screen"</b></div>
+        <button onclick="document.getElementById('iosHint').remove();localStorage.setItem('iosHintDismissed','1');" style="margin-top:12px;background:none;border:1px solid #555;color:#aaa;padding:6px 20px;border-radius:4px;cursor:pointer;">Got it</button>
+    `;
+    document.body.appendChild(hint);
+}
+
+    </script>
+</body>
+</html>

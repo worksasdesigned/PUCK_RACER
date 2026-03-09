@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simon Says Live</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+
+        .group-card { background: var(--card-bg); border-radius: 10px; padding: 15px; margin-bottom: 15px; border-left: 5px solid #fff; }
+        .g-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .g-name { font-size: 1.5rem; font-weight: bold; color: var(--text-main); }
+        .g-stars { color: gold; font-size: 1.2rem; }
+        .g-ctrl { display: flex; gap: 5px; margin-bottom: 10px; }
+        .seq-bar { display: flex; gap: 4px; height: 20px; background: var(--bg-color); border-radius: 4px; padding: 2px; overflow: hidden; }
+        .seq-dot { flex: 1; height: 100%; opacity: 0.3; border-radius: 2px; transition: opacity 0.1s; }
+        .seq-active { opacity: 1; box-shadow: 0 0 5px white; border: 1px solid #fff; }
+        .status-badge { background: var(--card-hover); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; text-transform: uppercase; font-weight: bold; color: var(--text-main);}
+        
+        .action-btns { display: flex; gap: 10px;}
+        .btn-action { flex:1; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
+        .btn-action:active { transform: scale(0.95); }
+        .btn-start { background: var(--success); color: black; }
+        .btn-stop { background: var(--danger); color: white; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="g_simon">Simon Says</div>
+     <div class="status-bar">
+    <div class="status-dot dot-green" id="cnt-green">0</div>
+    <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+    <div class="status-dot dot-red" id="cnt-red">0</div>
+</div>
+    </header>
+    <main>
+        <div class="controls">
+            <button onclick="goBack()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
+            <button onclick="doAction('start_all')" class="btn-primary btn-ctrl" data-i18n="btn_start_all">START ALL</button>
+            <button onclick="doAction('stop_all')" class="btn-danger btn-ctrl" data-i18n="btn_stop_all">STOP ALL</button>
+        </div>
+        
+        <div id="gameContainer">
+            <div style="text-align:center; color:var(--text-muted); padding:20px;" data-i18n="loading">Loading Game...</div>
+        </div>
+
+        <div class="bottom-nav">
+            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+<script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        document.getElementById('gameContainer').addEventListener('click', function(e) {
+            let btn = e.target.closest('.action-btn');
+            if(btn) {
+                let cmd = btn.getAttribute('data-cmd');
+                if(cmd) doAction(cmd);
+            }
+        });
+
+        setInterval(update, 400);
+        
+        function update() {
+            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                 
+                
+                if (!data.groups || data.groups.length === 0) {
+                     return;
+                }
+                
+                renderGroups(data.groups);
+            }).catch(e => {
+                document.getElementById('conn-stat').style.opacity = 0.2;
+            });
+        }
+        
+        function render(groups) {
+            let container = document.getElementById('gameContainer');
+            if(container.innerHTML.includes('Loading')) container.innerHTML = '';
+            
+            let tLvl = getTranslation('simr_run_lvl') || "Level";
+            let tDisq = getTranslation('simr_btn_disq') || "Disqualify";
+            let tRej = getTranslation('simr_btn_rejoin') || "Restart";
+
+            // NEU: Die Team-Farben (Rot, Blau, Gelb)
+            const TEAM_COLORS = ['#FF0000', '#0000FF', '#FFFF00'];
+
+            groups.forEach(g => {
+                // NEU: Farbe für die aktuelle Gruppe abgreifen
+                let teamCol = TEAM_COLORS[g.id % 3]; 
+
+                let stTxt = "UNK";
+                let stCol = "#fff"; 
+                let badgeBg = "var(--bg-color)";
+                
+                if(g.state == 0) { stTxt = getTranslation("sim_st_setup") || "SETUP"; stCol = "var(--text-muted)";}
+                if(g.state == 1) { stTxt = getTranslation("sim_st_ready") || "READY"; stCol = "#ff0"; }
+                if(g.state == 3) { stTxt = getTranslation("sim_st_watch") || "WATCH"; stCol = "#0af"; }
+                if(g.state == 4) { stTxt = getTranslation("sim_st_turn") || "YOUR TURN"; stCol = "var(--success)"; badgeBg="#004400"; }
+                if(g.state == 6) { stTxt = getTranslation("sim_st_vic") || "VICTORY"; stCol = "gold"; badgeBg="#444400"; }
+                if(g.state == 7) { stTxt = getTranslation("sim_st_fail") || "FAILED"; stCol = "var(--danger)"; badgeBg="#440000"; }
+                if(g.state == 5) { stTxt = getTranslation("sim_st_wait") || "WAIT"; stCol = "#fa0"; badgeBg="#442200"; }
+                
+                if (g.state == 3 && g.locked) {
+                    stTxt = getTranslation("sim_st_mis") || "MISTAKE"; stCol = "#fff"; badgeBg="var(--danger)";
+                }
+
+                let name = sessionStorage.getItem(`p_name_${g.id}`) || `Group ${g.id+1}`; 
+                
+                let sec = Math.floor(g.time / 1000);
+                let ms = Math.floor((g.time % 1000) / 100);
+                let min = Math.floor(sec / 60);
+                sec = sec % 60;
+                let timeStr = `${min}:${sec.toString().padStart(2,'0')}.${ms}`;
+                
+                let seqHtml = "";
+                for(let i=0; i<g.lvl; i++) { 
+                    let col = (g.seq && g.seq[i]) ? g.seq[i] : "var(--border-color)";
+                    let isDone = i < g.prog;
+                    let style = `background:${col};`;
+                    if(isDone) style += "opacity:1; border:1px solid #fff;";
+                    else style += "opacity:0.3;";
+                    seqHtml += `<div class="seq-dot" style="${style}"></div>`;
+                }
+                
+                let btnHtml = "";
+                if(g.state != 6 && g.state != 5) {
+                    btnHtml = `<button class="btn-warn action-btn" data-cmd="disq_${g.id}" style="padding:5px; font-size:0.8rem; margin-top:0;">${tDisq}</button>`;
+                }
+                if(g.state == 0 || g.state == 6 || g.state == 7) {
+                     btnHtml += `<button class="btn-primary action-btn" data-cmd="start_${g.id}" style="padding:5px; font-size:0.8rem; margin-left:10px; margin-top:0;">${tRej}</button>`;
+                }
+
+                let rowId = `sr-grp-${g.id}`;
+                let rowEl = document.getElementById(rowId);
+
+                if (!rowEl) {
+                    container.insertAdjacentHTML('beforeend', `
+                    <div id="${rowId}" class="group-card" style="border-left-color:${teamCol}"> <div class="g-head">
+                            <div class="g-name">${name}</div>
+                            <div id="time-${g.id}" class="g-time">${timeStr}</div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                            <span id="badge-${g.id}" class="g-badge" style="color:${stCol}; background:${badgeBg}">${stTxt}</span>
+                            <span style="color:var(--text-muted);">${tLvl} <span id="lvl-${g.id}">${g.lvl}</span> / ${g.target}</span>
+                        </div>
+                        <div id="seq-${g.id}" class="seq-row">${seqHtml}</div>
+                        <div id="ctrl-${g.id}" class="ctrl-row">${btnHtml}</div>
+                    </div>`);
+                } else {
+                    rowEl.style.borderLeftColor = teamCol; // HIER: teamCol statt stCol
+                    document.getElementById(`time-${g.id}`).innerText = timeStr;
+                    
+                    let badge = document.getElementById(`badge-${g.id}`);
+                    badge.innerText = stTxt;
+                    badge.style.color = stCol;
+                    badge.style.background = badgeBg;
+                    
+                    document.getElementById(`lvl-${g.id}`).innerText = g.lvl;
+                    document.getElementById(`seq-${g.id}`).innerHTML = seqHtml;
+                    document.getElementById(`ctrl-${g.id}`).innerHTML = btnHtml;
+                }
+            });
+        }
+        
+        function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
+        function goBack() { location.href = 'game_simon_names.html'; }
+        function goHome() { doAction('exit'); setTimeout(() => location.href = '/', 100); }
+    </script>
+</body>
+</html>

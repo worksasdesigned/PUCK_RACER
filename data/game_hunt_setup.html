@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Hunt!</title>
+    <link rel="stylesheet" href="style.css?v=2">
+    <style>
+        .diff-text { 
+            font-size: 0.9rem; 
+            color: var(--text-main); 
+            text-align: center; 
+            margin-top: 10px; 
+            font-weight:bold; 
+            background:var(--card-hover); 
+            padding:10px; 
+            border-radius:6px;
+        }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_hunt">Hunt! 🎯🏃</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="h_setup_time">⏱️ Game Time</h3>
+            <div class="slider-header">
+                <span data-i18n="lbl_time_limit">Duration:</span>
+                <span id="timeDisp" class="slider-val">60s</span>
+            </div>
+            <input type="range" id="timeSlider" min="20" max="180" step="10" value="60" oninput="updTime()">
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="h_setup_pucks">👥 Players & Pucks</h3>
+            <div class="slider-header">
+                <span data-i18n="h_lbl_pucks">Number of Pucks:</span>
+                <span id="puckDisp" class="slider-val">3</span>
+            </div>
+            <input type="range" id="puckSlider" min="3" max="10" value="3" oninput="updPucks()">
+            <br>
+            <div class="slider-header" style="margin-top:15px;">
+                <span data-i18n="h_lbl_plr">Players:</span>
+                <span id="plrDisp" class="slider-val">1</span>
+            </div>
+            <input type="range" id="plrSlider" min="1" max="9" value="1" oninput="updPlr()">
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; text-align:center;" data-i18n="h_hint_players">Max players = Pucks − 1 (one puck is always the target)</p>
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="h_setup_diff">🧠 Difficulty & Layout</h3>
+            <div class="slider-header">
+                <span data-i18n="h_lbl_rad">Circle Radius:</span>
+                <span id="radDisp" class="slider-val">5m</span>
+            </div>
+            <input type="range" id="radSlider" min="2" max="10" value="5" oninput="document.getElementById('radDisp').innerText = this.value + 'm'">
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:6px; text-align:center;" data-i18n="h_hint_radius">A larger radius automatically extends the time per round slightly.</p>
+            <br>
+            <div class="slider-header" style="margin-top:15px;">
+                <span data-i18n="h_lbl_diff">Difficulty:</span>
+                <span id="diffDisp" class="slider-val">3</span>
+            </div>
+            <input type="range" id="diffSlider" min="1" max="5" value="3" oninput="updDiff()">
+            <div id="diffTxt" class="diff-text">Medium (4.0s Base Time)</div>
+            
+            <div class="toggle-row" style="margin-top:20px;">
+                <span data-i18n="h_lbl_snd">Sound Effects On</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkSound" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        let connPucks = 0;
+
+        fetch('/api/game/load?id=17'); 
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            connPucks = data.filter(p => p.active).length;
+            let pSlider = document.getElementById('puckSlider');
+            pSlider.max = Math.max(3, connPucks);
+            if(pSlider.value > connPucks) pSlider.value = Math.max(3, connPucks);
+            updPucks();
+            updDiff();
+        });
+
+        function updTime() { document.getElementById('timeDisp').innerText = document.getElementById('timeSlider').value + "s"; }
+        
+        function updDiff() { 
+            let val = parseInt(document.getElementById('diffSlider').value);
+            document.getElementById('diffDisp').innerText = val;
+            document.getElementById('diffTxt').innerText = getTranslation(`h_diff_${val}`);
+        }
+
+        function updPucks() {
+            let p = parseInt(document.getElementById('puckSlider').value);
+            document.getElementById('puckDisp').innerText = p;
+            
+            let plrSlider = document.getElementById('plrSlider');
+            plrSlider.max = Math.max(1, p - 1);
+            if(parseInt(plrSlider.value) > plrSlider.max) plrSlider.value = plrSlider.max;
+            updPlr();
+            
+            let info = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+            info.innerText = `${getTranslation('req_pucks')} ${p} | ${getTranslation('conn_pucks')} ${connPucks}`;
+            
+            if (p > connPucks) {
+                info.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                info.classList.remove('warn-txt');
+                btn.style.opacity = 1;
+            }
+        }
+
+        function updPlr() { document.getElementById('plrDisp').innerText = document.getElementById('plrSlider').value; }
+
+        function nextStep() {
+            let req = document.getElementById('puckSlider').value;
+            if (req > connPucks) {
+                if(!confirm("You requested more pucks than connected. Continue anyway?")) return;
+            }
+            
+            sessionStorage.setItem('h_time', document.getElementById('timeSlider').value);
+            sessionStorage.setItem('h_pucks', req);
+            sessionStorage.setItem('h_plr', document.getElementById('plrSlider').value);
+            sessionStorage.setItem('h_rad', document.getElementById('radSlider').value);
+            sessionStorage.setItem('h_diff', document.getElementById('diffSlider').value);
+            sessionStorage.setItem('h_snd', document.getElementById('chkSound').checked ? 1 : 0);
+            
+            location.href = 'game_hunt_names.html';
+        }
+
+        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'timeSlider', el:'timeSlider' },
+        { key:'puckSlider', el:'puckSlider' },
+        { key:'plrSlider',  el:'plrSlider' },
+        { key:'radSlider',  el:'radSlider' },
+        { key:'diffSlider', el:'diffSlider' },
+        { key:'chkSound',   el:'chkSound', type:'check' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

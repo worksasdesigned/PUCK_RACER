@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - Display</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_display">Display Mode ▶️✨</div></header>
+    <main>
+        <div class="card">
+            <h3 data-i18n="disp_setup_info">⚙️ Session Info</h3>
+            
+            <p id="connInfo" class="info-txt" style="font-size:1.2rem; padding: 20px 0;" data-i18n="loading">Loading...</p>
+            
+            <div class="slider-header" style="margin-top:20px;">
+                <span data-i18n="disp_setup_dur">Max Duration (Timeout):</span>
+                <span id="timeDisp" class="slider-val">15 min</span>
+            </div>
+            <input type="range" id="timeSlider" min="5" max="60" step="5" value="15" oninput="document.getElementById('timeDisp').innerText=this.value+' min'">
+        </div>
+
+        <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="disp_btn_dj">TO DJ CONSOLE 🎛️</button>
+        <button onclick="location.href='/'" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        fetch('/api/game/load?id=5'); 
+
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            let count = data.filter(p => p.active).length;
+            document.getElementById('connInfo').innerHTML = `📡 ${getTranslation('conn_pucks')} <strong style="color:var(--text-main);">${count} Pucks</strong>`;
+        });
+
+        function startGame() {
+            let time = document.getElementById('timeSlider').value;
+            fetch(`/api/game/action?cmd=cfg_time&val=${time}`)
+            .then(() => fetch(`/api/game/action?cmd=setup`)) 
+            .then(() => {
+                 setTimeout(() => location.href = 'game_display_run.html', 200);
+            });
+        }
+    </script>
+    <script>
+    window.TRAINING_FIELDS = [
+        { key:'timeSlider', el:'timeSlider' }
+    ];
+    </script>
+    <script src="training_config.js"></script>
+</body>
+</html>

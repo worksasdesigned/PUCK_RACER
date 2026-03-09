@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Names - T-Test</title>
+    <link rel="stylesheet" href="style.css?v=4">
+    <style>
+        .player-row { background:var(--card-bg); padding:15px; border-radius:8px; border-left:5px solid #fff; margin-bottom:15px;}
+        .player-title { display:flex; align-items:center; gap:10px; margin-bottom:10px; font-weight:bold; }
+        .color-box { width: 20px; height: 20px; border-radius: 50%; border: 1px solid #fff; display:inline-block; vertical-align:middle; transition: all 0.3s;}
+        input[type=text] { flex-grow: 1; padding: 10px; font-size: 1.1rem; border: 1px solid var(--border-color); border-radius: 4px; background: var(--bg-color); color: var(--text-main); }
+        .hidden { display: none; }
+        #toggleIcon { transition: transform 0.3s; display: inline-block; }
+        .rotate { transform: rotate(-90deg); }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="tt_names_title">Setup T-Test</div></header>
+    <main>
+        <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">Initializing...</div>
+        
+        <div id="content" style="display:none;">
+            <div class="layout-card">
+                <div class="layout-header" onclick="toggleLayout()">
+                    <span>Aufbau pro Gruppe</span>
+                    <span id="toggleIcon">▼</span>
+                </div>
+                <div class="layout-body" id="layoutBody" style="flex-direction: column; align-items: center; gap: 20px;">
+                    <p style="font-size:0.85rem; color:var(--text-muted); text-align:center; margin:0;">
+                        Baue für jede Gruppe die Pucks exakt nach den Distanz-Vorgaben auf.
+                    </p>
+                    <div id="arenaContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;"></div>
+                </div>
+            </div>
+
+            <div id="pickerBar" style="margin-bottom:15px;">
+                <button onclick="loadFromPicker()" class="btn-primary" style="font-size:1.1rem; background:var(--card-hover); border:1px dashed var(--primary); color:var(--primary);">
+                    👥 <span data-i18n="pp_load_players">Load Teams</span>
+                </button>
+            </div>
+            
+            <div id="playerList"></div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="location.href='game_ttest_setup.html'" class="btn-warn" style="font-size:1.2rem;" data-i18n="btn_back">⬅ BACK</button>
+                <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">TO GAME 🏁</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="player_picker.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        const GRP_COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF'];
+        const TT_PUCKS = ["C5", "C1", "A1", "E1"]; // Start, Mitte, Links, Rechts
+        
+        let nGrp = parseInt(sessionStorage.getItem('tt_groups') || 1);
+
+        // Delay-Funktion, damit der ESP32 die Requests verarbeiten kann
+        const delay = ms => new Promise(res => setTimeout(res, ms));
+
+        document.addEventListener("DOMContentLoaded", () => {
+            setTimeout(initList, 500);
+        });
+
+        async function initList() {
+            try {
+                await fetch('/api/game/load?id=14');
+                
+                await fetch(`/api/game/action?cmd=cfg_groups&val=${nGrp}`);
+                await delay(100);
+                await fetch(`/api/game/action?cmd=cfg_time&val=${sessionStorage.getItem('tt_time') || 180}`);
+                await delay(100);
+                await fetch(`/api/game/action?cmd=cfg_grpstart&val=${sessionStorage.getItem('tt_grpstart') || 1}`);
+                await delay(100);
+                await fetch(`/api/game/action?cmd=cfg_press&val=${sessionStorage.getItem('tt_press') || 1}`);
+                await delay(100);
+                await fetch(`/api/game/action?cmd=cfg_sound&val=${sessionStorage.getItem('tt_sound') || 1}`);
+                await delay(100);
+                await fetch(`/api/game/action?cmd=cfg_speed&val=${sessionStorage.getItem('tt_speed') || 1}`);
+                await delay(100);
+                
+                await fetch('/api/game/action?cmd=setup'); 
+
+                let listContainer = document.getElementById('playerList');
+                let arenaContainer = document.getElementById('arenaContainer');
+                listContainer.innerHTML = "";
+                arenaContainer.innerHTML = "";
+
+                for(let i=0; i<nGrp; i++) {
+                    let gName = sessionStorage.getItem(`p_name_${i}`) || `Group ${i+1}`;
+                    let col = GRP_COLORS[i % GRP_COLORS.length];
+
+                    listContainer.innerHTML += `
+                    <div class="player-row" style="border-left-color:${col}">
+                        <div class="player-title">
+                            <div class="color-box" id="cb_${i}" style="background:${col}; box-shadow:0 0 10px ${col}"></div>
+                            <input type="text" id="name_${i}" value="${gName}" placeholder="Group Name">
+                        </div>
+                    </div>`;
+
+                    let tableHtml = `<div><h4 style="margin:0 0 10px 0; text-align:center; color:${col}">Group ${i+1}</h4><table class="arena-table">`;
+                    const cols = ['A', 'B', 'C', 'D', 'E'];
+                    for(let r = 1; r <= 5; r++) {
+                        tableHtml += `<tr>`;
+                        for(let c = 0; c < 5; c++) {
+                            tableHtml += `<td id="cell-${i}-${cols[c]}${r}"></td>`;
+                        }
+                        tableHtml += `</tr>`;
+                    }
+                    tableHtml += `</table></div>`;
+                    arenaContainer.innerHTML += tableHtml;
+
+                    for(let p = 0; p < 4; p++) {
+                        let coord = TT_PUCKS[p];
+                        let cell = document.getElementById(`cell-${i}-${coord}`);
+                        let globalIdx = (i * 4) + p; 
+                        if(cell) cell.innerHTML = `<div class="puck-icon" id="puck_vis_${globalIdx}" style="background:${col}">${p+1}</div>`;
+                    }
+                    
+                    const labels = {
+                        "C3": `<div style="color:var(--text-muted); font-weight:bold; font-size:0.9rem;">10m</div>`,
+                        "B2": `<div style="color:var(--text-muted); font-weight:bold; font-size:0.9rem;">5m</div>`,
+                        "D2": `<div style="color:var(--text-muted); font-weight:bold; font-size:0.9rem;">5m</div>`,
+                        "C2": `<div style="font-size:1.5rem;">⬆️</div>`,
+                        "C4": `<div style="font-size:1.5rem;">⬇️</div>`,
+                        "B1": `<div style="font-size:1.5rem;">⏪⏩</div>`,
+                        "D1": `<div style="font-size:1.5rem;">⏪⏩</div>`
+                    };
+
+                    for (const [coord, html] of Object.entries(labels)) {
+                        let cell = document.getElementById(`cell-${i}-${coord}`);
+                        if(cell) cell.innerHTML = html;
+                    }
+                }
+                
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+                
+                setInterval(pollPuckEffects, 1500);
+            } catch(e) { console.error(e); }
+        }
+
+        async function pollPuckEffects() {
+            try {
+                let r = await fetch('/api/effects');
+                let data = await r.json();
+                data.forEach(eff => {
+                    const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
+
+                    let vis = document.getElementById(`puck_vis_${eff.id}`);
+                    if(vis) {
+                        vis.classList.remove('eff-breathe', 'eff-chase', 'eff-rainbow');
+                        if(eff.eff == 3 || eff.eff == 4 || eff.eff == 5) vis.classList.add('eff-breathe');
+                        if(eff.eff == 6 || eff.eff == 7) vis.classList.add('eff-chase');
+                        
+                        // Rainbow Bugfix & Kuchendiagramm für Progress (Effekt 8 oder 18)
+                        if (eff.eff == 9) {
+                            vis.classList.add('eff-rainbow');
+                            vis.style.background = 'linear-gradient(45deg, red, orange, yellow, green, blue, purple)';
+                            vis.style.border = '2px solid #fff';
+                        } else if(eff.eff == 8 || eff.eff == 18) {
+                            let percent = Math.round(eff.dur / 2.55);
+                            vis.style.background = `conic-gradient(${rgb} ${percent}%, var(--border-color) ${percent}%)`;
+                            vis.style.border = `2px solid ${rgb}`;
+                        } else {
+                            vis.style.background = rgb;
+                            vis.style.border = (eff.r===0 && eff.g===0 && eff.b===0) ? "2px solid #444" : "2px solid #fff";
+                        }
+                        
+                        // BoxShadow anpassen, außer es ist komplett aus
+                        if (eff.eff == 9) {
+                            vis.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.6)';
+                        } else {
+                            vis.style.boxShadow = `0 0 15px ${rgb}`;
+                        }
+                    }
+
+                    // Farbe in Liste synchronisieren
+                    let pId = Math.floor(eff.id / 4);
+                    let cb = document.getElementById(`cb_${pId}`);
+                    if(cb && eff.eff !== 0) { 
+                        if (eff.eff == 9) {
+                            cb.style.background = 'linear-gradient(45deg, red, orange, yellow, green, blue, purple)';
+                            cb.style.boxShadow = `0 0 10px rgba(255,255,255,0.6)`;
+                        } else {
+                            cb.style.background = rgb;
+                            cb.style.boxShadow = `0 0 10px ${rgb}`; 
+                        }
+                    }
+                });
+            } catch(e) {}
+        }
+
+        function toggleLayout() {
+            document.getElementById('layoutBody').classList.toggle('hidden');
+            document.getElementById('toggleIcon').classList.toggle('rotate');
+        }
+        
+        function loadFromPicker() {
+            openPlayerPicker(nGrp, function(selected) {
+                selected.forEach((p, i) => {
+                    let inp = document.getElementById('name_' + i);
+                    if (inp) { inp.value = p.name; sessionStorage.setItem('p_name_' + i, p.name); }
+                });
+            });
+        }
+
+        function startGame() {
+            for(let i=0; i<nGrp; i++) {
+                sessionStorage.setItem(`p_name_${i}`, document.getElementById(`name_${i}`).value);
+            }
+            setTimeout(() => { location.href = 'game_ttest_run.html'; }, 200);
+        }
+    </script>
+</body>
+</html>

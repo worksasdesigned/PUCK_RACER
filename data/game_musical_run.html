@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RUN - Musical Chairs</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color);}
+        .big-val { font-size: 4rem; font-family: monospace; color: var(--primary); font-weight: bold; line-height:1;}
+        .status-txt { font-size: 1.5rem; color: var(--warning); text-transform: uppercase; margin-top:10px; font-weight:bold;}
+
+        /* Controls Layout wie bei den anderen Spielen */
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .controls-action { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; height: 100%;}
+        
+        .puck-list { display: flex; flex-direction: column; gap: 8px;}
+        .puck-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background: var(--card-hover); border-radius: 8px; border-left: 8px solid var(--border-color); transition: background 0.2s, opacity 0.3s;}
+        .puck-row.s-1 { border-color: var(--success); background: rgba(0,255,0,0.1); }
+        .puck-row.s-2 { opacity: 0.4; filter: grayscale(100%); border-color: #555; background: var(--bg-color); }
+        .puck-row.s-3 { opacity: 0.6; border-color: #555; text-decoration: line-through;}
+        
+        .p-name { font-size: 1.2rem; font-weight: bold; color: var(--text-main); }
+        .p-stat { font-size: 1.5rem; }
+
+        /* Kleine Action-Buttons für die Pucks (wie bei Zombie) */
+        .btn-small { width: max-content; padding: 8px 12px; font-size: 0.85rem; font-weight: bold; border: 1px solid rgba(0,0,0,0.5); border-radius: 4px; color: white; cursor: pointer; text-transform: uppercase;}
+        .btn-small:active { transform: scale(0.95); }
+        .btn-small.red { background: var(--danger); }
+        .btn-small.gray { background: #6c757d; } /* Grau für Wiederbeleben */
+
+        .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+    </style>
+</head>
+<body>
+    <audio id="bgMusic" loop src=""></audio>
+    
+    <header>
+        <div class="logo" data-i18n="g_musical">Musical Chairs 🪑</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="top-info">
+            <div style="color:var(--text-muted); margin-bottom:5px;">Chairs Available</div>
+            <div class="big-val" id="chairsVal">0</div>
+            <div class="status-txt" id="stateInfo">WAITING</div>
+            <div style="color:var(--text-muted); margin-top:10px; font-family:monospace;" id="timerVal">00:0s</div>
+        </div>
+
+        <div class="controls">
+            <button onclick="goBack()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
+            <button onclick="doAction('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
+            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
+        </div>
+
+        <div class="controls-action">
+            <button onclick="doAction('toggle_pause')" class="btn-warn btn-ctrl" id="btnPause">PAUSE</button>
+            <button onclick="doAction('force_open')" class="btn-danger btn-ctrl" id="btnForce" data-i18n="mus_btn_trigger">TRIGGER ⚡</button>
+        </div>
+
+        <h3 style="margin-top:20px; color:var(--text-muted); font-size:1rem; text-transform:uppercase;">Trainer Control</h3>
+        <div class="puck-list" id="puckList"></div>
+
+        <div class="bottom-nav">
+            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        
+        let audio = document.getElementById('bgMusic');
+        let lastState = -1;
+
+        fetch('/api/music_info').then(r=>r.json()).then(data => {
+            if(data.file) audio.src = data.file;
+        });
+
+        setInterval(update, 400); 
+
+        function update() {
+            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                
+                document.getElementById('chairsVal').innerText = data.act;
+                document.getElementById('timerVal').innerText = (data.t / 1000).toFixed(1) + "s";
+
+                let stTxt = "SETUP";
+                let stCol = "var(--text-muted)";
+                
+                // Status Handling & Audio Sync
+                if(data.st === 1 || data.st === 0) { 
+                    stTxt = "WAITING"; 
+                    audio.pause();
+                } else if(data.st === 2) { 
+                    stTxt = "🎵 MUSIC PLAYING"; 
+                    stCol = "var(--primary)"; 
+                    if(lastState !== 2) audio.play().catch(e=>{}); 
+                } else if(data.st === 3) { 
+                    stTxt = "CHAIRS OPEN! 🪑"; 
+                    stCol = "var(--danger)"; 
+                    audio.pause(); 
+                } else if(data.st === 4) { 
+                    stTxt = "ROUND OVER - PAUSE"; 
+                    stCol = "var(--warning)"; 
+                    audio.pause(); 
+                } else if(data.st === 5) { 
+                    stTxt = "MANUAL PAUSE"; 
+                    stCol = "var(--warning)"; 
+                    audio.pause(); 
+                } else if(data.st === 6) { 
+                    stTxt = "FINISHED 🏆"; 
+                    stCol = "gold"; 
+                    audio.pause(); 
+                }
+                lastState = data.st;
+                
+                document.getElementById('stateInfo').innerText = stTxt;
+                document.getElementById('stateInfo').style.color = stCol;
+
+                let bStart = document.getElementById('btnStart');
+                if (data.st === 0 || data.st === 1 || data.st === 6) {
+                    bStart.innerText = getTranslation('btn_start') || "START";
+                    bStart.style.background = "var(--primary)";
+                } else {
+                    bStart.innerText = "RUNNING";
+                    bStart.style.background = "var(--card-hover)";
+                }
+
+                let bPause = document.getElementById('btnPause');
+                if (data.st === 5) bPause.innerText = "WEITER ▶";
+                else bPause.innerText = "PAUSE ⏸";
+
+                if(data.pucks) renderPucks(data.pucks);
+
+            }).catch(e => {});
+        }
+
+        function renderPucks(pucks) {
+            let container = document.getElementById('puckList');
+            
+            // Hole Übersetzungen für die Buttons
+            let tDis = (typeof getTranslation === 'function') ? getTranslation('mus_btn_disable') : "Disable";
+            let tRev = (typeof getTranslation === 'function') ? getTranslation('mus_btn_revive') : "Revive";
+            if(!tDis) tDis = "Disable";
+            if(!tRev) tRev = "Revive";
+
+            pucks.forEach(p => {
+                let rowId = `p-row-${p.id}`;
+                let el = document.getElementById(rowId);
+                
+                let icon = "🔵";
+                let btnClass = "btn-small red";
+                let btnText = tDis;
+
+                if(p.s === 1) { 
+                    icon = "✅"; 
+                } else if(p.s === 2 || p.s === 3) { 
+                    icon = (p.s === 2) ? "❌" : "⏸️"; 
+                    btnClass = "btn-small gray"; 
+                    btnText = tRev; 
+                }
+
+                if(!el) {
+                    container.insertAdjacentHTML('beforeend', `
+                    <div id="${rowId}" class="puck-row s-${p.s}">
+                        <span class="p-name">Puck ${p.id+1}</span>
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <span class="p-stat" id="p-icn-${p.id}">${icon}</span>
+                            <button class="${btnClass}" id="p-btn-${p.id}" onclick="togglePuck(${p.id})">${btnText}</button>
+                        </div>
+                    </div>`);
+                } else {
+                    el.className = `puck-row s-${p.s}`;
+                    document.getElementById(`p-icn-${p.id}`).innerText = icon;
+                    
+                    let btn = document.getElementById(`p-btn-${p.id}`);
+                    if(btn.className !== btnClass) btn.className = btnClass;
+                    if(btn.innerText !== btnText) btn.innerText = btnText;
+                }
+            });
+        }
+
+        function togglePuck(id) { fetch(`/api/game/action?cmd=toggle_puck&val=${id}`); }
+        function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
+        function goBack() { doAction('reset'); location.href = 'game_musical_names.html'; }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+    </script>
+</body>
+</html>
