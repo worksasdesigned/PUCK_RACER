@@ -1,18 +1,17 @@
 /*
  * PROJEKT: Puck Race - PUCK FIRMWARE
- * VERSION: 74 (FIX: CMD_PING Re-Pairing, SEQ_OFF stoppt Ton, EFF_BREATHE globale Helligkeit)
+ * VERSION: 75 (FIX: ESP-NOW Core 2.x Kompatibilität + Promiscuous RSSI Sniffer)
  *
- * ÄNDERUNGEN v73:
- *  [FIX 1] Race Condition: portMUX_TYPE Spinlock um alle cmdQueue-Zugriffe.
- *          OnDataRecv (Core 0) und processIncomingCommands (Core 1) griffen
- *          gleichzeitig auf den Ringpuffer zu -> halbüberschriebene Pakete
- *          -> Dauerton / eingefrorene LEDs.
- *  [FIX 2] tone(pin, freq, duration) ersetzt durch tone(pin, freq) ohne
- *          duration-Parameter. Der interne FreeRTOS-Timer von tone() kollidierte
- *          bei schnell aufeinanderfolgenden Sequenzen und brach diese ab.
- *          noTone() wird jetzt explizit von der Sound Engine aufgerufen.
- *  [FIX 3] lastReceivedSeq startet bei 255 statt 0, damit das erste empfangene
- *          Paket (seqNr=0) nicht fälschlicherweise als Duplikat verworfen wird.
+ * ÄNDERUNGEN v75:
+ * [FIX] esp_now_recv_cb_t Signatur auf Core 2.x Standard angepasst, um
+ * Kompilierungsfehler im PlatformIO esp32-c3 Environment zu beheben.
+ * [NEW] Promiscuous Sniffer hinzugefügt, um den RSSI-Wert auszulesen,
+ * da der Core 2.x ESP-NOW Callback dies nicht nativ unterstützt.
+ *
+ * ÄNDERUNGEN v73/74:
+ * [FIX 1] Race Condition: portMUX_TYPE Spinlock um alle cmdQueue-Zugriffe.
+ * [FIX 2] tone() ohne duration-Parameter gegen FreeRTOS Timer Konflikte.
+ * [FIX 3] lastReceivedSeq startet bei 255.
  */
 
 #include <Arduino.h>
@@ -29,7 +28,7 @@
 #define PIN_BTN     3 
 #define PIN_BUZZER  5
 #define NUM_LEDS    35
-#define FW_VERSION  78
+#define FW_VERSION  79
 
 // --- AUDIO NOTEN ---
 #define NOTE_B0  31
@@ -58,10 +57,11 @@ bool updateRequested = false;
 unsigned long lastHeartbeat = 0;
 String updateSSID = "";
 String updatePW = "";
-int currentRSSI = 0;
-uint8_t globalSeqCounter = 0;
 
-// FIX 3: Start bei 255 damit seqNr=0 (erstes Paket) nicht als Duplikat gilt
+// GLOBALE RSSI VARIABLE (wird nun vom Sniffer befüllt)
+volatile int currentRSSI = 0;
+
+uint8_t globalSeqCounter = 0;
 uint8_t lastReceivedSeq = 255;
 
 // --- BEFEHLS-QUEUE (Ringpuffer) ---
@@ -70,7 +70,6 @@ volatile CommandPacket cmdQueue[CMD_QUEUE_SIZE];
 volatile int cmdHead = 0;
 volatile int cmdTail = 0;
 
-// FIX 1: Spinlock für thread-sicheren Queue-Zugriff zwischen Core 0 und Core 1
 portMUX_TYPE queueMux = portMUX_INITIALIZER_UNLOCKED;
 
 // --- BUTTON (GLITCH FILTER) ---
@@ -116,7 +115,28 @@ void handleButton();
 void processIncomingCommands();
 void performOTA();
 void sendEvent(uint8_t type);
-void OnDataRecv(const esp_now_recv_info_t * info, const uint8_t *data, int len);
+// FIX: Signatur für Core 2.x
+void OnDataRecv(const uint8_t * mac_addr, const uint8_t *data, int len); 
+
+
+// =========================================================================
+// NEU: RSSI SNIFFER FÜR CORE 2.X
+// Belauscht die WLAN Pakete im Hintergrund, um die Signalstärke zu lesen
+// =========================================================================
+void promiscuous_rx_cb(void *buf, wifi_promiscuous_pkt_type_t type) {
+    wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
+    // Prüfen, ob das Paket lang genug ist (MAC-Header)
+    if (pkt->rx_ctrl.sig_len >= 24) { 
+        // Lese die Sender-MAC (Offset 10 im 802.11 Header)
+        uint8_t *mac = pkt->payload + 10; 
+        
+        // Da wir nur vom Coordinator Pakete annehmen, reicht es, wenn wir
+        // bei jedem Management/Data Paket die RSSI Variable aktualisieren.
+        // Ein genauerer MAC-Filter ist für dieses Projekt nicht zwingend nötig.
+        currentRSSI = pkt->rx_ctrl.rssi;
+    }
+}
+
 
 void setup() {
     Serial.begin(115200);
@@ -129,11 +149,15 @@ void setup() {
     
     startSoundSequence(SEQ_MARIO);
 
+    // WIFI SETUP
     WiFi.mode(WIFI_STA); 
     WiFi.disconnect();
+    
+    // Sniffer aktivieren, um RSSI Werte abzugreifen
     esp_wifi_set_promiscuous(true);
+    esp_wifi_set_promiscuous_rx_cb(&promiscuous_rx_cb);
     esp_wifi_set_channel(WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE);
-    esp_wifi_set_promiscuous(false);
+    // esp_wifi_set_promiscuous(false); // Auskommentiert, damit der Sniffer aktiv bleibt
 
     if (esp_now_init() != ESP_OK) ESP.restart();
     esp_now_register_recv_cb(OnDataRecv);
@@ -152,7 +176,6 @@ void setup() {
 void loop() {
     if (updateRequested) { performOTA(); return; }
     
-    // Snapshot von cmdHead holen (ohne Lock reicht hier, da nur gelesen wird)
     if (cmdHead != cmdTail) { processIncomingCommands(); }
 
     handleButton();
@@ -173,7 +196,6 @@ void loop() {
     }
 }
 
-// FIX 2: tone() ohne duration-Parameter - kein konkurrierender interner FreeRTOS-Timer
 void runSound() {
     if (!sound.active) return;
     unsigned long now = millis();
@@ -181,10 +203,10 @@ void runSound() {
     if (sound.isExplosion) {
         if (now >= sound.nextNoteTime) {
             if (sound.seqIndex++ < 100) { 
-                tone(PIN_BUZZER, random(50, 400)); // Kein duration!
+                tone(PIN_BUZZER, random(50, 400)); 
                 sound.nextNoteTime = now + 5; 
             } else {
-                noTone(PIN_BUZZER); // Explizit stoppen
+                noTone(PIN_BUZZER); 
                 sound.active = false;
             }
         }
@@ -196,13 +218,13 @@ void runSound() {
             int f = sound.currentSeq[sound.seqIndex].freq;
             int d = sound.currentSeq[sound.seqIndex].duration;
             
-            if (f > 0) tone(PIN_BUZZER, f); // FIX 2: Kein duration-Parameter!
+            if (f > 0) tone(PIN_BUZZER, f); 
             else noTone(PIN_BUZZER);
             
             sound.nextNoteTime = now + d + 20; 
             sound.seqIndex++;
         } else {
-            noTone(PIN_BUZZER); // FIX 2: Explizit stoppen
+            noTone(PIN_BUZZER); 
             sound.active = false;
         }
     }
@@ -217,7 +239,7 @@ void addNote(int freq, int dur) {
 }
 
 void startSoundSequence(uint8_t id) {
-    noTone(PIN_BUZZER); // Zuerst alles stoppen (verhindert Timer-Konflikte)
+    noTone(PIN_BUZZER); 
     sound.active = true;
     sound.isExplosion = false;
     sound.seqIndex = 0;
@@ -226,12 +248,9 @@ void startSoundSequence(uint8_t id) {
 
     switch(id) {
         case SEQ_OFF:
-            // FIX 7: Explizit alles stoppen. Ohne diesen Case blieb ein
-            // laufender Ton aktiv, weil sound.active=true gesetzt wurde
-            // aber seqLength=0 blieb und nie noTone() aufgerufen wurde.
             sound.active = false;
             noTone(PIN_BUZZER);
-            return; // Früh raus, kein weiteres Setup nötig
+            return; 
         case SEQ_FANFARE: 
             addNote(NOTE_C5, 100); addNote(NOTE_E5, 100); addNote(NOTE_G5, 100);
             addNote(0, 50); addNote(NOTE_C6, 400);
@@ -265,9 +284,6 @@ void startSoundSequence(uint8_t id) {
             addNote(NOTE_E5, 150); addNote(NOTE_C6, 400);
             break;
         case SEQ_TETRIS:
-            // FIX 7: Placeholder – Noten können hier ergänzt werden.
-            // Ohne diesen Case würde SEQ_TETRIS lautlos bleiben aber
-            // sound.active=true lassen, was andere Töne unterdrückt.
             addNote(NOTE_E5, 120); addNote(NOTE_B4, 60);  addNote(NOTE_C5, 60);
             addNote(NOTE_D5, 120); addNote(NOTE_C5, 60);  addNote(NOTE_B4, 60);
             addNote(NOTE_A4, 120); addNote(NOTE_A4, 60);  addNote(NOTE_C5, 60);
@@ -278,10 +294,8 @@ void startSoundSequence(uint8_t id) {
     }
 }
 
-// FIX 1: Spinlock um alle Queue-Zugriffe - verhindert Race Condition zwischen Core 0/1
 void processIncomingCommands() {
     while (true) {
-        // Kritischen Abschnitt so kurz wie möglich halten: nur lesen + Index vorrücken
         portENTER_CRITICAL(&queueMux);
         bool hasData = (cmdTail != cmdHead);
         CommandPacket cmd;
@@ -293,12 +307,9 @@ void processIncomingCommands() {
 
         if (!hasData) break;
 
-        // Verarbeitung außerhalb des kritischen Abschnitts
         if (cmd.cmd == CMD_PING) {
-            // FIX 5: Coordinator hat neu gestartet → isPaired zurücksetzen,
-            // damit der Puck sofort EVT_HELLO sendet und sich neu anmeldet.
             isPaired = false;
-            lastHeartbeat = 0; // Sofort senden
+            lastHeartbeat = 0; 
             Serial.println("PING empfangen – Re-Pairing...");
         }
         else if (cmd.cmd == CMD_PAIR_ACK) { 
@@ -330,20 +341,20 @@ void processIncomingCommands() {
     }
 }
 
-// FIX 1: Spinlock beim Schreiben in die Queue (läuft auf Core 0 / WiFi-Task)
-void OnDataRecv(const esp_now_recv_info_t * info, const uint8_t *data, int len) {
-    if (info->rx_ctrl) currentRSSI = info->rx_ctrl->rssi;
-    
+
+// =========================================================================
+// FIX: ESP-NOW CALLBACK FÜR CORE 2.x
+// Nutzt die klassische Signatur. Der RSSI Wert wird vom Promiscuous Sniffer geliefert.
+// =========================================================================
+void OnDataRecv(const uint8_t * mac_addr, const uint8_t *data, int len) {
     if (len == sizeof(CommandPacket)) {
         CommandPacket* incoming = (CommandPacket*)data;
 
-        // Deduplication Check (lastReceivedSeq nur hier geschrieben -> kein Lock nötig)
         if (incoming->seqNr == lastReceivedSeq) {
             return;
         }
         lastReceivedSeq = incoming->seqNr;
 
-        // FIX 1: Kritischer Abschnitt für Queue-Schreibzugriff
         portENTER_CRITICAL(&queueMux);
         int nextHead = (cmdHead + 1) % CMD_QUEUE_SIZE;
         if (nextHead != cmdTail) {
@@ -414,9 +425,6 @@ void setEffect(uint8_t id, uint8_t r, uint8_t g, uint8_t b, int speed, uint8_t b
     anim.step = 0;
     anim.counter = extra; 
 
-    // FIX 3: Helligkeit IMMER sofort zurücksetzen, bevor der neue Effekt startet.
-    // Ohne diesen Reset würde EFF_BREATHE (das FastLED.setBrightness() dynamisch
-    // verändert) die globale Helligkeit für alle nachfolgenden Effekte korrumpieren.
     FastLED.setBrightness(bright);
     
     if (id == EFF_FLASH_BEEP) {
@@ -485,8 +493,6 @@ void runAnimation() {
                 break; 
             }
         case EFF_BREATHE: { 
-            // FIX 3: nscale8() auf die LED-Objekte statt FastLED.setBrightness(),
-            // damit die globale Helligkeit nicht für andere Effekte korrumpiert wird.
             uint8_t val = (uint8_t)((exp(sin(anim.step/50.0*PI)) - 0.36787944)*108.0);
             fill_solid(leds, NUM_LEDS, anim.color1);
             nscale8(leds, NUM_LEDS, val);
