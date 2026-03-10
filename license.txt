@@ -1,0 +1,20 @@
+Non-Commercial Use and Modification License (NCUML)
+
+Copyright (c) 2026, WorksAsDesined
+
+Permission is hereby granted to any person obtaining a copy of this software and associated documentation files (the "Software") to use and modify the Software for any purpose, subject to the following conditions:
+
+Non-Commercial Use Only
+The Software may not be used for commercial purposes. Commercial purposes include, but are not limited to, selling, licensing, sublicensing, renting, leasing, or offering the Software or derivatives thereof as part of a product or service for which a fee or other compensation is charged.
+
+No Sale
+The Software and any modified versions may not be sold, licensed for a fee, or otherwise transferred for value.
+
+Distribution
+Redistribution of the Software or modified versions is permitted only if it is provided free of charge and includes this license in full.
+
+No Warranty
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+
+Limitation of Liability
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
