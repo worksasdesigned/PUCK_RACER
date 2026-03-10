@@ -3,6 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PuckRacer">
+    <link rel="apple-touch-icon" href="/appicon_alphaklein.png">
+    <link rel="icon" type="image/png" href="/appicon_alphaklein.png">
     <title>Puck Racer Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <style>
@@ -521,35 +526,35 @@
         // Tutorial wird jetzt komplett von tour.js gesteuert (DOMContentLoaded).
         // Auto-Start beim ersten Besuch + Fortsetzung bei Seitenwechsel.
 		
-		function goFullscreen() {
-    // Already standalone (PWA)?
-    if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
-        return;
-    }
-    // Android/Chrome: native fullscreen
-    if (document.documentElement.requestFullscreen) {
-        document.documentElement.requestFullscreen();
-    }
-    // iOS: show install hint
-    else if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-        showIosHint();
-    }
-}
+// --- IOS FULLSCREEN LOGIK ---
+        function goFullscreen() {
+            if (window.navigator.standalone || window.matchMedia('(display-mode: standalone)').matches) {
+                return;
+            }
 
-	function showIosHint() {
-    if (document.getElementById('iosHint')) return;
-    let hint = document.createElement('div');
-    hint.id = 'iosHint';
-    hint.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;border-top:2px solid var(--primary);padding:16px 20px;z-index:9999;text-align:center;font-size:0.9rem;color:#ddd;animation:fade 0.3s;';
-    hint.innerHTML = `
-        <div style="margin-bottom:8px;font-weight:bold;color:var(--primary);">📲 Add this page to your Homescreen for fullscreen under iOS.</div>
-        <div>Tap <b style="font-size:1.3rem;vertical-align:middle;">⬆</b> (Share) at the bottom of Safari</div>
-        <div style="margin-top:4px;">then tap <b>"Add to Home Screen"</b></div>
-        <button onclick="document.getElementById('iosHint').remove();localStorage.setItem('iosHintDismissed','1');" style="margin-top:12px;background:none;border:1px solid #555;color:#aaa;padding:6px 20px;border-radius:4px;cursor:pointer;">Got it</button>
-    `;
-    document.body.appendChild(hint);
-}
+            // Apple tarnt das iPad als Mac, wir prüfen zusätzlich auf Touch-Punkte
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 
+            if (isIOS) {
+                showIosHint();
+            } else if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        }
+
+        function showIosHint() {
+            if (document.getElementById('iosHint')) return;
+            let hint = document.createElement('div');
+            hint.id = 'iosHint';
+            hint.style.cssText = 'position:fixed;bottom:0;left:0;right:0;background:#1a1a2e;border-top:2px solid var(--primary);padding:16px 20px;z-index:9999;text-align:center;font-size:0.9rem;color:#ddd;animation:fade 0.3s;';
+            hint.innerHTML = `
+                <div style="margin-bottom:8px;font-weight:bold;color:var(--primary);">${getTranslation('ios_hint_1')}</div>
+                <div>${getTranslation('ios_hint_2')}</div>
+                <div style="margin-top:4px;">${getTranslation('ios_hint_3')}</div>
+                <button onclick="document.getElementById('iosHint').remove();localStorage.setItem('iosHintDismissed','1');" style="margin-top:12px;background:none;border:1px solid #555;color:#aaa;padding:6px 20px;border-radius:4px;cursor:pointer;">${getTranslation('ios_btn')}</button>
+            `;
+            document.body.appendChild(hint);
+        }
     </script>
 </body>
 </html>

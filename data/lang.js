@@ -21,7 +21,7 @@ const TRANSLATIONS = {
         "confirm_not_enough_pucks": "Not enough pucks connected! Continue anyway?",
         "lbl_done": "DONE",
 		"filter_fav": "⭐ Favorites",
-        
+              
         // --- DASHBOARD (index.html) ---
         "filter_all": "All Games", 
         "filter_reaction": "Reaction", 
@@ -38,7 +38,13 @@ const TRANSLATIONS = {
         "g_ttest": "Agility T-Test", "g_hunt": "Hunt!", "g_pacemaker": "The Pacemaker", "g_memory": "Memory Sprint",
         "g_domination": "Domination", "g_batak": "Batak Pro", "g_tabata": "Tabata Timer", "g_display": "Display Mode",
         "g_training": "Training Manager", "g_settings": "Settings",
-		
+    
+        "ios_hint_1": "📲 Add this page to your Homescreen for fullscreen under iOS.",
+        "ios_hint_2": "Tap <b style='font-size:1.3rem;vertical-align:middle;'>⬆</b> (Share) at the bottom of Safari",
+        "ios_hint_3": "then tap <b>\"Add to Home Screen\"</b>",
+        "ios_btn": "Got it",
+            
+
 		//unsortierte Übersetzungen, müssen einsortiert werden
 		// --- ALLGEMEIN / GLOBAL ---
         "pp_load_players": "Load Players from List",
@@ -956,6 +962,10 @@ const TRANSLATIONS = {
         "g_ttest": "Agilitäts T-Test", "g_hunt": "Hunt! (Farbenjagd)", "g_pacemaker": "Der Pacemaker", "g_memory": "Memory Sprint",
         "g_domination": "Domination", "g_batak": "Batak Pro", "g_tabata": "Zirkeltraining", "g_display": "Display Modus",
         "g_training": "Trainingsplaner", "g_settings": "Einstellungen",
+        "ios_hint_1": "📲 Füge diese Seite zum Home-Bildschirm hinzu, um sie im Vollbild zu nutzen.",
+        "ios_hint_2": "Tippe auf <b style='font-size:1.3rem;vertical-align:middle;'>⬆</b> (Teilen) im Safari Browser",
+        "ios_hint_3": "und wähle <b>\"Zum Home-Bildschirm\"</b>",
+        "ios_btn": "Verstanden",
 
 		//unsortierte Übersetzungen, müssen einsortiert werden
 		// --- ALLGEMEIN / GLOBAL ---
