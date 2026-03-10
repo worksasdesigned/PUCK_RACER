@@ -2,7 +2,7 @@
 **The DIY agility System**
 
 ## 📖 The Story: Why this exists
-Let's be real for a second: I built this because I was simply too stingy to drop **300-400€** on a commercial reaction light system that consists of only 4 pucks,   needs a paid subscription and provides 200 extremely similar games... which can be summerized in 5 different game modes.  
+Let's be real for a second: I built this because I was simply too stingy to drop **300-400€** on a commercial reaction light system that consists of only 4 pucks, needs a paid subscription and provides 200 extremely similar games... which can be summerized in 5 different game modes.  
 **Puck Racer has now 26 games**. Highly adjustable. Multi-Player, Multi-Group support.  
 All options combined easily provide 200+ "games" ;-)  
 
