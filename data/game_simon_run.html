@@ -18,12 +18,14 @@
         .g-name { font-size: 1.5rem; font-weight: bold; color: var(--text-main); }
         .g-stars { color: gold; font-size: 1.2rem; }
         .g-ctrl { display: flex; gap: 5px; margin-bottom: 10px; }
-        .seq-bar { display: flex; gap: 4px; height: 20px; background: var(--bg-color); border-radius: 4px; padding: 2px; overflow: hidden; }
+        .seq-row { display: flex; gap: 4px; height: 20px; background: var(--bg-color); border-radius: 4px; padding: 2px; overflow: hidden; }
         .seq-dot { flex: 1; height: 100%; opacity: 0.3; border-radius: 2px; transition: opacity 0.1s; }
         .seq-active { opacity: 1; box-shadow: 0 0 5px white; border: 1px solid #fff; }
         .status-badge { background: var(--card-hover); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; text-transform: uppercase; font-weight: bold; color: var(--text-main);}
         
         .action-btns { display: flex; gap: 10px;}
+        .ctrl-row { display: flex; gap: 10px; margin-top: 8px; }
+        .ctrl-row button, .group-card .action-btn { width: auto; padding: 5px 12px; margin-top: 0; font-size: 0.8rem; }
         .btn-action { flex:1; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         .btn-action:active { transform: scale(0.95); }
         .btn-start { background: var(--success); color: black; }
@@ -57,9 +59,57 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
-<script>startStatusLoop();</script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        // --- STATS LOGIK ---
+        let savedStats = {}; 
+        let personalBests = {};
+        let sessionRecords = {};
+        let targetLvl = sessionStorage.getItem('sim_len') || 5;
+
+        async function loadPersonalBests() {
+            let numP = parseInt(sessionStorage.getItem('sim_groups') || 1);
+            for (let i = 0; i < numP; i++) {
+                let pid = sessionStorage.getItem(`p_id_${i}`);
+                if (pid && pid !== "0") {
+                    try {
+                        let r = await fetch('/s_' + pid + '.csv');
+                        if (r.ok) {
+                            let text = await r.text();
+                            let lines = text.split(/\r?\n/);
+                            let bestScore = 0; // Simon Says: Höher = Besser
+                            lines.forEach(line => {
+                                let parts = line.split(';');
+                                if (parts.length >= 4 && parts[1] === "4") { // GameID 4 = Simon Says
+                                    let score = parseInt(parts[2]); 
+                                    if (score > bestScore) bestScore = score;
+                                }
+                            });
+                            if (bestScore > 0) personalBests[i] = bestScore;
+                        }
+                    } catch(e) {}
+                }
+            }
+        }
+        loadPersonalBests();
+
+        function savePlayerStat(playerIndex, score, extra) {
+            let pid = sessionStorage.getItem(`p_id_${playerIndex}`);
+            if (!pid || pid === "0") return; 
+
+            let formData = new URLSearchParams();
+            formData.append('pid', pid);
+            formData.append('game', 4); // GameID 4
+            formData.append('score', score); // Max. erreichte Länge
+            formData.append('extra', extra); // Hier packen wir die "Stars" rein
+            formData.append('ts', Date.now()); 
+
+            fetch('/api/stats/player_save', { method: 'POST', body: formData })
+                .catch(e => console.log("Fehler beim Speichern"));
+        }
+        // --- ENDE STATS LOGIK ---
 
         document.getElementById('gameContainer').addEventListener('click', function(e) {
             let btn = e.target.closest('.action-btn');
@@ -73,15 +123,13 @@
         
         function update() {
             fetch('/api/game/status').then(r=>r.json()).then(data => {
-                 
-                
                 if (!data.groups || data.groups.length === 0) {
                      return;
                 }
-                
-                renderGroups(data.groups);
+                render(data.groups); // Bugfix: Funktion heißt render(), nicht renderGroups()
             }).catch(e => {
-                document.getElementById('conn-stat').style.opacity = 0.2;
+                let cs = document.getElementById('conn-stat');
+                if(cs) cs.style.opacity = 0.2;
             });
         }
         
@@ -93,12 +141,15 @@
             let tDisq = getTranslation('simr_btn_disq') || "Disqualify";
             let tRej = getTranslation('simr_btn_rejoin') || "Restart";
 
-            // NEU: Die Team-Farben (Rot, Blau, Gelb)
             const TEAM_COLORS = ['#FF0000', '#0000FF', '#FFFF00'];
 
-            groups.forEach(g => {
-                // NEU: Farbe für die aktuelle Gruppe abgreifen
-                let teamCol = TEAM_COLORS[g.id % 3]; 
+            // Bugfix: C++ JSON schickt keine "id", daher iterieren wir mit Index (gid)
+            groups.forEach((g, gid) => {
+                let teamCol = TEAM_COLORS[gid % 3]; 
+
+                // Bugfix: Variablen an das C++ JSON anpassen
+                let lvl = g.len || 0;
+                let prog = g.step || 0;
 
                 let stTxt = "UNK";
                 let stCol = "#fff"; 
@@ -116,18 +167,35 @@
                     stTxt = getTranslation("sim_st_mis") || "MISTAKE"; stCol = "#fff"; badgeBg="var(--danger)";
                 }
 
-                let name = sessionStorage.getItem(`p_name_${g.id}`) || `Group ${g.id+1}`; 
+                // --- STATS ABGLEICH ---
+                if (g.state <= 2) {
+                    savedStats[gid] = false;
+                    sessionRecords[gid] = false;
+                }
+
+                if ((g.state == 6 || g.state == 7) && !savedStats[gid]) {
+                    // Score = Level (bei Gewinn) oder Level-1 (bei Fail)
+                    let finalScore = (g.state == 6) ? lvl : Math.max(0, lvl - 1);
+                    
+                    if (!personalBests[gid] || finalScore > personalBests[gid]) {
+                        sessionRecords[gid] = true;
+                        personalBests[gid] = finalScore;
+                    }
+                    
+                    savedStats[gid] = true;
+                    savePlayerStat(gid, finalScore, g.stars || 0);
+                }
+                // --- ENDE STATS ---
+
+                let name = sessionStorage.getItem(`p_name_${gid}`) || `Group ${gid+1}`; 
+                let recordIcon = sessionRecords[gid] ? " <span title='Neuer Rekord!'>📈</span>" : "";
                 
-                let sec = Math.floor(g.time / 1000);
-                let ms = Math.floor((g.time % 1000) / 100);
-                let min = Math.floor(sec / 60);
-                sec = sec % 60;
-                let timeStr = `${min}:${sec.toString().padStart(2,'0')}.${ms}`;
+                let timeStr = ""; // Bei Simon Says gibt es keine laufende Zeit pro Gruppe im Backend
                 
                 let seqHtml = "";
-                for(let i=0; i<g.lvl; i++) { 
+                for(let i=0; i<lvl; i++) { 
                     let col = (g.seq && g.seq[i]) ? g.seq[i] : "var(--border-color)";
-                    let isDone = i < g.prog;
+                    let isDone = i <= prog;
                     let style = `background:${col};`;
                     if(isDone) style += "opacity:1; border:1px solid #fff;";
                     else style += "opacity:0.3;";
@@ -135,41 +203,39 @@
                 }
                 
                 let btnHtml = "";
-                if(g.state != 6 && g.state != 5) {
-                    btnHtml = `<button class="btn-warn action-btn" data-cmd="disq_${g.id}" style="padding:5px; font-size:0.8rem; margin-top:0;">${tDisq}</button>`;
-                }
                 if(g.state == 0 || g.state == 6 || g.state == 7) {
-                     btnHtml += `<button class="btn-primary action-btn" data-cmd="start_${g.id}" style="padding:5px; font-size:0.8rem; margin-left:10px; margin-top:0;">${tRej}</button>`;
+                     btnHtml = `<button class="btn-primary action-btn" data-cmd="start_${gid}" style="padding:5px; font-size:0.8rem; margin-top:0;">${tRej}</button>`;
                 }
 
-                let rowId = `sr-grp-${g.id}`;
+                let rowId = `sr-grp-${gid}`;
                 let rowEl = document.getElementById(rowId);
 
                 if (!rowEl) {
                     container.insertAdjacentHTML('beforeend', `
-                    <div id="${rowId}" class="group-card" style="border-left-color:${teamCol}"> <div class="g-head">
-                            <div class="g-name">${name}</div>
-                            <div id="time-${g.id}" class="g-time">${timeStr}</div>
+                    <div id="${rowId}" class="group-card" style="border-left-color:${teamCol}">
+                        <div class="g-head">
+                            <div class="g-name" id="name-${gid}">${name}${recordIcon}</div>
+                            <div id="time-${gid}" class="g-time">${timeStr}</div>
                         </div>
                         <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                            <span id="badge-${g.id}" class="g-badge" style="color:${stCol}; background:${badgeBg}">${stTxt}</span>
-                            <span style="color:var(--text-muted);">${tLvl} <span id="lvl-${g.id}">${g.lvl}</span> / ${g.target}</span>
+                            <span id="badge-${gid}" class="g-badge status-badge" style="color:${stCol}; background:${badgeBg}">${stTxt}</span>
+                            <span style="color:var(--text-muted);">${tLvl} <span id="lvl-${gid}">${lvl}</span> / ${targetLvl}</span>
                         </div>
-                        <div id="seq-${g.id}" class="seq-row">${seqHtml}</div>
-                        <div id="ctrl-${g.id}" class="ctrl-row">${btnHtml}</div>
+                        <div id="seq-${gid}" class="seq-row">${seqHtml}</div>
+                        <div id="ctrl-${gid}" class="ctrl-row">${btnHtml}</div>
                     </div>`);
                 } else {
-                    rowEl.style.borderLeftColor = teamCol; // HIER: teamCol statt stCol
-                    document.getElementById(`time-${g.id}`).innerText = timeStr;
+                    rowEl.style.borderLeftColor = teamCol; 
+                    document.getElementById(`name-${gid}`).innerHTML = `${name}${recordIcon}`;
                     
-                    let badge = document.getElementById(`badge-${g.id}`);
+                    let badge = document.getElementById(`badge-${gid}`);
                     badge.innerText = stTxt;
                     badge.style.color = stCol;
                     badge.style.background = badgeBg;
                     
-                    document.getElementById(`lvl-${g.id}`).innerText = g.lvl;
-                    document.getElementById(`seq-${g.id}`).innerHTML = seqHtml;
-                    document.getElementById(`ctrl-${g.id}`).innerHTML = btnHtml;
+                    document.getElementById(`lvl-${gid}`).innerText = lvl;
+                    document.getElementById(`seq-${gid}`).innerHTML = seqHtml;
+                    document.getElementById(`ctrl-${gid}`).innerHTML = btnHtml;
                 }
             });
         }

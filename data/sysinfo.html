@@ -76,7 +76,6 @@
   └──────────────────────┘
         </div>
 
-        <!-- UPTIME -->
         <div class="stat-card">
             <div class="stat-title">▸ COORDINATOR UPTIME</div>
             <div class="uptime-box">
@@ -85,7 +84,6 @@
             </div>
         </div>
 
-        <!-- CHIP INFO -->
         <div class="stat-card">
             <div class="stat-title">▸ HARDWARE</div>
             <div class="info-row">
@@ -110,7 +108,6 @@
             </div>
         </div>
 
-        <!-- MEMORY -->
         <div class="stat-card">
             <div class="stat-title">▸ MEMORY (HEAP)</div>
             <div class="info-row">
@@ -138,7 +135,6 @@
             </div>
         </div>
 
-        <!-- FLASH / FILESYSTEM -->
         <div class="stat-card">
             <div class="stat-title">▸ STORAGE (LittleFS)</div>
             <div class="info-row">
@@ -164,9 +160,13 @@
                 <span id="fsUsedTxt">-- used</span>
                 <span id="fsFreeTxt">-- free</span>
             </div>
+
+            <button onclick="loadFileList()" class="btn-warn" style="margin-top:15px; background:#1a3a1a; color:#33ff33; border:1px solid #33aa33; font-size:0.8rem; padding:8px;">📂 DATEISYSTEM DURCHSUCHEN</button>
+            <div id="fileList" style="display:none; margin-top:10px; background:#050505; padding:10px; border-radius:6px; border:1px solid #1a3a1a; max-height:250px; overflow-y:auto; font-size:0.8rem;">
+                <table style="width:100%; border-collapse:collapse;" id="fileTable"></table>
+            </div>
         </div>
 
-        <!-- WIFI -->
         <div class="stat-card">
             <div class="stat-title">▸ WIFI</div>
             <div class="info-row">
@@ -267,6 +267,49 @@
             document.getElementById('wifiCh').innerText = d.wifiCh || '--';
             document.getElementById('wifiClients').innerText = d.clients || '0';
             document.getElementById('wifiIp').innerText = d.ip || '--';
+        }
+
+        // NEU: Logik für den Datei Explorer
+        function loadFileList() {
+            let container = document.getElementById('fileList');
+            let table = document.getElementById('fileTable');
+            
+            if (container.style.display === 'block') {
+                container.style.display = 'none';
+                return;
+            }
+
+            table.innerHTML = '<tr><td style="color:#aaa;">Lade Dateien...</td></tr>';
+            container.style.display = 'block';
+
+            fetch('/api/fs_list').then(r=>r.json()).then(files => {
+                // Nach Größe absteigend sortieren
+                files.sort((a,b) => b.size - a.size);
+                
+                let html = '<tr><th style="text-align:left; padding-bottom:8px; border-bottom:1px solid #1a3a1a; color:#555;">DATEI</th><th style="text-align:right; padding-bottom:8px; border-bottom:1px solid #1a3a1a; color:#555;">GRÖSSE</th></tr>';
+                
+                if(files.length === 0) {
+                    html += '<tr><td colspan="2" style="color:#aaa;">Speicher ist leer</td></tr>';
+                } else {
+                    files.forEach(f => {
+                        let icon = '📄';
+                        if(f.name.endsWith('.mp3')) icon = '🎵';
+                        else if(f.name.endsWith('.csv')) icon = '📊';
+                        else if(f.name.endsWith('.html')) icon = '🌐';
+                        else if(f.name.endsWith('.json')) icon = '⚙️';
+                        else if(f.name.endsWith('.js') || f.name.endsWith('.css')) icon = '📜';
+                        else if(f.name.endsWith('.bin')) icon = '💾';
+
+                        html += `<tr>
+                            <td style="padding:6px 0; color:#ccc; border-bottom:1px solid #0d1a0d;">${icon} /${f.name}</td>
+                            <td style="text-align:right; padding:6px 0; color:#44aaff; border-bottom:1px solid #0d1a0d;">${fmtBytes(f.size)}</td>
+                        </tr>`;
+                    });
+                }
+                table.innerHTML = html;
+            }).catch(e => {
+                table.innerHTML = '<tr><td style="color:#ff4444;">Fehler beim Laden!</td></tr>';
+            });
         }
 
         function refresh() {

@@ -19,6 +19,10 @@
         .hidden { display: none; }
         #toggleIcon { transition: transform 0.3s; display: inline-block; }
         .rotate { transform: rotate(-90deg); }
+        
+        /* Styling für das Statistik-Icon */
+        .stat-icon { font-size: 1.3rem; opacity: 0.2; transition: all 0.3s; cursor: help; user-select: none; filter: grayscale(100%); }
+        .stat-icon.active { opacity: 1; filter: none; text-shadow: 0 0 8px rgba(13, 110, 253, 0.5); }
     </style>
 </head>
 <body>
@@ -76,6 +80,16 @@
         setTimeout(initList, 500);
     });
 
+    // Funktion zum manuellen Entfernen der ID, wenn Name händisch geändert wird
+    function clearPlayerId(idx) {
+        sessionStorage.setItem(`p_id_${idx}`, 0);
+        let icon = document.getElementById(`stat_icon_${idx}`);
+        if(icon) {
+            icon.classList.remove('active');
+            icon.title = "Gastspieler (Keine Statistik)";
+        }
+    }
+
     async function initList() {
         try {
             await fetch('/api/game/load?id=4');
@@ -110,10 +124,17 @@
                 let nPpg = pucks[i] || 4;
                 let ringCol = TEAM_COLORS_HEX[i % 3];
 
-                // Liste mit farbigen Balken
+                // Statistik Check
+                let pid = sessionStorage.getItem(`p_id_${i}`);
+                let hasStats = (pid && pid !== "0");
+                let statClass = hasStats ? "active" : "";
+                let statTitle = hasStats ? "Statistik wird gespeichert" : "Gastspieler (Keine Statistik)";
+
+                // Liste mit farbigen Balken und Stat-Icon
                 listContainer.innerHTML += `
                 <div class="player-row" style="border-left-color: ${ringCol};">
-                    <input type="text" id="name_${i}" value="${name}" placeholder="${ph}">
+                    <input type="text" id="name_${i}" value="${name}" placeholder="${ph}" oninput="clearPlayerId(${i})">
+                    <span class="stat-icon ${statClass}" id="stat_icon_${i}" title="${statTitle}">📊</span>
                     <span class="puck-count">${nPpg} Pucks</span>
                 </div>`;
 
@@ -187,7 +208,17 @@
         openPlayerPicker(groups, function(selected) {
             selected.forEach((p, i) => {
                 let inp = document.getElementById('name_' + i);
-                if (inp) { inp.value = p.name; sessionStorage.setItem('p_name_' + i, p.name); }
+                if (inp) { 
+                    inp.value = p.name; 
+                    sessionStorage.setItem('p_name_' + i, p.name); 
+                }
+                // ID sichern und Icon aktivieren
+                sessionStorage.setItem(`p_id_${i}`, p.id); 
+                let icon = document.getElementById(`stat_icon_${i}`);
+                if(icon) { 
+                    icon.classList.add('active'); 
+                    icon.title = "Statistik wird gespeichert"; 
+                }
             });
         });
     }

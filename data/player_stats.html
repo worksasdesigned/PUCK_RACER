@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PuckRacer">
+    <title>Player Stats</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="chart.umd.js"></script>
+    <style>
+        .header-title { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin-bottom: 20px; text-align: center; }
+        
+        /* Accordion Styling */
+        .grp-card { background:var(--card-bg); border:1px solid var(--border-color); border-radius:10px; margin-bottom:12px; overflow:hidden; transition:border-color 0.2s; }
+        .grp-card.open { border-color:var(--primary); }
+        .grp-header { display:flex; align-items:center; padding:14px 16px; cursor:pointer; gap:12px; user-select:none; background:var(--card-hover); }
+        .grp-arrow { font-size:1.2rem; transition:transform 0.2s; color:var(--text-muted); flex-shrink:0; }
+        .grp-card.open .grp-arrow { transform:rotate(90deg); }
+        .grp-name { flex:1; font-size:1.15rem; font-weight:bold; color:var(--text-main); }
+        .grp-count { background:var(--bg-color); padding:3px 10px; border-radius:12px; font-size:0.85rem; color:var(--text-muted); flex-shrink:0; border:1px solid var(--border-color);}
+        
+        .grp-body { display:none; padding:16px; background:var(--bg-color); }
+        .grp-card.open .grp-body { display:block; }
+
+        /* Tabellen Styling */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: var(--card-bg); border-radius: 8px; overflow: hidden;}
+        th { text-align: left; padding: 12px; background: var(--card-hover); color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; border-bottom: 2px solid var(--border-color); }
+        td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 1rem; color: var(--text-main); }
+        tr:last-child td { border-bottom: none; }
+        
+        /* Diagramm Container */
+        .chart-container { width: 100%; height: 250px; margin-bottom: 20px; position: relative; }
+
+        .empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 10px; display: block; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Player Stats</div>
+    </header>
+
+    <main>
+        <div class="header-title">📊 <span id="playerNameDisplay">Loading...</span></div>
+
+        <div id="loadingState" class="empty-state">
+            <span class="icon">⏳</span>
+            <p>Lade Statistiken...</p>
+        </div>
+
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <span class="icon">🤷‍♂️</span>
+            <p>Noch keine Statistiken für diesen Spieler vorhanden.</p>
+        </div>
+
+        <div id="statsContent" style="display:none;"></div>
+
+        <button onclick="location.href='player_manager.html'" class="btn-back" style="margin-top: 30px;">⬅ Zurück zum Manager</button>
+    </main>
+
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        // parseFloat sorgt dafür, dass aus dem Text "12.50" eine echte Zahl für Chart.js wird
+        const GAME_DICT = {
+            1:  { name: "Shuttle Run", lblScore: "Zeit", lblExtra: "Runden", fmtS: "ms", fmtE: "num", chartLabel: "Ø Zeit pro Runde (s)", calcChart: (e) => parseFloat(e.extra > 0 ? (e.score / e.extra / 1000).toFixed(2) : (e.score / 1000).toFixed(2)) },
+            // HIER WURDE SIMON SAYS ANGEPASST (lblExtra und fmtE)
+            4:  { name: "Simon Says", lblScore: "Level", lblExtra: "Sterne", fmtS: "num", fmtE: "num", chartLabel: "Erreichtes Level", calcChart: (e) => e.score },
+            6:  { name: "Simon Runs", lblScore: "Zeit", lblExtra: "Level", fmtS: "ms", fmtE: "num", chartLabel: "Zeit (s)", calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
+            8:  { name: "Bomb Defusal", lblScore: "Zeit", lblExtra: "Fehler", fmtS: "ms", fmtE: "num", chartLabel: "Überlebenszeit (s)", calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
+            9:  { name: "Red/Green", lblScore: "Reaktion", lblExtra: "Fehlstarts", fmtS: "ms", fmtE: "num", chartLabel: "Reaktionszeit (s)", calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
+            11: { name: "Zombie", lblScore: "Überlebt", lblExtra: "", fmtS: "ms", fmtE: "none", chartLabel: "Zeit überlebt (s)", calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
+            13: { name: "React 2P", lblScore: "Reaktion", lblExtra: "Sieg", fmtS: "ms", fmtE: "bool", chartLabel: "Reaktionszeit (s)", calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
+            14: { name: "T-Test", lblScore: "Zeit", lblExtra: "", fmtS: "ms", fmtE: "none", chartLabel: "Zeit (s)", calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
+            15: { name: "Target", lblScore: "Treffer", lblExtra: "Zeit", fmtS: "num", fmtE: "ms", chartLabel: "Treffer", calcChart: (e) => e.score },
+            21: { name: "Batak", lblScore: "Treffer", lblExtra: "", fmtS: "num", fmtE: "none", chartLabel: "Treffer", calcChart: (e) => e.score },
+            24: { name: "Whac-A-Mole", lblScore: "Treffer", lblExtra: "Fehler", fmtS: "num", fmtE: "num", chartLabel: "Treffer", calcChart: (e) => e.score }
+        };
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const pid = urlParams.get('pid');
+        const pName = urlParams.get('name') || "Spieler";
+
+        document.getElementById('playerNameDisplay').innerText = pName;
+
+        let parsedData = {}; 
+        let activeCharts = {}; // Merkt sich, welche Graphen schon gemalt wurden
+
+        if (pid) {
+            fetch('/s_' + pid + '.csv')
+                .then(r => { if (!r.ok) throw new Error("404"); return r.text(); })
+                .then(text => processCSV(text))
+                .catch(() => showEmpty());
+        } else {
+            showEmpty();
+        }
+
+        function showEmpty() {
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('emptyState').style.display = 'block';
+        }
+
+        function processCSV(text) {
+            if (!text || !text.trim()) { showEmpty(); return; }
+
+            let lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
+            lines.forEach(line => {
+                let parts = line.split(';');
+                if (parts.length >= 3) {
+                    let ts = parseInt(parts[0]);
+                    let gId = parseInt(parts[1]);
+                    let score = parseInt(parts[2]);
+                    let extra = parts.length >= 4 ? parseInt(parts[3]) : 0;
+                    if (!parsedData[gId]) parsedData[gId] = [];
+                    parsedData[gId].push({ ts, score, extra });
+                }
+            });
+
+            if (Object.keys(parsedData).length === 0) { showEmpty(); return; }
+
+            document.getElementById('loadingState').style.display = 'none';
+            document.getElementById('statsContent').style.display = 'block';
+            
+            buildAccordions();
+        }
+
+        function buildAccordions() {
+            let container = document.getElementById('statsContent');
+            let html = '';
+            let firstGame = true;
+            let firstGameId = null;
+
+            for (let gId in parsedData) {
+                if(firstGame) { firstGameId = gId; }
+                let info = GAME_DICT[gId] || { name: "Game " + gId, lblScore: "Wert", lblExtra: "Extra", fmtS: "num", fmtE: "num", chartLabel: "Wert", calcChart: (e)=>e.score };
+                let entries = parsedData[gId];
+                
+                let sortedDesc = [...entries].sort((a, b) => b.ts - a.ts);
+                let thExtra = info.fmtE !== "none" ? `<th>${info.lblExtra}</th>` : "";
+
+                let rowsHtml = '';
+                sortedDesc.forEach(e => {
+                    let d = new Date(e.ts);
+                    let dateStr = d.toLocaleDateString('de-DE') + " " + d.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'});
+                    let tdExtra = info.fmtE !== "none" ? `<td>${formatValue(e.extra, info.fmtE)}</td>` : "";
+                    
+                    rowsHtml += `
+                        <tr>
+                            <td><span style="font-size:0.85rem; color:var(--text-muted);">${dateStr}</span></td>
+                            <td><strong>${formatValue(e.score, info.fmtS)}</strong></td>
+                            ${tdExtra}
+                        </tr>`;
+                });
+
+                html += `
+                <div class="grp-card ${firstGame ? 'open' : ''}" id="card_${gId}">
+                    <div class="grp-header" onclick="toggleCard(${gId})">
+                        <span class="grp-arrow">▶</span>
+                        <span class="grp-name">${info.name}</span>
+                        <span class="grp-count">${entries.length} Läufe</span>
+                    </div>
+                    <div class="grp-body">
+                        <div class="chart-container">
+                            <canvas id="chart_${gId}"></canvas>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr><th>Datum</th><th>${info.lblScore}</th>${thExtra}</tr>
+                            </thead>
+                            <tbody>${rowsHtml}</tbody>
+                        </table>
+                    </div>
+                </div>`;
+                
+                firstGame = false;
+            }
+
+            container.innerHTML = html;
+
+            if (firstGameId !== null) {
+                setTimeout(() => drawChart(firstGameId), 50);
+            }
+        }
+
+        function toggleCard(gId) {
+            let card = document.getElementById('card_' + gId);
+            card.classList.toggle('open');
+            
+            if (card.classList.contains('open') && !activeCharts[gId]) {
+                drawChart(gId);
+            }
+        }
+
+        function drawChart(gId) {
+            activeCharts[gId] = true; 
+            let info = GAME_DICT[gId] || { name: "Game", chartLabel: "Wert", calcChart: (e)=>e.score };
+            let entries = parsedData[gId];
+            
+            let sortedAsc = [...entries].sort((a, b) => a.ts - b.ts);
+            
+            let labels = [];
+            let dataPoints = [];
+
+            sortedAsc.forEach(e => {
+                let d = new Date(e.ts);
+                labels.push(d.toLocaleDateString('de-DE', {day: '2-digit', month: '2-digit'}));
+                dataPoints.push(info.calcChart(e));
+            });
+
+            let ctx = document.getElementById('chart_' + gId).getContext('2d');
+            
+            let isLight = document.body.classList.contains('theme-light');
+            let gridColor = isLight ? '#dee2e6' : '#333333';
+            let textColor = isLight ? '#6c757d' : '#888888';
+            let primaryColor = '#0d6efd';
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: info.chartLabel,
+                        data: dataPoints,
+                        borderColor: primaryColor,
+                        backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                        borderWidth: 3,
+                        pointBackgroundColor: primaryColor,
+                        pointRadius: 4,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) { return context.parsed.y + ' ' + (info.chartLabel.includes('(s)') ? 's' : ''); }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { grid: { color: gridColor }, ticks: { color: textColor } },
+                        y: { grid: { color: gridColor }, ticks: { color: textColor } }
+                    }
+                }
+            });
+        }
+
+        function formatValue(val, type) {
+            if (type === "num") return val.toString();
+            if (type === "ms") {
+                let totalSec = Math.floor(val / 1000);
+                let m = Math.floor(totalSec / 60);
+                let s = totalSec % 60;
+                let z = Math.floor((val % 1000) / 100); 
+                if (m > 0) return `${m}:${s.toString().padStart(2,'0')}.${z}`;
+                return `${s}.${z}s`;
+            }
+            if (type === "bool") return val === 1 ? "✅ Ja" : "❌ Nein";
+            return val;
+        }
+    </script>
+</body>
+</html>

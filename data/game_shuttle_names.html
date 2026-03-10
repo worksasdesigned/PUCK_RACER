@@ -12,7 +12,12 @@
         .player-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background:var(--card-bg); padding:10px; border-radius:8px; border-left:1px solid var(--border-color);}
         .color-box { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; flex-shrink: 0; transition: all 0.3s;}
         .puck-ids { font-size:0.8rem; color:var(--text-muted); margin-left:10px;}
-        input[type=text] { flex-grow: 1; padding: 12px; font-size: 1.1rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-main); }
+        input[type=text] { flex-grow: 1; padding: 12px; font-size: 1.1rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-main); min-width: 0; }
+        
+        /* NEU: Styling für das Statistik-Icon */
+        .stat-icon { font-size: 1.3rem; opacity: 0.2; transition: all 0.3s; cursor: help; user-select: none; filter: grayscale(100%); }
+        .stat-icon.active { opacity: 1; filter: none; text-shadow: 0 0 8px rgba(13, 110, 253, 0.5); }
+        
         .hidden { display: none; }
         #toggleIcon { transition: transform 0.3s; display: inline-block; }
         .rotate { transform: rotate(-90deg); }
@@ -55,40 +60,30 @@
 <script src="lang.js"></script>
 <script src="player_picker.js"></script>
 <script>
-    // Theme initialisieren
     if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
     const COLORS = ['#0000FF', '#00FF00', '#FF0000', '#FFFF00', '#FF00FF'];
     let numPlayers = parseInt(sessionStorage.getItem('sr_players') || 1);
     
-    // Start, sobald das DOM geladen ist
     document.addEventListener("DOMContentLoaded", () => {
         setTimeout(initList, 500);
     });
 
     async function initList() {
         try {
-            // 1. Spiel in den RAM laden (ID 1 für Shuttle Run)
             await fetch('/api/game/load?id=1');
 
-            // 2. Setup-Werte aus dem sessionStorage lesen
             numPlayers = parseInt(sessionStorage.getItem('sr_players') || 1);
             let maxRounds = parseInt(sessionStorage.getItem('sr_rounds') || 3);
 
-            // 3. Konfiguration an den ESP32 senden (Exakte cmds aus Game_ShuttleRun.cpp)
             await fetch(`/api/game/action?cmd=config_players&val=${numPlayers}`);
             await fetch(`/api/game/action?cmd=config_rounds&val=${maxRounds}`);
-
-            // 4. Setup triggern
             await fetch('/api/game/action?cmd=setup');
 
-            // 5. Arena-Tabelle generieren (Zeilen = Anzahl Spieler)
             let tableHtml = `<table class="arena-table">`;
             const cols = ['A', 'B', 'C', 'D', 'E'];
             for(let r = 1; r <= numPlayers && r <= 5; r++) {
                 tableHtml += `<tr>`;
-                for(let c = 0; c < 5; c++) {
-                    tableHtml += `<td id="cell-${cols[c]}${r}"></td>`;
-                }
+                for(let c = 0; c < 5; c++) { tableHtml += `<td id="cell-${cols[c]}${r}"></td>`; }
                 tableHtml += `</tr>`;
             }
             tableHtml += `</table>`;
@@ -98,15 +93,14 @@
             container.innerHTML = "";
             let puckTxt = getTranslation('sr_names_pucks') || "Pucks";
 
-            // Pucks und UI-Elemente füllen
             for(let i=0; i<numPlayers; i++) {
                 let color = COLORS[i % COLORS.length];
                 let name = sessionStorage.getItem(`p_name_${i}`) || `Player ${i+1}`;
+                let pid = sessionStorage.getItem(`p_id_${i}`);
                 let puckA = i*2;
                 let puckB = i*2 + 1;
-                let r = i + 1; // Zeile im Raster
+                let r = i + 1;
 
-                // Arena besetzen
                 if(r <= 5) {
                     document.getElementById(`cell-A${r}`).innerHTML = `<div class="puck-icon" id="puck_vis_${puckA}" style="background:${color}">${puckA+1}</div>`;
                     document.getElementById(`cell-B${r}`).innerHTML = `<div style="font-size:1.5rem;">🏃‍♂️</div>`;
@@ -114,24 +108,37 @@
                     document.getElementById(`cell-E${r}`).innerHTML = `<div class="puck-icon" id="puck_vis_${puckB}" style="background:${color}">${puckB+1}</div>`;
                 }
                 
-                // Namensliste ergänzen
+                // NEU: Prüfen, ob eine gültige ID da ist, um das Icon zu aktivieren
+                let hasStats = (pid && pid !== "0");
+                let statClass = hasStats ? "active" : "";
+                let statTitle = hasStats ? "Statistik wird gespeichert" : "Gastspieler (Keine Statistik)";
+
                 container.innerHTML += `
                 <div class="player-row" style="border-left: 5px solid ${color}">
                     <div class="color-box" id="cb_${i}" style="background:${color}; box-shadow:0 0 10px ${color};"></div>
-                    <input type="text" id="name_${i}" value="${name}" placeholder="Name">
+                    <input type="text" id="name_${i}" value="${name}" placeholder="Name" oninput="clearPlayerId(${i})">
+                    <span class="stat-icon ${statClass}" id="stat_icon_${i}" title="${statTitle}">📊</span>
                     <div class="puck-ids">${puckTxt} ${puckA} & ${puckB}</div>
                 </div>`;
             }
 
-            // UI einblenden
             document.getElementById('loading').style.display = 'none';
             document.getElementById('content').style.display = 'block';
 
-            // 6. Polling für Live-Farben starten
             setInterval(pollPuckEffects, 1500);
 
         } catch (error) {
             console.error("Initialisierungsfehler:", error);
+        }
+    }
+
+    // NEU: Setzt die ID auf 0 und graut das Icon aus, wenn getippt wird
+    function clearPlayerId(idx) {
+        sessionStorage.setItem(`p_id_${idx}`, 0);
+        let icon = document.getElementById(`stat_icon_${idx}`);
+        if(icon) {
+            icon.classList.remove('active');
+            icon.title = "Gastspieler (Keine Statistik)";
         }
     }
 
@@ -141,13 +148,10 @@
             let data = await r.json();
             data.forEach(eff => {
                 const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
-                
-                // Farb-Kästchen beim Spieler aktualisieren
                 let pId = Math.floor(eff.id / 2);
                 let cb = document.getElementById(`cb_${pId}`);
                 if(cb) { cb.style.background = rgb; cb.style.boxShadow = `0 0 10px ${rgb}`; }
 
-                // Arena Puck animieren
                 let vis = document.getElementById(`puck_vis_${eff.id}`);
                 if(vis) {
                     vis.classList.remove('eff-breathe', 'eff-chase', 'eff-rainbow');
@@ -165,7 +169,7 @@
                     vis.style.boxShadow = `0 0 15px ${rgb}`;
                 }
             });
-        } catch (e) { console.error(e); }
+        } catch (e) {}
     }
 
     function toggleLayout() {
@@ -177,7 +181,18 @@
         openPlayerPicker(numPlayers, function(selected) {
             selected.forEach((p, i) => {
                 let inp = document.getElementById('name_' + i);
-                if (inp) { inp.value = p.name; sessionStorage.setItem(`p_name_${i}`, p.name); }
+                if (inp) { 
+                    inp.value = p.name; 
+                    sessionStorage.setItem(`p_name_${i}`, p.name); 
+                    sessionStorage.setItem(`p_id_${i}`, p.id); 
+                    
+                    // NEU: Icon aktivieren, wenn Spieler geladen wurde
+                    let icon = document.getElementById(`stat_icon_${i}`);
+                    if(icon) {
+                        icon.classList.add('active');
+                        icon.title = "Statistik wird gespeichert";
+                    }
+                }
             });
         });
     }
@@ -185,8 +200,11 @@
     function startGame() {
         let inputs = document.querySelectorAll('input[type=text]');
         inputs.forEach(inp => {
-            let id = inp.id.split('_')[1];
-            sessionStorage.setItem(`p_name_${id}`, inp.value);
+            let idx = inp.id.split('_')[1];
+            sessionStorage.setItem(`p_name_${idx}`, inp.value);
+            if (!sessionStorage.getItem(`p_id_${idx}`)) {
+                sessionStorage.setItem(`p_id_${idx}`, 0);
+            }
         });
         setTimeout(() => { location.href = 'game_shuttle_run.html'; }, 200);
     }

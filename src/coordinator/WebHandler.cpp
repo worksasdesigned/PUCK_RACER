@@ -7,59 +7,12 @@
 #include "StatsManager.h" 
 #include "WifiScanner.h"
 
-#define SYS_VER "v2.88.2" 
+#define SYS_VER "v2.89.4" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;
 
 static size_t debugUploadSize = 0;
-
-// --- INITIALISIERUNG DER TÜRSTEHER-VARIABLEN ---
-IPAddress WebHandler::activeClientIP(0,0,0,0);
-unsigned long WebHandler::lastActivityTime = 0;
-String WebHandler::activeClientName = "Unbekanntes Gerät";
-
-// =========================================================================
-// TÜRSTEHER LOGIK: Prüft, ob das anfragende Gerät das System steuern darf
-// =========================================================================
-bool WebHandler::isClientAllowed(AsyncWebServerRequest *req) {
-    IPAddress ip = req->client()->remoteIP();
-    unsigned long now = millis();
-
-    // ZUGRIFF ERLAUBT WENN:
-    // 1. Noch gar keine IP gespeichert ist (0.0.0.0)
-    // 2. ODER die letzte Anfrage des gespeicherten Geräts älter als 6 Sekunden ist (Timeout)
-    // 3. ODER die anfragende IP genau die gespeicherte IP ist (Stammgast)
-    if (activeClientIP == IPAddress(0,0,0,0) || (now - lastActivityTime > 6000) || activeClientIP == ip) {
-        
-        // Wenn es ein NEUES Gerät ist, versuchen wir herauszufinden, was es für eins ist
-        if (activeClientIP != ip || activeClientName == "Unbekanntes Gerät") {
-            String ua = "Unknown";
-            if (req->hasHeader("User-Agent")) {
-                ua = req->header("User-Agent");
-            }
-            
-            // Simpler Text-Filter über den User-Agent Header
-            if (ua.indexOf("iPhone") != -1) activeClientName = "iPhone";
-            else if (ua.indexOf("iPad") != -1) activeClientName = "iPad";
-            else if (ua.indexOf("Android") != -1) activeClientName = "Android Gerät";
-            else if (ua.indexOf("Windows") != -1) activeClientName = "Windows PC";
-            else if (ua.indexOf("Macintosh") != -1 || ua.indexOf("Mac OS") != -1) activeClientName = "MacBook/iMac";
-            else activeClientName = "Mobiles Gerät";
-            
-            Serial.printf("IP-LOCK: Neues Gerät hat Kontrolle übernommen: %s (%s)\n", activeClientName.c_str(), ip.toString().c_str());
-        }
-
-        // Timer und IP wieder auffrischen, da das Gerät gerade aktiv war
-        activeClientIP = ip;       
-        lastActivityTime = now;    
-        return true; // Lass den Nutzer durch
-    }
-    
-    // Wenn wir hier landen, gehört die IP jemand anderem und die 6 Sekunden sind noch nicht abgelaufen!
-    return false; 
-}
-
 
 // --- Die Welcome / Setup Page (wird direkt aus dem RAM geladen, falls LittleFS leer ist) ---
 const char* welcomeHTML PROGMEM = R"=====(
@@ -165,26 +118,11 @@ void WebHandler::begin() {
     
     // --- BASIS ROUTING & CAPTIVE PORTAL ---
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *req){
-        // IP-LOCK CHECK: Wenn Gerät nicht erlaubt ist, zeige Besetzt-Seite
-        if (!isClientAllowed(req)) {
-            if (LittleFS.exists("/only1device.html")) {
-                req->send(LittleFS, "/only1device.html", "text/html");
-            } else {
-                req->send(403, "text/plain", "System besetzt durch: " + activeClientName);
-            }
-            return;
-        }
-
         if (LittleFS.exists("/index.html")) {
             req->send(LittleFS, "/index.html", "text/html");
         } else {
             req->send(200, "text/html", welcomeHTML);
         }
-    });
-
-    // --- NEU: DIESE ROUTE IST FREI FÜR ALLE (Damit abgewiesene Handys den Namen abfragen können) ---
-    server.on("/api/who_is_active", HTTP_GET, [](AsyncWebServerRequest *req){
-        req->send(200, "text/plain", activeClientName);
     });
 
     // --- SYSTEM & PUCK STATUS ---
@@ -193,9 +131,6 @@ void WebHandler::begin() {
     });
 
     server.on("/api/status", HTTP_GET, [](AsyncWebServerRequest *req){
-        // IP-LOCK CHECK (Blockiert Polling-Versuche von fremden Geräten)
-        if (!isClientAllowed(req)) { req->send(403); return; }
-
         String json = "[";
         PuckInfo* p = PuckNetwork::getPucks();
         bool first = true;
@@ -227,16 +162,12 @@ void WebHandler::begin() {
 
     // --- GAME ENGINE ROUTING ---
     server.on("/api/game/status", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
-
         Game* g = GameManager::getCurrentGame();
         if (g) req->send(200, "application/json", g->getStatusJSON());
         else req->send(200, "application/json", "{}");
     });
 
     server.on("/api/game/load", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
-
         if (req->hasParam("id")) {
             GameManager::startGame(req->getParam("id")->value().toInt());
             req->send(200, "text/plain", "Loaded");
@@ -244,8 +175,6 @@ void WebHandler::begin() {
     });
 
     server.on("/api/game/action", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
-
         Game* g = GameManager::getCurrentGame();
         if (g) {
             String cmd = req->hasParam("cmd") ? req->getParam("cmd")->value() : "";
@@ -261,8 +190,6 @@ void WebHandler::begin() {
     });
 
     server.on("/api/stats/games", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
-
         String json = "{";
         for(int i=1; i<=27; i++) {
             json += "\"" + String(i) + "\":" + String(StatsManager::getGameStarts(i));
@@ -272,9 +199,73 @@ void WebHandler::begin() {
         req->send(200, "application/json", json);
     });
 
-    server.on("/api/effects", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
+    // =========================================================================
+    // ERWEITERTE SPIELER-STATISTIKEN (CSV-LOGGING)
+    // =========================================================================
+    // Jede Zeile in der /s_<ID>.csv hat exakt dieses Format:
+    // Timestamp;GameID;Score;Extra
+    // 
+    // AUFBAU DER WERTE JE NACH GAME-ID:
+    // GameID  1 (Shuttle Run) : Score = Zeit in ms         | Extra = Gelaufene Runden
+    // GameID  4 (Simon Says)  : Score = Erreichtes Level   | Extra = 0
+    // GameID  6 (Simon Runs)  : Score = Zeit in ms         | Extra = Erreichtes Level
+    // GameID  8 (Bomb Defusal): Score = Zeit in ms         | Extra = Anzahl Fehler
+    // GameID  9 (Red/Green)   : Score = Reaktionszeit (ms) | Extra = Anzahl Fehlstarts
+    // GameID 11 (Zombie)      : Score = Überlebenszeit (ms)| Extra = 0
+    // GameID 13 (React 2P)    : Score = Reaktionszeit (ms) | Extra = 1 (Win) oder 0 (Loss)
+    // GameID 14 (T-Test)      : Score = Zeit in ms         | Extra = 0
+    // GameID 15 (Target)      : Score = Getroffene Ziele   | Extra = Zeit in ms
+    // GameID 21 (Batak)       : Score = Getroffene Pucks   | Extra = 0
+    // GameID 24 (Whac-A-Mole) : Score = Getroffene Pucks   | Extra = Anzahl Fehler
+    // =========================================================================
 
+    server.on("/api/stats/player_save", HTTP_POST, [](AsyncWebServerRequest *req){
+        if (req->hasParam("pid", true) && req->hasParam("game", true) && req->hasParam("score", true) && req->hasParam("ts", true)) {
+            String pid = req->getParam("pid", true)->value();
+            if (pid == "0" || pid == "") { 
+                req->send(200, "text/plain", "Gastspieler, wird nicht gespeichert."); 
+                return; 
+            }
+            
+            String ts = req->getParam("ts", true)->value();
+            String game = req->getParam("game", true)->value();
+            String score = req->getParam("score", true)->value();
+            String extra = req->hasParam("extra", true) ? req->getParam("extra", true)->value() : "0";
+
+            String line = ts + ";" + game + ";" + score + ";" + extra + "\n";
+            String filename = "/s_" + pid + ".csv";
+            
+            File f = LittleFS.open(filename, "a"); // 'a' steht für Append (Anhängen) -> Schont den RAM!
+            if (f) {
+                f.print(line);
+                f.close();
+                req->send(200, "text/plain", "OK");
+            } else {
+                req->send(500, "text/plain", "Dateisystem Fehler");
+            }
+        } else {
+            req->send(400, "text/plain", "Fehlende Parameter");
+        }
+    });
+
+    server.on("/api/stats/player_del", HTTP_GET, [](AsyncWebServerRequest *req){
+        if (req->hasParam("pid")) {
+            String pid = req->getParam("pid")->value();
+            String filename = "/s_" + pid + ".csv";
+            if (LittleFS.exists(filename)) {
+                LittleFS.remove(filename);
+            }
+            req->send(200, "text/plain", "OK");
+        } else {
+            req->send(400);
+        }
+    });
+
+
+    // ---------------------------------------------------------
+    // API: Aktuelle Effekte der Pucks auslesen für *_names.html
+    // ---------------------------------------------------------
+    server.on("/api/effects", HTTP_GET, [](AsyncWebServerRequest *req){
         String json = "[";
         PuckInfo* p = PuckNetwork::getPucks();
         bool first = true;
@@ -300,20 +291,17 @@ void WebHandler::begin() {
 
     // --- NETZWERK & EINSTELLUNGEN ---
     server.on("/api/rssi_mode", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
         int val = req->hasParam("val") ? req->getParam("val")->value().toInt() : 0;
         PuckNetwork::setRssiMode(val == 1);
         req->send(200, "text/plain", val ? "RSSI ON" : "RSSI OFF");
     });
     
     server.on("/api/puck_reset", HTTP_GET, [](AsyncWebServerRequest *request){
-        if (!isClientAllowed(request)) { request->send(403); return; }
         PuckNetwork::clearList();
         request->send(200, "text/plain", "OK");
     });
 
     server.on("/api/wifi_config", HTTP_POST, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
         if(req->hasParam("ssid", true)) {
             String s = req->getParam("ssid", true)->value();
             String p = req->getParam("pw", true)->value();
@@ -324,28 +312,24 @@ void WebHandler::begin() {
     });
 
     server.on("/api/wifi_info", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
         String json = "{\"ssid\":\"" + PuckNetwork::getSSID() + "\", \"secured\":" + (PuckNetwork::getPassword().length() > 0 ? "true" : "false") + "}";
         req->send(200, "application/json", json);
     });
 
     // --- SEQUENZIELLES OTA UPDATE ---
     server.on("/api/trigger_ota", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
         Serial.println("WEB: Trigger Sequential OTA requested.");
         PuckNetwork::triggerUpdateSequential(); 
         req->send(200, "text/plain", "OK");
     });
 
     server.on("/api/ota_status", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
         req->send(200, "application/json", PuckNetwork::getOtaStatusJSON());
     });
 
     
-    // --- MP3 AUDIO MANAGEMENT ---
+    // MP3 AUDIO MANAGEMENT (Reise nach Jerusalem)
     server.on("/api/music_info", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
         String fname = "";
         File root = LittleFS.open("/");
         File file = root.openNextFile();
@@ -360,13 +344,14 @@ void WebHandler::begin() {
     server.on("/api/upload_mp3", HTTP_POST, [](AsyncWebServerRequest *req){
         req->send(200, "text/plain", "OK");
     }, [](AsyncWebServerRequest *req, String filename, size_t index, uint8_t *data, size_t len, bool final){
-        if (!isClientAllowed(req)) return; // Upload abbrechen, falls unberechtigt
         if (!index) {
             File root = LittleFS.open("/");
             File file = root.openNextFile();
             while(file) {
                 String fname = file.name();
-                if(fname.endsWith(".mp3")) LittleFS.remove("/" + fname);
+                if(fname.endsWith(".mp3")) {
+                    LittleFS.remove("/" + fname);
+                }
                 file = root.openNextFile();
             }
             if(!filename.startsWith("/")) filename = "/" + filename;
@@ -379,14 +364,17 @@ void WebHandler::begin() {
 
     // --- JSON DATEIVERWALTUNG (SPIELER & TRAINING) ---
     server.on("/api/players", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
-        if (LittleFS.exists("/players.json")) req->send(LittleFS, "/players.json", "application/json");
-        else req->send(200, "application/json", "{\"groups\":[]}");
+        if (LittleFS.exists("/players.json")) {
+            req->send(LittleFS, "/players.json", "application/json");
+        } else {
+            req->send(200, "application/json", "{\"groups\":[]}");
+        }
     });
 
     {
         static File _playersFile;
         static bool _playersSaveOk = false;
+
         server.on("/api/players", HTTP_POST,
             [](AsyncWebServerRequest *req){
                 if (_playersSaveOk) req->send(200, "text/plain", "OK");
@@ -395,7 +383,6 @@ void WebHandler::begin() {
             },
             NULL, 
             [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t index, size_t total){
-                if (!isClientAllowed(req)) return;
                 if (total > 20480) return; // Limit 20KB
                 if (index == 0) {
                     _playersFile = LittleFS.open("/players.json", "w");
@@ -412,15 +399,20 @@ void WebHandler::begin() {
         );
     }
 
+    // GET: Trainings laden
     server.on("/api/trainings", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
-        if (LittleFS.exists("/trainings.json")) req->send(LittleFS, "/trainings.json", "application/json");
-        else req->send(200, "application/json", "{\"trainings\":[]}");
+        if (LittleFS.exists("/trainings.json")) {
+            req->send(LittleFS, "/trainings.json", "application/json");
+        } else {
+            req->send(200, "application/json", "{\"trainings\":[]}");
+        }
     });
 
+    // POST: Trainings speichern
     {
         static File _trainingsFile;
         static bool _trainingsSaveOk = false;
+
         server.on("/api/trainings", HTTP_POST,
             [](AsyncWebServerRequest *req){
                 if (_trainingsSaveOk) req->send(200, "text/plain", "OK");
@@ -429,8 +421,10 @@ void WebHandler::begin() {
             },
             NULL,
             [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t index, size_t total){
-                if (!isClientAllowed(req)) return;
-                if (total > 30720) return; // Limit 30KB
+                if (total > 30720) { // Limit 30KB
+                    Serial.println("TRAININGS: JSON too large, rejected!");
+                    return;
+                }
                 if (index == 0) {
                     _trainingsFile = LittleFS.open("/trainings.json", "w");
                     _trainingsSaveOk = false;
@@ -440,6 +434,7 @@ void WebHandler::begin() {
                     if (_trainingsFile) {
                         _trainingsFile.close();
                         _trainingsSaveOk = true;
+                        Serial.println("TRAININGS: Saved OK.");
                     }
                 }
             }
@@ -448,7 +443,6 @@ void WebHandler::begin() {
 
     // --- SYSTEM DIAGNOSE ---
     server.on("/api/sysinfo", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
         String json = "{";
         json += "\"uptime\":" + String(millis()) + ",";
         json += "\"chip\":\"" + String(ESP.getChipModel()) + "\",";
@@ -473,8 +467,25 @@ void WebHandler::begin() {
         req->send(200, "application/json", json);
     });
 
+    // NEU: DATEI EXPLORER ROUTE
+    server.on("/api/fs_list", HTTP_GET, [](AsyncWebServerRequest *req){
+        String json = "[";
+        File root = LittleFS.open("/");
+        if (root && root.isDirectory()) {
+            File file = root.openNextFile();
+            bool first = true;
+            while(file) {
+                if(!first) json += ",";
+                json += "{\"name\":\"" + String(file.name()) + "\",\"size\":" + String(file.size()) + "}";
+                first = false;
+                file = root.openNextFile();
+            }
+        }
+        json += "]";
+        req->send(200, "application/json", json);
+    });
+
     server.on("/api/netstats", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
         NetworkStats s = PuckNetwork::getStats();
         String json = "{";
         json += "\"totalPacketsRx\":" + String(s.totalPacketsRx) + ",";
@@ -488,20 +499,18 @@ void WebHandler::begin() {
     });
 
     server.on("/api/netstats/reset", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
         PuckNetwork::resetStats();
         req->send(200, "text/plain", "OK");
     });
 
     server.on("/api/heap", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
-        String json = "{\"free\":" + String(ESP.getFreeHeap()) + ",\"min\":" + String(ESP.getMinFreeHeap()) + "}";
+        String json = "{\"free\":" + String(ESP.getFreeHeap()) + 
+                      ",\"min\":" + String(ESP.getMinFreeHeap()) + "}";
         req->send(200, "application/json", json);
     });
 
     // --- WIFI SCANNER ---
     server.on("/api/scanner/start", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
         if (WifiScanner::isScanning()) {
             req->send(409, "application/json", "{\"error\":\"scan in progress\"}");
             return;
@@ -513,7 +522,6 @@ void WebHandler::begin() {
     });
 
     server.on("/api/scanner/status", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
         if (WifiScanner::isScanning()) {
             req->send(200, "application/json", "{\"status\":\"scanning\"}");
         } else if (WifiScanner::hasResult()) {
@@ -530,72 +538,90 @@ void WebHandler::begin() {
     });
 
     server.on("/api/scanner/restore", HTTP_GET, [](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) { req->send(403); return; }
         WifiScanner::restoreChannel(WIFI_CHANNEL);
         req->send(200, "text/plain", "OK");
     });
 
     // --- UPLOAD HANDLER ---
     server.on("/upload_puck", HTTP_POST, [](AsyncWebServerRequest *req){
-        // HTML Output wie zuvor...
         String msg = "<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><link rel='stylesheet' href='style.css'></head>";
         msg += "<body style='background:#121212; color:#e0e0e0; font-family:sans-serif; text-align:center; padding:20px;'>";
         msg += "<h3>Upload Status</h3>";
         msg += "<div class='card' style='text-align:left; max-width:400px; margin:0 auto;'>";
         msg += "Bytes empfangen: <b>" + String(debugUploadSize) + "</b><br>";
+        
         if(debugUploadSize > 100000) msg += "<b style='color:#00ff00'>✔ Größe plausibel. Update bereit.</b>";
         else msg += "<b style='color:#ff4444'>❌ Fehler: Datei zu klein oder leer!</b>";
+        
         msg += "</div><br><br>";
         msg += "<a href='/firmware_update.html' class='btn-primary' style='padding:12px 20px; text-decoration:none; display:inline-block; border-radius:6px;'>Zurück zum Update Center</a>";
         msg += "</body></html>";
+        
         req->send(200, "text/html", msg);
         
     }, [](AsyncWebServerRequest *req, String filename, size_t index, uint8_t *data, size_t len, bool final){
-        if (!isClientAllowed(req)) return;
         if(filename == "") return;
+
         if(!index) {
             Serial.printf("UPLOAD START: %s\n", filename.c_str());
             debugUploadSize = 0; 
             req->_tempFile = LittleFS.open("/puck_update.bin", "w");
             if(!req->_tempFile) Serial.println("CRITICAL ERROR: Konnte Datei nicht im Flash erstellen!");
         }
+        
         if(req->_tempFile) {
             size_t written = req->_tempFile.write(data, len);
             debugUploadSize += written; 
+            if (written != len) Serial.printf("WRITE ERROR: Wollte %u schreiben, konnte nur %u schreiben.\n", len, written);
         }
-        if(final && req->_tempFile) {
-            req->_tempFile.close(); 
-            Serial.printf("UPLOAD COMPLETE. Empfangene Bytes: %u\n", debugUploadSize);
-        }
-    });
-
-    // ... (Weitere Upload Handler wie /upload_file und /update_system bleiben analog abgesichert)
-    // Um Code-Länge zu sparen hier abgekürzt, sie benötigen ebenfalls die if (!isClientAllowed(req)) return; Zeile in der Upload-Callback-Funktion.
-
-    // =========================================================================================
-    // WICHTIG: STATISCHE DATEIEN FILTERN (.html, .css, .js)
-    // Wenn die IP nicht stimmt, liefert serveStatic die HTML Datei nicht aus, sondern ignoriert sie!
-    // =========================================================================================
-    server.serveStatic("/", LittleFS, "/").setFilter([](AsyncWebServerRequest *req){
-        return isClientAllowed(req);
-    });
-
-    // =========================================================================================
-    // CATCH-ALL FÜR ABGEWIESENE GERÄTE
-    // Wenn serveStatic ignoriert hat (weil falsche IP), landet die Anfrage hier im "onNotFound".
-    // Hier leiten wir den blockierten Nutzer gezielt auf die only1device.html um.
-    // =========================================================================================
-    server.onNotFound([](AsyncWebServerRequest *req){
-        if (!isClientAllowed(req)) {
-            if (LittleFS.exists("/only1device.html")) {
-                req->send(LittleFS, "/only1device.html", "text/html");
-            } else {
-                req->send(403, "text/plain", "System besetzt durch: " + activeClientName);
+        
+        if(final) {
+            if(req->_tempFile) {
+                req->_tempFile.close(); 
+                Serial.printf("UPLOAD COMPLETE. Empfangene Bytes: %u\n", debugUploadSize);
             }
-        } else {
-            req->send(404, "text/plain", "404: File not found");
         }
     });
+
+    server.on("/upload_file", HTTP_POST, [](AsyncWebServerRequest *req){
+        String msg = "<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><link rel='stylesheet' href='style.css'></head>";
+        msg += "<body style='background:#121212; color:#e0e0e0; font-family:sans-serif; text-align:center; padding:20px;'>";
+        msg += "<h3>File Upload OK ✅</h3>";
+        msg += "<p>File was stored in flash storage!</p>";
+        msg += "<br><a href='/firmware_update.html' class='btn-back' style='padding:12px 20px; text-decoration:none; display:inline-block; border-radius:6px;'>Zurück</a>";
+        msg += "</body></html>";
+        req->send(200, "text/html", msg);
+        
+    }, [](AsyncWebServerRequest *req, String filename, size_t index, uint8_t *data, size_t len, bool final){
+        if(!index) {
+            if(!filename.startsWith("/")) filename = "/" + filename;
+            req->_tempFile = LittleFS.open(filename, "w");
+        }
+        if(req->_tempFile) req->_tempFile.write(data, len);
+        if(final && req->_tempFile) req->_tempFile.close();
+    });
+
+    server.on("/update_system", HTTP_POST, [](AsyncWebServerRequest *req){
+        bool success = !Update.hasError();
+        String msg = "<!DOCTYPE html><html><head><meta charset='UTF-8'><link rel='stylesheet' href='style.css'></head><body style='background:#121212; color:#e0e0e0; text-align:center; padding:50px;'>";
+        if (success) {
+            msg += "<h2 style='color:#0f0'>Flash sucessfull!</h2><h3>System restarts...</h3><p>Please wait 10 seconds.</p>";
+            msg += "<script>setTimeout(function(){window.location.href='/firmware_update.html';}, 10000);</script>";
+        } else {
+            msg += "<h2 style='color:#f00'>Update not sucessfull!</h2><a href='/firmware_update.html' class='btn-back'>Back</a>";
+        }
+        msg += "</body></html>";
+        req->send(200, "text/html", msg);
+        
+        if (success) { delay(1000); ESP.restart(); }
+    }, [](AsyncWebServerRequest *req, String filename, size_t index, uint8_t *data, size_t len, bool final){
+        if (!index) Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH);
+        if (!Update.hasError()) Update.write(data, len);
+        if (final) Update.end(true);
+    });
+
+    // Static files last — all /api/ routes are matched first
+    server.serveStatic("/", LittleFS, "/");
 
     server.begin();
 

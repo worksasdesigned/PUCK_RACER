@@ -37,6 +37,9 @@ struct SimonGroup {
     int playbackStep;              // Welchen Schritt zeigt der Computer gerade?
     bool lightOn;                  // Für das Blinken beim Zeigen
     
+    // Debounce
+    unsigned long lastInputTime;
+    
     // Stats
     int stars;
     unsigned long playTimeStart;

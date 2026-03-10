@@ -15,6 +15,7 @@ void Game_SimonSays::setup() {
         groups[i].stars = 0; 
         groups[i].state = SIM_SETUP;
         groups[i].totalPlayTime = 0;
+        groups[i].lastInputTime = 0;
         
         if (groups[i].active) {
             groups[i].numPucks = pucksPerGroup[i];
@@ -247,6 +248,10 @@ void Game_SimonSays::handleEvent(int puckIndex, EventPacket event) {
         }
 
         if (grp->state == SIM_INPUT) {
+            
+            // Debounce: 200ms Mindestabstand zwischen Eingaben
+            if (millis() - grp->lastInputTime < 200) return;
+            grp->lastInputTime = millis();
             
             // Feedback
             setPuck(puckIndex, EFF_STATIC, grp->puckColors[localIdx], 0, 255);

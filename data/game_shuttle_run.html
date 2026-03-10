@@ -43,11 +43,11 @@
 <body>
     <header>
         <div class="logo" data-i18n="g_shuttle">Shuttle Run</div>
-     <div class="status-bar">
-    <div class="status-dot dot-green" id="cnt-green">0</div>
-    <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
-    <div class="status-dot dot-red" id="cnt-red">0</div>
-</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
     </header>
 
     <main>
@@ -76,19 +76,53 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
-<script>startStatusLoop();</script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
         const COLORS = ['#0000FF', '#00FF00', '#FF0000', '#FFFF00', '#FF00FF'];
         const MEDALS = ['🥇','🥈','🥉'];
         
+        let savedStats = {}; 
+        let personalBests = {};
+        let sessionRecords = {}; // NEU: Merkt sich gebrochene Rekorde pro Runde
+
+        // Bisherige Rekorde aus der Datei laden
+        async function loadPersonalBests() {
+            let numP = parseInt(sessionStorage.getItem('sr_players') || 1);
+            for (let i = 0; i < numP; i++) {
+                let pid = sessionStorage.getItem(`p_id_${i}`);
+                if (pid && pid !== "0") {
+                    try {
+                        let r = await fetch('/s_' + pid + '.csv');
+                        if (r.ok) {
+                            let text = await r.text();
+                            let lines = text.split(/\r?\n/);
+                            let bestAvg = 99999999;
+                            lines.forEach(line => {
+                                let parts = line.split(';');
+                                if (parts.length >= 4 && parts[1] === "1") { 
+                                    let score = parseInt(parts[2]); 
+                                    let extra = parseInt(parts[3]); 
+                                    if (extra > 0) {
+                                        let avg = score / extra;
+                                        if (avg < bestAvg) bestAvg = avg;
+                                    }
+                                }
+                            });
+                            if (bestAvg !== 99999999) personalBests[i] = bestAvg;
+                        }
+                    } catch(e) {}
+                }
+            }
+        }
+        loadPersonalBests();
+
         setInterval(updateStatus, 400); 
 
         function updateStatus() {
             fetch('/api/game/status').then(r=>r.json()).then(data => {
                  
-                
                 document.getElementById('timer').innerText = formatTime(data.time || 0);
                 
                 let elText = document.getElementById('statusText');
@@ -98,6 +132,12 @@
                 let txtReset = getTranslation('btn_reset');
                 let txtStart = getTranslation('btn_start');
                 let txtRun = getTranslation('btn_running');
+
+                // Sobald das Spiel resettet/vorbereitet wird (State <= 2) Sperren aufheben!
+                if(data.state <= 2) {
+                    savedStats = {};
+                    sessionRecords = {}; 
+                }
 
                 if(data.state == 1) { txt = getTranslation('sr_st_hold'); elBtn.innerText = txtStart; }
                 else if(data.state == 2) { txt = getTranslation('sr_st_ready'); elBtn.innerText = txtRun; }
@@ -111,8 +151,26 @@
 
                 renderTable(data);
             }).catch(e => {
-                document.getElementById('conn-stat').style.opacity = 0.2;
+                let statEl = document.getElementById('conn-stat');
+                if (statEl) statEl.style.opacity = 0.2;
             });
+        }
+
+        function savePlayerStat(playerIndex, score, extra) {
+            let pid = sessionStorage.getItem(`p_id_${playerIndex}`);
+            if (!pid || pid === "0") return; 
+
+            let formData = new URLSearchParams();
+            formData.append('pid', pid);
+            formData.append('game', 1); 
+            formData.append('score', score); 
+            formData.append('extra', extra); 
+            formData.append('ts', Date.now()); 
+
+            fetch('/api/stats/player_save', {
+                method: 'POST',
+                body: formData
+            }).catch(e => console.log("Statistik konnte nicht gespeichert werden"));
         }
 
         function renderTable(data) {
@@ -126,11 +184,9 @@
             players.forEach((p, i) => {
                 let name = sessionStorage.getItem(`p_name_${i}`) || `Player ${i+1}`;
                 let color = COLORS[i % COLORS.length];
-                
                 let icon = "";
-                if(data.state == 1 || data.state == 2) {
-                    if(p.holding) icon = "🖐️"; 
-                }
+                
+                if(data.state == 1 || data.state == 2) { if(p.holding) icon = "🖐️"; }
                 
                 let roundsTxt = `R: ${p.round} / ${p.max}`;
                 let timeTxt = "";
@@ -139,17 +195,38 @@
 
                 if(data.state == 3 && i == data.fs) rowClasses += " row-false-start";
 
-                
                 if(p.finished) {
                     icon = "🏁";
                     roundsTxt = getTranslation('lbl_done');
                     let t = p.time;
                     timeTxt = (t/1000).toFixed(2) + "s";
                     
+                    let currentAvg = p.round > 0 ? (t / p.round) : 0;
+                    
                     if(winnerTime > 0) {
                         let diff = t - winnerTime;
                         if(diff > 0) timeTxt += `<span class='p-diff'>+${(diff/1000).toFixed(2)}</span>`;
                         else medal = MEDALS[0]; 
+                    }
+
+                    // Die Speicherung findet genau einmal statt, wenn der Spieler ins Ziel kommt
+                    if (!savedStats[i]) {
+                        // Prüfen ob ein neuer Rekord aufgestellt wurde
+                        if (personalBests[i] && currentAvg < personalBests[i]) {
+                            sessionRecords[i] = true; // Für diese Session markieren
+                        }
+                        
+                        savedStats[i] = true;
+                        savePlayerStat(i, p.time, p.round);
+                        
+                        if (!personalBests[i] || currentAvg < personalBests[i]) {
+                            personalBests[i] = currentAvg; // PB direkt aktualisieren
+                        }
+                    }
+
+                    // Das Icon basierend auf dem Session-Speicher anhängen
+                    if (sessionRecords[i]) {
+                        timeTxt += " <span title='Neuer Rekord (Ø Zeit/Runde)!'>📈</span>";
                     }
                 }
 
@@ -183,9 +260,7 @@
             }
         }
 
-        function goHome() {
-            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
-        }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/'); }
 
         function formatTime(ms) {
             let totalSec = Math.floor(ms / 1000);
