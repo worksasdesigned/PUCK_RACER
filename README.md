@@ -389,9 +389,14 @@ Create predefined trainings with a selection of games, sequence and already pres
 
 
 ## Technical Updates:
-- "fly in" - If a pucks loses his connection or needs to be restartet, his last effect and game assignment is recovered.
-- Impressum added
-- harmonization of most setup pages
+
+**V2.88.2**  
+    - iOS meta Tags added  
+    - App Icon added  
+    - Check that only 1 device is connected via WiFi  
+
+--- 
+
 
 ## 🤝 Contributing
 Found a bug? Have a game idea? Feel free to open an issue or submit a pull request. Let's make school sports digital (and affordable)!  
