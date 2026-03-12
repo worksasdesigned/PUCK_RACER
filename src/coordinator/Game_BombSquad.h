@@ -24,6 +24,7 @@ struct PlayerStats {
     long lastDelta; 
     long totalDelta;
     int roundsPlayed;
+    int targetTime; // NEU: Speichert die individuelle Zielzeit pro Puck
 };
 
 class Game_BombSquad : public Game {
@@ -39,14 +40,15 @@ public:
 private:
     // Config
     int activePucks = 1;
-    int maxSeconds = 10;    // <--- WAR FEHLEND
+    int maxSeconds = 10;
     int difficulty = 1; 
     int maxRounds = 5;
     bool groupMode = false;
 
     // Runtime
-    int currentTargetTime = 5;    // <--- WAR FEHLEND
-    unsigned long finishTime = 0; // <--- WAR FEHLEND
+    int maxTargetTimeThisRound = 5; // Die höchste Zielzeit aller Pucks in der aktuellen Runde
+    int globalTargetTime = 0;       // 0 = Individuell, >0 = Sync (gleiche Zeit für alle)
+    unsigned long finishTime = 0;
     
     BombState state = BOMB_SETUP;
     unsigned long stateStartTime = 0; 

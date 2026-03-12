@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>RUN - Countdown</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=4">
     <style>
         .timer-box { text-align: center; margin-bottom: 20px; }
         .big-time { font-size: 5rem; font-weight: bold; color: var(--text-main); font-family: 'Courier New', monospace; line-height: 1; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
@@ -19,7 +19,7 @@
         .score-row { display: flex; align-items: center; justify-content: space-between; background: var(--card-hover); margin-bottom: 8px; padding: 10px 15px; border-radius: 8px; border-left: 10px solid var(--border-color); transition: transform 0.2s, opacity 0.2s;}
         .score-val { font-size: 1.5rem; font-weight: bold; color: var(--text-main); text-align:right; }
         .score-sub { font-size: 0.8rem; color: var(--text-muted); display:block; text-transform:uppercase; }
-        .score-name { font-size: 1.2rem; color: var(--text-main); }
+        .score-name { font-size: 1.2rem; color: var(--text-main); font-weight:bold; }
         .rank { font-size: 1.5rem; margin-right: 10px; width: 30px; text-align:center;}
         .diff-time { color: var(--danger); font-size: 0.9rem; }
         
@@ -44,7 +44,7 @@
         </div>
 
         <div class="controls">
-            <button onclick="doAction('reset')" class="btn-warn btn-ctrl" data-i18n="btn_back">BACK</button>
+            <button onclick="goBack()" class="btn-warn btn-ctrl" data-i18n="btn_back">BACK</button>
             <button onclick="doAction('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
             <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
         </div>
@@ -60,17 +60,65 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
-<script>startStatusLoop();</script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
-        const COLORS = ['#0000FF', '#00FF00', '#FF0000', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#40E0D0', '#FFC0CB', '#FFFFFF', '#00FF00'];
+        const COLORS = ['#0000FF', '#00FF00', '#FF0000', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#40E0D0', '#FFC0CB', '#FFFFFF', '#32CD32'];
         const MEDALS = ['🥇','🥈','🥉'];
         
         let targetTime = parseInt(sessionStorage.getItem('cd_time') || 0);
+        let startCount = parseInt(sessionStorage.getItem('cd_count') || 10);
+        
+        // --- STATS LOGIK ---
+        let savedStats = false;
+        let personalBests = {};
+        let sessionRecords = {};
+
+        async function loadPersonalBests() {
+            let numP = parseInt(sessionStorage.getItem('cd_players') || 1);
+            for (let i = 0; i < numP; i++) {
+                let pid = sessionStorage.getItem(`p_id_${i}`);
+                if (pid && pid !== "0") {
+                    try {
+                        let r = await fetch('/s_' + pid + '.csv');
+                        if (r.ok) {
+                            let text = await r.text();
+                            let lines = text.split(/\r?\n/);
+                            let bestTime = 99999999;
+                            lines.forEach(line => {
+                                let parts = line.split(';');
+                                if (parts.length >= 4 && parts[1] === "3") { // Game 3 = Countdown
+                                    let score = parseInt(parts[2]); 
+                                    let extra = parseInt(parts[3]); 
+                                    if (score > 0 && score < bestTime && extra === startCount) bestTime = score;
+                                }
+                            });
+                            if (bestTime < 99999999) personalBests[i] = bestTime;
+                        }
+                    } catch(e) {}
+                }
+            }
+        }
+        loadPersonalBests();
+
+        function savePlayerStat(idx, timeMs) {
+            let pid = sessionStorage.getItem(`p_id_${idx}`);
+            if (!pid || pid === "0") return;
+            let fd = new URLSearchParams();
+            fd.append('pid', pid);
+            fd.append('game', 3); 
+            fd.append('score', timeMs); 
+            fd.append('extra', startCount); 
+            fd.append('ts', Date.now());
+            fetch('/api/stats/player_save', { method: 'POST', body: fd }).catch(e => console.log(e));
+        }
+        // --- ENDE STATS LOGIK ---
+
         document.addEventListener('DOMContentLoaded', () => {
             if(targetTime > 0) {
-                document.getElementById('targetInfo').innerText = `Limit: ${formatTime(targetTime*1000)}`;
+                let txt = (typeof getTranslation === 'function') ? getTranslation('cnt_run_limit') : "Limit:";
+                document.getElementById('targetInfo').innerText = `${txt} ${formatTime(targetTime*1000)}`;
             }
         });
 
@@ -82,15 +130,42 @@
                 document.getElementById('timer').innerText = formatTime(data.time || 0);
                 
                 let btnStart = document.getElementById('btnStart');
-                if (data.state == 2) btnStart.innerText = "RUNNING"; 
-                else if (data.state == 3) btnStart.innerText = getTranslation('btn_reset'); 
-                else btnStart.innerText = getTranslation('btn_start');
+                if (data.state == 2) {
+                    btnStart.innerText = "RUNNING"; 
+                    btnStart.style.background = "var(--card-hover)";
+                    btnStart.removeAttribute('onclick');
+                    savedStats = false;
+                    sessionRecords = {};
+                } 
+                else if (data.state == 3) {
+                    btnStart.innerText = getTranslation('btn_reset') || "RESET"; 
+                    btnStart.style.background = "var(--success)";
+                    btnStart.setAttribute('onclick', "doAction('reset')");
+                } 
+                else {
+                    btnStart.innerText = getTranslation('btn_start') || "START";
+                    btnStart.style.background = "var(--primary)";
+                    btnStart.setAttribute('onclick', "doAction('start')");
+                    savedStats = false;
+                }
 
                 if(data.scores && Array.isArray(data.scores)) {
+                    if (data.state === 3 && !savedStats) {
+                        data.scores.forEach(s => {
+                            if (s.sc === 0 && s.ft > 0) { 
+                                if (!personalBests[s.id] || s.ft < personalBests[s.id]) {
+                                    sessionRecords[s.id] = true;
+                                    personalBests[s.id] = s.ft;
+                                }
+                                savePlayerStat(s.id, s.ft);
+                            }
+                        });
+                        savedStats = true;
+                    }
                     renderScores(data.scores, data.winnerTime);
                 }
             }).catch(e => {
-                document.getElementById('conn-stat').style.opacity = 0.2;
+                document.getElementById('cnt-green').style.opacity = 0.2;
             });
         }
 
@@ -117,6 +192,8 @@
                 let valHtml = "";
                 let subHtml = "Remaining";
                 let rowOpacity = "1";
+
+                let recordIcon = sessionRecords[s.id] ? " <span title='Neuer Rekord!'>📈</span>" : "";
 
                 if (s.sc === 0) {
                     if (rankCounter === 1) rank = MEDALS[0];
@@ -148,7 +225,7 @@
                     <div id="${rowId}" class="score-row" style="border-left-color: ${color}; order: ${idx}; opacity: ${rowOpacity};">
                         <div style="display:flex; align-items:center;">
                             <span class="rank" id="rank-${s.id}">${rank}</span>
-                            <span class="score-name">${name}</span>
+                            <span class="score-name">${name}${recordIcon}</span>
                         </div>
                         <div>
                             <span class="score-sub" id="sub-${s.id}">${subHtml}</span>
@@ -158,6 +235,10 @@
                 } else {
                     rowEl.style.order = idx;
                     rowEl.style.opacity = rowOpacity;
+                    
+                    let nameEl = rowEl.querySelector('.score-name');
+                    if (nameEl.innerHTML !== `${name}${recordIcon}`) nameEl.innerHTML = `${name}${recordIcon}`;
+                    
                     document.getElementById(`rank-${s.id}`).innerText = rank;
                     document.getElementById(`sub-${s.id}`).innerText = subHtml;
                     document.getElementById(`val-${s.id}`).innerHTML = valHtml;
@@ -165,14 +246,15 @@
             });
         }
 
-        function doAction(act) {
-            if(act === 'reset') {
-                fetch(`/api/game/action?cmd=reset`);
-                location.href = 'game_countdown_names.html'; 
-            } else {
-                fetch(`/api/game/action?cmd=${act}`);
-            }
+        // --- HIER WURDE DER KNOTEN GELÖST ---
+        function doAction(cmd) {
+            fetch(`/api/game/action?cmd=${cmd}`);
         }
+
+        function goBack() {
+            fetch('/api/game/action?cmd=reset').then(() => location.href = 'game_countdown_names.html');
+        }
+        // ------------------------------------
 
         function goHome() {
             fetch('/api/game/action?cmd=exit')

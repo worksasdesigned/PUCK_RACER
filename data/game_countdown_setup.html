@@ -6,85 +6,78 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
-    <title>Setup - Simple Counter</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <title>Setup - Countdown</title>
+    <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
-    <header><div class="logo" data-i18n="g_counter">Simple Counter</div></header>
+    <header><div class="logo" data-i18n="g_countdown">Countdown</div></header>
     <main>
         <div class="card">
-            <h3 data-i18n="cd_setup_players">👥 Players</h3>
+            <h3 data-i18n="cd_setup_cfg">⚙️ Configuration</h3>
+            
             <div class="slider-header">
-                <span></span>
-                <span id="playerDisplay" class="slider-val">2</span>
+                <span data-i18n="cd_lbl_pucks">Active Pucks:</span>
+                <span id="puckVal" class="slider-val">1</span>
             </div>
-            <input type="range" id="playerSlider" min="1" max="12" value="2" oninput="updatePlayers(this.value)">
-            <p id="playerInfo" class="info-txt" data-i18n="loading">Loading...</p>
-        </div>
+            <input type="range" id="puck" min="1" max="12" value="1" oninput="upd('puck', this.value); checkPucks();">
+            <p id="puckInfo" class="info-txt" data-i18n="loading">Loading...</p>
 
-        <div class="card">
-            <h3 data-i18n="cnt_setup_time">⏱ Time Limit</h3>
-            <div class="slider-header">
-                <span></span>
+            <div class="slider-header" style="margin-top:20px;">
+                <span data-i18n="cd_setup_count">Start Count:</span>
+                <span id="countVal" class="slider-val">10</span>
+            </div>
+            <input type="range" id="count" min="1" max="100" value="10" oninput="upd('count', this.value)">
+
+            <div class="slider-header" style="margin-top:20px;">
+                <span data-i18n="cd_setup_time">Time Limit:</span>
                 <span id="timeDisplay" class="slider-val">∞</span>
             </div>
-            <input type="range" id="timeSlider" min="0" max="60" value="0" oninput="updateTime(this.value)">
-            <p class="info-txt" data-i18n="cnt_setup_time_hint">Slide right for time limit</p>
+            <input type="range" id="time" min="0" max="60" value="0" oninput="updateTime(this.value)">
         </div>
 
         <div class="card">
-            <h3 data-i18n="cnt_setup_opt">⚠️ Options</h3>
-            <div class="toggle-row">
-                <span data-i18n="cnt_setup_warn">Sound Warning at end?</span>
-                <label class="switch">
+            <h3 data-i18n="cd_setup_opt">⚠️ Options</h3>
+            <label class="toggle-row">
+                <span data-i18n="cd_setup_stopwin">Stop after first winner</span>
+                <div class="switch">
+                    <input type="checkbox" id="chkStopWin">
+                    <span class="slider-bg"></span>
+                </div>
+            </label>
+            <label class="toggle-row">
+                <span data-i18n="cd_setup_warn">Sound Warning at end</span>
+                <div class="switch">
                     <input type="checkbox" id="chkWarn">
                     <span class="slider-bg"></span>
-                </label>
-            </div>
+                </div>
+            </label>
         </div>
 
-        <button onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
-        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_back">Back</button>
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
     </main>
 
     <script src="lang.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
-        
-        let seconds = 0;
-        let maxPucks = 0;
 
-        // Pucks auslesen, um Slider dynamisch zu begrenzen
-        fetch('/api/status').then(r => r.json()).then(data => {
+        fetch('/api/game/load?id=3'); 
+
+        let maxPucks = 0;
+        let seconds = 0;
+
+        fetch('/api/status').then(r=>r.json()).then(data => {
             maxPucks = data.filter(p => p.active).length;
-            let slider = document.getElementById('playerSlider');
-            slider.max = Math.max(1, maxPucks);
-            if (parseInt(slider.value) > maxPucks) slider.value = maxPucks;
-            updatePlayers(slider.value);
+            checkPucks();
         });
 
-        function updatePlayers(val) {
-            val = parseInt(val);
-            document.getElementById('playerDisplay').innerText = val;
-            let info = document.getElementById('playerInfo');
-            info.innerText = `${getTranslation('req_pucks')} ${val} | ${getTranslation('conn_pucks')} ${maxPucks}`;
-            if (val > maxPucks) {
-                info.classList.add('warn-txt');
-            } else {
-                info.classList.remove('warn-txt');
-            }
-        }
+        function upd(id, val) { document.getElementById(id+'Val').innerText = val; }
 
         function updateTime(val) {
             val = parseInt(val);
-            if (val === 0) {
-                seconds = 0;
-                document.getElementById('timeDisplay').innerText = "∞";
-            } else if (val <= 18) {
-                seconds = val * 10;
-            } else {
-                seconds = 180 + ((val - 18) * 30);
-            }
+            if (val === 0) { seconds = 0; document.getElementById('timeDisplay').innerText = "∞"; } 
+            else if (val <= 18) { seconds = val * 10; } 
+            else { seconds = 180 + ((val - 18) * 30); }
             
             if (seconds > 0) {
                 let min = Math.floor(seconds / 60);
@@ -93,27 +86,50 @@
             }
         }
 
-        function nextStep() {
-            let p = parseInt(document.getElementById('playerSlider').value);
+        function checkPucks() {
+            let p = parseInt(document.getElementById('puck').value);
+            let info = document.getElementById('puckInfo');
+            let btn = document.getElementById('btnNext');
+            
+            let tReq = (typeof getTranslation === 'function') ? getTranslation('req_pucks') : "Required:";
+            let tConn = (typeof getTranslation === 'function') ? getTranslation('conn_pucks') : "Connected:";
+            info.innerText = `${tReq} ${p} | ${tConn} ${maxPucks}`;
+            
             if (p > maxPucks) {
-                if(!confirm(getTranslation('confirm_not_enough_pucks'))) return;
+                info.classList.add('warn-txt');
+                btn.style.opacity = 0.5;
+            } else {
+                info.classList.remove('warn-txt');
+                btn.style.opacity = 1;
             }
-            // Spieleranzahl speichern
-            sessionStorage.setItem('cnt_players', p);
-            sessionStorage.setItem('cnt_time', seconds);
-            sessionStorage.setItem('cnt_warn', document.getElementById('chkWarn').checked ? 1 : 0);
-            location.href = 'game_counter_names.html';
+        }
+
+        function nextStep() {
+            let p = parseInt(document.getElementById('puck').value);
+            if (p > maxPucks) {
+                if(!confirm("Not enough pucks connected! Continue anyway?")) return;
+            }
+
+            sessionStorage.setItem('cd_players', p);
+            sessionStorage.setItem('cd_count', document.getElementById('count').value);
+            sessionStorage.setItem('cd_time', seconds);
+            sessionStorage.setItem('cd_warn', document.getElementById('chkWarn').checked ? 1 : 0);
+            sessionStorage.setItem('cd_stopwin', document.getElementById('chkStopWin').checked ? 1 : 0);
+            
+            location.href = 'game_countdown_names.html';
         }
 
         function cancelSetup() {
-            fetch('/api/game/action?cmd=exit')
-                .then(() => location.href = '/')
-                .catch(() => location.href = '/');
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
         }
     </script>
+    
     <script>
     window.TRAINING_FIELDS = [
-        { key:'timeSlider', el:'timeSlider' },
+        { key:'puck',       el:'puck' },
+        { key:'count',      el:'count' },
+        { key:'time',       el:'time' },
+        { key:'chkStopWin', el:'chkStopWin', type:'check' },
         { key:'chkWarn',    el:'chkWarn', type:'check' }
     ];
     </script>

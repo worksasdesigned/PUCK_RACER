@@ -9,6 +9,7 @@
     <title>Player Stats</title>
     <link rel="stylesheet" href="style.css">
     <script src="chart.umd.js"></script>
+    <script src="lang.js"></script>
     <style>
         .header-title { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin-bottom: 20px; text-align: center; }
         
@@ -39,7 +40,7 @@
 </head>
 <body>
     <header>
-        <div class="logo">Player Stats</div>
+        <div class="logo" data-i18n="ps_title">Player Stats</div>
     </header>
 
     <main>
@@ -47,46 +48,51 @@
 
         <div id="loadingState" class="empty-state">
             <span class="icon">⏳</span>
-            <p>Lade Statistiken...</p>
+            <p data-i18n="ps_loading">Lade Statistiken...</p>
         </div>
 
         <div id="emptyState" class="empty-state" style="display:none;">
             <span class="icon">🤷‍♂️</span>
-            <p>Noch keine Statistiken für diesen Spieler vorhanden.</p>
+            <p data-i18n="ps_empty">Noch keine Statistiken für diesen Spieler vorhanden.</p>
         </div>
 
         <div id="statsContent" style="display:none;"></div>
 
-        <button onclick="location.href='player_manager.html'" class="btn-back" style="margin-top: 30px;">⬅ Zurück zum Manager</button>
+        <button onclick="location.href='player_manager.html'" class="btn-back" style="margin-top: 30px;" data-i18n="ps_back">⬅ Zurück zum Manager</button>
     </main>
 
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
-        // parseFloat sorgt dafür, dass aus dem Text "12.50" eine echte Zahl für Chart.js wird
+        // Übersetzungs-Hilfsfunktion
+        function t(key, fallback) {
+            return (typeof getTranslation === 'function') ? (getTranslation(key) || fallback) : fallback;
+        }
+
         const GAME_DICT = {
-            1:  { name: "Shuttle Run", lblScore: "Zeit", lblExtra: "Runden", fmtS: "ms", fmtE: "num", chartLabel: "Ø Zeit pro Runde (s)", calcChart: (e) => parseFloat(e.extra > 0 ? (e.score / e.extra / 1000).toFixed(2) : (e.score / 1000).toFixed(2)) },
-            // HIER WURDE SIMON SAYS ANGEPASST (lblExtra und fmtE)
-            4:  { name: "Simon Says", lblScore: "Level", lblExtra: "Sterne", fmtS: "num", fmtE: "num", chartLabel: "Erreichtes Level", calcChart: (e) => e.score },
-            6:  { name: "Simon Runs", lblScore: "Zeit", lblExtra: "Level", fmtS: "ms", fmtE: "num", chartLabel: "Zeit (s)", calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
-            8:  { name: "Bomb Defusal", lblScore: "Zeit", lblExtra: "Fehler", fmtS: "ms", fmtE: "num", chartLabel: "Überlebenszeit (s)", calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
-            9:  { name: "Red/Green", lblScore: "Reaktion", lblExtra: "Fehlstarts", fmtS: "ms", fmtE: "num", chartLabel: "Reaktionszeit (s)", calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
-            11: { name: "Zombie", lblScore: "Überlebt", lblExtra: "", fmtS: "ms", fmtE: "none", chartLabel: "Zeit überlebt (s)", calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
-            13: { name: "React 2P", lblScore: "Reaktion", lblExtra: "Sieg", fmtS: "ms", fmtE: "bool", chartLabel: "Reaktionszeit (s)", calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
-            14: { name: "T-Test", lblScore: "Zeit", lblExtra: "", fmtS: "ms", fmtE: "none", chartLabel: "Zeit (s)", calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
-            15: { name: "Target", lblScore: "Treffer", lblExtra: "Zeit", fmtS: "num", fmtE: "ms", chartLabel: "Treffer", calcChart: (e) => e.score },
-            21: { name: "Batak", lblScore: "Treffer", lblExtra: "", fmtS: "num", fmtE: "none", chartLabel: "Treffer", calcChart: (e) => e.score },
-            24: { name: "Whac-A-Mole", lblScore: "Treffer", lblExtra: "Fehler", fmtS: "num", fmtE: "num", chartLabel: "Treffer", calcChart: (e) => e.score }
+            1:  { name: t('g_1', "Shuttle Run"), lblScore: t('ps_time', "Zeit"), lblExtra: t('ps_rounds', "Runden"), fmtS: "ms", fmtE: "num", chartLabel: t('ps_chart_time_avg', "Ø Zeit pro Runde (s)"), calcChart: (e) => parseFloat(e.extra > 0 ? (e.score / e.extra / 1000).toFixed(2) : (e.score / 1000).toFixed(2)) },
+            3:  { name: t('g_3', "Countdown"), lblScore: t('ps_time_s', "Zeit (s)"), lblExtra: t('ps_clicks', "Klicks"), fmtS: "ms", fmtE: "num", chartLabel: t('ps_chart_time', "Zeit (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(1)) },
+            4:  { name: t('g_4', "Simon Says"), lblScore: t('ps_level', "Level"), lblExtra: t('ps_stars', "Sterne"), fmtS: "num", fmtE: "num", chartLabel: t('ps_chart_level', "Erreichtes Level"), calcChart: (e) => e.score },
+            6:  { name: t('g_6', "Simon Runs"), lblScore: t('ps_time', "Zeit"), lblExtra: t('ps_level', "Level"), fmtS: "ms", fmtE: "num", chartLabel: t('ps_chart_time', "Zeit (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
+            8:  { name: t('g_8', "Bomb Squad"), lblScore: t('ps_dev_avg', "Ø Abweichung"), lblExtra: t('ps_best', "Beste Runde"), fmtS: "ms3", fmtE: "ms3", chartLabel: t('ps_chart_dev', "Ø Abweichung (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(3)) },
+            9:  { name: t('g_9', "Red/Green"), lblScore: t('ps_react', "Reaktion"), lblExtra: t('ps_fails', "Fehlstarts"), fmtS: "ms", fmtE: "num", chartLabel: t('ps_chart_react', "Reaktionszeit (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
+            11: { name: t('g_11', "Zombie"), lblScore: t('ps_survived', "Überlebt"), lblExtra: "", fmtS: "ms", fmtE: "none", chartLabel: t('ps_chart_survived', "Zeit überlebt (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
+            13: { name: t('g_13', "React 2P"), lblScore: t('ps_react', "Reaktion"), lblExtra: t('ps_win', "Sieg"), fmtS: "ms", fmtE: "bool", chartLabel: t('ps_chart_react', "Reaktionszeit (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
+            14: { name: t('g_14', "T-Test"), lblScore: t('ps_time', "Zeit"), lblExtra: "", fmtS: "ms", fmtE: "none", chartLabel: t('ps_chart_time', "Zeit (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
+            15: { name: t('g_15', "Target"), lblScore: t('ps_hits', "Treffer"), lblExtra: t('ps_time', "Zeit"), fmtS: "num", fmtE: "ms", chartLabel: t('ps_chart_hits', "Treffer"), calcChart: (e) => e.score },
+            21: { name: t('g_21', "Batak"), lblScore: t('ps_hits', "Treffer"), lblExtra: "", fmtS: "num", fmtE: "none", chartLabel: t('ps_chart_hits', "Treffer"), calcChart: (e) => e.score },
+            24: { name: t('g_24', "Whac-A-Mole"), lblScore: t('ps_hits', "Treffer"), lblExtra: t('ps_fails', "Fehler"), fmtS: "num", fmtE: "num", chartLabel: t('ps_chart_hits', "Treffer"), calcChart: (e) => e.score },
+            25: { name: t('g_25', "Katzenreflexe"), lblScore: t('ps_react_avg', "Ø Reaktion"), lblExtra: t('ps_pts', "Punkte"), fmtS: "ms3", fmtE: "num", chartLabel: t('ps_chart_react_avg', "Ø Reaktionszeit (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(3)) }
         };
 
         const urlParams = new URLSearchParams(window.location.search);
         const pid = urlParams.get('pid');
-        const pName = urlParams.get('name') || "Spieler";
+        const pName = urlParams.get('name') || t('ps_default_name', "Spieler");
 
         document.getElementById('playerNameDisplay').innerText = pName;
 
         let parsedData = {}; 
-        let activeCharts = {}; // Merkt sich, welche Graphen schon gemalt wurden
+        let activeCharts = {}; 
 
         if (pid) {
             fetch('/s_' + pid + '.csv')
@@ -132,6 +138,9 @@
             let firstGame = true;
             let firstGameId = null;
 
+            let thDate = t('ps_date', 'Datum');
+            let txtRuns = t('ps_runs', 'Läufe');
+
             for (let gId in parsedData) {
                 if(firstGame) { firstGameId = gId; }
                 let info = GAME_DICT[gId] || { name: "Game " + gId, lblScore: "Wert", lblExtra: "Extra", fmtS: "num", fmtE: "num", chartLabel: "Wert", calcChart: (e)=>e.score };
@@ -159,7 +168,7 @@
                     <div class="grp-header" onclick="toggleCard(${gId})">
                         <span class="grp-arrow">▶</span>
                         <span class="grp-name">${info.name}</span>
-                        <span class="grp-count">${entries.length} Läufe</span>
+                        <span class="grp-count">${entries.length} ${txtRuns}</span>
                     </div>
                     <div class="grp-body">
                         <div class="chart-container">
@@ -167,7 +176,7 @@
                         </div>
                         <table>
                             <thead>
-                                <tr><th>Datum</th><th>${info.lblScore}</th>${thExtra}</tr>
+                                <tr><th>${thDate}</th><th>${info.lblScore}</th>${thExtra}</tr>
                             </thead>
                             <tbody>${rowsHtml}</tbody>
                         </table>
@@ -253,15 +262,17 @@
 
         function formatValue(val, type) {
             if (type === "num") return val.toString();
+            if (type === "ms3") return (val / 1000).toFixed(3) + "s";
             if (type === "ms") {
                 let totalSec = Math.floor(val / 1000);
                 let m = Math.floor(totalSec / 60);
                 let s = totalSec % 60;
+                // Extrahiert genau eine Nachkommastelle für Sekunden
                 let z = Math.floor((val % 1000) / 100); 
                 if (m > 0) return `${m}:${s.toString().padStart(2,'0')}.${z}`;
                 return `${s}.${z}s`;
             }
-            if (type === "bool") return val === 1 ? "✅ Ja" : "❌ Nein";
+            if (type === "bool") return val === 1 ? ("✅ " + t('ps_yes', "Ja")) : ("❌ " + t('ps_no', "Nein"));
             return val;
         }
     </script>

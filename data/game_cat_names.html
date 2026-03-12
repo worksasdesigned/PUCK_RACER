@@ -7,40 +7,44 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Names - Cat Reflex</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css?v=3">
     <style>
         .hidden { display: none; }
         #toggleIcon { transition: transform 0.3s; display: inline-block; }
         .rotate { transform: rotate(-90deg); }
-        .arena-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        .arena-table td { width: 20%; height: 50px; text-align: center; vertical-align: middle; }
-        .puck-icon { 
-            width: 30px; height: 30px; border-radius: 50%; background: #444; 
-            margin: 0 auto; display: flex; align-items: center; justify-content: center; 
-            color: white; font-weight: bold; font-size: 0.8rem; transition: background 0.2s, box-shadow 0.2s; 
-        }
+        
+        /* Styling für das Statistik-Icon */
+        .stat-icon { font-size: 1.3rem; opacity: 0.2; transition: all 0.3s; cursor: help; user-select: none; filter: grayscale(100%); margin-left: 10px; }
+        .stat-icon.active { opacity: 1; filter: none; text-shadow: 0 0 8px rgba(13, 110, 253, 0.5); }
     </style>
 </head>
 <body>
     <header><div class="logo" data-i18n="g_cat">Katzenreflexe</div></header>
     <main>
-        <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">Initializing...</div>
+        <div id="loading" style="text-align:center; color:var(--text-muted); padding:20px;" data-i18n="loading">Initializing...</div>
 
         <div id="content" style="display:none;">
-            <div class="card" id="layoutCard">
-                <div class="layout-header" onclick="toggleLayout()" style="cursor:pointer; display:flex; justify-content:space-between; font-weight:bold;">
-                    <span data-i18n="layout_title">Player Configuration & Layout</span>
+            
+            <div class="layout-card" id="layoutCard">
+                <div class="layout-header" onclick="toggleLayout()">
+                    <span data-i18n="cat_layout_title">Puck Setup</span>
                     <span id="toggleIcon">▼</span>
                 </div>
-                <div class="layout-body" id="layoutBody" style="margin-top:15px;">
-                    <div id="arenaContainer" style="margin-bottom: 20px;"></div>
-                    <div id="playerList"></div>
+                <div class="layout-body" id="layoutBody" style="flex-direction: column; align-items: center; gap: 15px;">
+                    <p style="font-size:0.8rem; color:var(--text-muted); text-align:center; margin:0;" data-i18n="cat_layout_desc">
+                        Scatter the pucks as shown. The center puck (C3) is the indicator!
+                    </p>
+                    <div id="arenaContainer"></div>
                 </div>
             </div>
 
-            <div class="action-bar" id="pickerBar" style="margin-top: 15px;">
-                <button class="btn-secondary" onclick="loadFromPicker()" data-i18n="btn_load_players">👥 Load Players</button>
+            <div id="pickerBar" style="margin-bottom: 15px;">
+                <button class="btn-primary" onclick="loadFromPicker()" style="font-size:1.1rem; background:var(--card-hover); border:1px dashed var(--primary); color:var(--primary);" data-i18n="pp_load_players">
+                    👥 Load Players from List
+                </button>
             </div>
+
+            <div id="playerList" class="card"></div>
 
             <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_start_game">START GAME 🏁</button>
             <button onclick="location.href='game_cat_setup.html'" class="btn-back" style="margin-top:20px;" data-i18n="btn_back">Back</button>
@@ -51,9 +55,9 @@
     <script src="player_picker.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
-        const COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FFFFFF', '#800080', '#FFC0CB'];
+        const COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FFFFFF', '#800080', '#FFC0CB', '#008080', '#FFD700'];
         
-        // Das Layout-Mapping
+        // Das Layout-Mapping (nur für die Spieler-Pucks)
         const LAYOUTS = {
             3:  ["C1","A5","E5"],
             4:  ["A1","E1","A5","E5"],
@@ -74,12 +78,19 @@
             setTimeout(initList, 500);
         });
 
+        function clearPlayerId(idx) {
+            sessionStorage.setItem(`p_id_${idx}`, 0);
+            let icon = document.getElementById(`stat_icon_${idx}`);
+            if(icon) {
+                icon.classList.remove('active');
+                icon.title = "Gastspieler (Keine Statistik)";
+            }
+        }
+
         async function initList() {
             try {
-                // 1. ESP32 Backend zurücksetzen
                 await fetch('/api/game/load?id=25');
 
-                // 2. Werte aus sessionStorage lesen
                 numPlayers = parseInt(sessionStorage.getItem('cr_players') || 1);
                 neededPucks = numPlayers + 1; 
                 let highlander = parseInt(sessionStorage.getItem('cr_highlander') || 1);
@@ -87,20 +98,16 @@
                 let diff = parseInt(sessionStorage.getItem('cr_diff') || 1000);
                 let chaos = parseInt(sessionStorage.getItem('cr_chaos') || 0);
 
-                // 3. Konfiguration ans Backend schicken
                 await fetch(`/api/game/action?cmd=config_players&val=${numPlayers}`);
                 await fetch(`/api/game/action?cmd=config_highlander&val=${highlander}`);
                 await fetch(`/api/game/action?cmd=config_time&val=${time}`);
                 await fetch(`/api/game/action?cmd=config_diff&val=${diff}`);
                 await fetch(`/api/game/action?cmd=config_chaos&val=${chaos}`);
 
-                // 4. Setup triggern
                 await fetch('/api/game/action?cmd=setup');
 
-                // 5. Arena aufbauen (Raster)
                 buildArena();
 
-                // 6. HTML Liste aufbauen
                 let container = document.getElementById('playerList');
                 container.innerHTML = "";
                 let ph = (typeof getTranslation === 'function') ? getTranslation('cr_setup_players') : "Spieler";
@@ -109,10 +116,18 @@
                 for(let i=0; i<numPlayers; i++) {
                     let color = COLORS[i % COLORS.length];
                     let name = sessionStorage.getItem(`p_name_${i}`) || `${ph} ${i+1}`;
+                    let pIndex = i + 1; // Entspricht dem Puck-Index im ESP32 (0 ist Anzeigepuck)
+                    
+                    let pid = sessionStorage.getItem(`p_id_${i}`);
+                    let hasStats = (pid && pid !== "0");
+                    let statClass = hasStats ? "active" : "";
+                    let statTitle = hasStats ? "Statistik wird gespeichert" : "Gastspieler (Keine Statistik)";
+
                     container.innerHTML += `
-                    <div class="player-row" style="border-left: 5px solid ${color}; padding-left:10px; margin-bottom:10px; display:flex; align-items:center;">
-                        <div class="color-box" id="cb_${i}" style="width:20px; height:20px; border-radius:50%; background:${color}; box-shadow:0 0 10px ${color}; margin-right:15px;"></div>
-                        <input type="text" id="name_${i}" value="${name}" placeholder="${ph} ${i+1}" style="flex:1; padding: 10px; font-size:1.1rem; border-radius:5px; border:1px solid #ccc;">
+                    <div class="player-row" style="border-left: 5px solid ${color}; padding:10px; margin-bottom:10px; display:flex; align-items:center; background:var(--card-bg); border-radius:8px;">
+                        <div class="color-box" id="cb_${pIndex}" style="width:20px; height:20px; border-radius:50%; background:${color}; box-shadow:0 0 10px ${color}; margin-right:15px;"></div>
+                        <input type="text" id="name_${i}" value="${name}" placeholder="${ph} ${i+1}" style="flex:1; padding: 10px; font-size:1.1rem; border-radius:5px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-main);" oninput="clearPlayerId(${i})">
+                        <span class="stat-icon ${statClass}" id="stat_icon_${i}" title="${statTitle}">📊</span>
                     </div>`;
                 }
 
@@ -142,16 +157,27 @@
             tableHtml += `</table>`;
             arenaContainer.innerHTML = tableHtml;
 
-            // Finde das passende Layout, greife auf Default zurück falls keins existiert
-            let layoutKey = Object.keys(LAYOUTS).find(k => parseInt(k) >= neededPucks) || 12;
+            // 1. Zentraler Puck (Anzeigepuck, Index 0) wird FEST auf C3 gesetzt
+            let centerCell = document.getElementById('cell-C3');
+            if(centerCell) {
+                centerCell.innerHTML = `<div class="puck-icon" id="puck_vis_0" style="background:#222; border-color:#fff;">C</div>`;
+            }
+
+            // 2. Finde das passende Layout NUR für die reine Spieleranzahl
+            let layoutKey = Object.keys(LAYOUTS).find(k => parseInt(k) >= numPlayers) || 12;
             let activeLayout = LAYOUTS[layoutKey];
 
-            for(let p=0; p<neededPucks && p<activeLayout.length; p++) {
-                let coord = activeLayout[p];
+            // 3. Spieler Pucks verteilen (Index p beginnt bei 1 für die UI und den ESP32-Status)
+            for(let p=1; p<=numPlayers && (p-1)<activeLayout.length; p++) {
+                let coord = activeLayout[p-1]; // Index im Layout-Array ist p-1
+                
+                // Sicherheitshalber überspringen wir C3, falls ein Layout diese Koordinate fälschlicherweise nutzt
+                if(coord === "C3") continue; 
+
                 let cell = document.getElementById(`cell-${coord}`);
                 if(cell) {
-                    // Der Anzeigepuck (Zentraler Puck) bekommt vielleicht ein spezielles Icon oder bleibt neutral
-                    cell.innerHTML = `<div class="puck-icon" id="puck_vis_${p}">P${p+1}</div>`;
+                    let color = COLORS[(p-1) % COLORS.length];
+                    cell.innerHTML = `<div class="puck-icon" id="puck_vis_${p}" style="background:#222; border-color:${color};">P${p}</div>`;
                 }
             }
         }
@@ -163,19 +189,29 @@
                 data.forEach(eff => {
                     const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
                     
-                    // 1. Liste updaten
                     let cb = document.getElementById(`cb_${eff.id}`);
                     if(cb) {
                         cb.style.background = rgb;
                         cb.style.boxShadow = `0 0 10px ${rgb}`;
                     }
 
-                    // 2. Arena Layout updaten
                     let vis = document.getElementById(`puck_vis_${eff.id}`);
                     if(vis) {
-                        vis.style.background = rgb;
-                        vis.style.boxShadow = `0 0 15px ${rgb}`;
-                        vis.style.border = (eff.r===0 && eff.g===0 && eff.b===0) ? "2px solid #444" : "2px solid #fff";
+                        vis.classList.remove('eff-breathe', 'eff-chase', 'eff-rainbow');
+                        
+                        if(eff.eff == 3 || eff.eff == 4 || eff.eff == 5) vis.classList.add('eff-breathe');
+                        if(eff.eff == 6 || eff.eff == 7) vis.classList.add('eff-chase');
+                        
+                        if(eff.eff == 9) {
+                            vis.classList.add('eff-rainbow');
+                            vis.style.background = 'linear-gradient(45deg, red, orange, yellow, green, blue, purple)';
+                            vis.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.6)';
+                            vis.style.border = "2px solid #fff";
+                        } else {
+                            vis.style.background = rgb;
+                            vis.style.boxShadow = `0 0 15px ${rgb}`;
+                            vis.style.border = (eff.r===0 && eff.g===0 && eff.b===0) ? "2px solid #444" : "2px solid #fff";
+                        }
                     }
                 });
             } catch(e) {}
@@ -190,7 +226,16 @@
             openPlayerPicker(numPlayers, function(selected) {
                 selected.forEach((p, i) => {
                     let inp = document.getElementById('name_' + i);
-                    if (inp) { inp.value = p.name; sessionStorage.setItem('p_name_' + i, p.name); }
+                    if (inp) { 
+                        inp.value = p.name; 
+                        sessionStorage.setItem('p_name_' + i, p.name); 
+                    }
+                    sessionStorage.setItem(`p_id_${i}`, p.id); 
+                    let icon = document.getElementById(`stat_icon_${i}`);
+                    if(icon) { 
+                        icon.classList.add('active'); 
+                        icon.title = "Statistik wird gespeichert"; 
+                    }
                 });
             });
         }

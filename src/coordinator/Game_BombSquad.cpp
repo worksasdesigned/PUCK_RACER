@@ -4,13 +4,12 @@
 void Game_BombSquad::setup() {
     Serial.println("GAME: Setup Bomb Squad");
     state = BOMB_SETUP;
-    // initGame/Licht kommt erst via cmd=setup (names.html)
 }
 
 void Game_BombSquad::processCommand(String cmd, int value) {
     if (cmd == "setup") initGame();
     else if (cmd == "cfg_pucks") activePucks = value;
-    else if (cmd == "cfg_time") maxSeconds = value; 
+    else if (cmd == "cfg_time") maxSeconds = value;
     else if (cmd == "cfg_diff") difficulty = value;
     else if (cmd == "cfg_rounds") maxRounds = value;
     else if (cmd == "cfg_group") groupMode = (value == 1);
@@ -38,8 +37,8 @@ void Game_BombSquad::initGame() {
         players[i].lastDelta = 0;
         players[i].totalDelta = 0;
         players[i].roundsPlayed = 0;
+        players[i].targetTime = 0;
         hasActed[i] = false;
-        
         if (i < activePucks) {
             setPuck(i, EFF_SINGLE_CHASE, PLAYER_COLORS[i], 40, 100);
         }
@@ -51,31 +50,39 @@ void Game_BombSquad::startRound() {
     state = BOMB_INFO;
     stateStartTime = millis();
     
-    // ZUFALLSZEIT: Zwischen 3s und Max (z.B. 10s)
     int upper = maxSeconds + 1;
     if (upper < 4) upper = 4;
-    currentTargetTime = random(3, upper);
     
-    // Info Phase: Pucks blinken die ZIELZEIT
+    int groupTarget = random(3, upper);
+    maxTargetTimeThisRound = 0;
+    
+    if (groupMode) globalTargetTime = groupTarget;
+    else globalTargetTime = 0;
+    
     for(int i=0; i<activePucks; i++) {
         hasActed[i] = false;
         players[i].lastResult = RES_NONE;
-        setPuck(i, EFF_BLINK_COUNT, PLAYER_COLORS[i], 500, 200, currentTargetTime);
+        
+        players[i].targetTime = groupMode ? groupTarget : random(3, upper);
+        
+        if (players[i].targetTime > maxTargetTimeThisRound) {
+            maxTargetTimeThisRound = players[i].targetTime;
+        }
+        
+        setPuck(i, EFF_BLINK_COUNT, PLAYER_COLORS[i], 500, 200, players[i].targetTime);
     }
 }
 
 void Game_BombSquad::loop() {
     unsigned long now = millis();
-
-    // 1. INFO PHASE (Blinken abwarten)
+    
     if (state == BOMB_INFO) {
-        if (now - stateStartTime > (unsigned long)(currentTargetTime * 1000 + 1200)) {
+        if (now - stateStartTime > (unsigned long)(maxTargetTimeThisRound * 1000 + 1200)) {
             state = BOMB_COUNTDOWN;
             stateStartTime = now;
             sendSequence(SEQ_SKI); 
         }
     }
-    // 2. COUNTDOWN (Ski Sound läuft ca. 3.8s)
     else if (state == BOMB_COUNTDOWN) {
         if (now - stateStartTime > 3100) {
             state = BOMB_RUNNING;
@@ -83,9 +90,8 @@ void Game_BombSquad::loop() {
             for(int i=0; i<activePucks; i++) setPuck(i, EFF_OFF, CRGB::Black);
         }
     }
-    // 3. RUNNING (Timeout Check)
     else if (state == BOMB_RUNNING) {
-        if (now - gameStartTime > (unsigned long)(currentTargetTime * 1000 + 5000)) {
+        if (now - gameStartTime > (unsigned long)(maxTargetTimeThisRound * 1000 + 5000)) {
             evaluateRound();
         }
     }
@@ -97,10 +103,10 @@ void Game_BombSquad::handleEvent(int puckIndex, EventPacket event) {
     if (event.type != EVT_BTN_CLICK) return;
     if (hasActed[puckIndex]) return; 
 
+    unsigned long pressTime = millis(); // VOR jeglicher Logik erfassen (Bug 4 Fix)
     hasActed[puckIndex] = true;
-    unsigned long pressTime = millis();
     
-    long delta = (long)(pressTime - gameStartTime) - (currentTargetTime * 1000);
+    long delta = (long)(pressTime - gameStartTime) - (players[puckIndex].targetTime * 1000);
     
     players[puckIndex].lastDelta = delta;
     players[puckIndex].totalDelta += abs(delta);
@@ -108,24 +114,23 @@ void Game_BombSquad::handleEvent(int puckIndex, EventPacket event) {
 
     int tol = getTolerance();
     bool success = (abs(delta) <= tol);
-
+    
     if (success) {
         players[puckIndex].lastResult = RES_DEFUSED;
         players[puckIndex].score++;
         
         setPuck(puckIndex, EFF_RAINBOW, CRGB::Black, 0, 150);
-        delay(25); // Anti-Verschlucken
         
-        CommandPacket snd; snd.cmd = CMD_SEQUENCE; snd.extra = SEQ_DINGDONG;
+        CommandPacket snd;
+        snd.cmd = CMD_SEQUENCE; snd.extra = SEQ_DINGDONG;
         PuckNetwork::sendToPuck(PuckNetwork::getPucks()[puckIndex].mac, snd);
 
     } else {
         players[puckIndex].lastResult = RES_EXPLODED;
-        
         setPuck(puckIndex, EFF_FAIL, CRGB::Red, 0, 255);
-        delay(25); // Anti-Verschlucken
         
-        CommandPacket snd; snd.cmd = CMD_SEQUENCE; snd.extra = SEQ_EXPLOSION;
+        CommandPacket snd;
+        snd.cmd = CMD_SEQUENCE; snd.extra = SEQ_EXPLOSION;
         PuckNetwork::sendToPuck(PuckNetwork::getPucks()[puckIndex].mac, snd);
     }
 
@@ -138,24 +143,27 @@ void Game_BombSquad::handleEvent(int puckIndex, EventPacket event) {
 }
 
 void Game_BombSquad::evaluateRound() {
+    // GUARD: Verhindert doppelten Aufruf durch Loop-Timeout und allDone (Bug 2 Fix)
+    if (state != BOMB_RUNNING) return; 
+    
+    state = BOMB_FINISHED; // Sofort blockieren
+    finishTime = millis();
+
     for(int i=0; i<activePucks; i++) {
         if(!hasActed[i]) {
             players[i].lastResult = RES_EXPLODED;
             players[i].lastDelta = 99999; 
+            players[i].totalDelta += 10000; 
             players[i].roundsPlayed++;
             setPuck(i, EFF_STATIC, CRGB::Red, 0, 50); 
         }
     }
-
-    state = BOMB_FINISHED;
-    finishTime = millis();
     
     if (currentRound >= maxRounds) {
-        delay(50);
-        CommandPacket snd; snd.cmd = CMD_SEQUENCE; snd.extra = SEQ_FANFARE;
+        CommandPacket snd;
+        snd.cmd = CMD_SEQUENCE; snd.extra = SEQ_FANFARE;
         PuckNetwork::broadcast(snd);
         
-        delay(50);
         for(int i=0; i<activePucks; i++) setPuck(i, EFF_RAINBOW, CRGB::Black, 0, 150);
     }
 }
@@ -183,7 +191,8 @@ void Game_BombSquad::setPuck(int index, int effect, CRGB color, int speed, int b
     
     CommandPacket cp;
     cp.cmd = CMD_EFFECT; cp.effectID = effect;
-    cp.r = color.r; cp.g = color.g; cp.b = color.b;
+    cp.r = color.r; cp.g = color.g;
+    cp.b = color.b;
     cp.duration = speed; cp.extra = bright; 
     if (effect == EFF_BLINK_COUNT) cp.extra = extra; 
     
@@ -195,7 +204,7 @@ String Game_BombSquad::getStatusJSON() {
     json += "\"state\":" + String(state) + ",";
     json += "\"round\":" + String(currentRound) + ",";
     json += "\"max\":" + String(maxRounds) + ",";
-    json += "\"target\":" + String(currentTargetTime) + ",";
+    json += "\"target\":" + String(globalTargetTime) + ","; 
     
     long elapsed = 0;
     if (state == BOMB_RUNNING) elapsed = millis() - gameStartTime;
@@ -213,7 +222,8 @@ String Game_BombSquad::getStatusJSON() {
         json += "\"score\":" + String(players[i].score) + ",";
         json += "\"res\":" + String(players[i].lastResult) + ",";
         json += "\"last\":" + String(players[i].lastDelta) + ",";
-        json += "\"avg\":" + String(avg);
+        json += "\"avg\":" + String(avg) + ",";
+        json += "\"target\":" + String(players[i].targetTime); // NEU für UI Anzeige (Zielzeit pro Puck)
         json += "}";
     }
     json += "]}";

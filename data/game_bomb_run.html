@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Bomb Squad Live</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=4">
     <style>
         .top-row { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;}
         .round-box { font-size: 1.2rem; color: var(--text-muted); font-weight:bold;}
@@ -35,7 +35,7 @@
 
         .p-row { 
             display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center;
-            background: var(--card-bg); padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 8px solid var(--border-color); 
+            background: var(--card-bg); padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 8px solid var(--border-color);
         }
         .p-name { font-size: 1.3rem; font-weight: bold; color:var(--text-main);}
         .p-res { font-size: 1.8rem; }
@@ -80,28 +80,143 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
-<script>startStatusLoop();</script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
-
-        const COLORS = ['#0000FF', '#00FF00', '#FF0000', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#40E0D0', '#FFC0CB', '#FFFFFF', '#00FF00'];
         
-        setInterval(update, 400); 
+        const COLORS = ['#0000FF', '#00FF00', '#FF0000', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#40E0D0', '#FFC0CB', '#FFFFFF', '#32CD32'];
+        
+        // --- STATS LOGIK ---
+        let savedStats = false;
+        let personalBests = {};
+        let sessionRecords = {};
+        
+        let playerMinDelta = {}; 
+        let processedRounds = {}; 
+        let lastState = -1;
+
+        async function loadPersonalBests() {
+            let numP = parseInt(sessionStorage.getItem('bomb_pucks') || 1);
+            if(parseInt(sessionStorage.getItem('bomb_group') || 0) === 1) numP = 1;
+            
+            for (let i = 0; i < numP; i++) {
+                let pid = sessionStorage.getItem(`p_id_${i}`);
+                if (pid && pid !== "0") {
+                    try {
+                        let r = await fetch('/s_' + pid + '.csv');
+                        if (r.ok) {
+                            let text = await r.text();
+                            let lines = text.split(/\r?\n/);
+                            let bestAvg = 99999999;
+                            lines.forEach(line => {
+                                let parts = line.split(';');
+                                if (parts.length >= 4 && parts[1] === "8") { 
+                                    let avgScore = parseInt(parts[2]); 
+                                    if (avgScore > 0 && avgScore < bestAvg) bestAvg = avgScore;
+                                }
+                            });
+                            if (bestAvg < 99999999) personalBests[i] = bestAvg;
+                        }
+                    } catch(e) {}
+                }
+            }
+        }
+        loadPersonalBests();
+
+        function savePlayerStat(idx, avgDelta, bestDelta) {
+            let pid = sessionStorage.getItem(`p_id_${idx}`);
+            if (!pid || pid === "0") return;
+            let fd = new URLSearchParams();
+            fd.append('pid', pid);
+            fd.append('game', 8); 
+            fd.append('score', avgDelta); 
+            fd.append('extra', bestDelta); 
+            fd.append('ts', Date.now());
+            fetch('/api/stats/player_save', { method: 'POST', body: fd }).catch(e => console.log(e));
+        }
+        // --- ENDE STATS LOGIK ---
+
+        setInterval(update, 400);
 
         function update() {
             fetch('/api/game/status').then(r=>r.json()).then(data => {
-                 
+                
+                if (data.state === 0 && lastState !== 0) {
+                    savedStats = false;
+                    sessionRecords = {};
+                    playerMinDelta = {};
+                    processedRounds = {};
+                }
+                lastState = data.state;
+
+                if (data.state === 4 && data.players && !processedRounds[data.round]) {
+                    data.players.forEach((p, i) => {
+                        let absDelta = Math.abs(p.last);
+                        if (absDelta !== 99999) { 
+                            if (playerMinDelta[i] === undefined || absDelta < playerMinDelta[i]) {
+                                playerMinDelta[i] = absDelta;
+                            }
+                        }
+                    });
+                    processedRounds[data.round] = true;
+                }
+
+                if (data.state === 4 && data.round >= data.max && !savedStats && data.players) {
+                    
+                    let isGroupMode = parseInt(sessionStorage.getItem('bomb_group') || 0) === 1;
+
+                    if (isGroupMode) {
+                        let totalAvg = 0;
+                        let teamBest = 999999;
+                        let activeCount = 0;
+                        
+                        data.players.forEach((p, i) => {
+                            totalAvg += p.avg;
+                            activeCount++;
+                            let b = playerMinDelta[i];
+                            if (b !== undefined && b < teamBest) teamBest = b;
+                        });
+                        
+                        let finalAvg = activeCount > 0 ? Math.round(totalAvg / activeCount) : 0;
+                        if (teamBest === 999999) teamBest = 0;
+                        
+                        if (activeCount > 0 && teamBest !== 0) {
+                            if (!personalBests[0] || finalAvg < personalBests[0]) {
+                                sessionRecords[0] = true;
+                                personalBests[0] = finalAvg;
+                            }
+                            savePlayerStat(0, finalAvg, teamBest);
+                        }
+
+                    } else {
+                        data.players.forEach((p, i) => {
+                            let avg = p.avg;
+                            let best = playerMinDelta[i];
+                            
+                            if (avg > 0 && best !== undefined) {
+                                if (!personalBests[i] || avg < personalBests[i]) {
+                                    sessionRecords[i] = true;
+                                    personalBests[i] = avg;
+                                }
+                                savePlayerStat(i, avg, best);
+                            }
+                        });
+                    }
+                    
+                    savedStats = true;
+                }
+                
                 render(data);
             }).catch(e => {});
         }
 
         function render(data) {
-            if(data.state === 3) { // RUNNING
+            if(data.state === 3) { 
                 let t = (data.time / 1000).toFixed(1);
                 document.getElementById('stopwatch').innerText = t;
                 document.getElementById('stopwatch').style.color = "var(--text-main)";
             } 
-            else if(data.state === 4) { // FINISHED
+            else if(data.state === 4) { 
                  let t = (data.time / 1000).toFixed(1);
                  document.getElementById('stopwatch').innerText = t;
                  document.getElementById('stopwatch').style.color = "var(--warning)"; 
@@ -112,30 +227,36 @@
             }
 
             let st = getTranslation(`bomb_st_${data.state}`);
-            let txtRound = getTranslation('bomb_run_rnd');
-            let txtTarget = getTranslation('bomb_run_target');
+            let txtRound = getTranslation('bomb_run_rnd') || "Round";
+            let txtTarget = getTranslation('bomb_run_target') || "Target:";
+            
+            let targetStr = data.target > 0 ? `${data.target}s` : "Individuell";
             
             document.getElementById('rndInfo').innerText = `${txtRound} ${data.round} / ${data.max}`;
             document.getElementById('stateInfo').innerText = st;
-            document.getElementById('targetInfo').innerText = `${txtTarget} ${data.target}s`;
+            document.getElementById('targetInfo').innerText = `${txtTarget} ${targetStr}`;
 
             let btn = document.getElementById('btnAction');
             if (data.round === 0 || data.state === 0) {
-                btn.innerText = getTranslation('btn_start');
+                btn.innerText = getTranslation('btn_start') || "START";
                 btn.style.background = "var(--primary)";
+                btn.setAttribute('onclick', "doAction('start')");
             } 
             else if (data.state === 4) {
                 if (data.round >= data.max) {
-                     btn.innerText = getTranslation('btn_reset'); 
+                     btn.innerText = getTranslation('btn_reset') || "RESET";
                      btn.style.background = "var(--success)";
+                     btn.setAttribute('onclick', "doAction('reset')");
                 } else {
-                     btn.innerText = getTranslation('bomb_btn_next'); 
+                     btn.innerText = getTranslation('bomb_btn_next') || "NEXT ROUND";
                      btn.style.background = "var(--primary)";
+                     btn.setAttribute('onclick', "doAction('start')");
                 }
             } 
             else {
-                btn.innerText = getTranslation('btn_running');
+                btn.innerText = getTranslation('btn_running') || "RUNNING";
                 btn.style.background = "var(--card-hover)";
+                btn.removeAttribute('onclick'); 
             }
 
             renderPlayers(data);
@@ -148,10 +269,16 @@
             let players = data.players.map((p, i) => ({...p, id: i}));
             players.sort((a,b) => b.score - a.score);
 
-            let txtTimeout = getTranslation('bomb_lbl_timeout');
-
+            let txtTimeout = getTranslation('bomb_lbl_timeout') || "TIMEOUT";
+            let isGroupMode = parseInt(sessionStorage.getItem('bomb_group') || 0) === 1;
+            let txtBomb = getTranslation('bomb_ph_bomb') || "Bombe";
+            
             players.forEach((p, index) => {
-                let name = sessionStorage.getItem(`p_name_${p.id}`) || `Player ${p.id+1}`;
+                let defaultName = isGroupMode ? `${txtBomb} ${p.id+1}` : `Player ${p.id+1}`;
+                
+                // Hier wurde der Bug behoben: Er liest immer den Session-Speicher aus und erzwingt NICHT mehr defaultName
+                let name = sessionStorage.getItem(`p_name_${p.id}`) || defaultName;
+
                 let col = COLORS[p.id % COLORS.length];
                 
                 let icon = "⏳";
@@ -161,17 +288,31 @@
                 let deltaTxt = "--";
                 let deltaColor = "var(--text-muted)";
                 
-                if(p.last != 0) {
+                if(p.res !== 0) {
                     if (p.last === 99999) { deltaTxt = txtTimeout; deltaColor="var(--danger)"; }
                     else {
                         let val = p.last/1000;
                         let sign = val > 0 ? "+" : "";
-                        deltaTxt = `${sign}${val.toFixed(2)}s`;
+                        deltaTxt = `${sign}${val.toFixed(3)}s`;
                         deltaColor = (p.res == 1) ? "var(--success)" : "var(--danger)";
                     }
                 }
                 
-                let avgTxt = (p.avg == 0) ? "" : `Ø ${(p.avg/1000).toFixed(2)}s`;
+                let avgTxt = (p.avg == 0) ? "" : `Ø ${(p.avg/1000).toFixed(3)}s`;
+                let bestVal = playerMinDelta[p.id];
+                let bestTxt = (bestVal === undefined) ? "" : `Best: ${(bestVal/1000).toFixed(3)}s`;
+                
+                let recordIcon = "";
+                if (isGroupMode) {
+                    if (p.id === 0 && sessionRecords[0]) recordIcon = " <span title='Team Rekord!'>📈</span>";
+                } else {
+                    if (sessionRecords[p.id]) recordIcon = " <span title='Neuer Rekord!'>📈</span>";
+                }
+
+                let indTargetTxt = "";
+                if (data.target === 0 && p.target > 0) {
+                    indTargetTxt = `<span style="font-size:0.9rem; color:var(--warning); margin-left:10px;">(🎯 ${p.target}s)</span>`;
+                }
 
                 let rowId = `b-row-${p.id}`;
                 let rowEl = document.getElementById(rowId);
@@ -179,16 +320,20 @@
                 if (!rowEl) {
                     container.insertAdjacentHTML('beforeend', `
                     <div id="${rowId}" class="p-row" style="border-left-color: ${col}; order: ${index};">
-                        <div class="p-name">${name}</div>
+                        <div class="p-name">${name}${recordIcon}${indTargetTxt}</div>
                         <div class="p-res" id="icon-${p.id}">${icon}</div>
                         <div class="p-delta">
                             <div id="sc-${p.id}" style="font-size:1.8rem; font-weight:bold; color:var(--primary); text-align:right;">${p.score}</div>
                             <div id="del-${p.id}" style="font-weight:bold; color:${deltaColor}; font-size:0.9rem;">${deltaTxt}</div>
-                            <div id="avg-${p.id}" style="font-size:0.8rem; color:var(--text-muted);">${avgTxt}</div>
+                            <div id="avg-${p.id}" style="font-size:0.8rem; color:var(--text-muted);">${avgTxt} | <span style="color:var(--success)">${bestTxt}</span></div>
                         </div>
                     </div>`);
                 } else {
                     rowEl.style.order = index;
+                    
+                    let nameEl = rowEl.querySelector('.p-name');
+                    if (nameEl.innerHTML !== `${name}${recordIcon}${indTargetTxt}`) nameEl.innerHTML = `${name}${recordIcon}${indTargetTxt}`;
+                    
                     document.getElementById(`sc-${p.id}`).innerText = p.score;
                     document.getElementById(`icon-${p.id}`).innerText = icon;
                     
@@ -196,7 +341,7 @@
                     delEl.innerText = deltaTxt;
                     delEl.style.color = deltaColor;
                     
-                    document.getElementById(`avg-${p.id}`).innerText = avgTxt;
+                    document.getElementById(`avg-${p.id}`).innerHTML = `${avgTxt} | <span style="color:var(--success)">${bestTxt}</span>`;
                 }
             });
         }
@@ -208,7 +353,7 @@
         }
         
         function goHome() { 
-            fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); 
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/');
         }
     </script>
 </body>

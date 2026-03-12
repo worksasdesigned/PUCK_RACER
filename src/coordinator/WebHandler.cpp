@@ -7,7 +7,7 @@
 #include "StatsManager.h" 
 #include "WifiScanner.h"
 
-#define SYS_VER "v2.89.4" 
+#define SYS_VER "v2.89.7" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;
@@ -218,6 +218,40 @@ void WebHandler::begin() {
     // GameID 21 (Batak)       : Score = Getroffene Pucks   | Extra = 0
     // GameID 24 (Whac-A-Mole) : Score = Getroffene Pucks   | Extra = Anzahl Fehler
     // =========================================================================
+    // API: Prüft, ob für eine Liste von Spieler-IDs (z.B. "1,2,3") bereits eine CSV existiert
+    server.on("/api/stats/check", HTTP_GET, [](AsyncWebServerRequest *req){
+        if(!req->hasParam("pids")) {
+            req->send(400, "application/json", "{\"error\":\"missing pids\"}");
+            return;
+        }
+        
+        String pidsParam = req->getParam("pids")->value();
+        String json = "{";
+        int start = 0;
+        bool first = true;
+        
+        // Komma-separierte Liste aufsplitten und abarbeiten
+        while(start < pidsParam.length()) {
+            int idx = pidsParam.indexOf(',', start);
+            if(idx == -1) idx = pidsParam.length();
+            
+            String pid = pidsParam.substring(start, idx);
+            start = idx + 1; // Für den nächsten Durchlauf
+            pid.trim();
+            
+            if(pid.length() > 0) {
+                // Prüfen ob die Datei existiert
+                String path = "/s_" + pid + ".csv";
+                bool exists = LittleFS.exists(path);
+
+                if(!first) json += ",";
+                json += "\"" + pid + "\":" + (exists ? "true" : "false");
+                first = false;
+            }
+        }
+        json += "}";
+        req->send(200, "application/json", json);
+    });
 
     server.on("/api/stats/player_save", HTTP_POST, [](AsyncWebServerRequest *req){
         if (req->hasParam("pid", true) && req->hasParam("game", true) && req->hasParam("score", true) && req->hasParam("ts", true)) {

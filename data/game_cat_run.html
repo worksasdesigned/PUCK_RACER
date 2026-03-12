@@ -13,27 +13,18 @@
         .timer-box { text-align: center; margin-bottom: 20px; }
         .big-time { font-size: 5rem; font-weight: bold; color: var(--text-main); font-family: 'Courier New', monospace; line-height: 1; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
         
-        .status-box { 
-            text-align: center; margin-bottom: 20px; 
-            border: 2px solid var(--border-color); background: var(--card-hover); 
-            padding: 15px; border-radius: 10px;
-        }
-        .big-status { 
-            font-size: 1.5rem; font-weight: bold; color: var(--text-main); 
-            text-transform:uppercase; letter-spacing: 2px;
-            animation: pulse 2s infinite;
-        }
+        .status-box { text-align: center; margin-bottom: 20px; border: 2px solid var(--border-color); background: var(--card-hover); padding: 15px; border-radius: 10px; }
+        .big-status { font-size: 1.5rem; font-weight: bold; color: var(--text-main); text-transform:uppercase; letter-spacing: 2px; animation: pulse 2s infinite; }
         
         .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 20px; }
         .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; height: 100%; }
         
         .run-row { display: flex; align-items: center; justify-content: space-between; background: var(--card-hover); margin-bottom: 8px; padding: 15px; border-radius: 8px; border-left: 10px solid var(--border-color); transition: background 0.3s, border-color 0.3s;}
         .p-name { font-size: 1.2rem; color: var(--text-main); font-weight:bold; }
-        .p-status { font-size: 2rem; }
-        .p-rounds { font-size: 1.2rem; color:var(--text-main); text-align:right;}
-        .p-diff { font-size:0.9rem; color:var(--text-muted); display:block;}
+        .p-rounds { flex-grow: 1; text-align:right;}
+        .p-diff { font-size:0.9rem; color:var(--text-muted); }
         
-        /* Highlight Klassen fuer Auswertung */
+        /* Highlight Klassen für Auswertung */
         .row-winner { background: rgba(0, 255, 0, 0.2) !important; border-color: var(--success) !important; }
         .row-ok { background: rgba(0, 255, 0, 0.05) !important; border-color: #88ff88 !important; }
         .row-fail { background: rgba(220,53,69,0.2) !important; border-color: var(--danger) !important; }
@@ -85,21 +76,89 @@
         const COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FFFFFF', '#800080', '#FF1493', '#00FF7F', '#FFD700'];
         const MEDALS = ['🥇','🥈','🥉'];
         
+        // --- STATS LOGIK ---
+        let savedStats = {};
+        let personalBests = {};
+        let sessionRecords = {};
+        
+        // Neu: Tracking der Reaktionszeiten pro Spieler
+        let playerReactTimes = {}; 
+        let roundRecorded = false;
+        let lastState = -1;
+
+        // Lädt die persönlichen Rekorde (niedrigste Durchschnittszeit)
+        async function loadPersonalBests() {
+            let numP = parseInt(sessionStorage.getItem('cr_players') || 1);
+            for (let i = 0; i < numP; i++) {
+                let pid = sessionStorage.getItem(`p_id_${i}`);
+                if (pid && pid !== "0") {
+                    try {
+                        let r = await fetch('/s_' + pid + '.csv');
+                        if (r.ok) {
+                            let text = await r.text();
+                            let lines = text.split(/\r?\n/);
+                            let bestTime = 99999999;
+                            lines.forEach(line => {
+                                let parts = line.split(';');
+                                // GameID 25 = Katzenreflexe
+                                if (parts.length >= 4 && parts[1] === "25") { 
+                                    let score = parseInt(parts[2]); 
+                                    if (score > 0 && score < bestTime) bestTime = score;
+                                }
+                            });
+                            if (bestTime < 99999999) personalBests[i] = bestTime;
+                        }
+                    } catch(e) {}
+                }
+            }
+        }
+        loadPersonalBests();
+
+        // Speichert die Durchschnittszeit als Score und die Punkte als Extra
+        function savePlayerStat(idx, avgTime, points) {
+            let pid = sessionStorage.getItem(`p_id_${idx}`);
+            if (!pid || pid === "0") return;
+            let fd = new URLSearchParams();
+            fd.append('pid', pid);
+            fd.append('game', 25); 
+            fd.append('score', avgTime); 
+            fd.append('extra', points);    
+            fd.append('ts', Date.now());
+            fetch('/api/stats/player_save', { method: 'POST', body: fd }).catch(e => console.log(e));
+        }
+        // --- ENDE STATS LOGIK ---
+
         setInterval(updateStatus, 300); 
 
         function updateStatus() {
             fetch('/api/game/status').then(r=>r.json()).then(data => {
                 
-                document.getElementById('timer').innerText = formatTime(data.timeLeft || 0);
+                // RESET-Erkennung: Wenn der Status von etwas anderem auf 1 (Countdown) springt,
+                // wurde ein Neustart ausgelöst. Dann leeren wir die Arrays.
+                if (data.state === 1 && lastState !== 1) {
+                    playerReactTimes = {};
+                    savedStats = {};
+                    sessionRecords = {};
+                    roundRecorded = false;
+                }
                 
+                // Setze den Runden-Tracker zurück, bevor eine neue Auswertung ansteht
+                if (data.state <= 3) {
+                    roundRecorded = false;
+                }
+                
+                lastState = data.state;
+
+                document.getElementById('timer').innerText = formatTime(data.timeLeft || 0);
+            
                 let elText = document.getElementById('statusText');
                 let elBtn = document.getElementById('btnStart');
                 
                 let txt = "UNKNOWN";
                 let txtReset = getTranslation('btn_reset') || "RESET";
                 let txtStart = getTranslation('btn_start') || "START";
-                
-                // CatState Enums: 0=Setup, 1=Countdown, 2=Wait, 3=Green, 4=Result, 5=Finished
+
+                // Status mapping
                 if(data.state == 1) { txt = "READY..."; elBtn.innerText = txtStart; }
                 else if(data.state == 2) { txt = "WAIT..."; elBtn.innerText = txtReset; elText.style.color = "var(--warning)"; }
                 else if(data.state == 3) { txt = "PRESS!"; elBtn.innerText = txtReset; elText.style.color = "var(--success)"; }
@@ -107,7 +166,7 @@
                 else if(data.state == 5) { txt = "FINISHED"; elBtn.innerText = txtReset; elText.style.color = "var(--primary)"; }
                 else { txt = "SETUP"; elBtn.innerText = txtStart; elText.style.color = "var(--text-main)"; }
                 
-                if(data.state != 2 && data.state != 3) elText.style.color = "var(--text-main)"; 
+                if(data.state != 2 && data.state != 3) elText.style.color = "var(--text-main)";
                 elText.innerText = txt;
 
                 renderTable(data);
@@ -124,40 +183,73 @@
             let players = data.players || [];
             let isFinished = (data.state == 5);
 
-            // Medaillen am Ende berechnen (Platze 1 bis 3 basierend auf Punkten)
+            // Sammle die Reaktionszeiten während der Auswertungsphase (State 4) genau einmal ein
+            if (data.state == 4 && !roundRecorded) {
+                players.forEach((p, i) => {
+                    if (!playerReactTimes[i]) playerReactTimes[i] = [];
+                    // Nur Zeiten aufzeichnen, wenn rechtzeitig und gültig gedrückt wurde
+                    if (p.pressed && !p.early && p.reactTime > 0) {
+                        playerReactTimes[i].push(p.reactTime);
+                    }
+                });
+                roundRecorded = true;
+            }
+
+            // Medaillen für das Frontend am Ende berechnen
             let sortedScores = [];
             if (isFinished) {
                 sortedScores = [...new Set(players.map(p => p.points))].sort((a,b) => b-a);
             }
             
             players.forEach((p, i) => {
-                // FIX: Hier p_name_ statt cr_name_ auslesen!
                 let name = sessionStorage.getItem(`p_name_${i}`) || `Player ${i+1}`;
                 let color = COLORS[i % COLORS.length];
                 let rowClasses = "run-row";
                 
+                // Berechne den aktuellen Durchschnitt und ziehe die letzten 5 Werte
+                let times = playerReactTimes[i] || [];
+                let avg = times.length > 0 ? times.reduce((a, b) => a + b, 0) / times.length : 0;
+                
+                let last5 = times.slice(-5).map(t => (t/1000).toFixed(3)).join(", ");
+                let avgTxt = avg > 0 ? "Ø " + (avg/1000).toFixed(3) + "s" : "Ø ---";
+                let historyTxt = last5.length > 0 ? `[${last5}]` : "";
+                
+                // --- STATS SPEICHERN ---
+                if (isFinished && !savedStats[i]) {
+                    let finalScore = Math.round(avg);
+                    if (finalScore > 0) {
+                        if (!personalBests[i] || finalScore < personalBests[i]) {
+                            sessionRecords[i] = true;
+                            personalBests[i] = finalScore;
+                        }
+                        // Speichern der Ø-Zeit als Score, Punkte als Extra
+                        savePlayerStat(i, finalScore, p.points);
+                    }
+                    savedStats[i] = true;
+                }
+                
+                let recordIcon = sessionRecords[i] ? " <span title='Neuer Rekord!'>📈</span>" : "";
                 let pointsTxt = `⭐ ${p.points}`;
                 let timeTxt = p.reactTime > 0 ? (p.reactTime/1000).toFixed(3) + "s" : "---";
                 let medal = "";
 
-                // Highlight Logik waehrend der Auswertungsphase (State 4)
+                // Highlight Logik während der Auswertungsphase
                 if(data.state == 4) {
                     if (p.early) {
-                        rowClasses += " row-fail"; // Zu frueh -> rot
+                        rowClasses += " row-fail"; 
                         timeTxt = "TOO EARLY";
                     } else if (!p.pressed) {
-                        rowClasses += " row-fail"; // Zu spaet -> rot
+                        rowClasses += " row-fail"; 
                         timeTxt = "TOO SLOW";
                     } else if (p.winner) {
-                        rowClasses += " row-winner"; // Schnellster -> leuchtend gruen
+                        rowClasses += " row-winner"; 
                     } else if (p.pressed && !data.highlander && p.reactTime <= data.difficulty) {
-                        rowClasses += " row-ok"; // Regulaerer Treffer -> leicht gruen
+                        rowClasses += " row-ok"; 
                     } else {
-                        rowClasses += " row-fail"; // Gedrueckt aber zu spaet -> rot
+                        rowClasses += " row-fail"; 
                     }
                 }
 
-                // Medaillen bei Spielende verteilen
                 if (isFinished && p.points > 0) {
                     let rank = sortedScores.indexOf(p.points);
                     if (rank >= 0 && rank < 3) medal = MEDALS[rank];
@@ -166,18 +258,30 @@
                 let rowId = `run-row-${i}`;
                 let rowEl = document.getElementById(rowId);
 
+                // Baue den HTML Block für die Werte ganz rechts auf
+                let statsHtml = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <span class="p-diff" style="margin-right:15px;">${timeTxt}</span>
+                        <span style="font-weight:bold; font-size: 1.2rem;">${pointsTxt}</span>
+                    </div>
+                    <div style="margin-top: 5px; display:flex; justify-content:flex-end; align-items:center; gap:10px;">
+                        <span style="font-size:0.8rem; color:var(--text-muted); font-family:monospace;">${historyTxt}</span>
+                        <span style="color:var(--primary); font-size:1.1rem; font-weight:bold;">${avgTxt}</span>
+                    </div>
+                `;
+
                 if (!rowEl) {
                     container.insertAdjacentHTML('beforeend', `
                     <div id="${rowId}" class="${rowClasses}" style="border-left-color: ${color}">
-                        <div><div class="p-name" id="name-${i}">${medal} ${name}</div></div>
+                        <div><div class="p-name" id="name-${i}">${medal} ${name}${recordIcon}</div></div>
                         <div class="p-rounds" id="info-${i}">
-                            ${pointsTxt}<br><span class="p-diff">${timeTxt}</span>
+                            ${statsHtml}
                         </div>
                     </div>`);
                 } else {
                     if (rowEl.className !== rowClasses) rowEl.className = rowClasses;
-                    document.getElementById(`name-${i}`).innerHTML = `${medal} ${name}`;
-                    document.getElementById(`info-${i}`).innerHTML = `${pointsTxt}<br><span class="p-diff">${timeTxt}</span>`;
+                    document.getElementById(`name-${i}`).innerHTML = `${medal} ${name}${recordIcon}`;
+                    document.getElementById(`info-${i}`).innerHTML = statsHtml;
                 }
             });
         }
@@ -199,7 +303,7 @@
             let totalSec = Math.floor(ms / 1000);
             let m = Math.floor(totalSec / 60);
             let s = totalSec % 60;
-            let z = Math.floor((ms % 1000) / 100); 
+            let z = Math.floor((ms % 1000) / 100);
             return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}.${z}`;
         }
     </script>

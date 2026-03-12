@@ -63,7 +63,7 @@ const TRANSLATIONS = {
 
         // --- CAT REFLEX ---
         "cat_layout_title": "Puck Setup",
-        "cat_layout_desc": "Scatter the pucks as shown. The center puck (C3) is the indicator!",
+        "cat_layout_desc": "Scatter the pucks as shown. The center puck is the indicator!",
 
         // --- COUNTDOWN / COUNTER ---
         "cd_layout_title": "Setup Info",
@@ -268,7 +268,7 @@ const TRANSLATIONS = {
         "ex_sorting": '20 students, 4 houses. Algorithm guarantees exactly 5 students per house.', 
         "img_sorting": 'game_sorting.jpg',
         
-        "desc_bomb": 'Tick... Tock... Can you estimate time? Defuse the bomb at the exact right moment!', 
+        "desc_bomb": 'Tick... Tock... Can you estimate time? Defuse the bomb at the exact right moment! Group mode gives every player the same target time.', 
         "setup_bomb": 'Choose time (e.g. 5s), difficulty (tolerance), and rounds.', 
         "ex_bomb": 'Puck blinks 5x (=5s). Then countdown. Then silence. Press exactly after 5 seconds! Green = Defused, Red = BOOM.', 
         "img_bomb": 'game_bomb.jpg',
@@ -370,12 +370,27 @@ const TRANSLATIONS = {
         "cnt_run_limit_lbl": "Time Limit",
 
         // --- COUNTDOWN ---
-        "cd_setup_count": "🔢 Start Count",
-        "cd_setup_time": "⏱ Time Limit",
+        // Für Countdown Setup (game_countdown_setup.html)
+        "cd_setup_cfg": "⚙️ Configuration",
+        "cd_lbl_pucks": "Active Pucks:",
+        "cd_setup_count": "Start Count:",
+        "cd_setup_time": "Time Limit:",
         "cd_setup_opt": "⚠️ Options",
         "cd_setup_stopwin": "Stop after first winner",
         "cd_setup_warn": "Sound Warning at end",
+
+        // Für Countdown Names (game_countdown_names.html)
         "cd_names_title": "Players - Countdown",
+        "cd_layout_title": "Aufbau Info",
+        "cd_ph_player": "Spieler",
+
+        // Für Countdown Run (game_countdown_run.html)
+        "cnt_run_limit": "Limit:",
+        "cnt_run_wait": "Loading Scores...",
+
+        // Für Player Stats 
+        "g_3": "Countdown",
+        "ps_clicks": "Klicks",
         
         // --- SIMPLE TIMER ---
         "tmr_setup_time": "⏳ Set Time",
@@ -597,7 +612,7 @@ const TRANSLATIONS = {
         "bomb_st_2": "COUNTDOWN",
         "bomb_st_3": "RUNNING",
         "bomb_st_4": "FINISHED",
-		"bomb_run_hint": "Trainer Info: The pucks blink the target time (e.g. 5 blinks = 5 seconds). After that, a countdown sound plays. The timer starts when the countdown sound ends! Players must then count the seconds in their head and press at the right moment.",
+		"bomb_run_hint": "Trainer Info: The pucks blink the target time (e.g. 5 blinks = 5 seconds). After that, a countdown sound plays. Players must then count the seconds in their head and press at the right moment.",
 
         // --- PACEMAKER ---
         "pm_setup_route": "📍 Route Layout",
@@ -985,7 +1000,8 @@ const TRANSLATIONS = {
 
         // --- CAT REFLEX ---
         "cat_layout_title": "Puck Aufbau",
-        "cat_layout_desc": "Verteile die Pucks wie angezeigt. Der Puck in der Mitte (C3) ist der Anzeigepuck!",
+        "cat_layout_desc": "Verteile die Pucks wie angezeigt. Der Puck in der Mitte ist der Anzeigepuck!",
+        
 
         // --- COUNTDOWN / COUNTER ---
         "cd_layout_title": "Aufbau Info",
@@ -1189,7 +1205,7 @@ const TRANSLATIONS = {
         "img_sorting": 'game_sorting.jpg',
         
         "desc_bomb": 'Tick... Tack... Kannst du die Zeit einschätzen? Entschärfe die Bombe im richtigen Moment!', 
-        "setup_bomb": 'Wähle Zeit (z.B. 5s), Schwierigkeit (Toleranz) und Rundenanzahl.', 
+        "setup_bomb": 'Wähle Zeit (z.B. 5s), Schwierigkeit (Toleranz) und Rundenanzahl. Der Gruppenmodus synchronisiert die Bomben für alle Spieler. Alle Pucks blinken gleichzeitig als Countdown. Nach Ablauf des Countdowns herrscht Stille – jetzt musst du genau im richtigen Moment drücken!', 
         "ex_bomb": 'Puck blinkt 5x (=5s). Dann Countdown. Dann Stille. Drücke genau nach 5 Sekunden! Grün = Entschärft, Rot = BOOM. Die Schwierigkeit gibt das Toleranzzeitfenster vor.', 
         "img_bomb": 'game_bomb.jpg',
         
@@ -1294,14 +1310,30 @@ const TRANSLATIONS = {
         "cnt_run_wait": "Warte auf Spieler...",
         "cnt_run_limit_lbl": "Zeitlimit",
 
-        // --- COUNTDOWN ---
-        "cd_setup_count": "🔢 Start-Zahl",
-        "cd_setup_time": "⏱ Zeitlimit",
+        // --- GAME 3: COUNTDOWN ---
+
+        // Setup
+        "cd_setup_cfg": "⚙️ Konfiguration",
+        "cd_lbl_pucks": "Aktive Pucks:",
+        "cd_setup_count": "Startwert (Klicks):",
+        "cd_setup_time": "Zeitlimit:",
         "cd_setup_opt": "⚠️ Optionen",
-        "cd_setup_stopwin": "Stoppen beim 1. Gewinner",
-        "cd_setup_warn": "Warnton am Ende",
+        "cd_setup_stopwin": "Stoppen nach dem 1. Sieger",
+        "cd_setup_warn": "Warnton kurz vor Ende",
+
+        // Names
         "cd_names_title": "Spieler - Countdown",
-        
+        "cd_layout_title": "Aufbau Info",
+        "cd_ph_player": "Spieler",
+
+        // Run
+        "cnt_run_limit": "Limit:",
+        "cnt_run_wait": "Warte auf Ergebnisse...",
+
+        // Player Stats
+        "g_3": "Countdown",
+        "ps_clicks": "Klicks",
+                
         // --- SIMPLE TIMER ---
         "tmr_setup_time": "⏳ Zeit einstellen",
         "tmr_setup_time_hint": "(10 Sekunden bis 60 Minuten)",
@@ -1523,7 +1555,7 @@ const TRANSLATIONS = {
         "bomb_st_2": "ACHTUNG...",
         "bomb_st_3": "LÄUFT",
         "bomb_st_4": "FERTIG",
-		"bomb_run_hint": "Trainer Info: Die Pucks blinken die Zielzeit vor (z.B. 5x Blinken = 5 Sekunden). Danach ertönt ein Countdown. Die Zeit läuft los, wenn der Countdown-Ton endet! Die Spieler müssen dann die Sekunden im Kopf zählen und im richtigen Moment drücken.",
+		"bomb_run_hint": "Trainer Info: Die Pucks blinken die Zielzeit vor (z.B. 5x Blinken = 5 Sekunden). Danach ertönt ein Countdown. Die Spieler müssen dann die Sekunden im Kopf zählen und im richtigen Moment drücken.",
 				
         // --- PACEMAKER ---
         "pm_setup_route": "📍 Strecken-Aufbau",
@@ -1847,7 +1879,26 @@ const TRANSLATIONS = {
         "tm_back_training": "↩ Zurück zum Training",
         "tm_cfg_banner": "Training-Konfiguration",
         "tm_cfg_banner_sub": "Einstellungen werden im Training gespeichert",
-        "tm_cfg_save": "💾 Einstellungen für Training speichern"
+        "tm_cfg_save": "💾 Einstellungen für Training speichern",
+
+        // Statistik und playermanager
+        "pm_export_title": "📊 Gruppen-Statistik Export",
+        "pm_export_loading": "Lade Daten vom ESP32...",
+        "pm_export_empty": "Keine Spieldaten für diese Gruppe gefunden.",
+        "pm_export_desc": "Wähle die Spiele, die du als CSV exportieren möchtest (Für Excel optimiert):",
+        "pm_export_entries": "Einträge",
+        "pm_export_started": "Download gestartet...",
+        "pm_stat_view": "Statistiken ansehen",
+        // Keys für die CSV Tabellenköpfe
+        "ps_name": "Name",
+        "ps_time_h": "Uhrzeit",
+        "ps_time_s": "Zeit (s)",
+        "ps_dev_avg_s": "Ø Abweichung (s)",
+        "ps_best_s": "Beste Runde (s)",
+        "ps_react_s": "Reaktion (s)",
+        "ps_survived_s": "Überlebt (s)",
+        "ps_react_avg_s": "Ø Reaktion (s)",
+        "ps_win_bool": "Sieg (1=Ja)"
 
     }
 };

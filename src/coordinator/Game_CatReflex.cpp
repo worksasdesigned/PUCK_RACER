@@ -41,11 +41,10 @@ void Game_CatReflex::processCommand(String cmd, int value) {
 
 void Game_CatReflex::startSequence(bool forceRestart) {
     if (!forceRestart && state != CR_SETUP && state != CR_FINISHED) return;
-    
     Serial.println("GAME: Cat Reflex Start Countdown");
     state = CR_START_COUNTDOWN;
     stateStartTime = millis();
-    gameStartTime = millis();
+    gameStartTime = millis(); // Initialwert setzen (wird spaeter ueberschrieben)
     finishTime = 0;
     
     // Punkte nullen
@@ -65,9 +64,9 @@ void Game_CatReflex::startSequence(bool forceRestart) {
 
 void Game_CatReflex::loop() {
     unsigned long now = millis();
-
-    // Globale Zeitueberwachung (nur wenn das Spiel aktiv laeuft)
-    if (state != CR_SETUP && state != CR_FINISHED) {
+    
+    // Globale Zeitueberwachung (nur wenn das Spiel aktiv laeuft UND der Countdown vorbei ist!)
+    if (state != CR_SETUP && state != CR_FINISHED && state != CR_START_COUNTDOWN) {
         if (now - gameStartTime >= (gameDurationSec * 1000UL)) {
             stopGame();
             return;
@@ -80,8 +79,13 @@ void Game_CatReflex::loop() {
             if (now - stateStartTime >= 3100) {
                 state = CR_WAIT_GREEN;
                 stateStartTime = now;
+                
+                // HIER DER FIX: Die echte Spielzeit (Countdown-Uhr) startet erst jetzt!
+                gameStartTime = now; 
+                
                 greenDelayMs = random(1000, 3001); // 1-3 Sekunden Wartezeit
-                setPuck(0, EFF_OFF, CRGB::Black);  // Anzeigepuck aus
+                setPuck(0, EFF_OFF, CRGB::Black);
+                // Anzeigepuck aus
                 
                 // Runden-Tracking fuer Spieler resetten
                 for(int p=1; p<=playerCount; p++) {
@@ -92,7 +96,7 @@ void Game_CatReflex::loop() {
                 }
             }
             break;
-
+            
         case CR_WAIT_GREEN:
             // Farbchaos Logik (alle 300ms Farbe wechseln)
             if (colorChaos && (now - lastChaosTime > 300)) {
@@ -108,7 +112,7 @@ void Game_CatReflex::loop() {
                 setPuck(0, EFF_STATIC, CRGB::Green, 0, 255); // GRUEN!
             }
             break;
-
+            
         case CR_GREEN_ACTIVE: {
             // Scope in geschweifte Klammern gesetzt, um Kompilierungsfehler zu vermeiden
             // Runde beenden, wenn 2.5 Sekunden lang nichts passiert ist
@@ -131,7 +135,8 @@ void Game_CatReflex::loop() {
                 state = CR_WAIT_GREEN;
                 stateStartTime = now;
                 greenDelayMs = random(1000, 3001);
-                setPuck(0, EFF_OFF, CRGB::Black); // Anzeigepuck wieder aus
+                setPuck(0, EFF_OFF, CRGB::Black);
+                // Anzeigepuck wieder aus
                 
                 // Spielerpucks zurueck auf Standard Chase
                 for(int p=1; p<=playerCount; p++) {
@@ -144,12 +149,13 @@ void Game_CatReflex::loop() {
                 }
                 
                 // Kurzer Beep fuer naechste Runde auf Anzeigepuck
-                CommandPacket snd; memset(&snd, 0, sizeof(snd));
+                CommandPacket snd;
+                memset(&snd, 0, sizeof(snd));
                 snd.cmd = CMD_SOUND; snd.duration = 200;
                 PuckNetwork::sendToPuck(PuckNetwork::getPucks()[0].mac, snd);
             }
             break;
-
+            
         default:
             break;
     }
@@ -163,7 +169,7 @@ void Game_CatReflex::handleEvent(int puckIndex, EventPacket event) {
     
     // Sicherstellen, dass der Index im Rahmen bleibt
     if (puckIndex > playerCount) return;
-
+    
     if (state == CR_WAIT_GREEN) {
         // ZU FRUEH GEDRUECKT (Fehlstart)
         if (!roundEarly[puckIndex]) {
@@ -264,19 +270,20 @@ void Game_CatReflex::stopGame() {
     }
     
     // Fanfare auf dem Anzeigepuck
-    CommandPacket snd; memset(&snd, 0, sizeof(snd));
+    CommandPacket snd;
+    memset(&snd, 0, sizeof(snd));
     snd.cmd = CMD_SEQUENCE; snd.extra = SEQ_FANFARE;
     PuckNetwork::sendToPuck(PuckNetwork::getPucks()[0].mac, snd);
 }
 
 void Game_CatReflex::resetGame() {
-    setup(); 
+    setup();
 }
 
 void Game_CatReflex::exitGame() {
     state = CR_SETUP;
     CommandPacket light; memset(&light, 0, sizeof(light));
-    light.cmd = CMD_EFFECT; light.effectID = EFF_STATUS; 
+    light.cmd = CMD_EFFECT; light.effectID = EFF_STATUS;
     light.r = 0; light.g = 255; light.b = 0; 
     light.extra = 255; light.duration = 0; 
     PuckNetwork::broadcast(light);
@@ -289,7 +296,8 @@ void Game_CatReflex::setPuck(int puckIndex, int effect, CRGB color, int speed, i
     
     CommandPacket cp; memset(&cp, 0, sizeof(cp));
     cp.cmd = CMD_EFFECT; cp.effectID = effect;
-    cp.r = color.r; cp.g = color.g; cp.b = color.b;
+    cp.r = color.r;
+    cp.g = color.g; cp.b = color.b;
     cp.duration = speed; cp.extra = bright;
     PuckNetwork::sendToPuck(p[puckIndex].mac, cp);
 }
@@ -308,7 +316,11 @@ String Game_CatReflex::getStatusJSON() {
     json += "\"difficulty\":" + String(difficultyMs) + ",";
     
     long elapsed = 0;
-    if (state != CR_SETUP && state != CR_FINISHED) {
+    
+    // HIER DER FIX: Während dem Setup und dem Countdown steht die Uhr im Frontend still auf 0
+    if (state == CR_START_COUNTDOWN || state == CR_SETUP) {
+        elapsed = 0; 
+    } else if (state != CR_SETUP && state != CR_FINISHED) {
         elapsed = millis() - gameStartTime;
     } else if (state == CR_FINISHED) {
         elapsed = finishTime - gameStartTime;
