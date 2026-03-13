@@ -7,11 +7,12 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Whac-A-Mole Live</title>
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=8">
     <style>
         .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color);}
         .big-time { font-size: 4rem; font-family: monospace; color: var(--text-main); font-weight: bold; line-height:1;}
-        .target-time { color: var(--text-muted); font-size: 1.2rem; margin-top: 5px; font-weight:normal; }
+        .status-txt { font-size: 1.2rem; color: var(--warning); text-transform: uppercase; margin-top:5px; font-weight:bold;}
+        .target-time { color: var(--text-muted); font-size: 1rem; margin-top: 5px; font-weight:normal; }
 
         .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 15px; }
         .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
@@ -46,6 +47,7 @@
     <main>
         <div class="top-info">
             <div class="big-time" id="globalTime">00:00.0</div>
+            <div class="status-txt" id="stateInfo">WAITING</div>
             <div class="target-time" id="globalTarget">Loading...</div>
         </div>
 
@@ -69,6 +71,10 @@
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
         const GRP_COLORS = ['#800080', '#00FFFF', '#FFA500'];
         
+        // Exaktes C++ Backend State Mapping:
+        // 0=SETUP, 1=LAYOUT (Idle), 2=START_SKI, 3=START_TARGETS, 4=RUNNING, 5=FINISHED_RAINBOW, 6=FINISHED_WHITE
+        const STATES = ["SETUP", "READY", "GET READY", "TARGETS", "RUNNING", "FINISHED", "FINISHED"];
+        
         function t(key, fallback) {
             if (typeof getTranslation !== 'function') return fallback;
             let val = getTranslation(key);
@@ -80,7 +86,6 @@
         let sessionRecords = {};
         let nGrp = parseInt(sessionStorage.getItem('whac_grp') || 1);
 
-        // Korrigierter Schlüssel: whac_col statt whac_cols
         let numTargetColors = parseInt(sessionStorage.getItem('whac_col') || 1);
         let timeLimitSecs = parseInt(sessionStorage.getItem('whac_time') || 60);
 
@@ -127,42 +132,52 @@
         function updateStatus() {
             fetch('/api/game/status').then(r=>r.json()).then(data => {
                  
-                // C++ sendet die Zeit in 'gT'
                 if (data.gT !== undefined) {
                     document.getElementById('globalTime').innerText = formatTimeBig(data.gT);
                 }
                 
-                let btn = document.getElementById('btnStart');
+                // Status Text Update
+                let stTxt = STATES[data.st] || "UNKNOWN";
+                let stCol = "var(--warning)";
+                if(data.st === 4) { stCol = "var(--success)"; stTxt = t("btn_running", "RUNNING"); }
+                if(data.st >= 5) { stCol = "gold"; stTxt = t("whac_st_finish", "FINISHED"); }
+                if(data.st === 1) { stCol = "var(--primary)"; stTxt = "READY"; } // Neu: C++ Layout Mode = Bereit!
                 
-                // Status Mapping Backend: 0=SETUP, 1=LAYOUT, 2=START_SKI, 3=RUNNING, 4=FINISHED
-                if (data.st === 0 || data.st === 4) { 
-                    btn.innerText = (data.st === 4) ? t('btn_reset', 'RESET') : t('btn_start_all', 'START ALL'); 
+                let stateEl = document.getElementById('stateInfo');
+                if(stateEl) {
+                    stateEl.innerText = stTxt;
+                    stateEl.style.color = stCol;
+                }
+
+                // Button Update
+                let btn = document.getElementById('btnStart');
+                // Wenn im Setup (0), Bereit-Modus (1) oder beendet (5,6) -> Startknopf zeigen
+                if (data.st === 0 || data.st === 1 || data.st >= 5) { 
+                    btn.innerText = t('btn_start_all', 'START ALL'); 
                     btn.style.background = "var(--primary)"; 
-                    btn.setAttribute('onclick', data.st === 0 ? "doAction('start')" : "doAction('reset')");
+                    btn.setAttribute('onclick', "doAction('start')");
                 } else { 
+                    // Während Skistart (2), TargetShow (3) oder Running (4) -> Blockieren
                     btn.innerText = t('btn_running', 'RUNNING');
                     btn.style.background = "var(--card-hover)"; 
                     btn.removeAttribute('onclick');
                 }
 
-                // C++ sendet das Limit nicht mehr mit, wir haben es aber im sessionStorage
                 let m = Math.floor(timeLimitSecs / 60);
                 let s = timeLimitSecs % 60;
                 document.getElementById('globalTarget').innerText = `${t('lbl_time_limit', 'Limit:')} ${m}m ${s.toString().padStart(2,'0')}s`;
 
-                // C++ sendet das Array als 'grps'
                 if (data.grps) {
                     let saveQueueDelay = 0;
                     data.grps.forEach((g, i) => {
-                        // Reset wenn Status kleiner 4
+                        // Reset Flag, wenn Status < 4 (also 0,1,2,3 -> beim Neustart)
                         if (data.st < 4) {
                             groupSaved[i] = false;
                             sessionRecords[i] = false;
                         }
                         
-                        // Wenn Spiel beendet (Status 4) und noch nicht gespeichert
-                        if (data.st === 4 && !groupSaved[i]) {
-                            // C++ sendet Treffer als 'sc' statt 'h'
+                        // Wenn Spiel beendet (Status 5 oder 6) und noch nicht gespeichert
+                        if (data.st >= 5 && !groupSaved[i]) {
                             if (g.sc > 0 || g.m > 0) { 
                                 if (g.sc > personalBests[i]) {
                                     personalBests[i] = g.sc;
@@ -209,9 +224,9 @@
                 
                 let icon = "";
                 if (globalState === 0 || globalState === 1) icon = "💤";
-                else if (globalState === 2) icon = "⌛";
-                else if (globalState === 3) icon = "🎯";
-                else if (globalState === 4) icon = "🏁";
+                else if (globalState === 2 || globalState === 3) icon = "⌛";
+                else if (globalState === 4) icon = "🎯";
+                else if (globalState >= 5) icon = "🏁";
 
                 let recIcon = sessionRecords[i] ? ` <span title='${t("bat_new_pers", "Neuer Persönlicher Rekord!")}'>📈</span>` : "";
 
@@ -241,7 +256,6 @@
                     let iconEl = document.getElementById(`st-icon-${i}`);
                     if (iconEl.innerText !== icon) iconEl.innerText = icon;
 
-                    // Treffer kommen vom ESP32 im JSON als 'sc'
                     document.getElementById(`hits-${i}`).innerText = g.sc;
                     document.getElementById(`miss-${i}`).innerText = g.m;
                 }
