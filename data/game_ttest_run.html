@@ -7,10 +7,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>T-Test Live</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=5">
     <style>
         .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color);}
-        .target-time { font-size: 1.5rem; color: var(--primary); font-weight:bold;}
+        .big-time { font-size: 4rem; font-family: monospace; color: var(--text-main); font-weight: bold; line-height:1;}
+        .target-time { color: var(--text-muted); font-size: 1.2rem; margin-top: 5px; font-weight:normal; }
 
         .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 15px; }
         .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
@@ -40,15 +41,16 @@
 <body>
     <header>
         <div class="logo" data-i18n="g_ttest">Agility T-Test 🏃‍♂️</div>
-     <div class="status-bar">
-    <div class="status-dot dot-green" id="cnt-green">0</div>
-    <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
-    <div class="status-dot dot-red" id="cnt-red">0</div>
-</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
     </header>
 
     <main>
         <div class="top-info">
+            <div class="big-time" id="globalTime">00:00.0</div>
             <div class="target-time" id="globalTarget">Loading...</div>
         </div>
 
@@ -67,13 +69,59 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
-<script>startStatusLoop();</script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
-
         const GRP_COLORS = ['#0000FF', '#FF0000'];
-        let tRestart = getTranslation('tt_btn_restart');
-        let tStop = getTranslation('tt_btn_stop');
+        
+        // Kugelsichere Übersetzungs-Funktion
+        function t(key, fallback) {
+            if (typeof getTranslation !== 'function') return fallback;
+            let val = getTranslation(key);
+            return (val && val !== key) ? val : fallback;
+        }
+
+        // STATS LOGIK
+        let groupSaved = {};
+        let personalBests = {};
+        let sessionRecords = {};
+        let nGrp = parseInt(sessionStorage.getItem('tt_groups') || 1);
+
+        async function loadPersonalBests() {
+            for(let i=0; i<nGrp; i++) {
+                personalBests[i] = 0;
+                let pid = sessionStorage.getItem(`p_id_${i}`);
+                if (pid && pid !== "0") {
+                    try {
+                        let r = await fetch('/s_' + pid + '.csv?_t=' + Date.now());
+                        if (r.ok) {
+                            let text = await r.text();
+                            let lines = text.split(/\r?\n/);
+                            lines.forEach(line => {
+                                let parts = line.split(';');
+                                if (parts.length >= 4 && parts[1] === "14") { 
+                                    let sc = parseFloat(parts[3]); // Wir speichern den Score in ex1 (als String/Float)
+                                    if (sc > personalBests[i]) personalBests[i] = sc;
+                                }
+                            });
+                        }
+                    } catch(e) {}
+                }
+            }
+        }
+        loadPersonalBests();
+
+        function savePlayerStat(idx, timeMs, scoreStr) {
+            let pid = sessionStorage.getItem(`p_id_${idx}`);
+            if (!pid || pid === "0") return;
+            let fd = new URLSearchParams();
+            fd.append('pid', pid);
+            fd.append('game', 14); 
+            fd.append('score', timeMs); // Zeit in Spalte 'Score'
+            fd.append('ex1', scoreStr); // Den T-Test Score in Spalte 'Ex1'
+            fd.append('ts', Date.now());
+            fetch('/api/stats/player_save', { method: 'POST', body: fd }).catch(e => console.log(e));
+        }
 
         document.getElementById('gameBoard').addEventListener('click', function(e) {
             let btn = e.target.closest('.action-btn');
@@ -88,36 +136,74 @@
         function updateStatus() {
             fetch('/api/game/status').then(r=>r.json()).then(data => {
                  
-                
+                // Globale Stoppuhr
+                let maxTime = 0;
+                if (data.groups) {
+                    data.groups.forEach(g => { if (g.time > maxTime) maxTime = g.time; });
+                }
+                document.getElementById('globalTime').innerText = formatTimeBig(maxTime);
+
+                // Ziel-Limit
                 if (data.limit) {
                     let m = Math.floor(data.limit / 60000);
                     let s = Math.floor((data.limit % 60000) / 1000);
-                    document.getElementById('globalTarget').innerText = `${getTranslation('lbl_time_limit')} ${m}m ${s.toString().padStart(2,'0')}s`;
+                    document.getElementById('globalTarget').innerText = `${t('lbl_time_limit', 'Limit:')} ${m}m ${s.toString().padStart(2,'0')}s`;
                 }
 
-                // Globaler Button Status
                 let btn = document.getElementById('btnStart');
                 if (data.groups && data.groups.length > 0) {
                     let firstSt = data.groups[0].st;
                     if (firstSt === 0 || firstSt === 5) { 
-                        btn.innerText = (firstSt === 5) ? getTranslation('btn_reset') : getTranslation('btn_start_all'); 
+                        btn.innerText = (firstSt === 5) ? t('btn_reset', 'RESET') : t('btn_start_all', 'START ALL'); 
                         btn.style.background = "var(--primary)"; 
                     } else { 
-                        btn.innerText = getTranslation('btn_running'); 
+                        btn.innerText = t('btn_running', 'RUNNING');
                         btn.style.background = "var(--card-hover)"; 
                     }
                 }
 
+                // Statistiken prüfen & mit Warteschlange (Queue) speichern
+                if (data.groups) {
+                    let saveQueueDelay = 0;
+                    data.groups.forEach((g, i) => {
+                        if (g.st < 4) {
+                            groupSaved[i] = false;
+                            sessionRecords[i] = false;
+                        }
+                        
+                        if (g.st === 5 && !groupSaved[i]) {
+                            if (g.sc > 0 || g.time > 0) { 
+                                // Persönlicher Rekord (Höherer Score = Besser)
+                                if (g.sc > personalBests[i]) {
+                                    personalBests[i] = g.sc;
+                                    sessionRecords[i] = true;
+                                }
+                                setTimeout(() => savePlayerStat(i, g.time, g.sc.toFixed(2)), saveQueueDelay);
+                                saveQueueDelay += 200;
+                            }
+                            groupSaved[i] = true;
+                        }
+                    });
+                }
+
                 renderTable(data.groups);
             }).catch(e => {
-                document.getElementById('conn-stat').style.opacity = 0.2;
+                document.getElementById('cnt-green').style.opacity = 0.2;
             });
         }
 
+        function formatTimeBig(ms) {
+            let totalSec = Math.floor(ms / 1000);
+            let m = Math.floor(totalSec / 60);
+            let s = totalSec % 60;
+            let z = Math.floor((ms % 1000) / 100); 
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}.${z}`;
+        }
+
         function formatTime(ms) {
-            let t = Math.floor(ms / 1000);
-            let m = Math.floor(t / 60);
-            let s = t % 60;
+            let tVal = Math.floor(ms / 1000);
+            let m = Math.floor(tVal / 60);
+            let s = tVal % 60;
             let dec = Math.floor((ms % 1000) / 100);
             return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}.${dec}`;
         }
@@ -126,7 +212,10 @@
             let container = document.getElementById('gameBoard');
             if (!groups) return;
             
-            let tScore = getTranslation('tt_run_score');
+            let tScore = t('tt_run_score', 'Score');
+            let tTime = t('tgt_run_time', 'Time');
+            let tRestart = t('tt_btn_restart', 'RESTART');
+            let tStop = t('tt_btn_stop', 'STOP');
 
             groups.forEach((g, i) => {
                 let rowId = `tt-grp-${i}`;
@@ -143,20 +232,23 @@
                 else if (g.st === 4) icon = "🏃";
                 else if (g.st === 5) icon = "🏁";
 
+                // Persönlicher Rekord Icon
+                let recIcon = sessionRecords[i] ? ` <span title='${t("bat_new_pers", "Neuer Persönlicher Rekord!")}'>📈</span>` : "";
+
                 if (!rowEl) {
                     container.insertAdjacentHTML('beforeend', `
                     <div id="${rowId}" class="${rowClass}" style="border-left-color: ${color}">
                         <div class="grp-head">
-                            <span class="g-name">${gName}</span>
+                            <span class="g-name">${gName}${recIcon}</span>
                             <span id="st-icon-${i}" class="g-status">${icon}</span>
                         </div>
                         <div class="run-stats">
                             <div class="stat-col">
-                                <div class="stat-lbl">Time</div>
+                                <div class="stat-lbl" id="lbl-time-${i}">${tTime}</div>
                                 <div id="time-${i}" class="stat-val">00:00.0</div>
                             </div>
                             <div class="stat-col">
-                                <div class="stat-lbl">${tScore}</div>
+                                <div class="stat-lbl" id="lbl-score-${i}">${tScore}</div>
                                 <div id="score-${i}" class="stat-val score">${g.sc.toFixed(2)}</div>
                             </div>
                         </div>
@@ -168,8 +260,15 @@
                 } else {
                     if (rowEl.className !== rowClass) rowEl.className = rowClass;
                     
+                    let nameEl = rowEl.querySelector('.g-name');
+                    let newNameHtml = `${gName}${recIcon}`;
+                    if (nameEl.innerHTML !== newNameHtml) nameEl.innerHTML = newNameHtml;
+
                     let iconEl = document.getElementById(`st-icon-${i}`);
                     if (iconEl.innerText !== icon) iconEl.innerText = icon;
+
+                    document.getElementById(`lbl-time-${i}`).innerText = tTime;
+                    document.getElementById(`lbl-score-${i}`).innerText = tScore;
 
                     document.getElementById(`time-${i}`).innerText = formatTime(g.time);
                     document.getElementById(`score-${i}`).innerText = g.sc.toFixed(2);
@@ -179,8 +278,9 @@
                     
                     if (btnStart.style.opacity === "0.5") btnStart.style.opacity = "1";
                     if (btnStop.style.opacity === "0.5") btnStop.style.opacity = "1";
-                    if (btnStart.innerText !== tRestart) btnStart.innerText = tRestart;
-                    if (btnStop.innerText !== tStop) btnStop.innerText = tStop;
+                    
+                    btnStart.innerText = tRestart;
+                    btnStop.innerText = tStop;
                 }
             });
         }

@@ -35,7 +35,7 @@ function updateHeader(pucks) {
 function updateSettingsTable(pucks) {
     let html = '';
     if (pucks.length === 0) {
-        html = '<tr><td colspan="4">No Pucks connected</td></tr>';
+        html = `<tr><td colspan="4">${getTranslation('err_no_pucks')}</td></tr>`;
     } else {
         pucks.forEach((p, i) => {
             if(p.active) {
@@ -57,10 +57,10 @@ function updateSettingsTable(pucks) {
 }
 
 function triggerPuckUpdate() {
-    if(confirm("Force ALL Pucks into Update Mode?")) {
+    if(confirm(getTranslation('confirm_force_ota'))) {
         fetch('/api/trigger_ota')
-            .then(() => alert("Command sent!"))
-            .catch(e => alert("Error: " + e));
+            .then(() => alert(getTranslation('alert_cmd_sent')))
+            .catch(e => alert(getTranslation('alert_error') + e));
     }
 }
 
@@ -71,7 +71,7 @@ setInterval(function() {
             let t = document.createElement('div');
             t.id = 'ramWarn';
             t.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#aa0000;color:#fff;padding:10px 15px;z-index:99999;text-align:center;font-size:0.85rem;font-weight:bold;animation:fade 0.3s;';
-            t.innerHTML = '⚠️ LOW MEMORY: ' + Math.round(d.free/1024) + 'KB free – System may become unstable!';
+            t.innerHTML = getTranslation('warn_low_memory').replace('{kb}', Math.round(d.free/1024));
             document.body.appendChild(t);
         } else if (d.free >= 25000 && document.getElementById('ramWarn')) {
             document.getElementById('ramWarn').remove();

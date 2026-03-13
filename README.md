@@ -80,320 +80,89 @@ After the real first beta is released il will provide the bin files in case of u
 
 ## 🎮 The Games
 
-## Puck Racer System – Modes Overview
+**26 games** across 4 categories. Highly adjustable, multi-player and multi-group support.
 
-The Puck Racer System offers a wide range of modes, from simple measurement tools to high-intensity, gamified training experiences.
-
-## Focus Legend
-
-⚡ Reaction: Hand-eye coordination and fast stimulus processing  
-🏃‍♂️ Agility: Rapid direction changes, sprints, and footwork  
-🫀 Endurance: Cardiovascular load and pacing  
-🧠 Cognition: Memory, timing, and stress resistance  
-🤪 Fun: Teambuilding and motivation, especially for kids and youth  
-🛠️ Utility: Practical tools for coaches and teachers  
+| Focus | Icon |
+|---|---|
+| Hand-eye coordination, fast stimulus processing | ⚡ Reaction |
+| Rapid direction changes, sprints, footwork | 🏃‍♂️ Agility |
+| Cardiovascular load and pacing | 🫀 Endurance |
+| Memory, timing, stress resistance | 🧠 Cognition |
+| Teambuilding and motivation | 🤪 Fun |
+| Practical tools for coaches and teachers | 🛠️ Utility |
 
 ---
 
-## 🏃‍♂️ Agility & Reaction
+### ⚡🏃‍♂️ Agility & Reaction
 
-## 🎯 Hunt! (Color Hunt)
-
-Chase your assigned color around a circle or across the field. A dynamic drill that forces quick direction changes, peripheral awareness, and sprinting under time pressure. When one puck lights up and gets pressed, the next one appears. Fail to reach it in time and you get penalized.
-
-**Players:** 1–10  
-**Pucks:** 3–20 (distributed in the area)  
-**Focus:** ⚡ Reaction, 🏃‍♂️ Agility, 🧠 Cognition  
-**Features:** Dynamic queues, adjustable difficulty (timeout), visual 1-second warning  
-
----
-
-## ⚡ React 2-Player
-
-The ultimate head-to-head duel. Two players face each other across a row of pucks. Each player has their own color. When it lights up, react faster than your opponent.
-
-**Groups:** 1–5 (duel pairs)  
-**Pucks:** 3–10 per group  
-**Focus:** ⚡ Reaction, 🧠 Cognition  
-**Features:** Configurable number of colors per player, fake colors for confusion  
+| Game | Players | Pucks | Focus | Highlights |
+|------|---------|-------|-------|------------|
+| 🎯 **Hunt! (Color Hunt)** | 1–10 | 3–20 | ⚡ 🏃‍♂️ 🧠 | Dynamic queues, adjustable timeout, 1-sec warning |
+| ⚡ **React 2-Player** | 2–10 (pairs) | 3–10/group | ⚡ 🧠 | Configurable colors, fake stimuli for confusion |
+| 🎯 **Target Touch** | 1–5 groups | 2–10/group | ⚡ 🛠️ | Sequence or random mode, rest time control |
+| 🏃‍♂️ **Agility T-Test** | 1–2 groups | 4/group | 🏃‍♂️ | Standard T-test layout, mandatory touch mode |
+| 🐱 **Cat Reflex** | 1–11 | 1/player + 1 center | ⚡ | Highlander mode, Color Chaos (false-start training) |
+| ⚡🎯 **Batak Pro** | 1 | 3–20 | ⚡ 🧠 | Adaptive speed, fake colors, per-puck reaction analysis |
 
 ---
 
-## 🎯 Target Touch
+### 🫀 Endurance & Pacing
 
-Improves core stability and reaction time. Ideal as a smart assistant for sit-ups, planks, wall jumps, and similar exercises. Players must touch pucks in a predefined or random sequence.
-
-**Groups:** 1–5  
-**Pucks:** 2–10 per group  
-**Focus:** ⚡ Reaction, 🛠️ Utility  
-**Features:** Adjustable rest times, sequence or random mode, time or round limits  
-
----
-
-## 🏃‍♂️💨 Agility T-Test
-
-Digital implementation of the global standard agility test. Pucks are arranged in a T-shape to train sprints and multidirectional movement.
-
-**Groups:** 1–2  
-**Pucks:** Exactly 4 per group  
-**Focus:** 🏃‍♂️ Agility  
-**Features:** Automatic pacing or mandatory touch mode  
+| Game | Players | Pucks | Focus | Highlights |
+|------|---------|-------|-------|------------|
+| ⏱️ **The Pacemaker** | Groups | 4–20 | 🫀 🧠 | Exact pace (min/km), circle or shuttle, live distance |
+| 🏃‍♂️ **Luc Léger (Beep Test)** | 1–10 | 2/player | 🫀 | Official VO₂max tables, false start detection |
+| 🏃‍♂️ **Shuttle Run** | 1–5 | 2/player | 🏃‍♂️ 🫀 | Winner detection, false start detection |
+| 🧟 **Zombie Escape** | 1–10 groups | 2/group | 🫀 🧠 🤪 | Auto time reduction, sudden death mode |
 
 ---
 
-## 🫀 Endurance & Pacing
+### 🧠🤪 Cognition & Fun
 
-## ⏱️🟢 The Pacemaker
-
-A virtual pacer that maintains an exact target speed. Pucks are placed at fixed intervals. A moving light indicates the precise pace. The runner must reach each puck before the light turns off.
-
-**Players:** Entire running groups  
-**Pucks:** 4–20  
-**Focus:** 🫀 Endurance, 🧠 Cognition  
-**Features:** Circle or shuttle mode, live distance calculation, precise pace control  
-
----
-
-## 🏃‍♂️🔁⏱️ Luc Léger (Beep Test)
-
-The classic progressive shuttle run test for estimating VO₂max. Signal frequency increases every minute.
-
-**Players:** 1–10  
-**Pucks:** 2 per player  
-**Focus:** 🫀 Endurance  
-**Features:** Official tables included, live VO₂max calculation, false start detection  
+| Game | Players | Pucks | Focus | Highlights |
+|------|---------|-------|-------|------------|
+| 🔴 **Simon Says** | 1–3 groups | 2–10/group | 🧠 | Adjustable speed, color-blind palette |
+| 🏃‍♂️ **Simon Runs** | 1–3 groups | 1 display + inputs | 🧠 🏃‍♂️ | Central display mode, disqualification management |
+| 💣 **Bomb Squad** | 1–10 | 1/player | 🧠 🤪 | Adjustable tolerance, group sync mode, explosion feedback |
+| 🚦 **Red Light, Green Light** | 1–10 groups | 1–20 | 🤪 ⚡ | Grace period, coach override |
+| 🎩 **The Sorting Hat** | 2–100 | 1–3 | 🛠️ 🤪 | Balanced assignment, live rebalance |
+| 🧠 **Memory Sprint** | 1+ | 4–20 (pairs) | 🧠 🏃‍♂️ | Blind search mode, auto-restart, live error tracking |
+| ⚔️ **Domination (Turf War)** | 2 teams/arena | 2+/arena | 🏃‍♂️ 🫀 | 1-click vs 2-click capture, dual-arena support |
+| ❌⭕ **Tactical TicTacToe** | 1–3 groups | 4 / 6 / 7 / 10 | 🧠 | Hard-Mode, grid auto-adapts to puck count |
+| 🪑 **Musical Chairs** | 2–13 | Player count −1 | 🤪 🏃‍♂️ | Custom MP3 upload, dynamic round elimination |
 
 ---
 
-## 🏃‍♂️🔁 Shuttle Run
+### 🛠️ Measurement Tools & Utilities
 
-Simple shuttle running between two points.
-
-**Players:** 1–5  
-**Pucks:** 2 per player  
-**Focus:** 🏃‍♂️ Agility, 🫀 Endurance  
-**Features:** Automatic winner detection, false start detection  
-
----
-
-## 🧟 Zombie Escape
-
-Repeated sprint challenge with decreasing time limits. Fail to reach the target in time and you're eliminated.
-
-**Players / Groups:** 1–10  
-**Pucks:** 2 per group  
-**Focus:** 🫀 Endurance, 🧠 Cognition, 🤪 Fun  
-**Features:** Automatic time reduction, sudden death mode, synchronized start  
+| Game | Players | Focus | Highlights |
+|------|---------|-------|------------|
+| ⏱️ **Stopwatch** | 1–10 | 🛠️ | Split/lap times, central or individual start, Hold-to-Start |
+| ⏳ **Simple Timer** | 1–10 | 🛠️ | Visual countdown fill, live +/− time adjustment per player |
+| 🔢 **Simple Counter** | 1–10 | 🛠️ | Tap-to-count, time limit, debounce filter |
+| ⬇️ **Simple Countdown** | 1–10 | 🛠️ | Count down from N, stop-on-winner option |
+| 🥵 **TABATA Controller** | Unlimited | 🛠️ 🫀 | Synced progress bars, work/rest phases, configurable sound |
+| ▶️ **Display Mode** | — | 🛠️ | Manual/sync/random light control for events |
 
 ---
 
-## 🧠 Cognition & Fun
-
-## 🔴🟢🔵🟡 Simon Says
-
-The classic memory challenge. Repeat the shown color sequence without mistakes.
-
-**Groups:** 1–3  
-**Pucks:** 2–10 per group  
-**Focus:** 🧠 Cognition  
-**Features:** Adjustable speed, color-blind friendly palette  
-
----
-
-## 🔴🟢🔵🏃‍♂️ Simon Runs
-
-Simon Says — but with movement. Players must run to reproduce the shown sequence.
-
-**Groups:** 1–3  
-**Pucks:** 1 display puck + unlimited input pucks  
-**Focus:** 🧠 Cognition, 🏃‍♂️ Agility  
-**Features:** Central display mode, disqualification management  
-
----
-
-## 💣⏰ Bomb Squad
-
-Trains internal timing under heavy stress. Press exactly when the target time expires.
-
-**Players:** 1–10  
-**Pucks:** 1 per player  
-**Focus:** 🧠 Cognition, 🤪 Fun  
-**Features:** Adjustable tolerance windows, explosion feedback  
-
----
-
-## 🚦🛑 Red Light, Green Light
-
-Fun warm-up game. Move on green, freeze on red.
-
-**Groups:** 1–10  
-**Pucks:** 1–20  
-**Focus:** 🤪 Fun, ⚡ Reaction  
-**Features:** Independent phases, grace period, coach override  
-
----
-
-## 🎩✨ The Sorting Hat
-
-Fair and random team assignment tool.
-
-**Players:** 2–100  
-**Pucks:** 1–3  
-**Focus:** 🛠️ Utility, 🤪 Fun  
-**Features:** Balanced assignment, live rebalance suggestions  
-
----
-
-## 🛠️ Measurement Tools & Utilities
-
-## ⏱⏱️ Stopwatch
-
-Each puck acts as an independent or synchronized timer.
-
-**Players:** 1–10  
-**Features:** Split times, centralized or individual start  
-
----
-
-## ⏱️ Simple Timer
-
-Fixed time limit mode for training stations.
-
-**Players:** 1–10  
-**Features:** Visual countdown, live penalty adjustment  
-
----
-
-## ⏱️🧮 Simple Countdown / 🔢 Simple Counter
-
-Counts touches up or down.
-
-**Players:** 1–10  
-**Features:** Debounce filter, automatic winner detection  
-
----
----
-
-## ⏱️🟢 The Pacemaker
-
-A virtual "rabbit" that dictates the exact running speed. A light travels from puck to puck at a configured pace.
-
-**Players:** 1+ (Entire running groups)  
-**Pucks:** 4–20  
-**Focus:** 🫀 Endurance, 🧠 Cognition (Pacing)  
-**Features:** Precise pace setting (min/km), circle or shuttle mode, live distance calculation, dynamic countdown warnings  
-
----
-
-## 🧠🏃 Memory Sprint
-
-Trains spatial working memory under maximal physical stress. Players must find matching color pairs spread across a large area.
-
-**Players:** 1+  
-**Pucks:** 4–20 (even numbers for pairs)  
-**Focus:** 🧠 Cognition, 🏃‍♂️ Agility  
-**Features:** Configurable memorize times, blind search mode, auto-restart function, live error tracking  
-
----
-
-## ⚔️🔴🔵 Domination (Turf War)
-
-High-intensity team interval game. Two teams fight to claim and steal pucks scattered around the arena before time runs out.
-
-**Players:** 2 Teams per Arena  
-**Pucks:** 2+ per Arena  
-**Focus:** 🏃‍♂️ Agility, 🫀 Endurance  
-**Features:** 1-click vs 2-click capture mechanics, visual protection timers, dual-arena support (run 2 games simultaneously), live score tracking  
-
----
-
-## ⚡🎯👀 Batak Pro
-
-Tests reaction time and peripheral vision. Pucks light up randomly and accelerate continuously. Hit them before they expire!
-
-**Players:** 1  
-**Pucks:** 3–20 (Wall-mounted or spread on the floor)  
-**Focus:** ⚡ Reaction, 🧠 Cognition  
-**Features:** Adaptive acceleration (speedup mode), fake colors (no-go stimulus), per-puck reaction time analysis, layout visualization  
-
----
-
-## ⏱️🥵 TABATA Controller
-
-Visual and acoustic workout assistant for Tabata and circuit training. Perfectly synchronizes all circuit stations.
-
-**Players:** Unlimited (Circuit stations)  
-**Pucks:** 1 per station  
-**Focus:** 🛠️ Utility, 🫀 Endurance  
-**Features:** Synchronized progress bars, visual rest/work phases, round & time limits, dynamic pause/resume function, configurable sound modes  
-
----  
-🐱⚡ Cat Reflex
-Fast-paced group reaction game. A central puck signals the start, and everyone sprints to their designated puck as quickly as possible.
-
-Groups: 1–11 Players
-
-Pucks: 1 per player + 1 central display puck
-
-Focus: ⚡ Reaction & Explosive Start
-
-Features: Highlander mode (only the fastest gets a point) and Color Chaos mode to train focus and prevent false starts.
----  
-❌⭕ Tactical TicTacToe (TTTT)
-Precision meets tactics! Play classic TicTacToe, but instead of drawing on paper, you claim the fields by throwing a ball at the pucks mounted on a wall.
-
-Groups: 1–3 Players
-
-Pucks: 4, 6, 7, or 10 (Grid size adapts to puck count)
-
-Focus: 🎯 Precision Throwing & 🧠 Tactics
-
-Features: Hard-Mode (you must neutralize an opponent's puck before claiming it) and auto-restarting grids.
-
----  
-🪑🎵 Musical Chairs
-The ultimate party and gym class highlight. Move around the room while the music plays, and secure a glowing puck as soon as the sound abruptly stops!
-
-Groups: 2–13 Players
-
-Pucks: Player count minus one (dynamically decreases each round)
-
-Focus: 🏃‍♂️ Acceleration & ⚡ Reaction under pressure
-
-Features: Custom MP3 upload and adjustable music randomness/variance.
-
----  
-
-
-## ▶️✨ Display Mode
-
-Coach control console for lighting and event usage.
-
-**Features:** Manual control, sync mode, random mode  
-
----
-
-## 👥 Player Manager  
-
-Manage teams, classes, friendlists for easier name assignment
-
-**Features:** Upload and backup simple CSV lists. Manually create teams for later use.  
-
-## 📋 Training Manager  
-
-Create predefined trainings with a selection of games, sequence and already preset game settings. **No need anymore for friggeling with setup page during the training!** 
-
-**Features:** Define a set of 3 games, especially for reaction training. Preset the parameters (distance, times, number of players, ...). Start the training and jump from one game to the next one.  
+### 👥 Player & Training Manager
+
+| Tool | Description |
+|------|-------------|
+| 👥 **Player Manager** | Manage teams and class lists. Upload/backup CSV. Create named groups for quick name assignment. |
+| 📋 **Training Manager** | Define training sequences with up to 3 games and pre-set all parameters. Jump between games without touching the setup screens. |
 
 ---
 
 
-## Technical Updates:
+## Technical Updates:  
 
 **V2.88.2**  
     - iOS meta Tags added  
     - App Icon added  
     - Check that only 1 device is connected via WiFi  
+<<<<<<< HEAD
 **V2.89.7**  
     - Simple Statistics added for players maintained in Playermanager  
         - CatReflexes (avarage reaction time)  
@@ -402,6 +171,28 @@ Create predefined trainings with a selection of games, sequence and already pres
         - Countdown (time and clicks) tracking of usage
     - Fix of copy&paste error in game_simplecounter_setup.html
 
+=======
+**V2.89.7**   
+    - Simple Statistics added for players maintained in Playermanager  
+    - CatReflexes (avarage reaction time)  
+    - BombSquad (avarage reaction time)  
+    - Shuttle run (time) assuming trainer always uses same distance, else its just a tracking of usage  
+    - Countdown (time and clicks) tracking of usage - Fix of copy&paste error in game_simplecounter_setup.html      
+**V2.89.13**  
+    - statistics for all relevant games finished  
+        - Whac-A-Mole  
+        - Pacemaker  
+        - React2Player  
+        - T-Test  
+        - Beep Test  
+        - Bataka (incl. System record)  
+    - Player manager with extended Export and Import incl. highscores and statistics   
+    - Minor bugfixes in some games (Player-List added, minor layout changes)  
+        - fix for Whac-A-Mole color picker  
+**V2.89.15**   
+    - Tutorial adjusted  
+    
+>>>>>>> prerelease
 --- 
 
 

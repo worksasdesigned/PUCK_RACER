@@ -79,7 +79,7 @@
         .core-ver-text { color: var(--primary); font-size: 1.2rem; font-family: 'puckracer', monospace; font-weight: bold; margin-top: 50px; letter-spacing: 3px; opacity: 0; transform: translateY(20px); transition: all 1s ease 1.5s; }
         #puckEasterEggOverlay.active .core-ver-text { opacity: 1; transform: translateY(0); }
     </style>
-	<script src="tour.js"></script>
+	<script src="tour.js?v=6" defer></script>
 </head>
 <body>
     <!-- SPLASH SCREEN -->
@@ -139,17 +139,17 @@
             <div class="dropdown">
                 <button class="btn-menu" id="btnMenu" onclick="toggleMenu()" title="Tools & Einstellungen">⋮</button>
                 <div class="dropdown-content" id="mainMenu">
-                    <a id="btnTheme" onclick="toggleTheme(); toggleMenu();">🌙 Dark Mode umschalten</a>
-                    <a id="btnStats" onclick="toggleStats(); toggleMenu();">🧮 Statistiken umschalten</a>
+                    <a id="btnTheme" onclick="toggleTheme(); toggleMenu();" data-i18n="menu_dark_mode">🌙 Dark Mode umschalten</a>
+                    <a id="btnStats" onclick="toggleStats(); toggleMenu();" data-i18n="menu_stats">🧮 Statistiken umschalten</a>
                     <div class="menu-item" style="display:flex; justify-content:space-between; align-items:center;" onclick="event.stopPropagation();">
-                        🌍 Sprache
+                        <span data-i18n="menu_language">🌍 Sprache</span>
                         <select class="lang-select" id="langSelect" onchange="changeLangUI()"></select>
                     </div>
-					<a onclick="goFullscreen(); toggleMenu();">📲 Fullscreen</a>
+					<a onclick="goFullscreen(); toggleMenu();" data-i18n="menu_fullscreen">📲 Fullscreen</a>
                     <hr style="border: 0; border-top: 1px solid #333; margin: 0;">
-                    <a onclick="startTutorial(); toggleMenu();" style="color: var(--primary); font-weight: bold;">🎓 Tutorial starten</a>
-                    <a style="color: #666; cursor: default;">📖 Handbuch (In Kürze)</a>
-                    <a href="/impressum.html">📜 Impressum</a>
+                    <a onclick="startTutorial(); toggleMenu();" style="color: var(--primary); font-weight: bold;" data-i18n="menu_tutorial">🎓 Tutorial starten</a>
+                    <a style="color: #666; cursor: default;" data-i18n="menu_manual">📖 Handbuch (In Kürze)</a>
+                    <a href="/impressum.html" data-i18n="menu_impressum">📜 Impressum</a>
                 </div>
             </div>
         </div>
@@ -181,7 +181,7 @@
     <div id="helpModal" class="modal-overlay" onclick="closeHelp(event)">
         <div class="modal-content" onclick="event.stopPropagation()"> 
             <div class="modal-header">
-                <h2 id="modalTitle">Game Title</h2>
+                <h2 id="modalTitle" data-i18n="modal_game_title">Game Title</h2>
                 <button class="close-modal" onclick="closeHelpForce()">×</button>
             </div>
             <div class="modal-body">
@@ -246,7 +246,7 @@
             { id: 'tabata', numId: 22, icon: '⏱️🥵', url: '/game_tabata_setup.html', tags: ['tool', 'sport'], key: 'g_tabata' },
 			{ id: 'catreflex', numId: 25, icon: '🐈⚡', url: '/game_cat_setup.html', tags: ['reaction'], key: 'g_cat' },
 			{ id: 'musical', numId: 0, icon: '🎵🪑🏃', url: '/game_musical_setup.html', tags: ['reaction'], key: 'g_musical' },
-            { id: 'tttt', numId: 0, icon: '❌⭕', url: '/game_tttt_setup.html', tags: ['reaction'], key: 'g_tttt' },
+            { id: 'tttt', numId: 0, icon: '❌⭕', url: '/game_tttt_setup.html', tags: ['brain'], key: 'g_tttt' },
             { id: 'display', numId: 5, icon: '▶️✨', url: '/game_display_setup.html', tags: ['tool'], key: 'g_display' },
             { id: 'players', numId: 0, icon: '👥', url: '/player_manager.html', tags: ['tool'], key: 'g_players' },
             { id: 'training', numId: 0, icon: '📋', url: '/training.html', tags: ['tool'], key: 'g_training' },

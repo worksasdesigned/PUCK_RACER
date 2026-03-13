@@ -7,58 +7,57 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Whac-A-Mole Live</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=9">
     <style>
         .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color);}
-        .big-time { font-size: 4.5rem; font-family: monospace; color: var(--text-main); font-weight: bold; line-height:1;}
+        .big-time { font-size: 4rem; font-family: monospace; color: var(--text-main); font-weight: bold; line-height:1;}
         .status-txt { font-size: 1.2rem; color: var(--warning); text-transform: uppercase; margin-top:5px; font-weight:bold;}
+        .target-time { color: var(--text-muted); font-size: 1rem; margin-top: 5px; font-weight:normal; }
 
-        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 15px; }
         .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
 
-        .target-bar { background: var(--bg-color); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); text-align: center; margin-bottom: 15px; font-weight: bold; color: var(--text-muted); }
-        .tgt-dot { display: inline-block; width: 18px; height: 18px; border-radius: 50%; margin: 0 5px; border: 1px solid #fff; vertical-align: middle; box-shadow: 0 0 8px rgba(255,255,255,0.3);}
+        .grp-box { background: var(--card-hover); border-radius: 8px; margin-bottom: 15px; padding: 12px; border-left: 8px solid var(--border-color); transition: background 0.3s, border-color 0.2s;}
+        .grp-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+        .g-name { font-size:1.3rem; font-weight:bold; color:var(--text-main); display:flex; align-items:center; flex-wrap:wrap;}
+        
+        .run-stats { display: flex; justify-content: space-between; align-items: center; background:var(--bg-color); padding:15px; border-radius:6px;}
+        .stat-col { text-align:center; flex:1; }
+        .stat-lbl { font-size:0.9rem; color:var(--text-muted); text-transform:uppercase; }
+        .stat-val { font-family:monospace; font-size:2rem; font-weight:bold; color:var(--text-main); }
+        
+        .val-hit { color: var(--success); text-shadow: 0 0 10px rgba(0,255,0,0.2); }
+        .val-miss { color: var(--danger); }
 
-        .grp-card { background: var(--card-hover); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; border-left: 5px solid #444; transition: box-shadow 0.2s;}
-        .grp-title { font-weight: bold; font-size: 1.3rem; color: var(--text-main); margin-bottom: 5px; }
+        .g-status { font-size: 2rem; margin-right:10px;}
         
-        .score-box { text-align: center; background: var(--bg-color); border-radius: 6px; padding: 10px; min-width: 70px;}
-        .score-val { font-size: 2.2rem; font-weight: bold; color: var(--success); font-family: monospace; line-height: 1;}
-        .score-lbl { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;}
-        
-        .miss-val { font-size: 2.2rem; font-weight: bold; color: var(--danger); font-family: monospace; line-height: 1;}
-        
-        .avg-box { text-align: center; background: var(--bg-color); border-radius: 6px; padding: 10px; min-width: 80px; border: 1px solid var(--primary);}
-        .avg-val { font-size: 1.8rem; font-weight: bold; color: var(--primary); font-family: monospace; line-height: 1;}
-
         .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
     </style>
 </head>
 <body>
     <header>
-        <div class="logo" data-i18n="g_whac">Whac-A-Mole 🔨</div>
-     <div class="status-bar">
-    <div class="status-dot dot-green" id="cnt-green">0</div>
-    <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
-    <div class="status-dot dot-red" id="cnt-red">0</div>
-</div>
+        <div class="logo" data-i18n="g_whac">Whac-A-Mole 🎯</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
     </header>
 
     <main>
         <div class="top-info">
-            <div class="big-time" id="globalTime">00:00</div>
+            <div class="big-time" id="globalTime">00:00.0</div>
             <div class="status-txt" id="stateInfo">WAITING</div>
+            <div class="target-time" id="globalTarget">Loading...</div>
         </div>
 
         <div class="controls">
             <button onclick="goBack()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
-            <button onclick="doAction('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
-            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
+            <button onclick="doAction('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start_all">START ALL</button>
+            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop_all">STOP ALL</button>
         </div>
 
-        <div class="target-bar" id="targetColorsBox">Target Colors: Loading...</div>
-
-        <div id="groupList"></div>
+        <div id="gameBoard"></div>
 
         <div class="bottom-nav">
             <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
@@ -67,116 +66,206 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
-<script>startStatusLoop();</script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        
+        const GRP_COLORS = ['#800080', '#00FFFF', '#FFA500'];
+        const GAME_COLORS_ARR = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FF1493', '#800080', '#00FF7F'];
+        const STATES = ["SETUP", "READY", "GET READY", "TARGETS", "RUNNING", "FINISHED", "FINISHED"];
+        
+        function t(key, fallback) {
+            if (typeof getTranslation !== 'function') return fallback;
+            let val = getTranslation(key);
+            return (val && val !== key) ? val : fallback;
+        }
 
-        const GAME_COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FF1493', '#800080', '#00FF7F'];
-        const ARENA_COLORS_HEX = ['#800080', '#00FFFF', '#FFA500'];
-        
+        let groupSaved = {};
+        let personalBests = {};
+        let sessionRecords = {};
+        let nGrp = parseInt(sessionStorage.getItem('whac_grp') || 1);
+
+        let numTargetColors = parseInt(sessionStorage.getItem('whac_col') || 1);
+        let timeLimitSecs = parseInt(sessionStorage.getItem('whac_time') || 60);
+
+        // Zielfarben (Punkte) HTML generieren
         let tgtMask = parseInt(sessionStorage.getItem('whac_tgt_mask') || 1);
-        let numCol = parseInt(sessionStorage.getItem('whac_col') || 2);
-        
-        let tgtHtml = getTranslation('whac_run_target');
-        if (numCol === 1) {
-            tgtHtml += `<span class='tgt-dot' style='background:#FF0000;'></span> <span style="font-size:0.8rem; font-weight:normal;">${getTranslation('whac_run_single')}</span>`;
-        } else {
-            for(let i=0; i<numCol; i++) {
-                if(tgtMask & (1<<i)) {
-                    tgtHtml += `<span class="tgt-dot" style="background:${GAME_COLORS[i]};"></span>`;
+        let colorDotsHtml = "<span style='display:inline-flex; gap:5px; margin-left:12px;'>";
+        for(let c=0; c<10; c++) {
+            if((tgtMask & (1 << c)) > 0) {
+                colorDotsHtml += `<span style="width:14px; height:14px; border-radius:50%; border:1px solid #fff; background:${GAME_COLORS_ARR[c]}; box-shadow:0 0 5px ${GAME_COLORS_ARR[c]};"></span>`;
+            }
+        }
+        colorDotsHtml += "</span>";
+
+        async function loadPersonalBests() {
+            for(let i=0; i<nGrp; i++) {
+                personalBests[i] = 0;
+                let pid = sessionStorage.getItem(`p_id_${i}`);
+                if (pid && pid !== "0") {
+                    try {
+                        let r = await fetch('/s_' + pid + '.csv?_t=' + Date.now());
+                        if (r.ok) {
+                            let text = await r.text();
+                            let lines = text.split(/\r?\n/);
+                            lines.forEach(line => {
+                                let parts = line.split(';');
+                                if (parts.length >= 4 && parts[1] === "24") { 
+                                    let sc = parseInt(parts[2]); 
+                                    if (sc > personalBests[i]) personalBests[i] = sc;
+                                }
+                            });
+                        }
+                    } catch(e) {}
                 }
             }
         }
-        document.getElementById('targetColorsBox').innerHTML = tgtHtml;
+        loadPersonalBests();
 
-        setInterval(update, 400); 
+        function savePlayerStat(idx, hits, misses, cols, durMs) {
+            let pid = sessionStorage.getItem(`p_id_${idx}`);
+            if (!pid || pid === "0") return;
+            let fd = new URLSearchParams();
+            fd.append('pid', pid);
+            fd.append('game', 24); 
+            fd.append('score', hits); 
+            fd.append('ex1', misses); 
+            fd.append('ex2', cols); 
+            fd.append('ex3', durMs); 
+            fd.append('ts', Date.now());
+            fetch('/api/stats/player_save', { method: 'POST', body: fd }).catch(e => console.log(e));
+        }
 
-        function update() {
+        setInterval(updateStatus, 300); 
+
+        function updateStatus() {
             fetch('/api/game/status').then(r=>r.json()).then(data => {
                  
-                render(data);
-            }).catch(e => {});
-        }
-
-        function formatTime(ms) {
-            let sec = Math.ceil(ms / 1000); 
-            let m = Math.floor(sec / 60);
-            let s = sec % 60;
-            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-        }
-
-        function render(data) {
-            document.getElementById('globalTime').innerText = formatTime(data.gT);
-            
-            let stTxt = getTranslation(`whac_st_${data.st}`);
-            let stCol = "var(--text-muted)";
-            if (data.st >= 2 && data.st <= 3) stCol = "var(--warning)"; 
-            if (data.st === 4) stCol = "var(--success)"; 
-            if (data.st >= 5) stCol = "gold"; 
-            
-            let infoEl = document.getElementById('stateInfo');
-            infoEl.innerText = stTxt;
-            infoEl.style.color = stCol;
-            
-            let btn = document.getElementById('btnStart');
-            if (data.st <= 1 || data.st >= 5) { 
-                btn.innerText = (data.st >= 5) ? getTranslation('btn_reset') : getTranslation('btn_start'); 
-                btn.style.background = "var(--primary)"; 
-            } else { 
-                btn.innerText = getTranslation('btn_running'); 
-                btn.style.background = "var(--card-bg)"; 
-            }
-
-            renderGroups(data);
-        }
-
-        function renderGroups(data) {
-            let container = document.getElementById('groupList');
-            if (!data.grps) return;
-            
-            let lblHits = getTranslation('whac_run_hits');
-            let lblMiss = getTranslation('whac_run_miss');
-            let lblH10 = getTranslation('whac_run_h10');
-
-            data.grps.forEach((g) => {
-                if(g.act === 0) return;
+                if (data.gT !== undefined) {
+                    document.getElementById('globalTime').innerText = formatTimeBig(data.gT);
+                }
                 
-                let rowId = `grp-${g.id}`;
+                let stTxt = STATES[data.st] || "UNKNOWN";
+                let stCol = "var(--warning)";
+                if(data.st === 4) { stCol = "var(--success)"; stTxt = t("btn_running", "RUNNING"); }
+                if(data.st >= 5) { stCol = "gold"; stTxt = t("whac_st_finish", "FINISHED"); }
+                if(data.st === 1) { stCol = "var(--primary)"; stTxt = "READY"; }
+                
+                let stateEl = document.getElementById('stateInfo');
+                if(stateEl) {
+                    stateEl.innerText = stTxt;
+                    stateEl.style.color = stCol;
+                }
+
+                let btn = document.getElementById('btnStart');
+                if (data.st === 0 || data.st === 1 || data.st >= 5) { 
+                    btn.innerText = t('btn_start_all', 'START ALL'); 
+                    btn.style.background = "var(--primary)"; 
+                    btn.setAttribute('onclick', "doAction('start')");
+                } else { 
+                    btn.innerText = t('btn_running', 'RUNNING');
+                    btn.style.background = "var(--card-hover)"; 
+                    btn.removeAttribute('onclick');
+                }
+
+                let m = Math.floor(timeLimitSecs / 60);
+                let s = timeLimitSecs % 60;
+                document.getElementById('globalTarget').innerText = `${t('lbl_time_limit', 'Limit:')} ${m}m ${s.toString().padStart(2,'0')}s`;
+
+                if (data.grps) {
+                    let saveQueueDelay = 0;
+                    data.grps.forEach((g, i) => {
+                        if (data.st < 4) {
+                            groupSaved[i] = false;
+                            sessionRecords[i] = false;
+                        }
+                        
+                        if (data.st >= 5 && !groupSaved[i]) {
+                            if (g.sc > 0 || g.m > 0) { 
+                                if (g.sc > personalBests[i]) {
+                                    personalBests[i] = g.sc;
+                                    sessionRecords[i] = true;
+                                }
+                                let durationMs = timeLimitSecs * 1000;
+                                setTimeout(() => savePlayerStat(i, g.sc, g.m, numTargetColors, durationMs), saveQueueDelay);
+                                saveQueueDelay += 200;
+                            }
+                            groupSaved[i] = true;
+                        }
+                    });
+                }
+
+                renderTable(data.grps, data.st);
+            }).catch(e => {
+                document.getElementById('cnt-green').style.opacity = 0.2;
+            });
+        }
+
+        function formatTimeBig(ms) {
+            if (ms < 0) ms = 0;
+            let totalSec = Math.floor(ms / 1000);
+            let m = Math.floor(totalSec / 60);
+            let s = totalSec % 60;
+            let z = Math.floor((ms % 1000) / 100); 
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}.${z}`;
+        }
+
+        function renderTable(groups, globalState) {
+            let container = document.getElementById('gameBoard');
+            if (!groups) return;
+            
+            let tScore = t('tgt_run_score', 'Score');
+            let tMiss = t('bat_run_miss', 'Misses');
+
+            groups.forEach((g, i) => {
+                let rowId = `wm-grp-${i}`;
                 let rowEl = document.getElementById(rowId);
-                let aName = sessionStorage.getItem(`whac_aname_${g.id}`) || `Arena ${g.id+1}`;
-                let h10Formatted = (g.h10 / 10).toFixed(1);
+                
+                let gName = sessionStorage.getItem(`p_name_${i}`) || `Lane ${i+1}`;
+                let color = GRP_COLORS[i % GRP_COLORS.length];
+                let rowClass = "grp-box";
+                
+                let icon = "";
+                if (globalState === 0 || globalState === 1) icon = "💤";
+                else if (globalState === 2 || globalState === 3) icon = "⌛";
+                else if (globalState === 4) icon = "🎯";
+                else if (globalState >= 5) icon = "🏁";
+
+                let recIcon = sessionRecords[i] ? `<span style="margin-left:8px;" title='${t("bat_new_pers", "Neuer Persönlicher Rekord!")}'>📈</span>` : "";
 
                 if (!rowEl) {
                     container.insertAdjacentHTML('beforeend', `
-                    <div id="${rowId}" class="grp-card" style="border-left-color:${ARENA_COLORS_HEX[g.id]}">
-                        <div class="grp-title">${aName}</div>
-                        <div style="display:flex; gap:8px;">
-                            <div class="score-box">
-                                <div class="score-val" id="sc-${g.id}">${g.sc}</div>
-                                <div class="score-lbl">${lblHits}</div>
+                    <div id="${rowId}" class="${rowClass}" style="border-left-color: ${color}">
+                        <div class="grp-head">
+                            <span class="g-name">${gName}${colorDotsHtml}${recIcon}</span>
+                            <span id="st-icon-${i}" class="g-status">${icon}</span>
+                        </div>
+                        <div class="run-stats">
+                            <div class="stat-col" style="border-right:1px solid var(--border-color);">
+                                <div class="stat-lbl">${tScore}</div>
+                                <div id="hits-${i}" class="stat-val val-hit">${g.sc}</div>
                             </div>
-                            <div class="score-box">
-                                <div class="miss-val" id="ms-${g.id}">${g.m}</div>
-                                <div class="score-lbl">${lblMiss}</div>
-                            </div>
-                            <div class="avg-box">
-                                <div class="avg-val" id="h10-${g.id}">${h10Formatted}</div>
-                                <div class="score-lbl">${lblH10}</div>
+                            <div class="stat-col">
+                                <div class="stat-lbl">${tMiss}</div>
+                                <div id="miss-${i}" class="stat-val val-miss">${g.m}</div>
                             </div>
                         </div>
                     </div>`);
                 } else {
-                    document.getElementById(`sc-${g.id}`).innerText = g.sc;
-                    document.getElementById(`ms-${g.id}`).innerText = g.m;
-                    document.getElementById(`h10-${g.id}`).innerText = h10Formatted;
-                    
-                    if (data.st === 4) rowEl.style.boxShadow = `0 0 10px rgba(0,255,0,0.2)`; 
-                    else rowEl.style.boxShadow = "none";
+                    let nameEl = rowEl.querySelector('.g-name');
+                    let newNameHtml = `${gName}${colorDotsHtml}${recIcon}`;
+                    if (nameEl.innerHTML !== newNameHtml) nameEl.innerHTML = newNameHtml;
+
+                    let iconEl = document.getElementById(`st-icon-${i}`);
+                    if (iconEl.innerText !== icon) iconEl.innerText = icon;
+
+                    document.getElementById(`hits-${i}`).innerText = g.sc;
+                    document.getElementById(`miss-${i}`).innerText = g.m;
                 }
             });
         }
 
-        function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
+        function doAction(act) { fetch(`/api/game/action?cmd=${act}`); }
         function goBack() { doAction('reset'); location.href = 'game_whac_names.html'; }
         function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
     </script>

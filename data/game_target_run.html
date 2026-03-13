@@ -7,10 +7,11 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Target Touch Live</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=5">
     <style>
         .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color);}
-        .target-time { font-size: 1.5rem; color: var(--primary); font-weight:bold;}
+        .big-time { font-size: 4rem; font-family: monospace; color: var(--text-main); font-weight: bold; line-height:1;}
+        .target-time { color: var(--text-muted); font-size: 1.2rem; margin-top: 5px; font-weight:normal; }
 
         .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 15px; }
         .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
@@ -40,15 +41,16 @@
 <body>
     <header>
         <div class="logo" data-i18n="g_target">Target Touch 🎯</div>
-     <div class="status-bar">
-    <div class="status-dot dot-green" id="cnt-green">0</div>
-    <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
-    <div class="status-dot dot-red" id="cnt-red">0</div>
-</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
     </header>
 
     <main>
         <div class="top-info">
+            <div class="big-time" id="globalTime">00:00.0</div>
             <div class="target-time" id="globalTarget">Loading...</div>
         </div>
 
@@ -67,17 +69,31 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
-<script>startStatusLoop();</script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
-
         const GRP_COLORS = ['#FF00FF', '#00FFFF', '#FFFF00', '#00FF00', '#FF1493'];
         
-        let tScore = getTranslation('tgt_run_score');
-        let tTime = getTranslation('tgt_run_time');
-        let tTarget = getTranslation('tgt_run_target');
-        let tRestart = getTranslation('tgt_btn_restart');
-        let tStop = getTranslation('tgt_btn_stop');
+        function t(key, fallback) {
+            if (typeof getTranslation !== 'function') return fallback;
+            let val = getTranslation(key);
+            return (val && val !== key) ? val : fallback;
+        }
+
+        // STATS LOGIK
+        let groupSaved = {};
+
+        function savePlayerStat(idx, hits, timeMs) {
+            let pid = sessionStorage.getItem(`p_id_${idx}`);
+            if (!pid || pid === "0") return;
+            let fd = new URLSearchParams();
+            fd.append('pid', pid);
+            fd.append('game', 15); 
+            fd.append('score', hits); 
+            fd.append('ex1', timeMs); 
+            fd.append('ts', Date.now());
+            fetch('/api/stats/player_save', { method: 'POST', body: fd }).catch(e => console.log(e));
+        }
 
         document.getElementById('gameBoard').addEventListener('click', function(e) {
             let btn = e.target.closest('.action-btn');
@@ -92,25 +108,59 @@
         function updateStatus() {
             fetch('/api/game/status').then(r=>r.json()).then(data => {
                  
-                
+                let maxTime = 0;
+                if (data.groups) {
+                    data.groups.forEach(g => {
+                        if (g.time > maxTime) maxTime = g.time;
+                    });
+                }
+                document.getElementById('globalTime').innerText = formatTimeBig(maxTime);
+
                 if (data.mode === 0) {
                     let m = Math.floor(data.lim / 60000);
                     let s = Math.floor((data.lim % 60000) / 1000);
-                    document.getElementById('globalTarget').innerText = `${getTranslation('lbl_time_limit')} ${m}m ${s.toString().padStart(2,'0')}s`;
+                    document.getElementById('globalTarget').innerText = `${t('lbl_time_limit', 'Limit:')} ${m}m ${s.toString().padStart(2,'0')}s`;
                 } else {
-                    document.getElementById('globalTarget').innerText = `${tTarget} ${data.lim}`;
+                    document.getElementById('globalTarget').innerText = `${t('tgt_run_target', 'Target:')} ${data.lim}`;
+                }
+
+                // Statistiken prüfen & mit Warteschlange (Queue) speichern
+                if (data.groups) {
+                    let saveQueueDelay = 0;
+                    data.groups.forEach((g, i) => {
+                        // Zurücksetzen, wenn die Gruppe wieder bei 0 anfängt
+                        if (g.st < 4) {
+                            groupSaved[i] = false;
+                        }
+                        
+                        // Wenn Gruppe fertig ist und noch nicht gespeichert wurde
+                        if (g.st === 5 && !groupSaved[i]) {
+                            // Speichern, sobald Score ODER Zeit größer 0 ist
+                            if (g.sc > 0 || g.time > 0) { 
+                                setTimeout(() => savePlayerStat(i, g.sc, g.time), saveQueueDelay);
+                                saveQueueDelay += 200; // 200ms Atempause für den ESP32
+                            }
+                            groupSaved[i] = true;
+                        }
+                    });
                 }
 
                 renderTable(data.groups);
-            }).catch(e => {
-                document.getElementById('conn-stat').style.opacity = 0.2;
-            });
+            }).catch(e => {});
+        }
+
+        function formatTimeBig(ms) {
+            let totalSec = Math.floor(ms / 1000);
+            let m = Math.floor(totalSec / 60);
+            let s = totalSec % 60;
+            let z = Math.floor((ms % 1000) / 100); 
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}.${z}`;
         }
 
         function formatTime(ms) {
-            let t = Math.floor(ms / 1000);
-            let m = Math.floor(t / 60);
-            let s = t % 60;
+            let tVal = Math.floor(ms / 1000);
+            let m = Math.floor(tVal / 60);
+            let s = tVal % 60;
             let dec = Math.floor((ms % 1000) / 100);
             return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}.${dec}`;
         }
@@ -118,6 +168,11 @@
         function renderTable(groups) {
             let container = document.getElementById('gameBoard');
             if (!groups) return;
+
+            let tScore = t('tgt_run_score', 'Score');
+            let tTime = t('tgt_run_time', 'Time');
+            let tRestart = t('tgt_btn_restart', 'RESTART');
+            let tStop = t('tgt_btn_stop', 'STOP');
 
             groups.forEach((g, i) => {
                 let rowId = `tg-grp-${i}`;
@@ -143,11 +198,11 @@
                         </div>
                         <div class="run-stats">
                             <div class="stat-col">
-                                <div class="stat-lbl">${tTime}</div>
+                                <div class="stat-lbl" id="lbl-time-${i}">${tTime}</div>
                                 <div id="time-${i}" class="stat-val">00:00.0</div>
                             </div>
                             <div class="stat-col">
-                                <div class="stat-lbl">${tScore}</div>
+                                <div class="stat-lbl" id="lbl-score-${i}">${tScore}</div>
                                 <div id="score-${i}" class="stat-val score">${g.sc}</div>
                             </div>
                         </div>
@@ -162,11 +217,17 @@
                     let iconEl = document.getElementById(`st-icon-${i}`);
                     if (iconEl.innerText !== icon) iconEl.innerText = icon;
 
+                    document.getElementById(`lbl-time-${i}`).innerText = tTime;
+                    document.getElementById(`lbl-score-${i}`).innerText = tScore;
+
                     document.getElementById(`time-${i}`).innerText = formatTime(g.time);
                     document.getElementById(`score-${i}`).innerText = g.sc;
                     
                     let btnStart = document.getElementById(`btn-start-${i}`);
                     let btnStop = document.getElementById(`btn-stop-${i}`);
+                    
+                    btnStart.innerText = tRestart;
+                    btnStop.innerText = tStop;
                     
                     if (btnStart.style.opacity === "0.5") btnStart.style.opacity = "1";
                     if (btnStop.style.opacity === "0.5") btnStop.style.opacity = "1";

@@ -13,7 +13,6 @@
     <style>
         .header-title { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin-bottom: 20px; text-align: center; }
         
-        /* Accordion Styling */
         .grp-card { background:var(--card-bg); border:1px solid var(--border-color); border-radius:10px; margin-bottom:12px; overflow:hidden; transition:border-color 0.2s; }
         .grp-card.open { border-color:var(--primary); }
         .grp-header { display:flex; align-items:center; padding:14px 16px; cursor:pointer; gap:12px; user-select:none; background:var(--card-hover); }
@@ -25,14 +24,18 @@
         .grp-body { display:none; padding:16px; background:var(--bg-color); }
         .grp-card.open .grp-body { display:block; }
 
-        /* Tabellen Styling */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: var(--card-bg); border-radius: 8px; overflow: hidden;}
         th { text-align: left; padding: 12px; background: var(--card-hover); color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; border-bottom: 2px solid var(--border-color); }
         td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 1rem; color: var(--text-main); }
         tr:last-child td { border-bottom: none; }
         
-        /* Diagramm Container */
-        .chart-container { width: 100%; height: 250px; margin-bottom: 20px; position: relative; }
+        .chart-wrapper { display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px; }
+        .chart-container { flex: 1; min-width: 300px; height: 250px; position: relative; }
+        .pie-container { width: 250px; flex: none; margin: 0 auto; }
+        @media (max-width: 650px) {
+            .chart-wrapper { flex-direction: column; }
+            .pie-container { width: 100%; height: 200px; }
+        }
 
         .empty-state { text-align: center; padding: 50px 20px; color: var(--text-muted); }
         .empty-state .icon { font-size: 3rem; margin-bottom: 10px; display: block; }
@@ -45,42 +48,82 @@
 
     <main>
         <div class="header-title">📊 <span id="playerNameDisplay">Loading...</span></div>
-
         <div id="loadingState" class="empty-state">
-            <span class="icon">⏳</span>
-            <p data-i18n="ps_loading">Lade Statistiken...</p>
+            <span class="icon">⏳</span><p data-i18n="ps_loading">Lade Statistiken...</p>
         </div>
-
         <div id="emptyState" class="empty-state" style="display:none;">
-            <span class="icon">🤷‍♂️</span>
-            <p data-i18n="ps_empty">Noch keine Statistiken für diesen Spieler vorhanden.</p>
+            <span class="icon">🤷‍♂️</span><p data-i18n="ps_empty">Noch keine Statistiken für diesen Spieler vorhanden.</p>
         </div>
-
         <div id="statsContent" style="display:none;"></div>
-
         <button onclick="location.href='player_manager.html'" class="btn-back" style="margin-top: 30px;" data-i18n="ps_back">⬅ Zurück zum Manager</button>
     </main>
 
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
-        // Übersetzungs-Hilfsfunktion
-        function t(key, fallback) {
-            return (typeof getTranslation === 'function') ? (getTranslation(key) || fallback) : fallback;
-        }
+        function t(key, fallback) { return (typeof getTranslation === 'function') ? (getTranslation(key) || fallback) : fallback; }
+
+        // --- Custom Plugin zum Zeichnen der Zahlen im Tortendiagramm ---
+        const pieLabelPlugin = {
+            id: 'pieLabels',
+            afterDraw: (chart) => {
+                if (chart.config.type !== 'doughnut') return;
+                const ctx = chart.ctx;
+                chart.data.datasets.forEach((dataset, i) => {
+                    const meta = chart.getDatasetMeta(i);
+                    meta.data.forEach((element, index) => {
+                        const dataVal = dataset.data[index];
+                        if(dataVal > 0) { // Zeige keine Nullen an
+                            ctx.fillStyle = '#fff';
+                            ctx.font = 'bold 16px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'middle';
+                            const pos = element.tooltipPosition();
+                            ctx.fillText(dataVal, pos.x, pos.y);
+                        }
+                    });
+                });
+            }
+        };
 
         const GAME_DICT = {
-            1:  { name: t('g_1', "Shuttle Run"), lblScore: t('ps_time', "Zeit"), lblExtra: t('ps_rounds', "Runden"), fmtS: "ms", fmtE: "num", chartLabel: t('ps_chart_time_avg', "Ø Zeit pro Runde (s)"), calcChart: (e) => parseFloat(e.extra > 0 ? (e.score / e.extra / 1000).toFixed(2) : (e.score / 1000).toFixed(2)) },
+            1:  { name: t('g_1', "Shuttle Run"), lblScore: t('ps_time', "Zeit"), lblExtra: t('ps_rounds', "Runden"), fmtS: "ms", fmtE: "num", chartLabel: t('ps_chart_time_avg', "Ø Zeit pro Runde (s)"), calcChart: (e) => parseFloat(e.ex1 > 0 ? (e.score / e.ex1 / 1000).toFixed(2) : (e.score / 1000).toFixed(2)) },
             3:  { name: t('g_3', "Countdown"), lblScore: t('ps_time_s', "Zeit (s)"), lblExtra: t('ps_clicks', "Klicks"), fmtS: "ms", fmtE: "num", chartLabel: t('ps_chart_time', "Zeit (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(1)) },
             4:  { name: t('g_4', "Simon Says"), lblScore: t('ps_level', "Level"), lblExtra: t('ps_stars', "Sterne"), fmtS: "num", fmtE: "num", chartLabel: t('ps_chart_level', "Erreichtes Level"), calcChart: (e) => e.score },
             6:  { name: t('g_6', "Simon Runs"), lblScore: t('ps_time', "Zeit"), lblExtra: t('ps_level', "Level"), fmtS: "ms", fmtE: "num", chartLabel: t('ps_chart_time', "Zeit (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
             8:  { name: t('g_8', "Bomb Squad"), lblScore: t('ps_dev_avg', "Ø Abweichung"), lblExtra: t('ps_best', "Beste Runde"), fmtS: "ms3", fmtE: "ms3", chartLabel: t('ps_chart_dev', "Ø Abweichung (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(3)) },
             9:  { name: t('g_9', "Red/Green"), lblScore: t('ps_react', "Reaktion"), lblExtra: t('ps_fails', "Fehlstarts"), fmtS: "ms", fmtE: "num", chartLabel: t('ps_chart_react', "Reaktionszeit (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
             11: { name: t('g_11', "Zombie"), lblScore: t('ps_survived', "Überlebt"), lblExtra: "", fmtS: "ms", fmtE: "none", chartLabel: t('ps_chart_survived', "Zeit überlebt (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
-            13: { name: t('g_13', "React 2P"), lblScore: t('ps_react', "Reaktion"), lblExtra: t('ps_win', "Sieg"), fmtS: "ms", fmtE: "bool", chartLabel: t('ps_chart_react', "Reaktionszeit (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
-            14: { name: t('g_14', "T-Test"), lblScore: t('ps_time', "Zeit"), lblExtra: "", fmtS: "ms", fmtE: "none", chartLabel: t('ps_chart_time', "Zeit (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) },
-            15: { name: t('g_15', "Target"), lblScore: t('ps_hits', "Treffer"), lblExtra: t('ps_time', "Zeit"), fmtS: "num", fmtE: "ms", chartLabel: t('ps_chart_hits', "Treffer"), calcChart: (e) => e.score },
-            21: { name: t('g_21', "Batak"), lblScore: t('ps_hits', "Treffer"), lblExtra: "", fmtS: "num", fmtE: "none", chartLabel: t('ps_chart_hits', "Treffer"), calcChart: (e) => e.score },
+            12: { name: t('g_12', "Luc Léger"), lblScore: t('ps_dist', "Distanz (m)"), lblExtra: t('ps_vo2', "VO2Max"), lblEx2: t('ps_level', "Level"), lblEx3: t('ps_speed', "km/h"), fmtS: "num", fmtE: "num", fmtEx2: "num", fmtEx3: "num", chartLabel: t('ps_chart_dist', "Distanz (m)"), calcChart: (e) => e.score },
+            13: { 
+                name: t('g_13', "React 2P"), 
+                lblScore: t('ps_react_avg', "Ø Reaktion"), 
+                lblExtra: t('ps_win', "Sieg"), 
+                fmtS: "ms", fmtE: "bool", 
+                chartLabel: t('ps_chart_react_avg', "Ø Reaktionszeit (s)"), 
+                calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)),
+                hasPie: true,
+                calcPie: (entries) => {
+                    let wins = entries.filter(e => parseInt(e.ex1) === 1).length;
+                    return [wins, entries.length - wins];
+                }
+            },
+            14: { name: t('g_14', "T-Test"), lblScore: t('ps_time', "Zeit"), lblExtra: t('ps_score', "Score"), fmtS: "ms", fmtE: "num", chartLabel: t('ps_score', "Score"), calcChart: (e) => parseFloat(e.ex1) },
+            15: { name: t('g_15', "Target Touch"), lblScore: t('ps_hits', "Treffer"), lblExtra: t('ps_time', "Zeit"), fmtS: "num", fmtE: "ms", chartLabel: t('ps_chart_hits', "Treffer"), calcChart: (e) => e.score },
+            
+            // NEU: Pacemaker (ID 18)
+            18: { 
+                name: t('g_18', "Pacemaker"), 
+                lblScore: t('ps_time', "Dauer"), 
+                lblExtra: t('ps_pace', "Target Pace"), 
+                lblEx2: t('ps_dist', "Distanz"), 
+                lblEx3: t('ps_mode', "Modus"), 
+                fmtS: "ms", fmtE: "str", fmtEx2: "str", fmtEx3: "str", 
+                chartLabel: t('ps_chart_dur', "Workout Dauer (s)"), 
+                calcChart: (e) => parseFloat((e.score / 1000).toFixed(2)) 
+            },
+            
+            21: { name: t('g_21', "Batak Pro"), lblScore: t('ps_react_avg', "Ø Reaktion"), lblExtra: t('ps_hits', "Treffer"), lblEx2: t('ps_miss', "Fehler"), lblEx3: t('ps_time_s', "Zeit (s)"), lblEx4: t('ps_level', "Level"), lblEx5: t('ps_pucks', "Pucks"), fmtS: "ms3", fmtE: "num", fmtEx2: "num", fmtEx3: "num", fmtEx4: "num", fmtEx5: "num", chartLabel: t('ps_chart_react_avg', "Ø Reaktionszeit (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(3)) },
             24: { name: t('g_24', "Whac-A-Mole"), lblScore: t('ps_hits', "Treffer"), lblExtra: t('ps_fails', "Fehler"), fmtS: "num", fmtE: "num", chartLabel: t('ps_chart_hits', "Treffer"), calcChart: (e) => e.score },
             25: { name: t('g_25', "Katzenreflexe"), lblScore: t('ps_react_avg', "Ø Reaktion"), lblExtra: t('ps_pts', "Punkte"), fmtS: "ms3", fmtE: "num", chartLabel: t('ps_chart_react_avg', "Ø Reaktionszeit (s)"), calcChart: (e) => parseFloat((e.score / 1000).toFixed(3)) }
         };
@@ -90,12 +133,11 @@
         const pName = urlParams.get('name') || t('ps_default_name', "Spieler");
 
         document.getElementById('playerNameDisplay').innerText = pName;
-
         let parsedData = {}; 
         let activeCharts = {}; 
 
         if (pid) {
-            fetch('/s_' + pid + '.csv')
+            fetch('/s_' + pid + '.csv?_t=' + Date.now())
                 .then(r => { if (!r.ok) throw new Error("404"); return r.text(); })
                 .then(text => processCSV(text))
                 .catch(() => showEmpty());
@@ -118,9 +160,15 @@
                     let ts = parseInt(parts[0]);
                     let gId = parseInt(parts[1]);
                     let score = parseInt(parts[2]);
-                    let extra = parts.length >= 4 ? parseInt(parts[3]) : 0;
+                    
+                    let ex1 = parts.length >= 4 ? parts[3] : "0"; 
+                    let ex2 = parts.length >= 5 ? parts[4] : "0"; 
+                    let ex3 = parts.length >= 6 ? parts[5] : "0"; 
+                    let ex4 = parts.length >= 7 ? parts[6] : "0"; 
+                    let ex5 = parts.length >= 8 ? parts[7] : "0"; 
+                    
                     if (!parsedData[gId]) parsedData[gId] = [];
-                    parsedData[gId].push({ ts, score, extra });
+                    parsedData[gId].push({ ts, score, ex1, ex2, ex3, ex4, ex5 });
                 }
             });
 
@@ -128,7 +176,6 @@
 
             document.getElementById('loadingState').style.display = 'none';
             document.getElementById('statsContent').style.display = 'block';
-            
             buildAccordions();
         }
 
@@ -147,13 +194,23 @@
                 let entries = parsedData[gId];
                 
                 let sortedDesc = [...entries].sort((a, b) => b.ts - a.ts);
+                
                 let thExtra = info.fmtE !== "none" ? `<th>${info.lblExtra}</th>` : "";
+                if (info.lblEx2) thExtra += `<th>${info.lblEx2}</th>`;
+                if (info.lblEx3) thExtra += `<th>${info.lblEx3}</th>`;
+                if (info.lblEx4) thExtra += `<th>${info.lblEx4}</th>`;
+                if (info.lblEx5) thExtra += `<th>${info.lblEx5}</th>`;
 
                 let rowsHtml = '';
                 sortedDesc.forEach(e => {
                     let d = new Date(e.ts);
                     let dateStr = d.toLocaleDateString('de-DE') + " " + d.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit'});
-                    let tdExtra = info.fmtE !== "none" ? `<td>${formatValue(e.extra, info.fmtE)}</td>` : "";
+                    
+                    let tdExtra = info.fmtE !== "none" ? `<td>${formatValue(e.ex1, info.fmtE)}</td>` : "";
+                    if (info.lblEx2) tdExtra += `<td>${formatValue(e.ex2, info.fmtEx2)}</td>`;
+                    if (info.lblEx3) tdExtra += `<td>${formatValue(e.ex3, info.fmtEx3)}</td>`;
+                    if (info.lblEx4) tdExtra += `<td>${formatValue(e.ex4, info.fmtEx4)}</td>`;
+                    if (info.lblEx5) tdExtra += `<td>${formatValue(e.ex5, info.fmtEx5)}</td>`;
                     
                     rowsHtml += `
                         <tr>
@@ -163,6 +220,11 @@
                         </tr>`;
                 });
 
+                let pieHtml = info.hasPie ? `
+                    <div class="chart-container pie-container">
+                        <canvas id="pie_${gId}"></canvas>
+                    </div>` : '';
+
                 html += `
                 <div class="grp-card ${firstGame ? 'open' : ''}" id="card_${gId}">
                     <div class="grp-header" onclick="toggleCard(${gId})">
@@ -170,14 +232,15 @@
                         <span class="grp-name">${info.name}</span>
                         <span class="grp-count">${entries.length} ${txtRuns}</span>
                     </div>
-                    <div class="grp-body">
-                        <div class="chart-container">
-                            <canvas id="chart_${gId}"></canvas>
+                    <div class="grp-body" style="overflow-x:auto;">
+                        <div class="chart-wrapper">
+                            <div class="chart-container">
+                                <canvas id="chart_${gId}"></canvas>
+                            </div>
+                            ${pieHtml}
                         </div>
-                        <table>
-                            <thead>
-                                <tr><th>${thDate}</th><th>${info.lblScore}</th>${thExtra}</tr>
-                            </thead>
+                        <table style="min-width: max-content;">
+                            <thead><tr><th>${thDate}</th><th>${info.lblScore}</th>${thExtra}</tr></thead>
                             <tbody>${rowsHtml}</tbody>
                         </table>
                     </div>
@@ -187,19 +250,13 @@
             }
 
             container.innerHTML = html;
-
-            if (firstGameId !== null) {
-                setTimeout(() => drawChart(firstGameId), 50);
-            }
+            if (firstGameId !== null) setTimeout(() => drawChart(firstGameId), 50);
         }
 
         function toggleCard(gId) {
             let card = document.getElementById('card_' + gId);
             card.classList.toggle('open');
-            
-            if (card.classList.contains('open') && !activeCharts[gId]) {
-                drawChart(gId);
-            }
+            if (card.classList.contains('open') && !activeCharts[gId]) drawChart(gId);
         }
 
         function drawChart(gId) {
@@ -208,7 +265,6 @@
             let entries = parsedData[gId];
             
             let sortedAsc = [...entries].sort((a, b) => a.ts - b.ts);
-            
             let labels = [];
             let dataPoints = [];
 
@@ -219,60 +275,66 @@
             });
 
             let ctx = document.getElementById('chart_' + gId).getContext('2d');
-            
             let isLight = document.body.classList.contains('theme-light');
             let gridColor = isLight ? '#dee2e6' : '#333333';
             let textColor = isLight ? '#6c757d' : '#888888';
-            let primaryColor = '#0d6efd';
 
             new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: info.chartLabel,
-                        data: dataPoints,
-                        borderColor: primaryColor,
-                        backgroundColor: 'rgba(13, 110, 253, 0.2)',
-                        borderWidth: 3,
-                        pointBackgroundColor: primaryColor,
-                        pointRadius: 4,
-                        fill: true,
-                        tension: 0.3
+                        label: info.chartLabel, data: dataPoints, borderColor: '#0d6efd',
+                        backgroundColor: 'rgba(13, 110, 253, 0.2)', borderWidth: 3,
+                        pointBackgroundColor: '#0d6efd', pointRadius: 4, fill: true, tension: 0.3
                     }]
                 },
                 options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) { return context.parsed.y + ' ' + (info.chartLabel.includes('(s)') ? 's' : ''); }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: { grid: { color: gridColor }, ticks: { color: textColor } },
-                        y: { grid: { color: gridColor }, ticks: { color: textColor } }
-                    }
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(c) { return c.parsed.y + ' ' + (info.chartLabel.includes('(s)') ? 's' : ''); } } } },
+                    scales: { x: { grid: { color: gridColor }, ticks: { color: textColor } }, y: { grid: { color: gridColor }, ticks: { color: textColor } } }
                 }
             });
+
+            if (info.hasPie) {
+                let pieCtx = document.getElementById('pie_' + gId).getContext('2d');
+                let pieData = info.calcPie(entries);
+                new Chart(pieCtx, {
+                    type: 'doughnut',
+                    plugins: [pieLabelPlugin], // Plugin für die Zahlen aktivieren!
+                    data: {
+                        labels: [t('ps_wins', 'Siege'), t('ps_losses', 'Niederlagen')],
+                        datasets: [{
+                            data: pieData,
+                            backgroundColor: ['#198754', '#dc3545'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'bottom', labels: { color: textColor, padding: 15 } }
+                        }
+                    }
+                });
+            }
         }
 
         function formatValue(val, type) {
             if (type === "num") return val.toString();
-            if (type === "ms3") return (val / 1000).toFixed(3) + "s";
+            if (type === "str") return val; // Einfacher Text für Pace und Modus
+            if (type === "ms3") return (parseInt(val) / 1000).toFixed(3) + "s";
             if (type === "ms") {
-                let totalSec = Math.floor(val / 1000);
+                let valInt = parseInt(val);
+                let totalSec = Math.floor(valInt / 1000);
                 let m = Math.floor(totalSec / 60);
                 let s = totalSec % 60;
-                // Extrahiert genau eine Nachkommastelle für Sekunden
-                let z = Math.floor((val % 1000) / 100); 
+                let z = Math.floor((valInt % 1000) / 100); 
                 if (m > 0) return `${m}:${s.toString().padStart(2,'0')}.${z}`;
                 return `${s}.${z}s`;
             }
-            if (type === "bool") return val === 1 ? ("✅ " + t('ps_yes', "Ja")) : ("❌ " + t('ps_no', "Nein"));
+            if (type === "bool") return parseInt(val) === 1 ? ("👑 " + t('ps_yes', "Ja")) : ("❌ " + t('ps_no', "Nein"));
             return val;
         }
     </script>

@@ -34,7 +34,7 @@
                 <span data-i18n="whac_lbl_grp">Active Groups:</span>
                 <span id="grpDisp" class="slider-val">1</span>
             </div>
-            <input type="range" id="grpSlider" min="1" max="3" value="1" oninput="updLimits()">
+            <input type="range" id="grpSlider" min="1" max="3" value="1" oninput="autoAdjustPucks(); updLimits()">
             
             <div class="slider-header" style="margin-top:15px;">
                 <span data-i18n="whac_lbl_ppg">Pucks per Group:</span>
@@ -93,10 +93,30 @@
         fetch('/api/game/load?id=24'); 
         fetch('/api/status').then(r=>r.json()).then(data => {
             connPucks = data.filter(p => p.active).length;
+            
+            // Setzt den Slider automatisch auf die Anzahl der aktuell verbundenen Pucks
+            autoAdjustPucks();
+            
             updLimits();
             updDiff();
             updTime();
         });
+
+        // Automatische Anpassung der Pucks pro Gruppe basierend auf connPucks
+        function autoAdjustPucks() {
+            if (connPucks > 0) {
+                let grp = parseInt(document.getElementById('grpSlider').value);
+                let ppgSlider = document.getElementById('ppgSlider');
+                
+                let availablePpg = Math.floor(connPucks / grp);
+                
+                // Behalte das Limit im Auge (Minimum 3, Maximum 10 Pucks pro Gruppe)
+                if (availablePpg < parseInt(ppgSlider.min)) availablePpg = parseInt(ppgSlider.min);
+                if (availablePpg > parseInt(ppgSlider.max)) availablePpg = parseInt(ppgSlider.max);
+                
+                ppgSlider.value = availablePpg;
+            }
+        }
 
         function updTime() {
             let s = parseInt(document.getElementById('timeSlider').value);

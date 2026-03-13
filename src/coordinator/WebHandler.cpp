@@ -7,7 +7,7 @@
 #include "StatsManager.h" 
 #include "WifiScanner.h"
 
-#define SYS_VER "v2.89.7" 
+#define SYS_VER "v2.89.16" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;
@@ -199,26 +199,26 @@ void WebHandler::begin() {
         req->send(200, "application/json", json);
     });
 
+// =========================================================================
+    // EXTENDED PLAYER STATISTICS (CSV LOGGING)
     // =========================================================================
-    // ERWEITERTE SPIELER-STATISTIKEN (CSV-LOGGING)
-    // =========================================================================
-    // Jede Zeile in der /s_<ID>.csv hat exakt dieses Format:
-    // Timestamp;GameID;Score;Extra
+    // Each line in the /s_<ID>.csv has exactly this format (8 columns):
+    // Timestamp;GameID;Score;Ex1;Ex2;Ex3;Ex4;Ex5
     // 
-    // AUFBAU DER WERTE JE NACH GAME-ID:
-    // GameID  1 (Shuttle Run) : Score = Zeit in ms         | Extra = Gelaufene Runden
-    // GameID  4 (Simon Says)  : Score = Erreichtes Level   | Extra = 0
-    // GameID  6 (Simon Runs)  : Score = Zeit in ms         | Extra = Erreichtes Level
-    // GameID  8 (Bomb Defusal): Score = Zeit in ms         | Extra = Anzahl Fehler
-    // GameID  9 (Red/Green)   : Score = Reaktionszeit (ms) | Extra = Anzahl Fehlstarts
-    // GameID 11 (Zombie)      : Score = Überlebenszeit (ms)| Extra = 0
-    // GameID 13 (React 2P)    : Score = Reaktionszeit (ms) | Extra = 1 (Win) oder 0 (Loss)
-    // GameID 14 (T-Test)      : Score = Zeit in ms         | Extra = 0
-    // GameID 15 (Target)      : Score = Getroffene Ziele   | Extra = Zeit in ms
-    // GameID 21 (Batak)       : Score = Getroffene Pucks   | Extra = 0
-    // GameID 24 (Whac-A-Mole) : Score = Getroffene Pucks   | Extra = Anzahl Fehler
+    // DATA STRUCTURE DEPENDING ON GAME-ID:
+    // GameID  1 (Shuttle Run)   : Score = Time (ms)             | Ex1 = Rounds
+    // GameID  3 (Countdown)     : Score = Time (ms)             | Ex1 = Clicks
+    // GameID  4 (Simon Says)    : Score = Time (ms)             | Ex1 = Level
+    // GameID  8 (Bomb Defusal)  : Score = Avg Deviation (ms)    | Ex1 = Best Round (ms)
+    // GameID 13 (React 2P)      : Score = Reaction Time (ms)    | Ex1 = 1 (Win) or 0 (Loss)
+    // GameID 14 (T-Test)        : Score = Time (ms)             | Ex1 = 0
+    // GameID 15 (Target)        : Score = Hits                  | Ex1 = Time (ms)
+    // GameID 21 (Batak Pro)     : Score = Avg Reaction (ms)     | Ex1 = Hits | Ex2 = Misses | Ex3 = Time (s) | Ex4 = Level | Ex5 = Pucks
+    // GameID 24 (Whac-A-Mole)   : Score = Hits                  | Ex1 = Fails
+    // GameID 25 (Katzenreflexe) : Score = Avg Reaction (ms)     | Ex1 = Points
     // =========================================================================
-    // API: Prüft, ob für eine Liste von Spieler-IDs (z.B. "1,2,3") bereits eine CSV existiert
+    // API: Checks if a CSV already exists for a list of player IDs (e.g., "1,2,3")
+
     server.on("/api/stats/check", HTTP_GET, [](AsyncWebServerRequest *req){
         if(!req->hasParam("pids")) {
             req->send(400, "application/json", "{\"error\":\"missing pids\"}");
@@ -254,33 +254,43 @@ void WebHandler::begin() {
     });
 
     server.on("/api/stats/player_save", HTTP_POST, [](AsyncWebServerRequest *req){
-        if (req->hasParam("pid", true) && req->hasParam("game", true) && req->hasParam("score", true) && req->hasParam("ts", true)) {
-            String pid = req->getParam("pid", true)->value();
-            if (pid == "0" || pid == "") { 
-                req->send(200, "text/plain", "Gastspieler, wird nicht gespeichert."); 
-                return; 
-            }
-            
-            String ts = req->getParam("ts", true)->value();
-            String game = req->getParam("game", true)->value();
-            String score = req->getParam("score", true)->value();
-            String extra = req->hasParam("extra", true) ? req->getParam("extra", true)->value() : "0";
+            if (req->hasParam("pid", true) && req->hasParam("game", true) && req->hasParam("score", true) && req->hasParam("ts", true)) {
+                String pid = req->getParam("pid", true)->value();
+                if (pid == "0" || pid == "") { 
+                    req->send(200, "text/plain", "Gastspieler, wird nicht gespeichert."); 
+                    return; 
+                }
+                
+                String ts = req->getParam("ts", true)->value();
+                String game = req->getParam("game", true)->value();
+                String score = req->getParam("score", true)->value();
+                
+                // Abwärtskompatibilität: Nimmt "ex1", ansonsten "extra" (für die anderen Spiele)
+                String ex1 = "0";
+                if (req->hasParam("ex1", true)) ex1 = req->getParam("ex1", true)->value();
+                else if (req->hasParam("extra", true)) ex1 = req->getParam("extra", true)->value();
 
-            String line = ts + ";" + game + ";" + score + ";" + extra + "\n";
-            String filename = "/s_" + pid + ".csv";
-            
-            File f = LittleFS.open(filename, "a"); // 'a' steht für Append (Anhängen) -> Schont den RAM!
-            if (f) {
-                f.print(line);
-                f.close();
-                req->send(200, "text/plain", "OK");
+                String ex2 = req->hasParam("ex2", true) ? req->getParam("ex2", true)->value() : "0";
+                String ex3 = req->hasParam("ex3", true) ? req->getParam("ex3", true)->value() : "0";
+                String ex4 = req->hasParam("ex4", true) ? req->getParam("ex4", true)->value() : "0";
+                String ex5 = req->hasParam("ex5", true) ? req->getParam("ex5", true)->value() : "0";
+
+                // Format: Timestamp;GameID;Score;Ex1;Ex2;Ex3;Ex4;Ex5
+                String line = ts + ";" + game + ";" + score + ";" + ex1 + ";" + ex2 + ";" + ex3 + ";" + ex4 + ";" + ex5 + "\n";
+                String filename = "/s_" + pid + ".csv";
+                
+                File f = LittleFS.open(filename, "a"); // Append (Anhängen)
+                if (f) {
+                    f.print(line);
+                    f.close();
+                    req->send(200, "text/plain", "OK");
+                } else {
+                    req->send(500, "text/plain", "Dateisystem Fehler");
+                }
             } else {
-                req->send(500, "text/plain", "Dateisystem Fehler");
+                req->send(400, "text/plain", "Fehlende Parameter");
             }
-        } else {
-            req->send(400, "text/plain", "Fehlende Parameter");
-        }
-    });
+        });
 
     server.on("/api/stats/player_del", HTTP_GET, [](AsyncWebServerRequest *req){
         if (req->hasParam("pid")) {
@@ -295,6 +305,33 @@ void WebHandler::begin() {
         }
     });
 
+    // --- NEU: Globale Highscore API ---
+    server.on("/api/highscore/get", HTTP_GET, [](AsyncWebServerRequest *req){
+        String game = req->hasParam("game") ? req->getParam("game")->value() : "";
+        String path = "/hs_" + game + ".json";
+        if(LittleFS.exists(path)){
+            req->send(LittleFS, path, "application/json");
+        } else {
+            req->send(200, "application/json", "{}");
+        }
+    });
+
+    server.on("/api/highscore/save", HTTP_POST, [](AsyncWebServerRequest *req){
+        if(req->hasParam("game", true) && req->hasParam("data", true)) {
+            String game = req->getParam("game", true)->value();
+            String data = req->getParam("data", true)->value();
+            File f = LittleFS.open("/hs_" + game + ".json", "w");
+            if(f){
+                f.print(data);
+                f.close();
+                req->send(200, "text/plain", "OK");
+            } else {
+                req->send(500, "text/plain", "FS Error");
+            }
+        } else {
+            req->send(400, "text/plain", "Missing args");
+        }
+    });
 
     // ---------------------------------------------------------
     // API: Aktuelle Effekte der Pucks auslesen für *_names.html
@@ -655,7 +692,11 @@ void WebHandler::begin() {
     });
 
     // Static files last — all /api/ routes are matched first
-    server.serveStatic("/", LittleFS, "/");
+    // server.serveStatic("/", LittleFS, "/");
+    // Static files last — all /api/ routes are matched first
+    server.serveStatic("/", LittleFS, "/")
+          .setDefaultFile("index.html")
+          .setCacheControl("no-store, no-cache, must-revalidate, max-age=0");
 
     server.begin();
 

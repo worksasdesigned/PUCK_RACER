@@ -12,6 +12,8 @@
         .hidden { display: none; }
         #toggleIcon { transition: transform 0.3s; display: inline-block; }
         .rotate { transform: rotate(-90deg); }
+        .stat-icon { font-size: 1.3rem; opacity: 0.2; transition: all 0.3s; cursor: help; user-select: none; filter: grayscale(100%); margin-left: 10px; }
+        .stat-icon.active { opacity: 1; filter: none; text-shadow: 0 0 8px rgba(13, 110, 253, 0.5); }
     </style>
 </head>
 <body>
@@ -38,6 +40,20 @@
                 </div>
             </div>
 
+            <div id="pickerBar" style="margin-top:15px; margin-bottom:15px;">
+                <button onclick="loadFromPicker()" class="btn-primary" style="font-size:1.1rem; background:var(--card-hover); border:1px dashed var(--primary); color:var(--primary);" data-i18n="pp_load_players">
+                    👥 Load Players from List
+                </button>
+            </div>
+            
+            <div id="playerList" class="card">
+                <div class="player-row" style="border-left: 5px solid var(--primary); padding:10px; display:flex; align-items:center; background:var(--bg-color); border-radius:8px;">
+                    <div class="color-box" style="width:20px; height:20px; border-radius:50%; background:var(--primary); box-shadow:0 0 10px var(--primary); margin-right:15px;"></div>
+                    <input type="text" id="name_0" value="Player 1" placeholder="Name" style="flex:1; padding: 10px; font-size:1.1rem; border-radius:5px; border:1px solid var(--border-color); background:transparent; color:var(--text-main);" oninput="clearPlayerId()">
+                    <span class="stat-icon" id="stat_icon_0" title="Gastspieler (Keine Statistik)">📊</span>
+                </div>
+            </div>
+
             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
                 <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">START 🏁</button>
                 <button onclick="location.href='game_batak_setup.html'" class="btn-back" data-i18n="btn_back">⬅ ZURÜCK</button>
@@ -46,6 +62,7 @@
     </main>
 
     <script src="lang.js"></script>
+    <script src="player_picker.js"></script>
     <script>
         const LAYOUTS = {
             12: ["A1","C1","E1","B2","D2","A3","E3","B4","D4","A5","C5","E5"],
@@ -62,6 +79,32 @@
         document.addEventListener("DOMContentLoaded", () => {
             setTimeout(initList, 500);
         });
+
+        function clearPlayerId() {
+            sessionStorage.setItem(`p_id_0`, 0);
+            let icon = document.getElementById(`stat_icon_0`);
+            if(icon) {
+                icon.classList.remove('active');
+                icon.title = "Gastspieler (Keine Statistik)";
+            }
+        }
+
+        function loadFromPicker() {
+            openPlayerPicker(1, function(selected) {
+                if(selected.length > 0) {
+                    let p = selected[0];
+                    document.getElementById('name_0').value = p.name; 
+                    sessionStorage.setItem('p_name_0', p.name); 
+                    sessionStorage.setItem('p_id_0', p.id); 
+                    
+                    let icon = document.getElementById('stat_icon_0');
+                    if(icon) { 
+                        icon.classList.add('active'); 
+                        icon.title = "Statistik wird gespeichert"; 
+                    }
+                }
+            });
+        }
 
         async function initList() {
             if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
@@ -94,7 +137,7 @@
             }
             tableHtml += `</table>`;
             document.getElementById('arenaContainer').innerHTML = tableHtml;
-
+            
             let layoutKey = [3, 4, 5, 6, 7, 8, 9, 10, 12].find(n => n >= numPucks) || 12;
             let activeLayout = LAYOUTS[layoutKey];
 
@@ -104,6 +147,21 @@
                 let targetCell = document.getElementById(`cell-${coord}`);
                 if(targetCell) {
                     targetCell.innerHTML = `<div class="puck-icon" id="puck_vis_${i}">${startHtml}${i+1}</div>`;
+                }
+            }
+
+            let ph = (typeof getTranslation === 'function') ? getTranslation('cd_ph_player') : "Spieler";
+            if(!ph) ph = "Spieler";
+
+            let pName = sessionStorage.getItem('p_name_0') || `${ph} 1`;
+            document.getElementById('name_0').value = pName;
+            
+            let pId = sessionStorage.getItem('p_id_0');
+            if (pId && pId !== "0") {
+                let icon = document.getElementById('stat_icon_0');
+                if(icon) {
+                    icon.classList.add('active');
+                    icon.title = "Statistik wird gespeichert";
                 }
             }
 
@@ -121,11 +179,12 @@
                     let vis = document.getElementById(`puck_vis_${eff.id}`);
                     if(vis) {
                         const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
+                    
                         vis.classList.remove('eff-breathe', 'eff-chase', 'eff-rainbow');
                         if(eff.eff == 3 || eff.eff == 4 || eff.eff == 5) vis.classList.add('eff-breathe');
                         if(eff.eff == 6 || eff.eff == 7) vis.classList.add('eff-chase');
                         if(eff.eff == 9) vis.classList.add('eff-rainbow');
-                        
+ 
                         if(eff.eff == 18) {
                             let percent = Math.round(eff.dur / 2.55);
                             vis.style.background = `conic-gradient(${rgb} ${percent}%, var(--border-color) ${percent}%)`;
@@ -146,6 +205,7 @@
         }
 
         function startGame() { 
+            sessionStorage.setItem('p_name_0', document.getElementById('name_0').value);
             setTimeout(() => { location.href = 'game_batak_run.html'; }, 200);
         }
     </script>

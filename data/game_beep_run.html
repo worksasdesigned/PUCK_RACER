@@ -7,9 +7,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Luc Léger Live</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=6">
     <style>
-        .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color);}
+        .top-info { position: relative; background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color);}
         .big-time { font-size: 3.5rem; font-family: monospace; color: var(--text-main); font-weight: bold;}
         .level-info { font-size: 1.5rem; color: var(--primary); font-weight:bold; margin-top:5px; }
         .speed-info { font-size: 1rem; color: var(--text-muted); }
@@ -22,7 +22,7 @@
         .b-stats { display: flex; gap: 15px; font-size: 0.9rem; color: var(--text-muted); margin-top: 5px;}
         .b-val { font-family: monospace; font-size: 1.1rem; color: var(--text-main); font-weight:bold; }
         
-        .row-eliminated { opacity: 0.4; border-color: var(--border-color) !important; background: var(--bg-color); filter: grayscale(100%);}
+        .row-eliminated { opacity: 0.5; border-color: var(--border-color) !important; background: var(--bg-color); filter: grayscale(100%);}
         .row-fail { background: rgba(220, 53, 69, 0.2) !important; border-color: var(--danger) !important; }
 
         .action-btns { display: flex; gap: 10px; align-items:center; justify-content: flex-end;}
@@ -32,20 +32,42 @@
         .btn-stop { background: var(--danger); color: white; }
         
         .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+
+        /* --- HIGHSCORE STYLES --- */
+        .sys-record { position: absolute; top: 10px; right: 10px; font-size: 0.85rem; color: var(--warning); cursor: pointer; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 6px; border: 1px solid var(--warning); transition: all 0.3s; z-index: 10; }
+        .sys-record:hover { transform: scale(1.05); background: var(--card-hover); }
+        .record-glow { border-color: #ff3333 !important; color: #fff !important; font-weight:bold; box-shadow: 0 0 15px #ff3333 !important; text-shadow: 0 0 5px #ff3333; background: rgba(255, 50, 50, 0.2) !important; animation: pulseRed 0.8s infinite alternate; }
+        @keyframes pulseRed { from { box-shadow: 0 0 10px #ff3333; } to { box-shadow: 0 0 25px #ff3333, inset 0 0 10px #ff3333; } }
+        
+        @media (max-width: 480px) {
+            .hide-mobile { display: none; }
+            .sys-record { top: auto; bottom: 10px; padding: 4px 6px; font-size: 0.8rem; }
+        }
+
+        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(4px); z-index:5000; display:none; align-items:center; justify-content:center; padding:15px; box-sizing:border-box; }
+        .modal-overlay.show { display:flex; }
+        .modal-box { background:var(--card-bg); border:1px solid var(--border-color); border-radius:12px; width:100%; max-width:350px; }
+        .modal-header { padding:16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; }
+        .modal-body { padding:20px; font-size:1.1rem; line-height:1.8; }
+        .hs-val { font-family:monospace; font-weight:bold; color:var(--primary); float:right; }
     </style>
 </head>
 <body>
     <header>
         <div class="logo" data-i18n="g_beep">Luc Léger Test ⏱️</div>
-     <div class="status-bar">
-    <div class="status-dot dot-green" id="cnt-green">0</div>
-    <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
-    <div class="status-dot dot-red" id="cnt-red">0</div>
-</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
     </header>
 
     <main>
         <div class="top-info">
+            <div id="sysRecordBtn" class="sys-record" onclick="showRecordModal()" style="display:none;" title="All-Time Highscore">
+                👑<span class="hide-mobile" data-i18n="bat_sys_record"> System Record:</span> <span id="sysRecordVal">---</span>
+            </div>
+
             <div class="big-time" id="totalTime">00:00.0</div>
             <div class="level-info" id="levelInfo">Level 1</div>
             <div class="speed-info" id="speedInfo">8.5 km/h</div>
@@ -64,14 +86,135 @@
         </div>
     </main>
 
+    <div class="modal-overlay" id="recordModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 style="margin:0; color:var(--warning);">👑 <span data-i18n="bat_hs_title">All-Time Highscore</span></h3>
+                <button onclick="closeRecordModal()" style="background:none;border:none;color:var(--text-main);font-size:1.5rem; cursor:pointer;">✕</button>
+            </div>
+            <div class="modal-body" id="recordBody"></div>
+        </div>
+    </div>
+
     <script src="lang.js"></script>
     <script src="script.js"></script>
-<script>startStatusLoop();</script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
-
         const COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FFFFFF', '#00FF00', '#FFC0CB'];
         let isSetupState = true;
+        let numPlayers = parseInt(sessionStorage.getItem('beep_players') || 1);
+
+        function t(key, fallback) {
+            if (typeof getTranslation !== 'function') return fallback;
+            let val = getTranslation(key);
+            return (val && val !== key) ? val : fallback;
+        }
+
+        // --- STATS LOGIK ---
+        let playerSaved = {};
+        let personalBests = {};
+        let sessionRecords = {};
+        let systemRecord = null;
+
+        async function loadPersonalBests() {
+            for(let i=0; i<numPlayers; i++){
+                personalBests[i] = 0; // Bei Distanz ist 0 der Standard
+                let pid = sessionStorage.getItem(`p_id_${i}`);
+                if (pid && pid !== "0") {
+                    try {
+                        let r = await fetch('/s_' + pid + '.csv?_t=' + Date.now());
+                        if (r.ok) {
+                            let text = await r.text();
+                            let lines = text.split(/\r?\n/);
+                            lines.forEach(line => {
+                                let parts = line.split(';');
+                                if (parts.length >= 4 && parts[1] === "12") { 
+                                    let score = parseInt(parts[2]); 
+                                    if (score > personalBests[i]) personalBests[i] = score;
+                                }
+                            });
+                        }
+                    } catch(e) {}
+                }
+            }
+        }
+        
+        async function loadSystemRecord() {
+            try {
+                let r = await fetch('/api/highscore/get?game=12&_t=' + Date.now());
+                if (r.ok) {
+                    let data = await r.json();
+                    if (data && data.dist) {
+                        systemRecord = data;
+                        document.getElementById('sysRecordVal').innerText = data.dist + "m";
+                        document.getElementById('sysRecordBtn').style.display = 'block';
+                    }
+                }
+            } catch(e) {}
+        }
+
+        loadPersonalBests();
+        loadSystemRecord();
+
+        function savePlayerStat(idx, dist, vo2, lvl, spd) {
+            let pid = sessionStorage.getItem(`p_id_${idx}`);
+            if (!pid || pid === "0") return;
+            let fd = new URLSearchParams();
+            fd.append('pid', pid);
+            fd.append('game', 12); 
+            fd.append('score', dist); 
+            fd.append('ex1', vo2); 
+            fd.append('ex2', lvl); 
+            fd.append('ex3', spd); 
+            fd.append('ts', Date.now());
+            fetch('/api/stats/player_save', { method: 'POST', body: fd }).catch(e => console.log(e));
+        }
+
+        function playHighscoreJingle() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            const playTone = (freq, type, time, dur) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, ctx.currentTime + time);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime + time);
+                gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + time + dur);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime + time);
+                osc.stop(ctx.currentTime + time + dur);
+            };
+            playTone(523.25, 'sine', 0, 0.15);   
+            playTone(659.25, 'sine', 0.15, 0.15); 
+            playTone(783.99, 'sine', 0.3, 0.15);  
+            playTone(1046.50, 'sine', 0.45, 0.5); 
+        }
+
+        function triggerNewSystemRecord(playerData, lvl, spd, pName) {
+            playHighscoreJingle();
+            let btn = document.getElementById('sysRecordBtn');
+            btn.classList.add('record-glow');
+            document.getElementById('sysRecordVal').innerText = playerData.dist + "m";
+            btn.style.display = 'block';
+            
+            systemRecord = {
+                name: pName,
+                dist: playerData.dist,
+                vo2: playerData.vo2,
+                lvl: lvl,
+                spd: spd,
+                ts: Date.now()
+            };
+            
+            let fd = new URLSearchParams();
+            fd.append('game', 12);
+            fd.append('data', JSON.stringify(systemRecord));
+            fetch('/api/highscore/save', { method: 'POST', body: fd });
+            setTimeout(() => { btn.classList.remove('record-glow'); }, 8000);
+        }
 
         document.getElementById('gameBoard').addEventListener('click', function(e) {
             let btn = e.target.closest('.action-btn');
@@ -86,7 +229,6 @@
         function updateStatus() {
             fetch('/api/game/status').then(r=>r.json()).then(data => {
                  
-                
                 if (data.tT !== undefined) {
                     let t = Math.floor(data.tT / 1000);
                     let m = Math.floor(t / 60);
@@ -98,8 +240,14 @@
                 if (data.spd) document.getElementById('speedInfo').innerText = data.spd.toFixed(1) + " km/h";
 
                 isSetupState = (data.st === 0);
-                let btnStart = document.getElementById('btnStart');
                 
+                // Reset Queue bei Setup/Neustart
+                if (data.st < 4) {
+                    playerSaved = {};
+                    sessionRecords = {};
+                }
+
+                let btnStart = document.getElementById('btnStart');
                 if (isSetupState) {
                     btnStart.innerText = getTranslation('btn_start');
                     btnStart.style.background = "var(--primary)";
@@ -111,8 +259,38 @@
                     btnStart.style.background = "var(--success)";
                 }
 
+                // Stats Speicherung wenn Spieler ausscheiden
+                if (data.players) {
+                    let saveQueueDelay = 0;
+                    data.players.forEach(p => {
+                        // Wenn der Spieler eliminiert ist und noch nicht gespeichert wurde
+                        if (p.elim === 1 && !playerSaved[p.id]) {
+                            
+                            let pName = sessionStorage.getItem(`p_name_${p.id}`) || `Lane ${p.id+1}`;
+
+                            // Check auf Persönlichen Rekord
+                            if (p.dist > personalBests[p.id]) {
+                                personalBests[p.id] = p.dist;
+                                sessionRecords[p.id] = true;
+                            }
+                            
+                            // Check auf System Rekord (Mindestens 10 Runden / 200m als Schutz)
+                            if (p.dist >= 200) {
+                                if (!systemRecord || p.dist > systemRecord.dist) {
+                                    triggerNewSystemRecord(p, data.lvl, data.spd, pName);
+                                }
+                            }
+
+                            if (p.dist > 0) {
+                                setTimeout(() => savePlayerStat(p.id, p.dist, p.vo2, data.lvl, data.spd), saveQueueDelay);
+                                saveQueueDelay += 200;
+                            }
+                            playerSaved[p.id] = true;
+                        }
+                    });
+                }
+
                 renderTable(data.players, data.st);
-                
             }).catch(e => {
                 document.getElementById('conn-stat').style.opacity = 0.2;
             });
@@ -144,11 +322,14 @@
                     }
                 }
 
+                // Persönlicher Rekord Icon
+                let recIcon = sessionRecords[p.id] ? ` <span title='${t("bat_new_pers", "Neuer Persönlicher Rekord!")}'>📈</span>` : "";
+
                 if (!rowEl) {
                     container.insertAdjacentHTML('beforeend', `
                     <div id="${rowId}" class="${rowClass}" style="border-left-color: ${color}">
                         <div>
-                            <div class="b-name">${name} <span id="st-icon-${i}">${statusIcon}</span></div>
+                            <div class="b-name">${name} <span id="st-icon-${i}">${statusIcon}</span>${recIcon}</div>
                             <div class="b-stats">
                                 <div>Dist: <span id="dist-${i}" class="b-val">${p.dist}m</span></div>
                                 <div>VO2Max: <span id="vo2-${i}" class="b-val">${p.vo2}</span></div>
@@ -163,8 +344,9 @@
                 } else {
                     if (rowEl.className !== rowClass) rowEl.className = rowClass;
                     
-                    let iconEl = document.getElementById(`st-icon-${i}`);
-                    if (iconEl.innerText !== statusIcon) iconEl.innerText = statusIcon;
+                    let nameEl = rowEl.querySelector('.b-name');
+                    let newNameHtml = `${name} <span id="st-icon-${i}">${statusIcon}</span>${recIcon}`;
+                    if (nameEl.innerHTML !== newNameHtml) nameEl.innerHTML = newNameHtml;
 
                     document.getElementById(`dist-${i}`).innerText = p.dist + "m";
                     document.getElementById(`vo2-${i}`).innerText = p.vo2;
@@ -191,6 +373,35 @@
                 }
             });
         }
+
+        function showRecordModal() {
+            if (!systemRecord) return;
+            let d = new Date(systemRecord.ts);
+            let dateStr = d.toLocaleDateString() + " " + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            
+            let lblPlayer = t('bat_hs_player', "Spieler:");
+            let lblDist = t('bp_hs_dist', "Distanz:");
+            let lblVO2 = t('bp_hs_vo2', "VO2Max:");
+            let lblLvl = t('bat_hs_lvl', "Level:");
+            let lblSpd = t('bp_hs_spd', "Geschwindigkeit:");
+
+            let html = `
+                <div><strong>${lblPlayer}</strong> <span class="hs-val" style="color:var(--text-main);">${systemRecord.name}</span></div>
+                <hr style="border-color:var(--border-color); margin:10px 0;">
+                <div><strong>${lblDist}</strong> <span class="hs-val" style="color:var(--warning); font-size:1.3rem;">${systemRecord.dist}m</span></div>
+                <div><strong>${lblVO2}</strong> <span class="hs-val" style="color:var(--success);">${systemRecord.vo2}</span></div>
+                <hr style="border-color:var(--border-color); margin:10px 0;">
+                <div style="font-size:0.9rem; color:var(--text-muted);">
+                    <div><strong>${lblLvl}</strong> <span class="hs-val">${systemRecord.lvl}</span></div>
+                    <div><strong>${lblSpd}</strong> <span class="hs-val">${systemRecord.spd} km/h</span></div>
+                    <div style="margin-top:10px; text-align:center;">${dateStr}</div>
+                </div>
+            `;
+            document.getElementById('recordBody').innerHTML = html;
+            document.getElementById('recordModal').classList.add('show');
+        }
+
+        function closeRecordModal() { document.getElementById('recordModal').classList.remove('show'); }
 
         function doAction(act) { fetch(`/api/game/action?cmd=${act}`); }
         function goBack() { doAction('reset'); location.href = 'game_beep_names.html'; }
