@@ -179,7 +179,9 @@ After the real first beta is released il will provide the bin files in case of u
     - Player manager with extended Export and Import incl. highscores and statistics   
     - Minor bugfixes in some games (Player-List added, minor layout changes)
         - fix for Whac-A-Mole color picker  
-
+**V2.89.15**   
+    - Tutorial adjusted  
+    
 --- 
 
 

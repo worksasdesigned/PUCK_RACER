@@ -1,4 +1,6 @@
-// --- ZENTRALE TUTORIAL ENGINE (v2 - i18n + Autostart + Dynamische Texte + Magnet Arrow + Smart Selectors) ---
+// --- ZENTRALE TUTORIAL ENGINE (v6 - Strict Paths, Cache Buster & Bulletproof Loading) ---
+// Entwickelt für PuckRacer - ESP32 Reaktionsspiel
+// Autor/Assistenz: Yollina
 
 // =============================================
 // TUTORIAL TEXTE (EN / DE)
@@ -12,19 +14,21 @@ const tourTexts = {
         btn_finish: "Finish ✔",
         btn_start: "Let's go! 🏁",
 
-        step_lang: "Welcome to Puck Racer! 🏁<br><br>First, choose your language!<br><br>Open the menu and select your preferred language. The tutorial will adapt automatically.",
-        step_status: "Up here you can always see how many pucks are currently connected to the system. The colors indicate the connection quality of each puck. One is missing? Switch it off and on again.",
-        step_filter: "Use this bar to quickly sort the 25+ games by training goal. You can also swipe left later to see more filters. Have you found some favorites? You can mark them with the star in the game tile to find them even faster next time!",
+        step_lang: "First, choose your language!<br><br>Open the menu and select your preferred language. The tutorial will adapt automatically.",
+        step_status: "Welcome to Puck Racer! 🏁<br><br>Up here you can always see how many pucks are currently connected to the system. The colors indicate the connection quality of each puck.",
+        step_filter: "Use this bar to quickly sort the 20+ games by training goal. You can also swipe left later to see more filters.",
+        
+        step_shuttle_help: "Note: Here you can see a description and an example for each game.<br><br>Click on the '?'.",
+        step_shuttle_modal: "Here you can find all details about the setup and rules of the game.<br><br>Now click on the 'X' to close the window.",
+        
         step_shuttle: "Let's set up your first game!<br><br>Click the <b>Shuttle Run</b> tile to enter the game settings.",
 
         step_setup_card: "Great! Here you are in the game settings.<br><br>Choose how many runners compete against each other. Note that this game requires 2 pucks per player and you need at least 2 pucks connected.",
         step_setup_rounds: "Shuttle Run is very simple. You only need to set how many rounds should be run. Other games have 5-6 settings here!",
         step_setup_next: "All set? Then click NEXT to get to the puck assignment.",
 
-        // NEUE TEXTE (EN)
         step_names_layout: "In most games, you can see how to set up the pucks here. The animation shows you how the puck should be lighting up right now, making it easy to see which pucks belong together.<br><br>In other games, the setup is a bit more complex, but you'll manage 😉<br><br><b>Tip:</b> You can turn many games into an obstacle course where the puck is simply the finish line.",
         step_names_picker: "<b>Load players from list:</b><br><br>In the Player Manager you can create classes and players to assign them very quickly. You will also find a small statistic for many games in the Player Manager.",
-
         step_names_card: "Here puck groups are formed so you can physically set up the game. You can also enter a name for each group.<br><br>Look at your pucks: One should now be breathing blue (the target puck), one has a circle effect (the start puck).",
         step_names_start: "Once you've placed the pucks, click START GAME.",
 
@@ -41,19 +45,21 @@ const tourTexts = {
         btn_finish: "Beenden ✔",
         btn_start: "Los geht's! 🏁",
 
-        step_lang: "Willkommen beim Puck Racer! 🏁<br> Wähle zuerst deine Sprache!<br><br>Öffne das Menü und wähle deine bevorzugte Sprache. Das Tutorial passt sich automatisch an.",
-        step_status: "Hier oben siehst du jederzeit, wie viele Pucks gerade aktiv mit dem System verbunden sind. Die Farben zeigen dir die jeweilige Verbindungsqualität.",
-        step_filter: "Mit dieser Leiste kannst du die über 25 Spiele blitzschnell nach Trainingsziel sortieren. Nachher kannst du hier auch nach links swipen um noch mehr Filter zu sehen. Du kannst dir auch Favoriten anlegen. Einfach auf den Stern in der Spiele-Kachel klicken",
+        step_lang: "Wähle zuerst deine Sprache!<br><br>Öffne das Menü und wähle deine bevorzugte Sprache. Das Tutorial passt sich automatisch an.",
+        step_status: "Willkommen beim Puck Racer! 🏁<br><br>Hier oben siehst du jederzeit, wie viele Pucks gerade aktiv mit dem System verbunden sind. Die Farben zeigen dir die jeweilige Verbindungsqualität.",
+        step_filter: "Mit dieser Leiste kannst du die über 20 Spiele blitzschnell nach Trainingsziel sortieren. Nachher kannst du hier auch nach links swipen um noch mehr Filter zu sehen.",
+        
+        step_shuttle_help: "Hinweis: Hier siehst du zu jedem Spiel eine Beschreibung und ein Beispiel.<br><br>Klicke auf das '?'.",
+        step_shuttle_modal: "Hier findest du alle Details zum Aufbau und Ablauf des Spiels.<br><br>Klicke nun auf das 'X', um das Fenster wieder zu schließen.",
+
         step_shuttle: "Lass uns dein erstes Spiel einstellen!<br><br>Klicke auf die Kachel <b>Pendellauf (Shuttle Run)</b>, um in die Spieleinstellungen zu gelangen.",
 
         step_setup_card: "Perfekt! Hier bist du in den Spieleinstellungen.<br><br>Hier wählst du z.B. aus, wie viele Läufer gegeneinander antreten sollen. Achte darauf, dass in diesem Spiel 2 Pucks pro Spieler benötigt werden und dass du mind. 2 Pucks verbunden hast.",
         step_setup_rounds: "Pendellauf ist sehr einfach. Du musst nur einstellen wie viele Runden gelaufen werden sollen. Andere Spiele haben hier 5-6 Einstellmöglichkeiten!",
         step_setup_next: "Alles klar? Dann klicke auf WEITER, um zur Puck-Zuweisung zu kommen.",
 
-        // NEUE TEXTE (DE)
         step_names_layout: "In den meisten Spielen siehst du hier, wie man die Pucks aufbauen soll. Die Animation zeigt dir, wie der Puck gerade leuchten soll, damit du einfach erkennst, welche Pucks zusammengehören.<br><br>In anderen Spielen ist der Aufbau etwas komplizierter, aber du schaffst das 😉<br><br><b>Tipp:</b> Du kannst aus vielen Spielen auch einen Hindernislauf bauen und der Puck ist einfach das Ende der Strecke.",
         step_names_picker: "<b>Spieler aus Liste:</b><br><br>Im Spieler-Manager kannst du Klassen und Spieler anlegen. So kannst du sehr schnell Spieler zuweisen. Außerdem findest du im Spieler-Manager für viele Spiele eine kleine Statistik.",
-
         step_names_card: "Hier werden Puckgruppen gebildet, damit du das Spiel physisch aufbauen kannst. Zudem kannst du je Gruppe einen Namen eingeben.<br><br>Schau auf deine Pucks: Einer sollte jetzt blau atmen (der Ziel-Puck), einer hat einen Kreislauf-Effekt (der Start-Puck).",
         step_names_start: "Wenn du die Pucks verteilt hast, klicke auf START GAME / ZUM SPIEL.",
 
@@ -71,19 +77,21 @@ const tourSteps = [
     { page: 'index', type: 'welcome' },
 
     { page: 'index', target: '#mainMenu', textKey: 'step_lang', requireInteraction: 'lang', placement: 'right' },
-
     { page: 'index', target: '#statusBarGroup', textKey: 'step_status', arrow: 'right' },
     { page: 'index', target: '#filterBar', textKey: 'step_filter' },
+
+    { page: 'index', target: '.tile[data-id="shuttle"] .help-btn', textKey: 'step_shuttle_help', requireClick: true, placement: 'top' },
+    { page: 'index', target: '#helpModal .close-modal', textKey: 'step_shuttle_modal', requireInteraction: 'modal_close', placement: 'bottom' },
     { page: 'index', target: '.tile[data-id="shuttle"]', textKey: 'step_shuttle', requireClick: true },
 
     { page: 'shuttle_setup', target: 'main .card:nth-of-type(1)', textKey: 'step_setup_card', allowInteraction: true },
     { page: 'shuttle_setup', target: 'main .card:nth-of-type(2)', textKey: 'step_setup_rounds', placement: 'top', allowInteraction: true },
+    
+    // Korrektur: In der game_shuttle_setup.html hat der Button die ID #btnNext.
     { page: 'shuttle_setup', target: '#btnNext', textKey: 'step_setup_next', requireClick: true, placement: 'top' },
 
-    // NEUE SCHRITTE: Streckenaufbau & Spieler aus Liste
     { page: 'shuttle_names', target: '.layout-card', textKey: 'step_names_layout', allowInteraction: true },
     { page: 'shuttle_names', target: '#pickerBar', textKey: 'step_names_picker', allowInteraction: true },
-
     { page: 'shuttle_names', target: '#playerList', textKey: 'step_names_card', allowInteraction: true },
     { page: 'shuttle_names', target: 'button[onclick="startGame()"]', textKey: 'step_names_start', requireClick: true, placement: 'top' },
 
@@ -99,10 +107,15 @@ const tourSteps = [
 let currentTourStep = parseInt(sessionStorage.getItem('pr_tour_step')) || 0;
 let tourLang = sessionStorage.getItem('pr_tour_lang') || 'en';
 
+/**
+ * Holt den passenden Text für den aktuellen Schritt unter Berücksichtigung der Sprache
+ * und fügt bei step_status dynamisch die aktuell verbundenen ESP32-Pucks ein.
+ */
 function getTourText(key) {
     let texts = tourTexts[tourLang] || tourTexts['en'];
     let baseText = texts[key] || tourTexts['en'][key] || key;
 
+    // Spezifische Logik für die Anzeige der Pucks im Status-Text
     if (key === 'step_status') {
         let green = parseInt(document.getElementById('cnt-green')?.innerText || '0');
         let yellow = parseInt(document.getElementById('cnt-yellow')?.innerText || '0');
@@ -129,7 +142,14 @@ function getTourText(key) {
 // =============================================
 // HTML INJECTION
 // =============================================
+/**
+ * Fügt das Overlay und die Tutorial-Bubble in das DOM ein, falls sie noch nicht existieren.
+ */
 function injectTourHTML() {
+    if (!document.body) {
+        setTimeout(injectTourHTML, 100);
+        return;
+    }
     if (document.getElementById('tourOverlay')) return;
 
     const html = `
@@ -173,47 +193,11 @@ function injectTourHTML() {
                 <div class="puck-scene" style="width:300px; height:300px; perspective:1200px; display:flex; justify-content:center; align-items:center; margin:0 auto;">
                     <div class="puck-assembly" id="tourPuckAssembly" style="position:relative; width:180px; height:180px; transform-style:preserve-3d; transform:rotateX(70deg) rotateZ(0deg); transition:transform 2s cubic-bezier(0.25,1,0.5,1);">
                         <div class="puck-part puck-base" style="--z:0px;"></div>
-                        <div class="puck-part puck-base" style="--z:2px;"></div>
-                        <div class="puck-part puck-base" style="--z:4px;"></div>
-                        <div class="puck-part puck-base" style="--z:6px;"></div>
-                        <div class="puck-part puck-base" style="--z:8px;"></div>
                         <div class="puck-part puck-base" style="--z:10px;"></div>
-                        <div class="puck-part puck-base" style="--z:12px;"></div>
-                        <div class="puck-part puck-base" style="--z:14px;"></div>
-                        <div class="puck-part puck-base" style="--z:16px;"></div>
-                        <div class="puck-part puck-base" style="--z:18px;"></div>
-                        <div class="puck-part puck-base" style="--z:20px;"></div>
-                        <div class="puck-part puck-base" style="--z:22px;"></div>
-                        <div class="puck-part puck-base" style="--z:24px;"></div>
-                        <div class="puck-part puck-base" style="--z:26px;"></div>
-                        <div class="puck-part puck-base" style="--z:28px;"></div>
                         <div class="puck-part puck-base" style="--z:30px;"></div>
-                        <div class="puck-part puck-base" style="--z:32px;"></div>
-                        <div class="puck-part puck-base" style="--z:34px;"></div>
-                        <div class="puck-part puck-base" style="--z:36px;"></div>
-                        <div class="puck-part puck-base" style="--z:38px;"></div>
-                        <div class="puck-part puck-base" style="--z:40px;"></div>
-                        <div class="puck-part puck-base" style="--z:42px;"></div>
-                        <div class="puck-part puck-base" style="--z:44px;"></div>
-                        <div class="puck-part puck-base" style="--z:46px;"></div>
-                        <div class="puck-part puck-base" style="--z:48px;"></div>
                         <div class="puck-part puck-base" style="--z:50px;"></div>
-                        <div class="puck-part puck-base" style="--z:52px;"></div>
-                        <div class="puck-part puck-base" style="--z:54px;"></div>
-                        <div class="puck-part puck-base" style="--z:56px;"></div>
-                        <div class="puck-part puck-base" style="--z:58px;"></div>
-                        <div class="puck-part puck-base" style="--z:60px;"></div>
-                        <div class="puck-part puck-base" style="--z:62px;"></div>
                         <div class="puck-part puck-led" style="--z:64px;"></div>
-                        <div class="puck-part puck-led" style="--z:66px;"></div>
-                        <div class="puck-part puck-led" style="--z:68px;"></div>
-                        <div class="puck-part puck-led" style="--z:70px;"></div>
                         <div class="puck-part puck-button" style="--z:72px;"></div>
-                        <div class="puck-part puck-button" style="--z:74px;"></div>
-                        <div class="puck-part puck-button" style="--z:76px;"></div>
-                        <div class="puck-part puck-button" style="--z:78px;"></div>
-                        <div class="puck-part puck-button" style="--z:80px;"></div>
-                        <div class="puck-part puck-button" style="--z:82px;"></div>
                     </div>
                 </div>
 
@@ -389,6 +373,11 @@ function endTutorial() {
         }
     });
 
+    let modal = document.getElementById('helpModal');
+    if (modal) {
+        modal.style.removeProperty('z-index');
+    }
+
     let menu = document.getElementById('mainMenu');
     if (menu) menu.classList.remove('show');
     resetHeaderZIndex();
@@ -443,11 +432,17 @@ function updateBubblePosition() {
     let left = rect.left;
 
     let fitsRight = (rect.right + 25 + bubbleW) <= window.innerWidth;
+    let fitsTop = (rect.top - bubbleH - 15) >= 10;
+    let fitsBottom = (rect.bottom + 15 + bubbleH) <= window.innerHeight;
 
     if (step.placement === 'right' && fitsRight) {
         left = rect.right + 25;
         top = targetCY - (bubbleH / 2);
-    } else if (step.placement === 'top' || (top + bubbleH > window.innerHeight)) {
+    } else if (step.placement === 'top' && fitsTop) {
+        top = rect.top - bubbleH - 15;
+    } else if (step.placement === 'bottom' && fitsBottom) {
+        top = rect.bottom + 15;
+    } else if (fitsTop) {
         top = rect.top - bubbleH - 15;
     } else {
         top = rect.bottom + 15;
@@ -472,14 +467,14 @@ function updateBubblePosition() {
         bubble.style.setProperty('--arrow-top', arrowTop + 'px');
         bubble.style.setProperty('--arrow-left', '-22px');
         bubble.style.setProperty('--arrow-color', 'transparent var(--primary) transparent transparent');
-    } else if (step.placement === 'top' || (rect.bottom + 15 + bubbleH > window.innerHeight)) {
+    } else if ((step.placement === 'top' && fitsTop) || (!fitsBottom && fitsTop)) { 
         let arrowLeft = targetCX - left - 10;
         if (arrowLeft < 15) arrowLeft = 15;
         if (arrowLeft > bubbleW - 35) arrowLeft = bubbleW - 35;
         bubble.style.setProperty('--arrow-top', '100%');
         bubble.style.setProperty('--arrow-left', arrowLeft + 'px');
         bubble.style.setProperty('--arrow-color', 'var(--primary) transparent transparent transparent');
-    } else {
+    } else { 
         let arrowLeft = targetCX - left - 10;
         if (arrowLeft < 15) arrowLeft = 15;
         if (arrowLeft > bubbleW - 35) arrowLeft = bubbleW - 35;
@@ -490,7 +485,8 @@ function updateBubblePosition() {
 }
 
 // =============================================
-// SHOW STEP
+// SHOW STEP 
+// (Behoben: Funktion war im vorherigen Stand doppelt verschachtelt)
 // =============================================
 function showTourStep() {
     if (currentTourStep >= tourSteps.length) {
@@ -505,17 +501,20 @@ function showTourStep() {
         return;
     }
 
-    let path = window.location.pathname;
-    let isIndexPage = path.endsWith('/') || path.endsWith('index.html');
+    // Striktes Seiten-Matching: Stellt sicher, dass das Skript nur auslöst, 
+    // wenn der aktuelle Schritt auch zur aktuellen Seite passt.
+    let path = window.location.pathname.toLowerCase();
+    let isIndexPage = path === '/' || path.includes('index');
     let isShuttleSetup = path.includes('shuttle_setup');
-    let isShuttleNames = path.includes('shuttle_names');
+    let isShuttleNames = path.includes('shuttle_name'); // Matcht _names und _name
     let isShuttleRun = path.includes('shuttle_run');
 
     if (step.page === 'index' && !isIndexPage) return;
     if (step.page === 'shuttle_setup' && !isShuttleSetup) return;
     if (step.page === 'shuttle_names' && !isShuttleNames) return;
     if (step.page === 'shuttle_run' && !isShuttleRun) return;
-
+        
+    // Reset von alten Highlights
     document.querySelectorAll('.tour-highlight').forEach(el => {
         el.classList.remove('tour-highlight');
         el.style.pointerEvents = '';
@@ -532,9 +531,51 @@ function showTourStep() {
 
     let targetEl = document.querySelector(step.target);
     
-    if (!targetEl || (targetEl.offsetHeight === 0 && targetEl.offsetWidth === 0)) { 
-        setTimeout(showTourStep, 200); 
-        return; 
+    if (step.requireInteraction !== 'modal_close') {
+        // Retry-Logik, falls dynamischer Content (wie das DOM) noch nicht vollständig gerendert ist
+        if (!targetEl || (targetEl.offsetHeight === 0 && targetEl.offsetWidth === 0)) { 
+            setTimeout(showTourStep, 200); 
+            return; 
+        }
+    }
+
+    // --- SONDERSCHRITT: Auf das Schließen des Modals warten ---
+    if (step.requireInteraction === 'modal_close') {
+        let modal = document.getElementById('helpModal');
+        
+        if (!modal || modal.style.display === 'none' || modal.style.display === '') {
+            currentTourStep++;
+            sessionStorage.setItem('pr_tour_step', currentTourStep);
+            showTourStep();
+            return;
+        }
+
+        modal.style.setProperty('z-index', '10001', 'important');
+        document.getElementById('tourOverlay').style.display = 'block';
+        
+        targetEl.classList.add('tour-highlight');
+        targetEl.style.setProperty('pointer-events', 'auto', 'important');
+
+        let bubble = document.getElementById('tourBubble');
+        document.getElementById('tourText').innerHTML = getTourText(step.textKey);
+        bubble.style.display = 'block';
+        document.getElementById('tourNextBtn').style.display = 'none';
+
+        updateBubblePosition();
+        setTimeout(updateBubblePosition, 100);
+
+        // Intervall prüft regelmäßig, ob das Modal wieder unsichtbar ist
+        let checkClose = setInterval(() => {
+            if (modal.style.display === 'none') {
+                clearInterval(checkClose);
+                modal.style.removeProperty('z-index');
+                currentTourStep++;
+                sessionStorage.setItem('pr_tour_step', currentTourStep);
+                showTourStep();
+            }
+        }, 200);
+        updateTourButtonTexts();
+        return;
     }
 
     manageHeaderZIndex(targetEl);
@@ -568,16 +609,32 @@ function showTourStep() {
 
     setTimeout(updateBubblePosition, 500);
 
+    // Klick-Ereignis-Handler für Schritte, bei denen der Nutzer selbst klicken muss (z.B. Buttons, Kacheln)
     if (step.requireClick) {
         targetEl.style.setProperty('pointer-events', 'auto', 'important');
         document.getElementById('tourNextBtn').style.display = 'none';
 
         const clickHandler = function (e) {
-            if (e.target.classList.contains('help-btn') || e.target.classList.contains('fav-btn')) return;
-            targetEl.removeEventListener('click', clickHandler);
-            sessionStorage.setItem('pr_tour_step', currentTourStep + 1);
+            // Verhindert, dass das Tutorial fälschlicherweise weitergeht, wenn man auf den Stern oder das Fragezeichen klickt
+            if (step.target === '.tile[data-id="shuttle"]') {
+                if (e.target.closest('.help-btn') || e.target.closest('.fav-btn')) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return; 
+                }
+            }
+
+            targetEl.removeEventListener('click', clickHandler, true);
+            currentTourStep++;
+            sessionStorage.setItem('pr_tour_step', currentTourStep);
+            
+            let nextStepObj = tourSteps[currentTourStep];
+            if (nextStepObj && nextStepObj.page === step.page) {
+                setTimeout(showTourStep, 150);
+            }
         };
-        targetEl.addEventListener('click', clickHandler);
+        
+        targetEl.addEventListener('click', clickHandler, true);
 
     } else {
         targetEl.style.setProperty('pointer-events', step.allowInteraction ? 'auto' : 'none', 'important');
@@ -594,6 +651,9 @@ function showTourStep() {
     updateTourButtonTexts();
 }
 
+/**
+ * Funktion, um manuell zum nächsten Schritt zu wechseln
+ */
 function tourNextStep() {
     currentTourStep++;
     sessionStorage.setItem('pr_tour_step', currentTourStep);
@@ -603,7 +663,10 @@ function tourNextStep() {
 window.addEventListener('scroll', updateBubblePosition, { passive: true });
 window.addEventListener('resize', updateBubblePosition, { passive: true });
 
-document.addEventListener('DOMContentLoaded', () => {
+/**
+ * Initialisiert das Tutorial. Wird direkt beim Laden des DOMs aufgerufen.
+ */
+function initTour() {
     injectTourHTML();
     let savedLang = sessionStorage.getItem('pr_tour_lang');
     if (savedLang) tourLang = savedLang;
@@ -614,4 +677,10 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         setTimeout(autoStartTutorial, 800);
     }
-});
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTour);
+} else {
+    initTour();
+}

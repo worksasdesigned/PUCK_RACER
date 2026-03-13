@@ -7,7 +7,7 @@
 #include "StatsManager.h" 
 #include "WifiScanner.h"
 
-#define SYS_VER "v2.89.15" 
+#define SYS_VER "v2.89.16" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;

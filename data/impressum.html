@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +9,7 @@
     <title>Impressum – Puck Racer</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        main { max-width: 700px; }
+        main { max-width: 700px; margin: 0 auto; }
 
         .section-title {
             font-family: 'puckracer', sans-serif;
@@ -29,8 +29,15 @@
             color: var(--text-main);
             margin-bottom: 10px;
         }
-        .imp-text strong { color: var(--text-main); }
-        .imp-muted { color: var(--text-muted); font-style: italic; }
+        .imp-text-en {
+            font-size: 0.9rem;
+            line-height: 1.7;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+        
+        .imp-text strong, .imp-text-en strong { color: var(--text-main); }
 
         .highlight-box {
             background: var(--card-bg);
@@ -38,11 +45,15 @@
             padding: 14px 18px;
             border-radius: 0 8px 8px 0;
             margin: 15px 0;
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             line-height: 1.6;
+            color: var(--text-main);
         }
-        .highlight-box.warn {
-            border-left-color: var(--warning);
+        .highlight-box-en {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-style: italic;
         }
         .highlight-box.danger {
             border-left-color: var(--danger);
@@ -73,10 +84,21 @@
             border-radius: 6px;
             border: 1px solid var(--border-color);
         }
-        .lib-name {
+        .lib-name a {
             font-weight: bold;
             color: var(--primary);
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 4px;
+        }
+        .lib-name a:hover {
+            text-decoration: underline;
+        }
+        .lib-text {
             display: block;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            margin-bottom: 4px;
         }
         .lib-license {
             font-size: 0.8rem;
@@ -96,121 +118,108 @@
 
     <main>
 
-        <h2 class="section-title">⚖️ Legal Notice & Philosophy</h2>
+        <h2 class="section-title">⚖️ Legal Notice & Impressum</h2>
 
         <p class="imp-text">
-            <strong>Developed by:</strong> WorksAsDesigned<br>
-            <span class="imp-muted">(Full address and contact details to be added)</span>
+            <strong>Entwickelt von / Developed by:</strong> WorksAsDesigned<br>
+            <span style="color: var(--text-muted); font-style: italic;">(Full address and contact details to be added)</span>
         </p>
 
         <h2 class="section-title">⚠️ Disclaimer</h2>
 
         <div class="highlight-box danger">
-            <strong>Use at your own risk!</strong>
+            <strong>Nutzung auf eigene Gefahr!</strong><br>
+            <div class="highlight-box-en"><strong>Use at your own risk!</strong></div>
         </div>
 
         <p class="imp-text">
-            This project is 100% open-source and is provided <strong>"as is"</strong>, without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement.
+            Die Software wird "wie besehen" (as is) zur Verfügung gestellt, ohne jegliche Garantie, weder ausdrücklich noch stillschweigend. Ich übernehme absolut keine Verantwortung oder Haftung für durchgebrannte Mikrocontroller, kurzgeschlossene Batterien oder Kinder, die in der Turnhalle über die Pucks stolpern. Du baust es, du nutzt es, du trägst das Risiko. Bitte handle verantwortungsvoll und sicher, besonders beim Löten und im Umgang mit Li-Ion Akkus!
         </p>
-        <p class="imp-text">
-            I take absolutely no responsibility or liability for any fried microcontrollers, short-circuited batteries, or kids tripping over the pucks in the gym.
-        </p>
-        <p class="imp-text">
-            <strong>You build it, you use it, you take the risk.</strong> Please act responsibly and be safe, especially when soldering and handling Li-Ion batteries!
+        <p class="imp-text-en">
+            The software is provided "as is", without warranty of any kind, express or implied. I take absolutely no responsibility or liability for any fried microcontrollers, short-circuited batteries, or kids tripping over the pucks in the gym. You build it, you use it, you take the risk. Please act responsibly and be safe, especially when soldering and handling Li-Ion batteries!
         </p>
 
-        <h2 class="section-title">📄 License</h2>
+        <h2 class="section-title">📄 Lizenz & Shareware</h2>
 
-        <div class="license-badge">CC BY-NC-SA 4.0 – Non-Commercial, Share-Alike</div>
+        <div class="license-badge">Shareware – Lifetime License</div>
 
         <p class="imp-text">
-            You are free to <strong>use, copy, modify, and redistribute</strong> the source code of this project, under the following conditions:
+            Nach mehreren hundert Stunden Arbeit und unzähligen Nächten am Code, habe ich mich entschieden, Puck Racer als <strong>Shareware</strong> anzubieten. Das bedeutet: Du kannst 100 Spiele komplett ohne Einschränkungen starten und das System auf Herz und Nieren testen. Danach wird dich das Spiel vor jedem Start mit einem kleinen Popup und ein paar Gedenksekunden daran erinnern, dass es Zeit für eine Lizenz wäre. 
+        </p>
+        <p class="imp-text-en">
+            After hundreds of hours of work and countless nights coding, I decided to offer Puck Racer as <strong>Shareware</strong>. This means: You can start 100 games completely without restrictions to thoroughly test the system. After that, the game will remind you before every start with a small popup and a few seconds of waiting time that it might be time to get a license.
+        </p>
+
+        <p class="imp-text">
+            Es gibt <strong>kein Abo-Modell</strong>. Du kaufst einmalig eine Lifetime-Lizenz und hast für immer Ruhe vor den Hinweisen. Du darfst das System weiterhin frei nutzen, es nervt dich dann eben nur ein bisschen. Die Hardware ist und bleibt natürlich zu 100% Open Source. Du darfst eigene Gehäuse und Adapter entwerfen, drucken und gerne mit der Community teilen!
+        </p>
+        <p class="imp-text-en">
+            There is <strong>no subscription model</strong>. You buy a lifetime license once and the nag screens are gone forever. You can still use the system freely without a license, it will just annoy you a bit. The hardware is and will always remain 100% Open Source. You are explicitly invited to design, print, and share your own cases and adapters with the community!
+        </p>
+
+        <h2 class="section-title">🧠 Philosophie</h2>
+
+        <p class="imp-text">
+            Ich mache das hier nicht aus rein kommerziellen Gründen. Aber wenn du das System oft in deinem Training oder Verein nutzt, bezahlst du hoffentlich gerne die paar Euro für eine Lizenz. Das Geld deckt meine laufenden Entwicklungskosten, die Hardware-Tests und sorgt dafür, dass ab und zu ein schöner Strauß Blumen für meine Frau herausspringt, die meine Zeit im Bastelkeller ertragen muss.
+        </p>
+        <p class="imp-text-en">
+            I'm not doing this for purely commercial reasons. But if you use the system frequently in your training or club, I hope you'll gladly pay the few bucks for a license. The money covers ongoing development costs, hardware testing, and ensures I can occasionally buy a nice bouquet of flowers for my wife, who puts up with all the time I spend in my workshop.
+        </p>
+
+        <p class="imp-text">
+            <strong>Für kleine Vereine:</strong> Wenn ihr ein kleiner Verein seid, der jeden Cent umdrehen muss und keine Kasse für sowas hat – schreibt mir einfach eine Mail. Wir finden ganz sicher eine Lösung, damit ihr um die Lizenzkosten herumkommt!
+        </p>
+        <p class="imp-text-en">
+            <strong>For small sports clubs:</strong> If you are a small club on a very tight budget – just send me an email. I'm sure we can figure out a way to get you a license for free or a big discount!
+        </p>
+
+
+        <h2 class="section-title">📖 Die Geschichte dahinter</h2>
+
+        <p class="imp-text">
+            Um ehrlich zu sein: Ich habe das System gebaut, weil ich einfach zu geizig war, 300 bis 400 Euro für ein kommerzielles Reaktionslicht-System auszugeben. Diese Systeme kommen oft nur mit 4 Pucks, nutzen geschlossene Software und bieten dir unzählige Spiele an, die im Grunde nur 5 verschiedene Modi in leichter Abwandlung sind. Zudem ist mir aufgefallen, dass sich die Sportausstattung an der Grundschule meiner Kinder in den letzten 40 Jahren nicht wirklich verändert hat. Es war Zeit für ein Upgrade.
+        </p>
+        <p class="imp-text-en">
+            Let's be real for a second: I built this because I was simply too stingy to drop 300 to 400 Euros on a commercial reaction light system. Those systems usually come with only 4 pucks, run closed-source software, and market countless games that basically boil down to 5 different modes. I also noticed that the PE equipment at my kids' elementary school hasn't really changed in 40 years. It was time for an upgrade.
         </p>
 
         <div class="highlight-box">
-            <strong>✅ You may:</strong><br>
-            • Use Puck Racer privately, in schools, clubs, and organizations<br>
-            • Modify the source code to your heart's content<br>
-            • Share your modified version with others<br>
-            • Build and assemble Puck Racer systems for personal use or as a gift<br>
-            • Charge a fair assembly fee if you build systems for others (covering parts + your time)
+            <strong>Puck Racer hat mittlerweile 26 hochgradig anpassbare Spiele.</strong> Das ist die perfekte DIY-Lösung für professionelle Trainingsunterstützung im Verein, für den Sportunterricht oder als absolutes Highlight auf dem nächsten Kindergeburtstag.
+            <div class="highlight-box-en"><strong>Puck Racer now features 26 highly customizable games.</strong> It's the perfect DIY solution for professional training support, PE lessons, or as the absolute highlight at the next kids' birthday party.</div>
         </div>
 
-        <div class="highlight-box danger">
-            <strong>🚫 You may NOT:</strong><br>
-            • Sell the software or any derivative of it commercially<br>
-            • Bundle the software with hardware and charge a premium for the software itself<br>
-            • Remove or alter this copyright notice<br>
-            • Present the work as your own without attribution
-        </div>
+        <p class="imp-text">
+            Der Deal ist simpel: Ein System mit 4 bis 10 Pucks zu bauen, kostet Zeit, Geduld und etwas Lötarbeit. Der Lohn dafür ist ein System, bei dem die Hardwarekosten pro Puck auf unter 20 Euro gedrückt werden können. 
+        </p>
+        <p class="imp-text-en">
+            The trade-off is simple: Building a system with 4 to 10 Pucks takes time, patience, and some soldering. The reward is a system where the hardware cost per Puck can be pushed under 20 Euros.
+        </p>
 
         <h2 class="section-title">🛠️ Credits & Libraries</h2>
         <p class="imp-text">
+            Puck Racer baut auf der großartigen Arbeit der Open-Source-Community auf. Ohne diese essenziellen Bibliotheken wäre das Projekt nicht möglich gewesen:
+        </p>
+        <p class="imp-text-en">
             Puck Racer is built upon the incredible work of the open-source community. This project would not be possible without these essential libraries:
         </p>
         
         <ul class="lib-list">
             <li>
-                <span class="lib-name">FastLED</span>
-                <span class="lib-text">The backbone of all lighting effects. Unbeatable performance for WS2812B LEDs.</span><br>
+                <span class="lib-name"><a href="https://github.com/FastLED/FastLED" target="_blank">FastLED</a></span>
+                <span class="lib-text">The backbone of all lighting effects. Unbeatable performance for WS2812B LEDs.</span>
                 <span class="lib-license">License: MIT License</span>
             </li>
             <li>
-                <span class="lib-name">ESPAsyncWebServer & AsyncTCP</span>
-                <span class="lib-text">Providing the high-performance web interface on the ESP32 Coordinator.</span><br>
+                <span class="lib-name"><a href="https://github.com/me-no-dev/ESPAsyncWebServer" target="_blank">ESPAsyncWebServer</a> & <a href="https://github.com/me-no-dev/AsyncTCP" target="_blank">AsyncTCP</a></span>
+                <span class="lib-text">Providing the high-performance web interface on the ESP32 Coordinator.</span>
                 <span class="lib-license">License: LGPL-3.0</span>
             </li>
             <li>
-                <span class="lib-name">Arduino JSON</span>
-                <span class="lib-text">For efficient data handling between the web interface and the controller.</span><br>
+                <span class="lib-name"><a href="https://arduinojson.org/" target="_blank">ArduinoJson</a></span>
+                <span class="lib-text">For efficient data handling between the web interface and the controller.</span>
                 <span class="lib-license">License: MIT License</span>
             </li>
         </ul>
-
-        <h2 class="section-title">💸 A Quick Word on Money & Donations</h2>
-
-        <p class="imp-text">
-            First of all: A massive <strong>THANK YOU</strong> to everyone who supported this project with a tip or donation on Makerworld! It really means a lot and keeps the soldering iron hot. 🔥
-        </p>
-
-        <div class="highlight-box warn">
-            <strong>Got ripped off?</strong> If you bought this system from someone and paid a premium for the software (meaning you paid significantly more than the raw hardware costs and a fair assembly fee) — you got scammed. Please go back to your seller and kindly point them to the open-source license of this project. <strong>Puck Racer is free!</strong>
-        </div>
-
-        <h2 class="section-title">🧠 Developer Philosophy</h2>
-
-        <p class="imp-text">
-            I strongly believe that hobby software should be free. At most, it should reimburse the developer for their prototyping costs. If a pizza or a crate of beer comes out of it eventually, that's awesome — hobbies should fund hobbies. 🍕🍺
-        </p>
-        <p class="imp-text">
-            Obviously, professional enterprise software needs to be paid for professionally, but this is a community project built by a maker, for makers.
-        </p>
-
-        <h2 class="section-title">📖 The Story: Why This Exists</h2>
-
-        <p class="imp-text">
-            Let's be real for a second: I built this because I was simply too stingy to drop 300–400 € on a commercial reaction light system that consists of only 4 pucks, runs closed-source software and provides 200 extremely similar "games" — which can be summarized in about 5 different game modes.
-        </p>
-        <p class="imp-text">
-            Puck Racer now has <strong>23 games</strong>. Highly adjustable. Multi-player, multi-group support. All options combined easily provide 200+ "games". 😉
-        </p>
-        <p class="imp-text">
-            I also noticed that the PE equipment at my kids' elementary school hasn't really changed in 40 years. It was time for an upgrade.
-        </p>
-
-        <div class="highlight-box">
-            <strong>Puck Racer is the answer.</strong> It's perfect for professional training support in sports clubs, spicing up PE lessons in schools, or just being the absolute highlight of the next kids' birthday party. I would describe it as a blazingPOD – DIY solution.
-        </div>
-
-        <p class="imp-text">
-            <strong>The Trade-off:</strong> Yes, building 4–10 Pucks and a Coordinator is a bit of a grind. It takes time and patience.
-        </p>
-        <p class="imp-text">
-            <strong>The Reward:</strong> You get a fully customizable system where the hardware cost per Puck can be pushed under 20 €. You do the math. 😉
-        </p>
-        <p class="imp-text">
-            Nice side effect: Teach your kids how to solder. It's easy to medium difficulty. My 9-year-old twins built 5 pucks by themselves with very little help. 🧒🔧
-        </p>
 
         <br>
         <button onclick="location.href='/'" class="btn-back" style="margin-top:20px;">🏠 Home</button>
@@ -218,8 +227,10 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
-    <script>startStatusLoop();</script>
     <script>
+        // Startet den Status-Loop, wenn die Funktion aus script.js existiert
+        if(typeof startStatusLoop === 'function') startStatusLoop();
+        
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
     </script>
 </body>
