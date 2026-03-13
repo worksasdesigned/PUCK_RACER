@@ -163,21 +163,21 @@ After the real first beta is released il will provide the bin files in case of u
     - App Icon added  
     - Check that only 1 device is connected via WiFi  
 **V2.89.7**   
-    - Simple Statistics added for players maintained in Playermanager
-    - CatReflexes (avarage reaction time)
-    - BombSquad (avarage reaction time)
-    - Shuttle run (time) assuming trainer always uses same distance, else its just a tracking of usage
+    - Simple Statistics added for players maintained in Playermanager  
+    - CatReflexes (avarage reaction time)  
+    - BombSquad (avarage reaction time)  
+    - Shuttle run (time) assuming trainer always uses same distance, else its just a tracking of usage  
     - Countdown (time and clicks) tracking of usage - Fix of copy&paste error in game_simplecounter_setup.html      
-**V2.89.13**
-    - statistics for all relevant games finished
-        - Whac-A-Mole
-        - Pacemaker
-        - React2Player
-        - T-Test
-        - Beep Test
-        - Bataka (incl. System record)
+**V2.89.13**  
+    - statistics for all relevant games finished  
+        - Whac-A-Mole  
+        - Pacemaker  
+        - React2Player  
+        - T-Test  
+        - Beep Test  
+        - Bataka (incl. System record)  
     - Player manager with extended Export and Import incl. highscores and statistics   
-    - Minor bugfixes in some games (Player-List added, minor layout changes)
+    - Minor bugfixes in some games (Player-List added, minor layout changes)  
         - fix for Whac-A-Mole color picker  
 **V2.89.15**   
     - Tutorial adjusted  
