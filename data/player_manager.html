@@ -32,7 +32,6 @@
             font-size:0.85rem; color:var(--text-muted); flex-shrink:0;
         }
         
-        /* Buttons in der Gruppen-Kopfzeile */
         .grp-export {
             background:none; border:none; color:var(--primary); font-size:1.3rem;
             cursor:pointer; padding:0 4px; margin:0 5px 0 0; width:auto; opacity:0.6;
@@ -47,18 +46,15 @@
         }
         .grp-del:hover { opacity:1; }
 
-        /* Gruppen-Body (eingeklappt) */
         .grp-body { display:none; padding:0 16px 16px; }
         .grp-card.open .grp-body { display:block; }
 
-        /* Gruppen-Name bearbeiten */
         .grp-name-input {
             width:100%; padding:10px; font-size:1rem; margin-bottom:12px;
             background:var(--bg-color); color:var(--text-main);
             border:1px solid var(--border-color); border-radius:6px;
         }
 
-        /* Spieler-Liste */
         .player-item {
             display:flex; align-items:center; gap:10px;
             padding:10px 8px; border-bottom:1px solid var(--border-color);
@@ -83,12 +79,10 @@
         }
         .player-del:active { opacity:1; }
 
-        /* Spieler hinzufügen */
         .add-row { display:flex; gap:8px; margin-top:10px; }
         .add-row input { flex:1; padding:10px; font-size:1rem; }
         .add-row button { width:auto; padding:10px 18px; flex-shrink:0; }
 
-        /* Modals (Import & Export) */
         .modal-overlay {
             position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,0.85); backdrop-filter:blur(4px);
@@ -108,7 +102,6 @@
         .modal-header h3 { margin:0; color:var(--primary); }
         .modal-body { padding:16px; }
         
-        /* Import Spezifisch */
         .import-body textarea {
             width:100%; height:150px; padding:10px; font-size:0.95rem;
             font-family:monospace; background:var(--bg-color); color:var(--text-main);
@@ -136,7 +129,6 @@
         .modal-footer { padding:12px 16px; display:flex; gap:10px; border-top:1px solid var(--border-color); }
         .modal-footer button { flex:1; }
 
-        /* Status Toast */
         .toast {
             position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
             background:var(--success); color:#000; padding:10px 20px;
@@ -146,10 +138,7 @@
         }
         .toast.show { opacity:1; }
 
-        /* Leer-Zustand */
-        .empty-state {
-            text-align:center; padding:50px 20px; color:var(--text-muted);
-        }
+        .empty-state { text-align:center; padding:50px 20px; color:var(--text-muted); }
         .empty-state .icon { font-size:3rem; margin-bottom:10px; display:block; }
     </style>
 </head>
@@ -167,7 +156,7 @@
         <div class="toolbar">
             <button onclick="addGroup()" class="btn-primary" data-i18n="pm_add_group">➕ Add Group</button>
             <button onclick="openImport()" class="btn-warn" data-i18n="pm_import">📋 Import</button>
-            <button onclick="exportCSV()" class="btn-warn" style="background:var(--card-bg); color:var(--text-main); border:1px solid var(--border-color);">💾 Backup</button>
+            <button onclick="createFullBackup()" class="btn-warn" style="background:var(--card-bg); color:var(--text-main); border:1px solid var(--border-color);" data-i18n="pm_sys_backup">📦 Backup</button>
         </div>
 
         <div id="groupList"></div>
@@ -178,16 +167,16 @@
     <div class="modal-overlay" id="importOverlay">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 data-i18n="pm_import_title">📋 Import Players</h3>
+                <h3 data-i18n="pm_import_title">📋 Import / Restore</h3>
                 <button class="close-modal" onclick="closeImport()" style="width:auto;background:none;border:none;color:var(--text-main);font-size:1.5rem;padding:0;margin:0;">✕</button>
             </div>
             <div class="modal-body import-body">
                 <div class="import-drop" id="importDrop" onclick="document.getElementById('importFile').click()">
                     <span style="font-size:2rem;">📂</span><br>
-                    <span data-i18n="pm_import_drop">Drop CSV/TXT here or tap to select</span>
-                    <input type="file" id="importFile" accept=".csv,.txt,.tsv" onchange="handleImportFile(this.files[0])">
+                    <span data-i18n="pm_import_drop">Drop JSON Backup or CSV here</span>
+                    <input type="file" id="importFile" accept=".csv,.txt,.tsv,.json" onchange="handleImportFile(this.files[0])">
                 </div>
-                <p class="import-hint" data-i18n="pm_import_hint">Or paste names below. Supports: Tab, semicolon, or comma as separator.<br>Format: <b>Group, Name</b> or just <b>Name</b> (one per line).</p>
+                <p class="import-hint" id="importHintText" data-i18n="pm_import_hint">Or paste names below. Supports: Tab, semicolon, or comma as separator.<br>Format: <b>Group, Name</b> or just <b>Name</b> (one per line).</p>
                 <textarea id="importText" placeholder="U12;Lena M.&#10;U12;Tim K.&#10;U14;Max S.&#10;&#10;or just:&#10;Lena M.&#10;Tim K."></textarea>
                 <div class="import-preview" id="importPreview">
                     <table id="importTable"></table>
@@ -195,7 +184,7 @@
             </div>
             <div class="modal-footer">
                 <button onclick="closeImport()" class="btn-back" data-i18n="btn_cancel">Cancel</button>
-                <button onclick="previewImport()" class="btn-warn" data-i18n="pm_preview">👁 Preview</button>
+                <button onclick="previewImport()" class="btn-warn" id="previewBtn" data-i18n="pm_preview">👁 Preview</button>
                 <button onclick="executeImport()" class="btn-primary" id="importBtn" data-i18n="pm_do_import" disabled>Import</button>
             </div>
         </div>
@@ -207,8 +196,7 @@
                 <h3 data-i18n="pm_export_title">📊 Gruppen-Statistik Export</h3>
                 <button class="close-modal" onclick="closeStatsExport()" style="width:auto;background:none;border:none;color:var(--text-main);font-size:1.5rem;padding:0;margin:0;">✕</button>
             </div>
-            <div class="modal-body" id="statsExportBody">
-            </div>
+            <div class="modal-body" id="statsExportBody"></div>
             <div class="modal-footer">
                 <button onclick="closeStatsExport()" class="btn-back" data-i18n="btn_cancel">Abbrechen</button>
                 <button onclick="executeStatsExport()" class="btn-primary" data-i18n="btn_download">Download</button>
@@ -224,12 +212,10 @@
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
-        // Übersetzungs-Hilfsfunktion
         function t(key, fallback) {
             return (typeof getTranslation === 'function') ? (getTranslation(key) || fallback) : fallback;
         }
 
-        // Wörterbuch für die Export-Daten (inklusive dem neuen Countdown-Spiel)
         const GAME_DICT = {
             1:  { name: t('g_1', "Shuttle Run"), lblScore: t('ps_time_s', "Zeit (s)"), lblExtra: t('ps_rounds', "Runden"), fmtS: "ms_to_s", fmtE: "num" },
             3:  { name: t('g_3', "Countdown"), lblScore: t('ps_time_s', "Zeit (s)"), lblExtra: t('ps_clicks', "Klicks"), fmtS: "ms_to_s1", fmtE: "num" },
@@ -238,11 +224,13 @@
             8:  { name: t('g_8', "Bomb Squad"), lblScore: t('ps_dev_avg_s', "Ø Abweichung (s)"), lblExtra: t('ps_best_s', "Beste Runde (s)"), fmtS: "ms_to_s", fmtE: "ms_to_s" },
             9:  { name: t('g_9', "Red/Green"), lblScore: t('ps_react_s', "Reaktion (s)"), lblExtra: t('ps_fails', "Fehlstarts"), fmtS: "ms_to_s", fmtE: "num" },
             11: { name: t('g_11', "Zombie"), lblScore: t('ps_survived_s', "Überlebt (s)"), lblExtra: "", fmtS: "ms_to_s", fmtE: "none" },
+            12: { name: t('g_12', "Luc Léger"), lblScore: t('ps_dist', "Distanz (m)"), lblExtra: t('ps_vo2', "VO2Max"), lblEx2: t('ps_level', "Level"), lblEx3: t('ps_speed', "km/h"), fmtS: "num", fmtE: "num", fmtEx2: "num", fmtEx3: "num" },
             13: { name: t('g_13', "React 2P"), lblScore: t('ps_react_s', "Reaktion (s)"), lblExtra: t('ps_win_bool', "Sieg (1=Ja)"), fmtS: "ms_to_s", fmtE: "num" },
-            14: { name: t('g_14', "T-Test"), lblScore: t('ps_time_s', "Zeit (s)"), lblExtra: "", fmtS: "ms_to_s", fmtE: "none" },
-            15: { name: t('g_15', "Target"), lblScore: t('ps_hits', "Treffer"), lblExtra: t('ps_time_s', "Zeit (s)"), fmtS: "num", fmtE: "ms_to_s" },
-            21: { name: t('g_21', "Batak"), lblScore: t('ps_hits', "Treffer"), lblExtra: "", fmtS: "num", fmtE: "none" },
-            24: { name: t('g_24', "Whac-A-Mole"), lblScore: t('ps_hits', "Treffer"), lblExtra: t('ps_fails', "Fehler"), fmtS: "num", fmtE: "num" },
+            14: { name: t('g_14', "T-Test"), lblScore: t('ps_time_s', "Zeit (s)"), lblExtra: t('ps_score', "Score"), fmtS: "ms_to_s", fmtE: "str" },
+            15: { name: t('g_15', "Target Touch"), lblScore: t('ps_hits', "Treffer"), lblExtra: t('ps_time_s', "Zeit (s)"), fmtS: "num", fmtE: "ms_to_s" },
+            18: { name: t('g_18', "Pacemaker"), lblScore: t('ps_time_s', "Dauer (s)"), lblExtra: t('ps_pace', "Target Pace"), lblEx2: t('ps_dist', "Distanz"), lblEx3: t('ps_mode', "Modus"), fmtS: "ms_to_s", fmtE: "str", fmtEx2: "str", fmtEx3: "str" },
+            21: { name: t('g_21', "Batak Pro"), lblScore: t('ps_react_avg_s', "Ø Reaktion (s)"), lblExtra: t('ps_hits', "Treffer"), lblEx2: t('ps_miss', "Fehler"), lblEx3: t('ps_time_s', "Zeit (s)"), lblEx4: t('ps_level', "Level"), lblEx5: t('ps_pucks', "Pucks"), fmtS: "ms_to_s", fmtE: "num", fmtEx2: "num", fmtEx3: "num", fmtEx4: "num", fmtEx5: "num" },
+            24: { name: t('g_24', "Whac-A-Mole"), lblScore: t('ps_hits', "Treffer"), lblExtra: t('ps_miss', "Fehler"), lblEx2: t('ps_colors', "Zielfarben"), fmtS: "num", fmtE: "num", fmtEx2: "num" },
             25: { name: t('g_25', "Katzenreflexe"), lblScore: t('ps_react_avg_s', "Ø Reaktion (s)"), lblExtra: t('ps_pts', "Punkte"), fmtS: "ms_to_s", fmtE: "num" }
         };
 
@@ -250,11 +238,12 @@
         let nextGroupId = 1;
         let nextPlayerId = 1;
         let saveTimer = null;
+        
         let parsedImport = []; 
+        let pendingFullBackup = null; // Speichert eingelesenes JSON Backup
 
         let knownStats = {}; 
         let checkingGroups = {};
-
         let currentExportData = {};
         let currentExportGroupName = "";
 
@@ -268,46 +257,30 @@
                     if (!data.groups) data.groups = [];
                     data.groups.forEach(g => {
                         if (g.id >= nextGroupId) nextGroupId = g.id + 1;
-                        g.players.forEach(p => {
-                            if (p.id >= nextPlayerId) nextPlayerId = p.id + 1;
-                        });
+                        g.players.forEach(p => { if (p.id >= nextPlayerId) nextPlayerId = p.id + 1; });
                     });
                     renderGroups();
                 })
-                .catch(e => {
-                    console.error('Load error:', e);
-                    renderGroups();
-                });
+                .catch(e => renderGroups());
         }
 
-        function hasAnyStats(g) {
-            return g.players.some(p => knownStats[p.id] === true);
-        }
+        function hasAnyStats(g) { return g.players.some(p => knownStats[p.id] === true); }
 
         async function checkGroupStats(gid) {
             if (checkingGroups[gid]) return; 
             checkingGroups[gid] = true;
-            
             let grp = data.groups.find(g => g.id === gid);
-            if (!grp) {
-                checkingGroups[gid] = false;
-                return;
-            }
+            if (!grp) { checkingGroups[gid] = false; return; }
 
             let pidsToCheck = grp.players.filter(p => knownStats[p.id] === undefined).map(p => p.id);
-
             if (pidsToCheck.length > 0) {
                 try {
                     let r = await fetch('/api/stats/check?pids=' + pidsToCheck.join(','));
                     if (r.ok) {
                         let result = await r.json();
-                        for (let pid in result) {
-                            knownStats[pid] = result[pid];
-                        }
+                        for (let pid in result) knownStats[pid] = result[pid];
                     }
-                } catch(e) {
-                    console.error("Fehler beim Abfragen der Stats:", e);
-                }
+                } catch(e) {}
             }
 
             let grpHasStats = false;
@@ -318,12 +291,10 @@
                     if (pBtn) pBtn.style.display = 'inline-block';
                 }
             }
-            
             if (grpHasStats) {
                 let gBtn = document.getElementById(`btn-grp-stat-${gid}`);
                 if (gBtn) gBtn.style.display = 'inline-block';
             }
-            
             checkingGroups[gid] = false;
         }
 
@@ -336,21 +307,14 @@
 
         function renderGroups() {
             let container = document.getElementById('groupList');
-
             if (data.groups.length === 0) {
-                container.innerHTML = `
-                    <div class="empty-state">
-                        <span class="icon">👥</span>
-                        <p data-i18n="pm_empty">No groups yet. Add a group or import players!</p>
-                    </div>`;
-                applyTranslations();
-                return;
+                container.innerHTML = `<div class="empty-state"><span class="icon">👥</span><p data-i18n="pm_empty">No groups yet. Add a group or import players!</p></div>`;
+                applyTranslations(); return;
             }
 
             let html = '';
             data.groups.forEach((g, gi) => {
                 let isOpen = document.querySelector(`.grp-card[data-gid="${g.id}"]`)?.classList.contains('open');
-                
                 let grpStatDisplay = hasAnyStats(g) ? 'inline-block' : 'none';
 
                 html += `
@@ -359,25 +323,19 @@
                         <span class="grp-arrow">▶</span>
                         <span class="grp-name">${escHTML(g.name)}</span>
                         <span class="grp-count">${g.players.length} 👤</span>
-                        
                         <button id="btn-grp-stat-${g.id}" class="grp-export" onclick="event.stopPropagation(); openStatsExport(${g.id})" title="${t('pm_export_title', 'Statistik exportieren')}" style="display:${grpStatDisplay};">📊</button>
-                        
                         <button class="grp-del" onclick="event.stopPropagation(); deleteGroup(${g.id})" title="Delete Group">🗑</button>
                     </div>
                     <div class="grp-body">
-                        <input class="grp-name-input" value="${escHTML(g.name)}" maxlength="25"
-                               placeholder="Group Name" onchange="renameGroup(${g.id}, this.value)"
-                               data-i18n-placeholder="pm_grp_name_ph">
+                        <input class="grp-name-input" value="${escHTML(g.name)}" maxlength="25" placeholder="Group Name" onchange="renameGroup(${g.id}, this.value)" data-i18n-placeholder="pm_grp_name_ph">
                         <div id="players-${g.id}">`;
 
                 g.players.forEach((p, pi) => {
                     let pStatDisplay = knownStats[p.id] ? 'inline-block' : 'none';
-
                     html += `
                             <div class="player-item">
                                 <span style="color:var(--text-muted); font-size:0.8rem; width:24px;">${pi+1}.</span>
-                                <input class="player-name-input" value="${escHTML(p.name)}" maxlength="20"
-                                       onchange="renamePlayer(${g.id}, ${p.id}, this.value)">
+                                <input class="player-name-input" value="${escHTML(p.name)}" maxlength="20" onchange="renamePlayer(${g.id}, ${p.id}, this.value)">
                                 <button id="btn-stat-${p.id}" class="player-btn-stats" onclick="location.href='player_stats.html?pid=${p.id}&name=${encodeURIComponent(p.name)}'" title="${t('pm_stat_view', 'Statistiken ansehen')}" style="display:${pStatDisplay};">📊</button>
                                 <button class="player-del" onclick="deletePlayer(${g.id}, ${p.id})" title="Löschen">✕</button>
                             </div>`;
@@ -386,32 +344,21 @@
                 html += `
                         </div>
                         <div class="add-row">
-                            <input type="text" id="newPlayer-${g.id}" maxlength="20"
-                                   placeholder="New Player Name"
-                                   onkeydown="if(event.key==='Enter') addPlayerFromInput(${g.id})"
-                                   data-i18n-placeholder="pm_new_player_ph">
+                            <input type="text" id="newPlayer-${g.id}" maxlength="20" placeholder="New Player Name" onkeydown="if(event.key==='Enter') addPlayerFromInput(${g.id})" data-i18n-placeholder="pm_new_player_ph">
                             <button onclick="addPlayerFromInput(${g.id})" class="btn-primary">+</button>
                         </div>
                     </div>
                 </div>`;
             });
-
             container.innerHTML = html;
             applyTranslations();
         }
 
-        function escHTML(s) {
-            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        }
+        function escHTML(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
         function toggleGroup(gid) {
             let card = document.querySelector(`.grp-card[data-gid="${gid}"]`);
-            if (card) {
-                card.classList.toggle('open');
-                if (card.classList.contains('open')) {
-                    checkGroupStats(gid);
-                }
-            }
+            if (card) { card.classList.toggle('open'); if (card.classList.contains('open')) checkGroupStats(gid); }
         }
 
         function addGroup() {
@@ -422,10 +369,7 @@
             data.groups.push({ id: nextGroupId++, name: name, players: [] });
             renderGroups();
             scheduleSave();
-            setTimeout(() => {
-                let card = document.querySelector(`.grp-card[data-gid="${nextGroupId - 1}"]`);
-                if (card) card.classList.add('open');
-            }, 50);
+            setTimeout(() => { let card = document.querySelector(`.grp-card[data-gid="${nextGroupId - 1}"]`); if (card) card.classList.add('open'); }, 50);
         }
 
         function deleteGroup(gid) {
@@ -433,12 +377,7 @@
             if (!grp) return;
             let msg = (getTranslation('pm_confirm_del_grp') || 'Delete group "{name}" and all {n} players?').replace('{name}', grp.name).replace('{n}', grp.players.length);
             if (!confirm(msg)) return;
-            
-            grp.players.forEach(p => { 
-                fetch('/api/stats/player_del?pid=' + p.id).catch(e=>{}); 
-                delete knownStats[p.id];
-            });
-
+            grp.players.forEach(p => { fetch('/api/stats/player_del?pid=' + p.id).catch(e=>{}); delete knownStats[p.id]; });
             data.groups = data.groups.filter(g => g.id !== gid);
             renderGroups();
             scheduleSave();
@@ -454,23 +393,16 @@
             let inp = document.getElementById('newPlayer-' + gid);
             let name = sanitizePlayerName(inp.value);
             if (!name) return;
-
             let grp = data.groups.find(g => g.id === gid);
             if (!grp) return;
-
-            if (grp.players.some(p => p.name.toLowerCase() === name.toLowerCase())) {
-                showToast('⚠️ ' + name + ' exists!', true);
-                return;
-            }
-
+            if (grp.players.some(p => p.name.toLowerCase() === name.toLowerCase())) { showToast('⚠️ ' + name + ' exists!', true); return; }
+            
             let newId = nextPlayerId++;
             grp.players.push({ id: newId, name: name });
             knownStats[newId] = false; 
-
             inp.value = '';
             renderGroups();
             scheduleSave();
-
             setTimeout(() => {
                 let card = document.querySelector(`.grp-card[data-gid="${gid}"]`);
                 if (card) card.classList.add('open');
@@ -485,12 +417,8 @@
             grp.players = grp.players.filter(p => p.id !== pid);
             fetch('/api/stats/player_del?pid=' + pid).catch(e=>{});
             delete knownStats[pid];
-            
             renderGroups();
-            setTimeout(() => {
-                let card = document.querySelector(`.grp-card[data-gid="${gid}"]`);
-                if (card) card.classList.add('open');
-            }, 50);
+            setTimeout(() => { let card = document.querySelector(`.grp-card[data-gid="${gid}"]`); if (card) card.classList.add('open'); }, 50);
             scheduleSave();
         }
 
@@ -502,10 +430,7 @@
             if (player && newName) { player.name = newName; scheduleSave(); }
         }
 
-        function scheduleSave() {
-            clearTimeout(saveTimer);
-            saveTimer = setTimeout(saveData, 800);
-        }
+        function scheduleSave() { clearTimeout(saveTimer); saveTimer = setTimeout(saveData, 800); }
 
         function saveData() {
             fetch('/api/players', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
@@ -522,41 +447,33 @@
             setTimeout(() => t.classList.remove('show'), 2000);
         }
 
+        // =====================================================================
+        // CSV GRUPPEN-EXPORT LOGIK (Bleibt erhalten)
+        // =====================================================================
         async function openStatsExport(gid) {
             let grp = data.groups.find(g => g.id === gid);
             if (!grp) return;
-            
             currentExportGroupName = grp.name;
             currentExportData = {};
-
             showToast(t('pm_export_loading', 'Lade Daten vom ESP32...'), false);
 
             let promises = grp.players.map(async (p) => {
                 if (knownStats[p.id]) {
                     try {
-                        let r = await fetch('/s_' + p.id + '.csv');
-                        if (r.ok) {
-                            let text = await r.text();
-                            parsePlayerCSVForExport(p.name, text);
-                        }
+                        let r = await fetch('/s_' + p.id + '.csv?_t=' + Date.now());
+                        if (r.ok) { let text = await r.text(); parsePlayerCSVForExport(p.name, text); }
                     } catch(e) {}
                 }
             });
 
             await Promise.all(promises);
-
             let gameIds = Object.keys(currentExportData);
-            
-            if (gameIds.length === 0) {
-                showToast(t('pm_export_empty', 'Keine Spieldaten für diese Gruppe gefunden.'), true);
-                return;
-            }
+            if (gameIds.length === 0) { showToast(t('pm_export_empty', 'Keine Spieldaten gefunden.'), true); return; }
 
-            let txtDesc = t('pm_export_desc', 'Wähle die Spiele, die du als CSV exportieren möchtest (Für Excel optimiert):');
+            let txtDesc = t('pm_export_desc', 'Wähle die Spiele, die du als CSV exportieren möchtest:');
             let txtEntries = t('pm_export_entries', 'Einträge');
 
             let html = `<p style="margin-top:0; color:var(--text-muted); font-size:0.9rem;">${txtDesc}</p><div style="text-align:left; margin-top:10px;">`;
-            
             gameIds.forEach(gId => {
                 let info = GAME_DICT[gId] || { name: "Game " + gId };
                 let count = currentExportData[gId].length;
@@ -568,7 +485,6 @@
                     </label>`;
             });
             html += `</div>`;
-            
             document.getElementById('statsExportBody').innerHTML = html;
             document.getElementById('statsExportOverlay').classList.add('show');
         }
@@ -581,37 +497,38 @@
                     let ts = parseInt(parts[0]);
                     let gId = parseInt(parts[1]);
                     let score = parseInt(parts[2]);
-                    let extra = parts.length >= 4 ? parseInt(parts[3]) : 0;
-
+                    let ex1 = parts.length >= 4 ? parts[3] : "0"; 
+                    let ex2 = parts.length >= 5 ? parts[4] : "0"; 
+                    let ex3 = parts.length >= 6 ? parts[5] : "0"; 
+                    let ex4 = parts.length >= 7 ? parts[6] : "0"; 
+                    let ex5 = parts.length >= 8 ? parts[7] : "0"; 
                     if (!currentExportData[gId]) currentExportData[gId] = [];
-                    currentExportData[gId].push({ name: playerName, ts, score, extra });
+                    currentExportData[gId].push({ name: playerName, ts, score, ex1, ex2, ex3, ex4, ex5 });
                 }
             });
         }
 
-        function closeStatsExport() {
-            document.getElementById('statsExportOverlay').classList.remove('show');
-        }
+        function closeStatsExport() { document.getElementById('statsExportOverlay').classList.remove('show'); }
 
         function executeStatsExport() {
             let checkboxes = document.querySelectorAll('.stats-export-cb:checked');
             if (checkboxes.length === 0) return;
-
             let delay = 0;
-            checkboxes.forEach(cb => {
-                let gId = cb.value;
-                setTimeout(() => downloadGameCSV(gId), delay);
-                delay += 400; 
-            });
-
+            checkboxes.forEach(cb => { setTimeout(() => downloadGameCSV(cb.value), delay); delay += 400; });
             closeStatsExport();
             showToast(t('pm_export_started', 'Download gestartet...'), false);
+        }
+
+        function formatValueForExport(val, type) {
+            if (type === "ms_to_s") return (parseInt(val) / 1000).toFixed(3).replace('.', ',');
+            if (type === "ms_to_s1") return (parseInt(val) / 1000).toFixed(1).replace('.', ',');
+            if (type === "bool") return parseInt(val) === 1 ? "1" : "0";
+            return val;
         }
 
         function downloadGameCSV(gId) {
             let info = GAME_DICT[gId] || { name: "Game " + gId, lblScore: "Score", lblExtra: "Extra", fmtE: "num" };
             let entries = currentExportData[gId] || [];
-
             entries.sort((a, b) => b.ts - a.ts);
 
             let txtName = t('ps_name', 'Name');
@@ -620,6 +537,10 @@
 
             let header = `${txtName};${txtDate};${txtTime};${info.lblScore}`;
             if (info.fmtE !== "none") header += `;${info.lblExtra}`;
+            if (info.lblEx2) header += `;${info.lblEx2}`;
+            if (info.lblEx3) header += `;${info.lblEx3}`;
+            if (info.lblEx4) header += `;${info.lblEx4}`;
+            if (info.lblEx5) header += `;${info.lblEx5}`;
             let lines = [header];
 
             entries.forEach(e => {
@@ -627,33 +548,18 @@
                 let dateStr = d.toLocaleDateString('de-DE');
                 let timeStr = d.toLocaleTimeString('de-DE', {hour: '2-digit', minute:'2-digit', second:'2-digit'});
                 
-                let scoreVal = e.score;
-                
-                // Erweiterte Export Logik für das korrekte Komma bei Sekunden
-                if (info.fmtS === "ms_to_s") {
-                    scoreVal = (e.score / 1000).toFixed(3).replace('.', ',');
-                } else if (info.fmtS === "ms_to_s1") {
-                    scoreVal = (e.score / 1000).toFixed(1).replace('.', ','); // Fix für nur 1 Nachkommastelle!
-                }
-                
-                let line = `${e.name};${dateStr};${timeStr};${scoreVal}`;
-                
-                if (info.fmtE !== "none") {
-                    let extraVal = e.extra;
-                    if (info.fmtE === "ms_to_s") {
-                        extraVal = (e.extra / 1000).toFixed(3).replace('.', ',');
-                    } else if (info.fmtE === "ms_to_s1") {
-                        extraVal = (e.extra / 1000).toFixed(1).replace('.', ',');
-                    }
-                    line += `;${extraVal}`;
-                }
+                let line = `${e.name};${dateStr};${timeStr};${formatValueForExport(e.score, info.fmtS)}`;
+                if (info.fmtE !== "none") line += `;${formatValueForExport(e.ex1, info.fmtE)}`;
+                if (info.lblEx2) line += `;${formatValueForExport(e.ex2, info.fmtEx2)}`;
+                if (info.lblEx3) line += `;${formatValueForExport(e.ex3, info.fmtEx3)}`;
+                if (info.lblEx4) line += `;${formatValueForExport(e.ex4, info.fmtEx4)}`;
+                if (info.lblEx5) line += `;${formatValueForExport(e.ex5, info.fmtEx5)}`;
                 lines.push(line);
             });
 
             let csvStr = lines.join('\r\n');
             let blob = new Blob(['\uFEFF' + csvStr], { type: 'text/csv;charset=utf-8' });
             let url = URL.createObjectURL(blob);
-            
             let safeGrpName = currentExportGroupName.replace(/[^a-zA-Z0-9]/g, '_');
             let safeGameName = info.name.replace(/[^a-zA-Z0-9]/g, '_');
             let stamp = new Date().toISOString().split('T')[0];
@@ -668,33 +574,79 @@
         }
 
         // =====================================================================
-        // BACKUP MANAGER (Spieler-Daten) - Unverändert
+        // FULL SYSTEM BACKUP (Spieler + Highscores + Alle Statistiken)
         // =====================================================================
-        function exportCSV() {
-            if (data.groups.length === 0) { showToast('⚠️ No groups to export!', true); return; }
-            let lines = ['Group;Name'];
-            data.groups.forEach(g => { g.players.forEach(p => { lines.push(g.name + ';' + p.name); }); });
-            let csv = lines.join('\r\n');
-            let blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+        async function createFullBackup() {
+            showToast(t('pm_backup_wait', 'Erstelle Backup... Bitte warten.'), false);
+            let backup = {
+                type: "puckracer_full_backup",
+                version: 1,
+                players: data, 
+                stats: {},
+                highscores: {}
+            };
+
+            let allPlayers = [];
+            data.groups.forEach(g => g.players.forEach(p => allPlayers.push(p.id)));
+
+            // 1. Lade alle CSVs aller Spieler
+            for (let pid of allPlayers) {
+                try {
+                    let r = await fetch('/s_' + pid + '.csv?_t=' + Date.now());
+                    if (r.ok) {
+                        let text = await r.text();
+                        if (text.trim().length > 0) backup.stats[pid] = text;
+                    }
+                } catch(e) {}
+            }
+
+            // 2. Lade alle möglichen Highscore JSONs (Anhand des GAME_DICT)
+            for (let gId in GAME_DICT) {
+                try {
+                    let r = await fetch('/api/highscore/get?game=' + gId + '&_t=' + Date.now());
+                    if (r.ok) {
+                        let text = await r.text();
+                        if (text && text.trim() !== "{}" && text.trim() !== "") {
+                            backup.highscores[gId] = text;
+                        }
+                    }
+                } catch(e) {}
+            }
+
+            // 3. Backup als Blob packen und herunterladen
+            let blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
             let url = URL.createObjectURL(blob);
-            let a = document.createElement('a');
-            a.href = url;
+            let dlAnchorElem = document.createElement('a');
+            dlAnchorElem.href = url;
             let d = new Date();
             let stamp = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-            a.download = 'PuckRacer_Players_' + stamp + '.csv';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
+            dlAnchorElem.download = "PuckRacer_FullBackup_" + stamp + ".json";
+            document.body.appendChild(dlAnchorElem);
+            dlAnchorElem.click();
+            document.body.removeChild(dlAnchorElem);
             URL.revokeObjectURL(url);
-            let total = data.groups.reduce((s,g) => s + g.players.length, 0);
-            showToast('💾 ' + total + ' players exported');
+
+            showToast(t('pm_backup_done', '✅ System-Backup erfolgreich heruntergeladen!'));
         }
 
+        // =====================================================================
+        // IMPORT MANAGER (Full Restore & CSV)
+        // =====================================================================
         function openImport() {
             parsedImport = [];
+            pendingFullBackup = null;
             document.getElementById('importText').value = '';
+            document.getElementById('importText').style.display = 'block';
+            document.getElementById('importHintText').style.display = 'block';
             document.getElementById('importPreview').style.display = 'none';
-            document.getElementById('importBtn').disabled = true;
+            document.getElementById('previewBtn').style.display = 'inline-block';
+            
+            let btn = document.getElementById('importBtn');
+            btn.innerText = t('pm_do_import', 'Import');
+            btn.className = "btn-primary";
+            btn.disabled = true;
+            btn.onclick = executeImport;
+            
             document.getElementById('importOverlay').classList.add('show');
         }
 
@@ -714,10 +666,117 @@
         function handleImportFile(file) {
             if (!file) return;
             let reader = new FileReader();
-            reader.onload = function(e) { document.getElementById('importText').value = e.target.result; previewImport(); };
+            reader.onload = function(e) { 
+                let content = e.target.result; 
+                
+                // Prüfen ob es unser JSON Backup ist
+                try {
+                    let json = JSON.parse(content);
+                    if (json.type === "puckracer_full_backup") {
+                        pendingFullBackup = json;
+                        document.getElementById('importText').style.display = 'none';
+                        document.getElementById('importHintText').style.display = 'none';
+                        document.getElementById('previewBtn').style.display = 'none';
+                        
+                        let pCount = json.players && json.players.groups ? json.players.groups.reduce((acc, g) => acc + g.players.length, 0) : 0;
+                        let sCount = Object.keys(json.stats || {}).length;
+                        let hCount = Object.keys(json.highscores || {}).length;
+
+                        document.getElementById('importPreview').innerHTML = `
+                            <div style="text-align:center; padding:20px;">
+                                <div style="font-size:3rem; margin-bottom:10px;">📦</div>
+                                <h3 style="color:var(--primary); margin-top:0;">${t('pm_res_title', 'Vollständiges Backup erkannt')}</h3>
+                                <ul style="text-align:left; display:inline-block; margin:0 auto; color:var(--text-main);">
+                                    <li>👥 ${pCount} Spieler</li>
+                                    <li>📊 ${sCount} Statistiken (CSVs)</li>
+                                    <li>👑 ${hCount} Highscores</li>
+                                </ul>
+                                <p style="color:var(--danger); font-weight:bold; margin-top:15px;">${t('pm_res_warn', 'Achtung: Ein Restore überschreibt alle aktuellen Daten auf dem ESP32!')}</p>
+                            </div>
+                        `;
+                        document.getElementById('importPreview').style.display = 'block';
+                        
+                        let btn = document.getElementById('importBtn');
+                        btn.innerText = t('pm_res_btn', "RESTORE STARTEN");
+                        btn.className = "btn-danger";
+                        btn.disabled = false;
+                        btn.onclick = executeFullRestore;
+                        return;
+                    }
+                } catch(err) {}
+
+                // Fallback: Text Import
+                pendingFullBackup = null;
+                document.getElementById('importText').value = content; 
+                previewImport(); 
+            };
             reader.readAsText(file);
         }
 
+        // --- FULL RESTORE STREAMING ---
+        async function executeFullRestore() {
+            if (!pendingFullBackup) return;
+            if (!confirm(t('pm_res_confirm', "Bist du sicher? Alle bisherigen Spieler, Statistiken und Highscores werden gelöscht und mit dem Backup überschrieben!"))) return;
+
+            let btn = document.getElementById('importBtn');
+            btn.disabled = true;
+            btn.innerText = "Wiederherstellen...";
+
+            try {
+                // 1. Restore Players
+                showToast("Stelle Spieler wieder her...", false);
+                await fetch('/api/players', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pendingFullBackup.players) });
+
+                // 2. Restore Highscores
+                showToast("Stelle Highscores wieder her...", false);
+                for (let gId in pendingFullBackup.highscores) {
+                    let fd = new URLSearchParams();
+                    fd.append('game', gId);
+                    fd.append('data', pendingFullBackup.highscores[gId]);
+                    await fetch('/api/highscore/save', { method: 'POST', body: fd });
+                }
+
+                // 3. Restore Stats (Line by Line Streaming zum ESP32 RAM-Schutz)
+                let statKeys = Object.keys(pendingFullBackup.stats);
+                for (let i = 0; i < statKeys.length; i++) {
+                    let pid = statKeys[i];
+                    showToast(`Schreibe Statistik (${i+1}/${statKeys.length})...`, false);
+                    
+                    await fetch('/api/stats/player_del?pid=' + pid); // Alte löschen
+
+                    let csv = pendingFullBackup.stats[pid];
+                    let lines = csv.split(/\r?\n/).filter(l => l.trim().length > 0);
+                    for (let line of lines) {
+                        let parts = line.split(';');
+                        if (parts.length >= 3) {
+                            let fd = new URLSearchParams();
+                            fd.append('pid', pid);
+                            fd.append('ts', parts[0]);
+                            fd.append('game', parts[1]);
+                            fd.append('score', parts[2]);
+                            if(parts.length > 3) fd.append('ex1', parts[3]);
+                            if(parts.length > 4) fd.append('ex2', parts[4]);
+                            if(parts.length > 5) fd.append('ex3', parts[5]);
+                            if(parts.length > 6) fd.append('ex4', parts[6]);
+                            if(parts.length > 7) fd.append('ex5', parts[7]);
+                            await fetch('/api/stats/player_save', { method: 'POST', body: fd });
+                            
+                            await new Promise(r => setTimeout(r, 10)); // 10ms Atempause für den Webserver
+                        }
+                    }
+                }
+
+                showToast("✅ Restore komplett erfolgreich!", false);
+                setTimeout(() => { location.reload(); }, 1500);
+
+            } catch (e) {
+                showToast("❌ Fehler beim Restore! Verbindung getrennt?", true);
+                btn.disabled = false;
+                btn.innerText = t('pm_res_btn', "RESTORE STARTEN");
+            }
+        }
+
+        // --- OLD TEXT/CSV IMPORT ---
         function previewImport() {
             let text = document.getElementById('importText').value;
             parsedImport = parseImportText(text);

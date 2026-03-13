@@ -7,17 +7,19 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Pacemaker Live</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=6">
     <style>
         .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 15px; border: 1px solid var(--border-color);}
         .big-time { font-size: 5rem; font-family: monospace; color: var(--text-main); font-weight: bold; line-height:1;}
         .status-txt { font-size: 1.5rem; color: var(--warning); text-transform: uppercase; margin-top:10px; font-weight:bold;}
 
-        .runner-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;}
-        .runner-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: var(--card-hover); border-radius: 8px; font-weight: bold; font-size: 1.2rem; border-left: 5px solid transparent; transition: background 0.2s, border-color 0.2s;}
+        .runner-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;}
+        .runner-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--card-hover); border-radius: 8px; border-left: 8px solid transparent; transition: background 0.2s, border-color 0.2s;}
+        
+        .name-badge { background:var(--bg-color); border: 1px solid var(--border-color); color:var(--text-main); padding:4px 10px; border-radius:12px; font-size:1rem; margin-right:6px; display:inline-block; margin-top:8px;}
         
         .row-false-start { border-color: var(--danger) !important; background: rgba(220,53,69,0.2) !important; }
-        .p-status { font-size: 1.8rem; line-height:1;}
+        .p-status { font-size: 2rem; line-height:1;}
 
         .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 15px; }
         .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
@@ -27,10 +29,7 @@
         .stat-lbl { color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; margin-bottom: 5px;}
         .stat-val { color: var(--text-main); font-size: 1.6rem; font-weight: bold; font-family: monospace;}
 
-        @media (max-width: 500px) {
-            .stat-val { font-size: 1.3rem; }
-        }
-
+        @media (max-width: 500px) { .stat-val { font-size: 1.3rem; } }
         .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
     </style>
 </head>
@@ -87,34 +86,102 @@
     <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
-
         let numGroups = parseInt(sessionStorage.getItem('pm_grp') || 1);
-        let runnerHtml = "";
-        let runnerColors = ['#00FF00', '#FF00FF']; 
+        let runnerColors = ['#00FF00', '#FF00FF'];
         
+        let savedStats = false;
+        
+        function t(key, fallback) {
+            if (typeof getTranslation !== 'function') return fallback;
+            let val = getTranslation(key);
+            return (val && val !== key) ? val : fallback;
+        }
+
+        // Render die Grauen Boxen mit den Badges
+        let runnerHtml = "";
         for(let i=0; i<numGroups; i++) {
-            let name = sessionStorage.getItem(`p_name_${i}`) || `Runner ${i+1}`;
+            let count = parseInt(sessionStorage.getItem(`pm_g${i}_count`) || 1);
+            let badges = "";
+            for(let p=0; p<count; p++) {
+                let n = sessionStorage.getItem(`pm_g${i}_name_${p}`) || `Runner ${p+1}`;
+                badges += `<span class="name-badge">${n}</span>`;
+            }
+            let grpTitle = `Gruppe ${i+1}`;
+            
             runnerHtml += `
             <div class="runner-row" id="r-row-${i}" style="border-left-color: ${runnerColors[i]};">
-                <div style="display:flex; align-items:center;">
-                    <span style="color:${runnerColors[i]}; margin-right:10px; font-size:1.5rem; line-height:0.8;">•</span> ${name}
+                <div style="display:flex; flex-direction:column; justify-content:center;">
+                    <span style="color:${runnerColors[i]}; font-size:1.1rem; font-weight:bold;">${grpTitle}</span>
+                    <div>${badges}</div>
                 </div>
                 <div class="p-status" id="r-icon-${i}"></div>
             </div>`;
         }
         document.getElementById('runnerList').innerHTML = runnerHtml;
 
-
-        setInterval(update, 400); 
+        setInterval(update, 400);
 
         function update() {
             fetch('/api/game/status').then(r=>r.json()).then(data => {
+                
+                if (data.st < 4) savedStats = false;
+
+                // STATISTIK SPEICHERUNG am Ende!
+                if (data.st === 5 && !savedStats) {
+                    let delay = 0;
+                    let modeStr = data.shut ? "Shuttle" : "Circle";
+                    let paceStr = "";
+                    let coveredDistStr = "N/A";
+                    
+                    // Tatsächliche Laufzeit = Gesamtlimit minus verbleibende Zeit (t)
+                    let actualDurationMs = data.lim - data.t;
+                    if (actualDurationMs < 0) actualDurationMs = 0;
+                    
+                    if (data.inpt === 1) {
+                        paceStr = formatTime(data.lapt * 1000) + " Lap";
+                    } else {
+                        let pm = Math.floor(data.pace / 60);
+                        let ps = data.pace % 60;
+                        paceStr = `${pm}:${ps.toString().padStart(2,'0')} min/km`;
+                        
+                        // Tatsächlich zurückgelegte Strecke berechnen (ms / pace_in_sekunden = meter)
+                        if (data.pace > 0) {
+                            coveredDistStr = Math.floor(actualDurationMs / data.pace) + "m";
+                        }
+                    }
+
+                    // Nur Speichern, wenn wirklich Zeit vergangen ist (nicht bei direktem Abbruch nach 0.1s)
+                    if (actualDurationMs > 2000) {
+                        for(let g=0; g<numGroups; g++) {
+                            let count = parseInt(sessionStorage.getItem(`pm_g${g}_count`) || 1);
+                            for(let p=0; p<count; p++) {
+                                let pid = sessionStorage.getItem(`pm_g${g}_id_${p}`);
+                                if (pid && pid !== "0") {
+                                    setTimeout(() => {
+                                        let fd = new URLSearchParams();
+                                        fd.append('pid', pid);
+                                        fd.append('game', 18); 
+                                        fd.append('score', actualDurationMs); // Tatsächliche Dauer als Score
+                                        fd.append('ex1', paceStr);
+                                        fd.append('ex2', coveredDistStr); // Berechnete Distanz in Metern!
+                                        fd.append('ex3', modeStr);
+                                        fd.append('ts', Date.now());
+                                        fetch('/api/stats/player_save', { method: 'POST', body: fd });
+                                    }, delay);
+                                    delay += 200;
+                                }
+                            }
+                        }
+                    }
+                    savedStats = true;
+                }
+
                 render(data);
             }).catch(e => {});
         }
 
         function formatTime(ms) {
-            let sec = Math.ceil(ms / 1000); 
+            let sec = Math.ceil(ms / 1000);
             let m = Math.floor(sec / 60);
             let s = sec % 60;
             return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
@@ -122,26 +189,24 @@
 
         function render(data) {
             document.getElementById('globalTime').innerText = formatTime(data.t);
-            
-            let stTxt = getTranslation(`pm_st_${data.st}`) || "UNKNOWN";
+            let stTxt = t(`pm_st_${data.st}`, "UNKNOWN");
             let stCol = "var(--warning)";
             if(data.st === 3) stCol = "var(--danger)";
-            if(data.st === 4) { stCol = "var(--success)"; }
-            if(data.st === 5) { stCol = "gold"; }
+            if(data.st === 4) stCol = "var(--success)"; 
+            if(data.st === 5) stCol = "gold";
             
             document.getElementById('stateInfo').innerText = stTxt;
             document.getElementById('stateInfo').style.color = stCol;
             
             let btn = document.getElementById('btnStart');
             if (data.st === 0 || data.st === 5 || data.st === 3) { 
-                btn.innerText = (data.st === 3) ? (getTranslation('btn_reset') || "RESET") : (getTranslation('btn_start') || "START"); 
-                btn.style.background = "var(--primary)"; 
+                btn.innerText = (data.st === 3) ? t('btn_reset', "RESET") : t('btn_start', "START"); 
+                btn.style.background = "var(--primary)";
             } else { 
-                btn.innerText = getTranslation('btn_running') || "RUNNING"; 
+                btn.innerText = t('btn_running', "RUNNING"); 
                 btn.style.background = "var(--card-hover)"; 
             }
 
-            // NEU: Hand Icon und Fehlstart visualisieren
             if (data.run && Array.isArray(data.run)) {
                 for(let i=0; i<numGroups; i++) {
                     let row = document.getElementById(`r-row-${i}`);
@@ -149,7 +214,7 @@
                     if (row && iconEl && data.run[i]) {
                         let icon = "";
                         if (data.st === 1 || data.st === 2) {
-                            if (data.run[i].h === 1) icon = "🖐️"; 
+                            if (data.run[i].h === 1) icon = "🖐️";
                         }
                         
                         if (data.st === 3 && data.fs === i) {
@@ -164,14 +229,14 @@
                 }
             }
 
-            document.getElementById('modeVal').innerText = data.shut ? (getTranslation('pm_mode_shuttle') || "Shuttle") : (getTranslation('pm_mode_circle') || "Circle");
+            document.getElementById('modeVal').innerText = data.shut ? t('pm_mode_shuttle', "Shuttle") : t('pm_mode_circle', "Circle");
 
             if (data.inpt === 1) { 
-                document.getElementById('lblMetric').innerText = "Lap Time"; 
+                document.getElementById('lblMetric').innerText = "Lap Time";
                 document.getElementById('paceVal').innerText = formatTime(data.lapt * 1000);
                 document.getElementById('kmhVal').innerText = "Runde";
                 document.getElementById('distVal').innerText = "N/A";
-                document.getElementById('runDistVal').innerText = "N/A"; 
+                document.getElementById('runDistVal').innerText = "N/A";
             } else { 
                 if (data.pace > 0) {
                     let m = Math.floor(data.pace / 60);
@@ -180,11 +245,10 @@
                     document.getElementById('kmhVal').innerText = (3600 / data.pace).toFixed(1) + " km/h";
                     document.getElementById('distVal').innerText = data.dist + " m";
 
+                    // Berechnete aktuell abgelaufene Strecke live updaten
                     let elapsedMs = data.lim - data.t;
                     let runDist = 0;
-                    if (data.st >= 4) { 
-                        runDist = elapsedMs / data.pace;
-                    }
+                    if (data.st >= 4) { runDist = elapsedMs / data.pace; }
                     document.getElementById('runDistVal').innerText = Math.floor(runDist) + " m";
                 }
             }

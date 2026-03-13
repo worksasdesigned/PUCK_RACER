@@ -117,6 +117,8 @@ const TRANSLATIONS = {
         "tgt_layout_creative": "Be creative! You can also place the pucks behind a small obstacle course.",
         "tgt_help_seq": "Hit the pucks in sequence.",
         "tgt_help_rnd": "Hit the puck that lights up.",
+        "tgt_btn_restart": "RESTART",
+        "tgt_btn_stop": "STOP",
 
         // --- WHAC-A-MOLE ---
         "whac_sel_title": "Select Hit-Colors",
@@ -381,16 +383,39 @@ const TRANSLATIONS = {
 
         // Für Countdown Names (game_countdown_names.html)
         "cd_names_title": "Players - Countdown",
-        "cd_layout_title": "Aufbau Info",
-        "cd_ph_player": "Spieler",
+        "cd_layout_title": "Layout Info",
+        "cd_ph_player": "Players",
 
         // Für Countdown Run (game_countdown_run.html)
         "cnt_run_limit": "Limit:",
         "cnt_run_wait": "Loading Scores...",
+        // =========================================================================
+        // GAME 3: COUNTDOWN
+        // =========================================================================
+
+        // Setup
+        "cd_setup_cfg": "⚙️ Configuration",
+        "cd_lbl_pucks": "Active Pucks:",
+        "cd_setup_count": "Start Count (Clicks):",
+        "cd_setup_time": "Time Limit:",
+        "cd_setup_opt": "⚠️ Options",
+        "cd_setup_stopwin": "Stop after first winner",
+        "cd_setup_warn": "Sound warning near end",
+
+        // Names
+        "cd_names_title": "Players - Countdown",
+        "cd_layout_title": "Layout Info",
+        "cd_ph_player": "Player",
+
+        // Run
+        "cnt_run_limit": "Limit:",
+        "cnt_run_wait": "Waiting for results...",
 
         // Für Player Stats 
         "g_3": "Countdown",
         "ps_clicks": "Klicks",
+        "ps_colors": "Target Colors",
+        "ps_chart_hits10s": "Hits/10s",
         
         // --- SIMPLE TIMER ---
         "tmr_setup_time": "⏳ Set Time",
@@ -421,6 +446,14 @@ const TRANSLATIONS = {
         "bp_names_title": "Names - Luc Léger",
         "bp_names_hint": "Start: Chase | Target: Breathe",
         "bp_hold": "HOLD PUCKS!",
+        "g_12": "Luc Léger",
+        "ps_dist": "Distance (m)",
+        "ps_vo2": "VO2Max",
+        "ps_speed": "km/h",
+        "ps_chart_dist": "Distance (m)",
+        "bp_hs_dist": "Distance:",
+        "bp_hs_vo2": "VO2Max:",
+        "bp_hs_spd": "Speed:",
 
         // --- REACT 2-PLAYER ---
         "r2_setup_time": "⏱️ Game Time",
@@ -436,6 +469,8 @@ const TRANSLATIONS = {
         "r2_names_grp": "Group",
         "r2_run_restart_grp": "Restart Group",
         "r2_run_stop_grp": "Stop Group",
+        "ps_wins": "Wins",
+        "ps_losses": "Losses",
 
         // --- TARGET TOUCH ---
         "tgt_setup_target": "🎯 Game Target",
@@ -494,6 +529,9 @@ const TRANSLATIONS = {
         "tt_run_score": "Score",
         "tt_btn_restart": "Restart Group",
         "tt_btn_stop": "Stop Group",
+        "ps_score": "Score",
+        "tt_btn_restart": "RESTART",
+        "tt_btn_stop": "STOP",
 		
 		// --- DOMINATION ---
         "dom_setup_time": "⏱️ Game Time",
@@ -654,6 +692,10 @@ const TRANSLATIONS = {
         "pm_track_layout":	"Track Layout",
         "pm_inst_dist":	"Ensure an even spacing",
         "pm_extend_line": "build a long line",
+        "g_18": "The Pacemaker",
+        "ps_pace": "Target Pace",
+        "ps_mode": "Mode",
+        "ps_chart_dur": "Workout Duration (s)",
 
 		
 		// --- MEMORY SPRINT ---
@@ -855,6 +897,49 @@ const TRANSLATIONS = {
         "bat_run_miss": "Misses",
         "bat_run_avg": "Average Reaction Time",
         "bat_run_ana": "Puck Analysis",
+        // Setup
+        "bat_setup_time": "⏱️ Duration",
+        "lbl_time_limit": "Time Limit:",
+        "bat_setup_pucks": "🎯 Pucks & Colors",
+        "bat_lbl_pucks": "Active Pucks:",
+        "bat_lbl_col": "Target Color:",
+        "bat_setup_diff": "🧠 Difficulty",
+        "bat_lbl_lvl": "Level:",
+        "bat_setup_rules": "⚙️ Rules",
+        "bat_lbl_spd": "Speedup Mode (Acceleration)",
+        "bat_lbl_snd": "Sound Effects",
+        "bat_lbl_fake": "Fake Colors (No-Go)",
+        "bat_hint_fake": "Spawns wrong colors.",
+        "bat_lbl_hold": "Hold Start Puck to begin",
+        "bat_btn_hint": "TO LAYOUT ➡",
+
+        // Names (Aufbau)
+        "bat_names_title": "Batak Pro",
+        "bat_layout_title": "Puck Wall Layout",
+        "bat_layout_desc": "Attach the pucks to the wall in the displayed pattern.",
+
+        // Run
+        "bat_run_hits": "Hits",
+        "bat_run_miss": "Misses",
+        "bat_run_avg": "Avg. Reaction Time",
+        "bat_run_ana": "Puck Analysis",
+
+        // Stats / CSV Export
+        "g_21": "Batak Pro",
+        "ps_batak_stats": "Detail Stats",
+        "ps_miss": "Misses",
+        "ps_pucks": "Pucks",
+
+        // System Highscore & Personal Records
+        "bat_sys_record": " System Record:",
+        "bat_hs_title": "All-Time Highscore",
+        "bat_hs_player": "Player:",
+        "bat_hs_rt": "Avg. Reaction Time:",
+        "bat_hs_hits": "Hits:",
+        "bat_hs_miss": "Misses:",
+        "bat_hs_pucks": "Pucks:",
+        "bat_hs_lvl": "Level:",
+        "bat_new_pers": "New Personal Record!",
 		
 		// Cat Reflexes
         "g_cat": "CatReflexes",
@@ -1028,11 +1113,17 @@ const TRANSLATIONS = {
         "pm_track_err": "Zu wenige Pucks verbunden (min. 4 benötigt).",
         "pm_btn_run": "ZUM LAUF 🏁",
         "pm_extend_line": "einfach eine lange Linie",
+        "g_18": "The Pacemaker",
+        "ps_pace": "Target Pace",
+        "ps_mode": "Modus",
+        "ps_chart_dur": "Workout Dauer (s)",
 
         // --- REACT 2P ---
         "r2_names_grp": "Duell",
         "r2_names_p1": "Spieler 1",
         "r2_names_p2": "Spieler 2",
+        "ps_wins": "Siege",
+        "ps_losses": "Niederlagen",
 
         // --- SHUTTLE RUN ---
         "sr_names_pucks": "Pucks:",
@@ -1054,9 +1145,12 @@ const TRANSLATIONS = {
         "sort_prev_rem": "{0} Spieler werden zufällig verteilt.",
 
         // --- TARGET TOUCH ---
+        "g_15": "Target Touch",
         "tgt_layout_creative": "Sei kreativ! Du kannst die Pucks auch hinter einem kleinen Hindernis-Parkour aufbauen.",
         "tgt_help_seq": "Schlagt die Pucks der Reihe nach ab.",
         "tgt_help_rnd": "Schlagt den Puck ab, der aufleuchtet.",
+        "tgt_btn_restart": "NEUSTART",
+        "tgt_btn_stop": "STOPP",
 
         // --- WHAC-A-MOLE ---
         "whac_sel_title": "Zielfarben auswählen",
@@ -1333,6 +1427,8 @@ const TRANSLATIONS = {
         // Player Stats
         "g_3": "Countdown",
         "ps_clicks": "Klicks",
+        "ps_colors": "Zielfarben",
+        "ps_chart_hits10s": "Hits/10s",
                 
         // --- SIMPLE TIMER ---
         "tmr_setup_time": "⏳ Zeit einstellen",
@@ -1363,6 +1459,14 @@ const TRANSLATIONS = {
         "bp_names_title": "Namen - Luc Léger",
         "bp_names_hint": "Start: Lauflicht | Ziel: Atmen",
         "bp_hold": "PUCKS HALTEN!",
+        "g_12": "Luc Léger",
+        "ps_dist": "Distanz (m)",
+        "ps_vo2": "VO2Max",
+        "ps_speed": "km/h",
+        "ps_chart_dist": "Distanz (m)",
+        "bp_hs_dist": "Distanz:",
+        "bp_hs_vo2": "VO2Max:",
+        "bp_hs_spd": "Geschwindigkeit:",
 
         // --- REACT 2-PLAYER ---
         "r2_setup_time": "⏱️ Spielzeit",
@@ -1436,6 +1540,9 @@ const TRANSLATIONS = {
         "tt_run_score": "Punkte",
         "tt_btn_restart": "Gruppe neustarten",
         "tt_btn_stop": "Gruppe stoppen",
+        "ps_score": "Score",
+        "tt_btn_restart": "NEUSTART",
+        "tt_btn_stop": "STOPP",
 		
 		
 		// --- DOMINATION ---
@@ -1798,6 +1905,15 @@ const TRANSLATIONS = {
         "bat_run_miss": "Fehler",
         "bat_run_avg": "Durchschnittliche Reaktionszeit",
         "bat_run_ana": "Puck-Analyse",
+        "bat_sys_record": " System Rekord:",
+        "bat_hs_title": "All-Time Highscore",
+        "bat_hs_player": "Spieler:",
+        "bat_hs_rt": "Ø Reaktionszeit:",
+        "bat_hs_hits": "Treffer:",
+        "bat_hs_miss": "Fehler:",
+        "bat_hs_pucks": "Pucks:",
+        "bat_hs_lvl": "Level:",
+        "bat_new_pers": "Neuer Persönlicher Rekord!",
 		
 		// Katzenreflexe 
 		"cr_setup_players": "Spieler",

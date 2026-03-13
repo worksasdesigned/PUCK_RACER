@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Names - T-Test</title>
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css?v=5">
     <style>
         .player-row { background:var(--card-bg); padding:15px; border-radius:8px; border-left:5px solid #fff; margin-bottom:15px;}
         .player-title { display:flex; align-items:center; gap:10px; margin-bottom:10px; font-weight:bold; }
@@ -16,6 +16,10 @@
         .hidden { display: none; }
         #toggleIcon { transition: transform 0.3s; display: inline-block; }
         .rotate { transform: rotate(-90deg); }
+        
+        /* Statistik Icon */
+        .stat-icon { font-size: 1.3rem; opacity: 0.2; transition: all 0.3s; cursor: help; user-select: none; filter: grayscale(100%); margin-left: 5px; }
+        .stat-icon.active { opacity: 1; filter: none; text-shadow: 0 0 8px rgba(13, 110, 253, 0.5); }
     </style>
 </head>
 <body>
@@ -57,21 +61,27 @@
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
         const GRP_COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF'];
-        const TT_PUCKS = ["C5", "C1", "A1", "E1"]; // Start, Mitte, Links, Rechts
+        const TT_PUCKS = ["C5", "C1", "A1", "E1"];
         
         let nGrp = parseInt(sessionStorage.getItem('tt_groups') || 1);
-
-        // Delay-Funktion, damit der ESP32 die Requests verarbeiten kann
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
         document.addEventListener("DOMContentLoaded", () => {
             setTimeout(initList, 500);
         });
 
+        function clearPlayerId(idx) {
+            sessionStorage.setItem(`p_id_${idx}`, 0);
+            let icon = document.getElementById(`stat_icon_${idx}`);
+            if(icon) {
+                icon.classList.remove('active');
+                icon.title = "Gastspieler (Keine Statistik)";
+            }
+        }
+
         async function initList() {
             try {
                 await fetch('/api/game/load?id=14');
-                
                 await fetch(`/api/game/action?cmd=cfg_groups&val=${nGrp}`);
                 await delay(100);
                 await fetch(`/api/game/action?cmd=cfg_time&val=${sessionStorage.getItem('tt_time') || 180}`);
@@ -96,11 +106,17 @@
                     let gName = sessionStorage.getItem(`p_name_${i}`) || `Group ${i+1}`;
                     let col = GRP_COLORS[i % GRP_COLORS.length];
 
+                    let pid = sessionStorage.getItem(`p_id_${i}`);
+                    let hasStats = (pid && pid !== "0");
+                    let statClass = hasStats ? "active" : "";
+                    let statTitle = hasStats ? "Statistik wird gespeichert" : "Gastspieler (Keine Statistik)";
+
                     listContainer.innerHTML += `
                     <div class="player-row" style="border-left-color:${col}">
                         <div class="player-title">
                             <div class="color-box" id="cb_${i}" style="background:${col}; box-shadow:0 0 10px ${col}"></div>
-                            <input type="text" id="name_${i}" value="${gName}" placeholder="Group Name">
+                            <input type="text" id="name_${i}" value="${gName}" placeholder="Group Name" oninput="clearPlayerId(${i})">
+                            <span class="stat-icon ${statClass}" id="stat_icon_${i}" title="${statTitle}">📊</span>
                         </div>
                     </div>`;
 
@@ -132,7 +148,6 @@
                         "B1": `<div style="font-size:1.5rem;">⏪⏩</div>`,
                         "D1": `<div style="font-size:1.5rem;">⏪⏩</div>`
                     };
-
                     for (const [coord, html] of Object.entries(labels)) {
                         let cell = document.getElementById(`cell-${i}-${coord}`);
                         if(cell) cell.innerHTML = html;
@@ -159,7 +174,6 @@
                         if(eff.eff == 3 || eff.eff == 4 || eff.eff == 5) vis.classList.add('eff-breathe');
                         if(eff.eff == 6 || eff.eff == 7) vis.classList.add('eff-chase');
                         
-                        // Rainbow Bugfix & Kuchendiagramm für Progress (Effekt 8 oder 18)
                         if (eff.eff == 9) {
                             vis.classList.add('eff-rainbow');
                             vis.style.background = 'linear-gradient(45deg, red, orange, yellow, green, blue, purple)';
@@ -173,7 +187,6 @@
                             vis.style.border = (eff.r===0 && eff.g===0 && eff.b===0) ? "2px solid #444" : "2px solid #fff";
                         }
                         
-                        // BoxShadow anpassen, außer es ist komplett aus
                         if (eff.eff == 9) {
                             vis.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.6)';
                         } else {
@@ -181,7 +194,6 @@
                         }
                     }
 
-                    // Farbe in Liste synchronisieren
                     let pId = Math.floor(eff.id / 4);
                     let cb = document.getElementById(`cb_${pId}`);
                     if(cb && eff.eff !== 0) { 
@@ -206,7 +218,16 @@
             openPlayerPicker(nGrp, function(selected) {
                 selected.forEach((p, i) => {
                     let inp = document.getElementById('name_' + i);
-                    if (inp) { inp.value = p.name; sessionStorage.setItem('p_name_' + i, p.name); }
+                    if (inp) { 
+                        inp.value = p.name; 
+                        sessionStorage.setItem('p_name_' + i, p.name); 
+                    }
+                    sessionStorage.setItem(`p_id_${i}`, p.id); 
+                    let icon = document.getElementById(`stat_icon_${i}`);
+                    if(icon) { 
+                        icon.classList.add('active'); 
+                        icon.title = "Statistik wird gespeichert"; 
+                    }
                 });
             });
         }

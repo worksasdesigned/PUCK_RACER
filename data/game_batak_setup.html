@@ -9,7 +9,6 @@
     <title>Setup - Batak Pro</title>
     <link rel="stylesheet" href="style.css?v=2">
     <style>
-        /* Spezifische Klasse für diese Seite beibehalten */
         .diff-text {
             font-size: 0.9rem;
             color: var(--text-main);
@@ -131,7 +130,9 @@
             let info = document.getElementById('puckInfo');
             let btn = document.getElementById('btnNext');
             
-            info.innerText = `${getTranslation('req_pucks')} ${p} | ${getTranslation('conn_pucks')} ${connPucks}`;
+            let txtReq = (typeof getTranslation === 'function') ? getTranslation('req_pucks') : "Required:";
+            let txtConn = (typeof getTranslation === 'function') ? getTranslation('conn_pucks') : "Connected:";
+            info.innerText = `${txtReq} ${p} | ${txtConn} ${connPucks}`;
             
             if (p > connPucks) {
                 info.classList.add('warn-txt');
@@ -144,8 +145,10 @@
 
         function updDiff() {
             let val = parseInt(document.getElementById('diffSlider').value);
-            document.getElementById('diffDisp').innerText = getTranslation(`bat_diff_${val}`);
-            document.getElementById('diffTxt').innerText = getTranslation(`bat_diff_${val}_d`);
+            let txt = (typeof getTranslation === 'function') ? getTranslation(`bat_diff_${val}`) : val;
+            let desc = (typeof getTranslation === 'function') ? getTranslation(`bat_diff_${val}_d`) : "";
+            document.getElementById('diffDisp').innerText = txt;
+            document.getElementById('diffTxt').innerText = desc;
         }
 
         function nextStep() {

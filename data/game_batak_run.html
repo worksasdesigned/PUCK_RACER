@@ -7,9 +7,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Batak Live</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=5">
     <style>
-        .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 15px; border: 1px solid var(--border-color);}
+        .player-info { text-align:center; margin-bottom:15px; background:var(--card-bg); padding:15px; border-radius:8px; border:1px solid var(--border-color); }
+        .top-info { position: relative; background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 15px; border: 1px solid var(--border-color);}
         .big-time { font-size: 4rem; font-family: monospace; color: var(--text-main); font-weight: bold; line-height:1;}
         .status-txt { font-size: 1.2rem; color: var(--warning); text-transform: uppercase; margin-top:5px; font-weight:bold;}
 
@@ -36,20 +37,64 @@
         }
 
         .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
+
+        /* --- HIGHSCORE STYLES --- */
+        .sys-record {
+            position: absolute; top: 10px; right: 10px; font-size: 0.85rem; color: var(--warning); 
+            cursor: pointer; background: rgba(0,0,0,0.5); padding: 5px 10px; 
+            border-radius: 6px; border: 1px solid var(--warning); transition: all 0.3s; z-index: 10;
+        }
+        .sys-record:hover { transform: scale(1.05); background: var(--card-hover); }
+        .record-glow {
+            border-color: #ff3333 !important; color: #fff !important; font-weight:bold;
+            box-shadow: 0 0 15px #ff3333 !important; text-shadow: 0 0 5px #ff3333;
+            background: rgba(255, 50, 50, 0.2) !important;
+            animation: pulseRed 0.8s infinite alternate;
+        }
+        @keyframes pulseRed { 
+            from { box-shadow: 0 0 10px #ff3333; } 
+            to { box-shadow: 0 0 25px #ff3333, inset 0 0 10px #ff3333; } 
+        }
+
+        /* Responsive Fix für das iPhone */
+        @media (max-width: 480px) {
+            .hide-mobile { display: none; }
+            .sys-record {
+                top: auto;          /* Entfernt die Ankerung oben */
+                bottom: 10px;       /* Setzt das Badge nach unten rechts */
+                padding: 4px 6px;   /* Etwas schmaler */
+                font-size: 0.8rem;  /* Minimale Schriftverkleinerung */
+            }
+        }
+
+        .modal-overlay { position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); backdrop-filter:blur(4px); z-index:5000; display:none; align-items:center; justify-content:center; padding:15px; box-sizing:border-box; }
+        .modal-overlay.show { display:flex; }
+        .modal-box { background:var(--card-bg); border:1px solid var(--border-color); border-radius:12px; width:100%; max-width:350px; }
+        .modal-header { padding:16px; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center; }
+        .modal-body { padding:20px; font-size:1.1rem; line-height:1.8; }
+        .hs-val { font-family:monospace; font-weight:bold; color:var(--primary); float:right; }
     </style>
 </head>
 <body>
     <header>
         <div class="logo" data-i18n="g_batak">Batak Pro ⚡</div>
-     <div class="status-bar">
-    <div class="status-dot dot-green" id="cnt-green">0</div>
-    <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
-    <div class="status-dot dot-red" id="cnt-red">0</div>
-</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
     </header>
 
     <main>
+        <div class="player-info">
+            <div style="font-size:1.4rem; font-weight:bold; color:var(--text-main);">👤 <span id="playerNameDisplay">Spieler 1</span></div>
+        </div>
+
         <div class="top-info">
+            <div id="sysRecordBtn" class="sys-record" onclick="showRecordModal()" style="display:none;" title="All-Time Highscore">
+                👑<span class="hide-mobile" data-i18n="bat_sys_record"> System Record:</span> <span id="sysRecordVal">---</span>
+            </div>
+            
             <div class="big-time" id="globalTime">00:00</div>
             <div class="status-txt" id="stateInfo">WAITING</div>
         </div>
@@ -77,7 +122,7 @@
         </div>
 
         <div id="resultsArea" style="display:none; background:var(--bg-color); padding:15px; border-radius:8px; border:1px solid var(--border-color);">
-            <h3 style="margin-top:0; border-bottom:1px solid var(--border-color); padding-bottom:5px; text-align:center; color:var(--text-main);" data-i18n="bat_run_ana">Puck Analysis</h3>
+            <h3 style="margin:0; border-bottom:1px solid var(--border-color); padding-bottom:5px; text-align:center; color:var(--text-main);" data-i18n="bat_run_ana">Puck Analysis</h3>
             <div class="res-grid" id="resGrid"></div>
         </div>
 
@@ -86,26 +131,186 @@
         </div>
     </main>
 
+    <div class="modal-overlay" id="recordModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 style="margin:0; color:var(--warning);">👑 <span data-i18n="bat_hs_title">All-Time Highscore</span></h3>
+                <button onclick="closeRecordModal()" style="background:none;border:none;color:var(--text-main);font-size:1.5rem; cursor:pointer;">✕</button>
+            </div>
+            <div class="modal-body" id="recordBody"></div>
+        </div>
+    </div>
+
     <script src="lang.js"></script>
     <script src="script.js"></script>
     <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
+        function t(key, fallback) {
+            return (typeof getTranslation === 'function') ? (getTranslation(key) || fallback) : fallback;
+        }
+
         const BLOCK_COLORS = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FF1493'];
         const STATES = ["SETUP", "HOLD START!", "COUNTDOWN", "FALSE START", "RUNNING", "FINISHED"];
+        const MIN_HITS_FOR_RECORD = 100;
+
+        let savedStats = false;
+        let personalBest = 99999999;
+        let sessionRecords = {}; 
+        
+        let systemRecord = null; 
+        
+        let pName = sessionStorage.getItem('p_name_0') || "Spieler 1";
+        document.getElementById('playerNameDisplay').innerText = pName;
+
+        async function loadPersonalBests() {
+            let pid = sessionStorage.getItem(`p_id_0`);
+            if (pid && pid !== "0") {
+                try {
+                    // Cache-Buster hinzugefügt
+                    let r = await fetch('/s_' + pid + '.csv?_t=' + Date.now());
+                    if (r.ok) {
+                        let text = await r.text();
+                        let lines = text.split(/\r?\n/);
+                        lines.forEach(line => {
+                            let parts = line.split(';');
+                            if (parts.length >= 4 && parts[1] === "21") { 
+                                let score = parseInt(parts[2]); 
+                                if (score > 0 && score < personalBest) personalBest = score;
+                            }
+                        });
+                    }
+                } catch(e) {}
+            }
+        }
+        
+        async function loadSystemRecord() {
+            try {
+                // Auch die JSON API vor dem Cache schützen!
+                let r = await fetch('/api/highscore/get?game=21&_t=' + Date.now());
+                if (r.ok) {
+                    let data = await r.json();
+                    if (data && data.rt) {
+                        systemRecord = data;
+                        document.getElementById('sysRecordVal').innerText = data.rt + "ms";
+                        document.getElementById('sysRecordBtn').style.display = 'block';
+                    }
+                }
+            } catch(e) {}
+        }
+
+        loadPersonalBests();
+        loadSystemRecord();
+
+        function savePlayerStat(avgRT, hits, miss) {
+            let pid = sessionStorage.getItem(`p_id_0`);
+            if (!pid || pid === "0") return;
+            
+            let time = sessionStorage.getItem('batak_time') || 60;
+            let diff = sessionStorage.getItem('batak_diff') || 2;
+            let pucks = sessionStorage.getItem('batak_pucks') || 4;
+
+            let fd = new URLSearchParams();
+            fd.append('pid', pid);
+            fd.append('game', 21); 
+            fd.append('score', avgRT); 
+            fd.append('ex1', hits); 
+            fd.append('ex2', miss); 
+            fd.append('ex3', time); 
+            fd.append('ex4', diff); 
+            fd.append('ex5', pucks); 
+            fd.append('ts', Date.now());
+            fetch('/api/stats/player_save', { method: 'POST', body: fd }).catch(e => console.log(e));
+        }
+
+        function playHighscoreJingle() {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (!AudioContext) return;
+            const ctx = new AudioContext();
+            
+            const playTone = (freq, type, time, dur) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, ctx.currentTime + time);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime + time);
+                gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + time + dur);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(ctx.currentTime + time);
+                osc.stop(ctx.currentTime + time + dur);
+            };
+            
+            playTone(523.25, 'sine', 0, 0.15);   // C5
+            playTone(659.25, 'sine', 0.15, 0.15); // E5
+            playTone(783.99, 'sine', 0.3, 0.15);  // G5
+            playTone(1046.50, 'sine', 0.45, 0.5); // C6
+        }
+
+        function triggerNewSystemRecord(data) {
+            playHighscoreJingle();
+            
+            let btn = document.getElementById('sysRecordBtn');
+            btn.classList.add('record-glow');
+            document.getElementById('sysRecordVal').innerText = data.avg + "ms"; // Ohne Leerzeichen!
+            btn.style.display = 'block';
+            
+            let diffCfg = sessionStorage.getItem('batak_diff') || 2;
+            let puckCfg = sessionStorage.getItem('batak_pucks') || 4;
+            
+            systemRecord = {
+                name: pName,
+                rt: data.avg,
+                hits: data.hits,
+                miss: data.miss,
+                diff: diffCfg,
+                pucks: puckCfg,
+                ts: Date.now()
+            };
+            
+            let fd = new URLSearchParams();
+            fd.append('game', 21);
+            fd.append('data', JSON.stringify(systemRecord));
+            fetch('/api/highscore/save', { method: 'POST', body: fd });
+            
+            setTimeout(() => { btn.classList.remove('record-glow'); }, 8000);
+        }
 
         setInterval(update, 150); 
 
         function update() {
             fetch('/api/game/status').then(r=>r.json()).then(data => {
-                 
+                
+                if (data.st < 4) {
+                    savedStats = false;
+                    sessionRecords = {}; 
+                }
+
+                if (data.st === 5 && !savedStats) {
+                    if (data.hits > 0 && data.avg > 0) {
+                        
+                        if (data.avg < personalBest) {
+                            personalBest = data.avg;
+                            sessionRecords[0] = true; 
+                        }
+                        
+                        if (data.hits >= MIN_HITS_FOR_RECORD) {
+                            if (!systemRecord || data.avg < systemRecord.rt) {
+                                triggerNewSystemRecord(data);
+                            }
+                        }
+
+                        savePlayerStat(data.avg, data.hits, data.miss);
+                    }
+                    savedStats = true;
+                }
                 render(data);
             }).catch(e => {});
         }
 
         function formatTime(ms) {
-            let sec = Math.ceil(ms / 1000); 
+            let sec = Math.ceil(ms / 1000);
             let m = Math.floor(sec / 60);
             let s = sec % 60;
             return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
@@ -115,13 +320,19 @@
             document.getElementById('globalTime').innerText = formatTime(data.t);
             document.getElementById('valHit').innerText = data.hits;
             document.getElementById('valMiss').innerText = data.miss;
-            document.getElementById('valAvg').innerText = data.avg > 0 ? `${data.avg} ms` : "-- ms";
+            
+            let avgTxt = data.avg > 0 ? `${data.avg} ms` : "-- ms";
+            if (sessionRecords[0]) {
+                let titleNewPers = t('bat_new_pers', 'Neuer Persönlicher Rekord!');
+                avgTxt += ` <span title='${titleNewPers}'>📈</span>`;
+            }
+            document.getElementById('valAvg').innerHTML = avgTxt;
             
             let stTxt = STATES[data.st] || "UNKNOWN";
             let stCol = "var(--warning)";
-            if(data.st === 3) { stCol = "var(--danger)"; stTxt = getTranslation("sr_st_false") || stTxt; }
-            if(data.st === 4) { stCol = "var(--success)"; stTxt = getTranslation("btn_running") || stTxt; }
-            if(data.st === 5) { stCol = "gold"; stTxt = getTranslation("whac_st_5") || stTxt; }
+            if(data.st === 3) { stCol = "var(--danger)"; stTxt = t("sr_st_false", stTxt); }
+            if(data.st === 4) { stCol = "var(--success)"; stTxt = t("btn_running", stTxt); }
+            if(data.st === 5) { stCol = "gold"; stTxt = t("whac_st_5", stTxt); }
             
             let infoEl = document.getElementById('stateInfo');
             infoEl.innerText = stTxt;
@@ -129,11 +340,13 @@
             
             let btn = document.getElementById('btnStart');
             if (data.st === 0 || data.st === 5 || data.st === 3) { 
-                btn.innerText = (data.st === 3 || data.st === 5) ? getTranslation('btn_reset') : getTranslation('btn_start'); 
+                btn.innerText = (data.st === 3 || data.st === 5) ? t('btn_reset', "RESET") : t('btn_start', "START"); 
                 btn.style.background = "var(--primary)"; 
+                btn.setAttribute('onclick', data.st === 0 ? "doAction('start')" : "doAction('reset')");
             } else { 
-                btn.innerText = getTranslation('btn_running'); 
+                btn.innerText = t('btn_running', "RUNNING");
                 btn.style.background = "var(--card-hover)"; 
+                btn.removeAttribute('onclick');
             }
 
             let resArea = document.getElementById('resultsArea');
@@ -149,6 +362,7 @@
                     if (fillPercent === 100) bgStyle = `background: ${colHex}; border: 2px solid #fff;`;
                     
                     let rt = p.a > 0 ? `${p.a}ms` : "-";
+        
                     let cardId = `res-card-${p.id}`;
                     let cardEl = document.getElementById(cardId);
 
@@ -168,6 +382,40 @@
                 resGrid.innerHTML = ""; 
             }
         }
+
+        function showRecordModal() {
+            if (!systemRecord) return;
+            let d = new Date(systemRecord.ts);
+            let dateStr = d.toLocaleDateString() + " " + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+            
+            let diffFallback = systemRecord.diff == 1 ? "Leicht" : (systemRecord.diff == 2 ? "Mittel" : "Schwer");
+            let diffTxt = t(`bat_diff_${systemRecord.diff}`, diffFallback);
+            
+            let lblPlayer = t('bat_hs_player', "Spieler:");
+            let lblRT = t('bat_hs_rt', "Ø Reaktionszeit:");
+            let lblHits = t('bat_hs_hits', "Treffer:");
+            let lblMiss = t('bat_hs_miss', "Fehler:");
+            let lblPucks = t('bat_hs_pucks', "Pucks:");
+            let lblLvl = t('bat_hs_lvl', "Level:");
+
+            let html = `
+                <div><strong>${lblPlayer}</strong> <span class="hs-val" style="color:var(--text-main);">${systemRecord.name}</span></div>
+                <hr style="border-color:var(--border-color); margin:10px 0;">
+                <div><strong>${lblRT}</strong> <span class="hs-val" style="color:var(--warning); font-size:1.3rem;">${systemRecord.rt} ms</span></div>
+                <div><strong>${lblHits}</strong> <span class="hs-val" style="color:var(--success);">${systemRecord.hits}</span></div>
+                <div><strong>${lblMiss}</strong> <span class="hs-val" style="color:var(--danger);">${systemRecord.miss}</span></div>
+                <hr style="border-color:var(--border-color); margin:10px 0;">
+                <div style="font-size:0.9rem; color:var(--text-muted);">
+                    <div><strong>${lblPucks}</strong> <span class="hs-val">${systemRecord.pucks}</span></div>
+                    <div><strong>${lblLvl}</strong> <span class="hs-val">${diffTxt}</span></div>
+                    <div style="margin-top:10px; text-align:center;">${dateStr}</div>
+                </div>
+            `;
+            document.getElementById('recordBody').innerHTML = html;
+            document.getElementById('recordModal').classList.add('show');
+        }
+
+        function closeRecordModal() { document.getElementById('recordModal').classList.remove('show'); }
 
         function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
         function goBack() { doAction('reset'); location.href = 'game_batak_names.html'; }

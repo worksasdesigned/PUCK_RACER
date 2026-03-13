@@ -81,7 +81,7 @@
                 let pid = sessionStorage.getItem(`p_id_${i}`);
                 if (pid && pid !== "0") {
                     try {
-                        let r = await fetch('/s_' + pid + '.csv');
+                        let r = await fetch('/s_' + pid + '.csv?_t=' + Date.now());
                         if (r.ok) {
                             let text = await r.text();
                             let lines = text.split(/\r?\n/);
