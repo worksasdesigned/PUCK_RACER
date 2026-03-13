@@ -156,7 +156,7 @@ After the real first beta is released il will provide the bin files in case of u
 ---
 
 
-## Technical Updates:
+## Technical Updates:  
 
 **V2.88.2**  
     - iOS meta Tags added  

@@ -12,14 +12,18 @@ const tourTexts = {
         btn_finish: "Finish ✔",
         btn_start: "Let's go! 🏁",
 
-        step_lang: "First, choose your language!<br><br>Open the menu and select your preferred language. The tutorial will adapt automatically.",
-        step_status: "Welcome to Puck Racer! 🏁<br><br>Up here you can always see how many pucks are currently connected to the system. The colors indicate the connection quality of each puck.",
-        step_filter: "Use this bar to quickly sort the 20+ games by training goal. You can also swipe left later to see more filters.",
+        step_lang: "Welcome to Puck Racer! 🏁<br><br>First, choose your language!<br><br>Open the menu and select your preferred language. The tutorial will adapt automatically.",
+        step_status: "Up here you can always see how many pucks are currently connected to the system. The colors indicate the connection quality of each puck. One is missing? Switch it off and on again.",
+        step_filter: "Use this bar to quickly sort the 25+ games by training goal. You can also swipe left later to see more filters. Have you found some favorites? You can mark them with the star in the game tile to find them even faster next time!",
         step_shuttle: "Let's set up your first game!<br><br>Click the <b>Shuttle Run</b> tile to enter the game settings.",
 
         step_setup_card: "Great! Here you are in the game settings.<br><br>Choose how many runners compete against each other. Note that this game requires 2 pucks per player and you need at least 2 pucks connected.",
         step_setup_rounds: "Shuttle Run is very simple. You only need to set how many rounds should be run. Other games have 5-6 settings here!",
         step_setup_next: "All set? Then click NEXT to get to the puck assignment.",
+
+        // NEUE TEXTE (EN)
+        step_names_layout: "In most games, you can see how to set up the pucks here. The animation shows you how the puck should be lighting up right now, making it easy to see which pucks belong together.<br><br>In other games, the setup is a bit more complex, but you'll manage 😉<br><br><b>Tip:</b> You can turn many games into an obstacle course where the puck is simply the finish line.",
+        step_names_picker: "<b>Load players from list:</b><br><br>In the Player Manager you can create classes and players to assign them very quickly. You will also find a small statistic for many games in the Player Manager.",
 
         step_names_card: "Here puck groups are formed so you can physically set up the game. You can also enter a name for each group.<br><br>Look at your pucks: One should now be breathing blue (the target puck), one has a circle effect (the start puck).",
         step_names_start: "Once you've placed the pucks, click START GAME.",
@@ -37,14 +41,18 @@ const tourTexts = {
         btn_finish: "Beenden ✔",
         btn_start: "Los geht's! 🏁",
 
-        step_lang: "Wähle zuerst deine Sprache!<br><br>Öffne das Menü und wähle deine bevorzugte Sprache. Das Tutorial passt sich automatisch an.",
-        step_status: "Willkommen beim Puck Racer! 🏁<br><br>Hier oben siehst du jederzeit, wie viele Pucks gerade aktiv mit dem System verbunden sind. Die Farben zeigen dir die jeweilige Verbindungsqualität.",
-        step_filter: "Mit dieser Leiste kannst du die über 20 Spiele blitzschnell nach Trainingsziel sortieren. Nachher kannst du hier auch nach links swipen um noch mehr Filter zu sehen.",
+        step_lang: "Willkommen beim Puck Racer! 🏁<br> Wähle zuerst deine Sprache!<br><br>Öffne das Menü und wähle deine bevorzugte Sprache. Das Tutorial passt sich automatisch an.",
+        step_status: "Hier oben siehst du jederzeit, wie viele Pucks gerade aktiv mit dem System verbunden sind. Die Farben zeigen dir die jeweilige Verbindungsqualität.",
+        step_filter: "Mit dieser Leiste kannst du die über 25 Spiele blitzschnell nach Trainingsziel sortieren. Nachher kannst du hier auch nach links swipen um noch mehr Filter zu sehen. Du kannst dir auch Favoriten anlegen. Einfach auf den Stern in der Spiele-Kachel klicken",
         step_shuttle: "Lass uns dein erstes Spiel einstellen!<br><br>Klicke auf die Kachel <b>Pendellauf (Shuttle Run)</b>, um in die Spieleinstellungen zu gelangen.",
 
         step_setup_card: "Perfekt! Hier bist du in den Spieleinstellungen.<br><br>Hier wählst du z.B. aus, wie viele Läufer gegeneinander antreten sollen. Achte darauf, dass in diesem Spiel 2 Pucks pro Spieler benötigt werden und dass du mind. 2 Pucks verbunden hast.",
         step_setup_rounds: "Pendellauf ist sehr einfach. Du musst nur einstellen wie viele Runden gelaufen werden sollen. Andere Spiele haben hier 5-6 Einstellmöglichkeiten!",
         step_setup_next: "Alles klar? Dann klicke auf WEITER, um zur Puck-Zuweisung zu kommen.",
+
+        // NEUE TEXTE (DE)
+        step_names_layout: "In den meisten Spielen siehst du hier, wie man die Pucks aufbauen soll. Die Animation zeigt dir, wie der Puck gerade leuchten soll, damit du einfach erkennst, welche Pucks zusammengehören.<br><br>In anderen Spielen ist der Aufbau etwas komplizierter, aber du schaffst das 😉<br><br><b>Tipp:</b> Du kannst aus vielen Spielen auch einen Hindernislauf bauen und der Puck ist einfach das Ende der Strecke.",
+        step_names_picker: "<b>Spieler aus Liste:</b><br><br>Im Spieler-Manager kannst du Klassen und Spieler anlegen. So kannst du sehr schnell Spieler zuweisen. Außerdem findest du im Spieler-Manager für viele Spiele eine kleine Statistik.",
 
         step_names_card: "Hier werden Puckgruppen gebildet, damit du das Spiel physisch aufbauen kannst. Zudem kannst du je Gruppe einen Namen eingeben.<br><br>Schau auf deine Pucks: Einer sollte jetzt blau atmen (der Ziel-Puck), einer hat einen Kreislauf-Effekt (der Start-Puck).",
         step_names_start: "Wenn du die Pucks verteilt hast, klicke auf START GAME / ZUM SPIEL.",
@@ -68,14 +76,16 @@ const tourSteps = [
     { page: 'index', target: '#filterBar', textKey: 'step_filter' },
     { page: 'index', target: '.tile[data-id="shuttle"]', textKey: 'step_shuttle', requireClick: true },
 
-    // Nutze nth-of-type, damit wir keine IDs im HTML brauchen! 
     { page: 'shuttle_setup', target: 'main .card:nth-of-type(1)', textKey: 'step_setup_card', allowInteraction: true },
     { page: 'shuttle_setup', target: 'main .card:nth-of-type(2)', textKey: 'step_setup_rounds', placement: 'top', allowInteraction: true },
-    { page: 'shuttle_setup', target: '.btn-primary', textKey: 'step_setup_next', requireClick: true, placement: 'top' },
+    { page: 'shuttle_setup', target: '#btnNext', textKey: 'step_setup_next', requireClick: true, placement: 'top' },
 
-    // Nutze direkt #playerList für das Input-Feld
+    // NEUE SCHRITTE: Streckenaufbau & Spieler aus Liste
+    { page: 'shuttle_names', target: '.layout-card', textKey: 'step_names_layout', allowInteraction: true },
+    { page: 'shuttle_names', target: '#pickerBar', textKey: 'step_names_picker', allowInteraction: true },
+
     { page: 'shuttle_names', target: '#playerList', textKey: 'step_names_card', allowInteraction: true },
-    { page: 'shuttle_names', target: '.btn-primary', textKey: 'step_names_start', requireClick: true, placement: 'top' },
+    { page: 'shuttle_names', target: 'button[onclick="startGame()"]', textKey: 'step_names_start', requireClick: true, placement: 'top' },
 
     { page: 'shuttle_run', target: '#timer', textKey: 'step_run_timer' },
     { page: 'shuttle_run', target: '#statusText', textKey: 'step_run_status', placement: 'top' },
@@ -522,8 +532,6 @@ function showTourStep() {
 
     let targetEl = document.querySelector(step.target);
     
-    // WICHTIG: Warte, bis das Element im DOM existiert UND physisch sichtbar ist 
-    // (Löst das Problem bei nachladenden Inhalten wie der Namens-Liste).
     if (!targetEl || (targetEl.offsetHeight === 0 && targetEl.offsetWidth === 0)) { 
         setTimeout(showTourStep, 200); 
         return; 
@@ -572,7 +580,6 @@ function showTourStep() {
         targetEl.addEventListener('click', clickHandler);
 
     } else {
-        // Zwingt den Browser absolut dazu, Interaktionen im markierten Bereich durchzulassen
         targetEl.style.setProperty('pointer-events', step.allowInteraction ? 'auto' : 'none', 'important');
         
         let nextBtn = document.getElementById('tourNextBtn');
