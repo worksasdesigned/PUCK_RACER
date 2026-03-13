@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Whac-A-Mole Live</title>
-    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="stylesheet" href="style.css?v=9">
     <style>
         .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color);}
         .big-time { font-size: 4rem; font-family: monospace; color: var(--text-main); font-weight: bold; line-height:1;}
@@ -19,7 +19,7 @@
 
         .grp-box { background: var(--card-hover); border-radius: 8px; margin-bottom: 15px; padding: 12px; border-left: 8px solid var(--border-color); transition: background 0.3s, border-color 0.2s;}
         .grp-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-        .g-name { font-size:1.3rem; font-weight:bold; color:var(--text-main); }
+        .g-name { font-size:1.3rem; font-weight:bold; color:var(--text-main); display:flex; align-items:center; flex-wrap:wrap;}
         
         .run-stats { display: flex; justify-content: space-between; align-items: center; background:var(--bg-color); padding:15px; border-radius:6px;}
         .stat-col { text-align:center; flex:1; }
@@ -69,10 +69,9 @@
     <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
-        const GRP_COLORS = ['#800080', '#00FFFF', '#FFA500'];
         
-        // Exaktes C++ Backend State Mapping:
-        // 0=SETUP, 1=LAYOUT (Idle), 2=START_SKI, 3=START_TARGETS, 4=RUNNING, 5=FINISHED_RAINBOW, 6=FINISHED_WHITE
+        const GRP_COLORS = ['#800080', '#00FFFF', '#FFA500'];
+        const GAME_COLORS_ARR = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FF1493', '#800080', '#00FF7F'];
         const STATES = ["SETUP", "READY", "GET READY", "TARGETS", "RUNNING", "FINISHED", "FINISHED"];
         
         function t(key, fallback) {
@@ -88,6 +87,16 @@
 
         let numTargetColors = parseInt(sessionStorage.getItem('whac_col') || 1);
         let timeLimitSecs = parseInt(sessionStorage.getItem('whac_time') || 60);
+
+        // Zielfarben (Punkte) HTML generieren
+        let tgtMask = parseInt(sessionStorage.getItem('whac_tgt_mask') || 1);
+        let colorDotsHtml = "<span style='display:inline-flex; gap:5px; margin-left:12px;'>";
+        for(let c=0; c<10; c++) {
+            if((tgtMask & (1 << c)) > 0) {
+                colorDotsHtml += `<span style="width:14px; height:14px; border-radius:50%; border:1px solid #fff; background:${GAME_COLORS_ARR[c]}; box-shadow:0 0 5px ${GAME_COLORS_ARR[c]};"></span>`;
+            }
+        }
+        colorDotsHtml += "</span>";
 
         async function loadPersonalBests() {
             for(let i=0; i<nGrp; i++) {
@@ -136,12 +145,11 @@
                     document.getElementById('globalTime').innerText = formatTimeBig(data.gT);
                 }
                 
-                // Status Text Update
                 let stTxt = STATES[data.st] || "UNKNOWN";
                 let stCol = "var(--warning)";
                 if(data.st === 4) { stCol = "var(--success)"; stTxt = t("btn_running", "RUNNING"); }
                 if(data.st >= 5) { stCol = "gold"; stTxt = t("whac_st_finish", "FINISHED"); }
-                if(data.st === 1) { stCol = "var(--primary)"; stTxt = "READY"; } // Neu: C++ Layout Mode = Bereit!
+                if(data.st === 1) { stCol = "var(--primary)"; stTxt = "READY"; }
                 
                 let stateEl = document.getElementById('stateInfo');
                 if(stateEl) {
@@ -149,15 +157,12 @@
                     stateEl.style.color = stCol;
                 }
 
-                // Button Update
                 let btn = document.getElementById('btnStart');
-                // Wenn im Setup (0), Bereit-Modus (1) oder beendet (5,6) -> Startknopf zeigen
                 if (data.st === 0 || data.st === 1 || data.st >= 5) { 
                     btn.innerText = t('btn_start_all', 'START ALL'); 
                     btn.style.background = "var(--primary)"; 
                     btn.setAttribute('onclick', "doAction('start')");
                 } else { 
-                    // Während Skistart (2), TargetShow (3) oder Running (4) -> Blockieren
                     btn.innerText = t('btn_running', 'RUNNING');
                     btn.style.background = "var(--card-hover)"; 
                     btn.removeAttribute('onclick');
@@ -170,13 +175,11 @@
                 if (data.grps) {
                     let saveQueueDelay = 0;
                     data.grps.forEach((g, i) => {
-                        // Reset Flag, wenn Status < 4 (also 0,1,2,3 -> beim Neustart)
                         if (data.st < 4) {
                             groupSaved[i] = false;
                             sessionRecords[i] = false;
                         }
                         
-                        // Wenn Spiel beendet (Status 5 oder 6) und noch nicht gespeichert
                         if (data.st >= 5 && !groupSaved[i]) {
                             if (g.sc > 0 || g.m > 0) { 
                                 if (g.sc > personalBests[i]) {
@@ -228,13 +231,13 @@
                 else if (globalState === 4) icon = "🎯";
                 else if (globalState >= 5) icon = "🏁";
 
-                let recIcon = sessionRecords[i] ? ` <span title='${t("bat_new_pers", "Neuer Persönlicher Rekord!")}'>📈</span>` : "";
+                let recIcon = sessionRecords[i] ? `<span style="margin-left:8px;" title='${t("bat_new_pers", "Neuer Persönlicher Rekord!")}'>📈</span>` : "";
 
                 if (!rowEl) {
                     container.insertAdjacentHTML('beforeend', `
                     <div id="${rowId}" class="${rowClass}" style="border-left-color: ${color}">
                         <div class="grp-head">
-                            <span class="g-name">${gName}${recIcon}</span>
+                            <span class="g-name">${gName}${colorDotsHtml}${recIcon}</span>
                             <span id="st-icon-${i}" class="g-status">${icon}</span>
                         </div>
                         <div class="run-stats">
@@ -250,7 +253,7 @@
                     </div>`);
                 } else {
                     let nameEl = rowEl.querySelector('.g-name');
-                    let newNameHtml = `${gName}${recIcon}`;
+                    let newNameHtml = `${gName}${colorDotsHtml}${recIcon}`;
                     if (nameEl.innerHTML !== newNameHtml) nameEl.innerHTML = newNameHtml;
 
                     let iconEl = document.getElementById(`st-icon-${i}`);

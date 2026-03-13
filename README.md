@@ -168,7 +168,7 @@ After the real first beta is released il will provide the bin files in case of u
     - BombSquad (avarage reaction time)
     - Shuttle run (time) assuming trainer always uses same distance, else its just a tracking of usage
     - Countdown (time and clicks) tracking of usage - Fix of copy&paste error in game_simplecounter_setup.html      
-**V2.89.11**
+**V2.89.13**
     - statistics for all relevant games finished
         - Whac-A-Mole
         - Pacemaker
@@ -176,8 +176,10 @@ After the real first beta is released il will provide the bin files in case of u
         - T-Test
         - Beep Test
         - Bataka (incl. System record)
-    - Player manager with extended Export and Import
-    - Minor bugfixes in some games (Player-List added, minor layout changes)  
+    - Player manager with extended Export and Import incl. highscores and statistics   
+    - Minor bugfixes in some games (Player-List added, minor layout changes)
+        - fix for Whac-A-Mole color picker  
+
 --- 
 
 

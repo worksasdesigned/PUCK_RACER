@@ -204,6 +204,17 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="backupProgressOverlay">
+        <div class="modal-box" style="text-align:center; padding: 30px;">
+            <div style="font-size:3rem; margin-bottom:15px;" id="backupSpinner">⏳</div>
+            <h3 style="color:var(--primary); margin-top:0;" data-i18n="pm_backup_title">System Backup läuft...</h3>
+            <p id="backupStatusText" style="color:var(--text-main); font-weight:bold; margin-bottom: 5px;">Initialisiere...</p>
+            <div style="width:100%; background:var(--bg-color); border-radius:10px; border:1px solid var(--border-color); height:20px; margin-top:15px; overflow:hidden;">
+                <div id="backupProgressBar" style="width:0%; height:100%; background:var(--primary); transition:width 0.2s;"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <script src="lang.js"></script>
@@ -240,7 +251,7 @@
         let saveTimer = null;
         
         let parsedImport = []; 
-        let pendingFullBackup = null; // Speichert eingelesenes JSON Backup
+        let pendingFullBackup = null; 
 
         let knownStats = {}; 
         let checkingGroups = {};
@@ -439,16 +450,16 @@
         }
 
         function showToast(msg, isError) {
-            let t = document.getElementById('toast');
-            t.textContent = msg;
-            t.style.background = isError ? 'var(--danger)' : 'var(--success)';
-            t.style.color = isError ? '#fff' : '#000';
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 2000);
+            let tEl = document.getElementById('toast');
+            tEl.textContent = msg;
+            tEl.style.background = isError ? 'var(--danger)' : 'var(--success)';
+            tEl.style.color = isError ? '#fff' : '#000';
+            tEl.classList.add('show');
+            setTimeout(() => tEl.classList.remove('show'), 2000);
         }
 
         // =====================================================================
-        // CSV GRUPPEN-EXPORT LOGIK (Bleibt erhalten)
+        // CSV GRUPPEN-EXPORT LOGIK
         // =====================================================================
         async function openStatsExport(gid) {
             let grp = data.groups.find(g => g.id === gid);
@@ -577,7 +588,15 @@
         // FULL SYSTEM BACKUP (Spieler + Highscores + Alle Statistiken)
         // =====================================================================
         async function createFullBackup() {
-            showToast(t('pm_backup_wait', 'Erstelle Backup... Bitte warten.'), false);
+            document.getElementById('backupProgressOverlay').classList.add('show');
+            let statusText = document.getElementById('backupStatusText');
+            let progressBar = document.getElementById('backupProgressBar');
+            let spinner = document.getElementById('backupSpinner');
+
+            spinner.innerText = "⏳";
+            progressBar.style.width = "0%";
+            statusText.innerText = t('pm_backup_init', 'Sammle Systemdaten...');
+
             let backup = {
                 type: "puckracer_full_backup",
                 version: 1,
@@ -590,7 +609,12 @@
             data.groups.forEach(g => g.players.forEach(p => allPlayers.push(p.id)));
 
             // 1. Lade alle CSVs aller Spieler
-            for (let pid of allPlayers) {
+            for (let i = 0; i < allPlayers.length; i++) {
+                let pid = allPlayers[i];
+                let prozent = (i / allPlayers.length) * 50; 
+                statusText.innerText = `${t('pm_backup_stats', 'Lade Statistiken')} (${i+1}/${allPlayers.length})...`;
+                progressBar.style.width = prozent + "%";
+                
                 try {
                     let r = await fetch('/s_' + pid + '.csv?_t=' + Date.now());
                     if (r.ok) {
@@ -601,7 +625,13 @@
             }
 
             // 2. Lade alle möglichen Highscore JSONs (Anhand des GAME_DICT)
-            for (let gId in GAME_DICT) {
+            let gameIds = Object.keys(GAME_DICT);
+            for (let i = 0; i < gameIds.length; i++) {
+                let gId = gameIds[i];
+                let prozent = 50 + ((i / gameIds.length) * 40); 
+                statusText.innerText = `${t('pm_backup_hs', 'Lade Highscores')} (${i+1}/${gameIds.length})...`;
+                progressBar.style.width = prozent + "%";
+                
                 try {
                     let r = await fetch('/api/highscore/get?game=' + gId + '&_t=' + Date.now());
                     if (r.ok) {
@@ -612,6 +642,9 @@
                     }
                 } catch(e) {}
             }
+
+            statusText.innerText = t('pm_backup_pack', 'Erstelle Backup-Datei...');
+            progressBar.style.width = "95%";
 
             // 3. Backup als Blob packen und herunterladen
             let blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
@@ -626,7 +659,13 @@
             document.body.removeChild(dlAnchorElem);
             URL.revokeObjectURL(url);
 
-            showToast(t('pm_backup_done', '✅ System-Backup erfolgreich heruntergeladen!'));
+            progressBar.style.width = "100%";
+            spinner.innerText = "✅";
+            statusText.innerText = t('pm_backup_done', 'Backup erfolgreich heruntergeladen!');
+
+            setTimeout(() => {
+                document.getElementById('backupProgressOverlay').classList.remove('show');
+            }, 2500);
         }
 
         // =====================================================================
@@ -682,14 +721,18 @@
                         let sCount = Object.keys(json.stats || {}).length;
                         let hCount = Object.keys(json.highscores || {}).length;
 
+                        let txtPl = t('pm_res_players', 'Spieler');
+                        let txtSt = t('pm_res_stats', 'Statistiken (CSVs)');
+                        let txtHs = t('pm_res_hs', 'Highscores');
+
                         document.getElementById('importPreview').innerHTML = `
                             <div style="text-align:center; padding:20px;">
                                 <div style="font-size:3rem; margin-bottom:10px;">📦</div>
                                 <h3 style="color:var(--primary); margin-top:0;">${t('pm_res_title', 'Vollständiges Backup erkannt')}</h3>
                                 <ul style="text-align:left; display:inline-block; margin:0 auto; color:var(--text-main);">
-                                    <li>👥 ${pCount} Spieler</li>
-                                    <li>📊 ${sCount} Statistiken (CSVs)</li>
-                                    <li>👑 ${hCount} Highscores</li>
+                                    <li>👥 ${pCount} ${txtPl}</li>
+                                    <li>📊 ${sCount} ${txtSt}</li>
+                                    <li>👑 ${hCount} ${txtHs}</li>
                                 </ul>
                                 <p style="color:var(--danger); font-weight:bold; margin-top:15px;">${t('pm_res_warn', 'Achtung: Ein Restore überschreibt alle aktuellen Daten auf dem ESP32!')}</p>
                             </div>
@@ -705,7 +748,7 @@
                     }
                 } catch(err) {}
 
-                // Fallback: Text Import
+                // Fallback: Text/CSV Import
                 pendingFullBackup = null;
                 document.getElementById('importText').value = content; 
                 previewImport(); 
@@ -720,27 +763,38 @@
 
             let btn = document.getElementById('importBtn');
             btn.disabled = true;
-            btn.innerText = "Wiederherstellen...";
+            
+            // Nutze das Backup Modal für den Restore-Progress
+            document.getElementById('importOverlay').classList.remove('show');
+            document.getElementById('backupProgressOverlay').classList.add('show');
+            let statusText = document.getElementById('backupStatusText');
+            let progressBar = document.getElementById('backupProgressBar');
+            let spinner = document.getElementById('backupSpinner');
+            
+            spinner.innerText = "📦";
+            progressBar.style.width = "5%";
 
             try {
                 // 1. Restore Players
-                showToast("Stelle Spieler wieder her...", false);
+                statusText.innerText = t('pm_res_prog_players', 'Restoring player database...');
                 await fetch('/api/players', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pendingFullBackup.players) });
+                progressBar.style.width = "10%";
 
                 // 2. Restore Highscores
-                showToast("Stelle Highscores wieder her...", false);
-                for (let gId in pendingFullBackup.highscores) {
+                    statusText.innerText = t('pm_res_prog_hs', 'Restoring Highscores...');                for (let gId in pendingFullBackup.highscores) {
                     let fd = new URLSearchParams();
                     fd.append('game', gId);
                     fd.append('data', pendingFullBackup.highscores[gId]);
                     await fetch('/api/highscore/save', { method: 'POST', body: fd });
                 }
+                progressBar.style.width = "20%";
 
                 // 3. Restore Stats (Line by Line Streaming zum ESP32 RAM-Schutz)
                 let statKeys = Object.keys(pendingFullBackup.stats);
                 for (let i = 0; i < statKeys.length; i++) {
                     let pid = statKeys[i];
-                    showToast(`Schreibe Statistik (${i+1}/${statKeys.length})...`, false);
+                    statusText.innerText = `${t('pm_res_prog_stats', 'Restoring statistics file')} (${i+1}/${statKeys.length})...`;
+                    progressBar.style.width = `${20 + ((i / statKeys.length) * 80)}%`;
                     
                     await fetch('/api/stats/player_del?pid=' + pid); // Alte löschen
 
@@ -766,13 +820,17 @@
                     }
                 }
 
-                showToast("✅ Restore komplett erfolgreich!", false);
-                setTimeout(() => { location.reload(); }, 1500);
+                progressBar.style.width = "100%";
+                spinner.innerText = "✅";
+                statusText.innerText = t('pm_res_prog_done', 'Restore successful!');
+                
+                setTimeout(() => { location.reload(); }, 2000);
 
             } catch (e) {
-                showToast("❌ Fehler beim Restore! Verbindung getrennt?", true);
-                btn.disabled = false;
-                btn.innerText = t('pm_res_btn', "RESTORE STARTEN");
+                spinner.innerText = "❌";
+                statusText.innerText = t('pm_res_prog_err', 'Error during restore! Connection might be unstable. Please try again.');
+                progressBar.style.background = "var(--danger)";
+                setTimeout(() => { document.getElementById('backupProgressOverlay').classList.remove('show'); }, 3000);
             }
         }
 

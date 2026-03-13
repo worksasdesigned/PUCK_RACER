@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Targets - Whac-A-Mole</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css?v=6">
     <style>
         .grp-card { background:var(--card-bg); padding:15px; border-radius:8px; border-left:5px solid #fff; margin-bottom:15px;}
         .grp-title { display:flex; align-items:center; gap:10px; font-weight:bold; }
@@ -19,20 +19,44 @@
         
         .stat-icon { font-size: 1.3rem; opacity: 0.2; transition: all 0.3s; cursor: help; user-select: none; filter: grayscale(100%); margin-left: 5px; }
         .stat-icon.active { opacity: 1; filter: none; text-shadow: 0 0 8px rgba(13, 110, 253, 0.5); }
+
+        /* --- COLOR SELECTION STYLES --- */
+        .color-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; margin-top:10px;}
+        .color-node {
+            width: 55px; height: 55px; border-radius: 50%; 
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.5rem; font-weight: bold; color: white; text-shadow: 1px 1px 2px #000;
+            cursor: pointer; border: 3px solid var(--border-color); opacity: 0.4; transition: 0.2s;
+        }
+        .color-node.active { opacity: 1; border: 3px solid #fff; box-shadow: 0 0 15px rgba(255,255,255,0.5); transform: scale(1.1); }
+        .color-node.disabled { cursor: not-allowed; filter: grayscale(80%); }
     </style>
 </head>
 <body>
-    <header><div class="logo" data-i18n="wm_names_title">Setup Players</div></header>
+    <header><div class="logo" data-i18n="whac_names_title">Valid Targets</div></header>
     <main>
         <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">Initializing...</div>
         
         <div id="content" style="display:none;">
+            
+            <div class="layout-card" id="colorSelectionArea" style="margin-bottom:20px;">
+                <div class="layout-header">
+                    <span data-i18n="whac_names_sel">Select Hit Colors</span>
+                </div>
+                <div class="layout-body" style="flex-direction:column; align-items:center; padding:15px;">
+                    <p style="color:var(--text-muted); font-size:0.9rem; margin:0 0 5px 0; text-align:center;" data-i18n="whac_names_sel_hint">Tap the colors you want to define as VALID TARGETS.</p>
+                    <p id="ruleText" style="color:var(--primary); font-size:0.85rem; font-weight:bold; margin-bottom:10px; text-align:center;"></p>
+                    <div class="color-grid" id="grid"></div>
+                </div>
+            </div>
+
             <div class="layout-card">
                 <div class="layout-header" onclick="toggleLayout()">
-                    <span>Aufbau pro Lane</span>
+                    <span data-i18n="whac_names_arenas">Name your Arenas</span>
                     <span id="toggleIcon">▼</span>
                 </div>
                 <div class="layout-body" id="layoutBody" style="flex-direction: column; align-items: center; gap: 20px;">
+                    <p style="color:var(--text-muted); font-size:0.85rem; margin:0; text-align:center;" data-i18n="whac_names_arenas_hint">Pucks on the floor are breathing in their respective arena colors.</p>
                     <div id="arenaContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;"></div>
                 </div>
             </div>
@@ -47,7 +71,7 @@
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
                 <button onclick="location.href='game_whac_setup.html'" class="btn-warn" style="font-size:1.2rem;" data-i18n="btn_back">⬅ BACK</button>
-                <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">TO GAME 🏁</button>
+                <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">TO ARENA 🏁</button>
             </div>
         </div>
     </main>
@@ -56,6 +80,8 @@
     <script src="player_picker.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        
+        const GAME_COLORS_ARR = ['#FF0000', '#0000FF', '#00FF00', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#FF1493', '#800080', '#00FF7F'];
         const GRP_COLORS = ['#800080', '#00FFFF', '#FFA500'];
         
         const WHAC_LAYOUTS = { 
@@ -67,11 +93,21 @@
         
         let nGrp = parseInt(sessionStorage.getItem('whac_grp') || 1);
         let nPucks = parseInt(sessionStorage.getItem('whac_ppg') || 3); 
+        let numColors = parseInt(sessionStorage.getItem('whac_col') || 1);
+
+        // --- VARIABLEN FÜR FARB-AUSWAHL ---
+        let maxTargets = Math.max(1, Math.floor(numColors / 2));
+        let selectedMask = 0;
+        let selectedCount = 0;
 
         const delay = ms => new Promise(res => setTimeout(res, ms));
 
+        function t(key, fallback) {
+            return (typeof getTranslation === 'function') ? (getTranslation(key) || fallback) : fallback;
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
-            setTimeout(initList, 500);
+            setTimeout(initList, 300);
         });
 
         function clearPlayerId(idx) {
@@ -85,21 +121,43 @@
 
         async function initList() {
             try {
+                // 1. FARB-AUSWAHL INIT
+                if (numColors <= 1) {
+                    selectedMask = 1;
+                    document.getElementById('colorSelectionArea').style.display = 'none';
+                } else {
+                    let ruleStr = t('whac_names_rule', 'Wähle max. {0} Farben').replace('{0}', maxTargets);
+                    document.getElementById('ruleText').innerText = ruleStr;
+                    let html = "";
+                    for(let i=0; i<numColors; i++) {
+                        let isActive = (i === 0);
+                        let cls = isActive ? "color-node active" : "color-node";
+                        if (isActive) {
+                            selectedMask |= (1 << i);
+                            selectedCount++;
+                        }
+                        html += `<div class="${cls}" id="cn-${i}" style="background:${GAME_COLORS_ARR[i]}" onclick="toggleColor(${i})">${isActive ? '✓' : ''}</div>`;
+                    }
+                    document.getElementById('grid').innerHTML = html;
+                    updateUI();
+                }
+
+                // 2. SPIELER & ARENA INIT
                 await fetch('/api/game/load?id=24');
                 await fetch(`/api/game/action?cmd=cfg_grp&val=${nGrp}`);
-                await delay(100);
+                await delay(50);
                 await fetch(`/api/game/action?cmd=cfg_ppg&val=${nPucks}`);
-                await delay(100);
+                await delay(50);
                 await fetch(`/api/game/action?cmd=cfg_time&val=${sessionStorage.getItem('whac_time') || 60}`);
-                await delay(100);
-                await fetch(`/api/game/action?cmd=cfg_col&val=${sessionStorage.getItem('whac_col') || 1}`);
-                await delay(100);
+                await delay(50);
+                await fetch(`/api/game/action?cmd=cfg_col&val=${numColors}`);
+                await delay(50);
                 await fetch(`/api/game/action?cmd=cfg_diff&val=${sessionStorage.getItem('whac_diff') || 2}`);
-                await delay(100);
+                await delay(50);
                 await fetch(`/api/game/action?cmd=cfg_snd&val=${sessionStorage.getItem('whac_snd') || 1}`);
-                await delay(100);
+                await delay(50);
                 await fetch(`/api/game/action?cmd=cfg_shw&val=${sessionStorage.getItem('whac_shw') || 1}`);
-                await delay(100);
+                await delay(50);
                 
                 await fetch('/api/game/action?cmd=setup'); 
 
@@ -158,13 +216,46 @@
             } catch(e) { console.error(e); }
         }
 
+        // --- FARB LOGIK FUNKTIONEN ---
+        function toggleColor(idx) {
+            let node = document.getElementById(`cn-${idx}`);
+            let isSelected = (selectedMask & (1 << idx)) > 0;
+            if (isSelected) {
+                if (selectedCount > 1) {
+                    selectedMask &= ~(1 << idx);
+                    selectedCount--;
+                    node.classList.remove('active');
+                    node.innerHTML = "";
+                }
+            } else {
+                if (selectedCount < maxTargets) {
+                    selectedMask |= (1 << idx);
+                    selectedCount++;
+                    node.classList.add('active');
+                    node.innerHTML = "✓";
+                }
+            }
+            updateUI();
+        }
+        
+        function updateUI() {
+            let limitReached = (selectedCount >= maxTargets);
+            for(let i=0; i<numColors; i++) {
+                let node = document.getElementById(`cn-${i}`);
+                let isSelected = (selectedMask & (1 << i)) > 0;
+                if (!isSelected) {
+                    if (limitReached) node.classList.add('disabled');
+                    else node.classList.remove('disabled');
+                }
+            }
+        }
+
         async function pollPuckEffects() {
             try {
                 let r = await fetch('/api/effects');
                 let data = await r.json();
                 data.forEach(eff => {
-                    // Farben von der API werden hier absichtlich IGNORIERT, 
-                    // damit das im Setup definierte Lila/Türkis/Orange bestehen bleibt!
+                    // Farben von der API werden ignoriert, damit die Lane-Farben bleiben
                     let vis = document.getElementById(`puck_vis_${eff.id}`);
                     if(vis) {
                         vis.classList.remove('eff-breathe', 'eff-chase', 'eff-rainbow');
@@ -199,10 +290,15 @@
             });
         }
 
-        function startGame() {
+        async function startGame() {
             for(let i=0; i<nGrp; i++) {
                 sessionStorage.setItem(`p_name_${i}`, document.getElementById(`name_${i}`).value);
             }
+            
+            // Maske speichern und an Backend senden!
+            sessionStorage.setItem('whac_tgt_mask', selectedMask);
+            await fetch(`/api/game/action?cmd=cfg_tgt&val=${selectedMask}`);
+            
             setTimeout(() => { location.href = 'game_whac_run.html'; }, 200);
         }
     </script>
