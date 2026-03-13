@@ -36,6 +36,24 @@ const TRANSLATIONS = {
         "ios_hint_2": "Tap <b style='font-size:1.3rem;vertical-align:middle;'>⬆</b> (Share) at the bottom of Safari",
         "ios_hint_3": "then tap <b>\"Add to Home Screen\"</b>",
         "ios_btn": "Got it",
+
+        // --- MENU ---
+        "menu_dark_mode": "🌙 Toggle Dark Mode",
+        "menu_stats": "🧮 Toggle Statistics",
+        "menu_language": "🌍 Language",
+        "menu_fullscreen": "📲 Fullscreen",
+        "menu_tutorial": "🎓 Start Tutorial",
+        "menu_manual": "📖 Manual (Coming Soon)",
+        "menu_impressum": "📜 Imprint",
+        "modal_game_title": "Game",
+
+        // --- MESSAGES ---
+        "err_no_pucks": "No Pucks connected",
+        "confirm_force_ota": "Force ALL Pucks into Update Mode?",
+        "alert_cmd_sent": "Command sent!",
+        "alert_error": "Error: ",
+        "warn_low_memory": "⚠️ LOW MEMORY: {kb}KB free – System may become unstable!",
+
         "g_counter": "Simple Counter",
         "g_timer": "Simple Timer",
         "g_stopwatch": "Stopwatch",
@@ -240,6 +258,7 @@ const TRANSLATIONS = {
         "pm_export_entries": "Entries",
         "pm_export_started": "Download started...",
         "pm_stat_view": "View Statistics",
+        "pm_export_title ": "Export Players and Stats",
 
         // --- PLAYER PICKER ---
         "pp_title": "Select Players",
@@ -966,6 +985,24 @@ const TRANSLATIONS = {
         "ios_hint_2": "Tippe auf <b style='font-size:1.3rem;vertical-align:middle;'>⬆</b> (Teilen) im Safari Browser",
         "ios_hint_3": "und wähle <b>\"Zum Home-Bildschirm\"</b>",
         "ios_btn": "Verstanden",
+
+        // --- MENU ---
+        "menu_dark_mode": "🌙 Dark Mode umschalten",
+        "menu_stats": "🧮 Statistiken umschalten",
+        "menu_language": "🌍 Sprache",
+        "menu_fullscreen": "📲 Vollbild",
+        "menu_tutorial": "🎓 Tutorial starten",
+        "menu_manual": "📖 Handbuch (In Kürze)",
+        "menu_impressum": "📜 Impressum",
+        "modal_game_title": "Spiel",
+
+        // --- MESSAGES ---
+        "err_no_pucks": "Keine Pucks verbunden",
+        "confirm_force_ota": "Alle Pucks in den Update-Modus zwingen?",
+        "alert_cmd_sent": "Befehl gesendet!",
+        "alert_error": "Fehler: ",
+        "warn_low_memory": "⚠️ WENIG SPEICHER: {kb}KB frei – System kann instabil werden!",
+
         "g_counter": "Einfacher Zähler",
         "g_timer": "Einfacher Timer",
         "g_stopwatch": "Stoppuhr",
@@ -1170,6 +1207,7 @@ const TRANSLATIONS = {
         "pm_export_entries": "Einträge",
         "pm_export_started": "Download gestartet...",
         "pm_stat_view": "Statistiken ansehen",
+        "pm_export_title ": "📊 Gruppen-Statistik Export",
 
         // --- PLAYER PICKER ---
         "pp_title": "Spieler auswählen",
