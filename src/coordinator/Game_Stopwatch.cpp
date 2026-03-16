@@ -59,17 +59,22 @@ void Game_Stopwatch::initGame() {
         }
     }
     
-    if(centralStart) gameState = SW_SETUP;
-    else gameState = SW_RUNNING; 
+    gameState = SW_SETUP;
 }
 
 void Game_Stopwatch::startSequence() {
-    if (!centralStart) return; 
-    
     for(int i=0; i<numPlayers; i++) {
         players[i].falseStart = false;
         players[i].isHolding = false;
         players[i].state = PL_IDLE;
+    }
+
+    if (!centralStart) {
+        gameState = SW_RUNNING;
+        CommandPacket snd; memset(&snd, 0, sizeof(snd));
+        snd.cmd = CMD_SOUND; snd.duration = 300;
+        PuckNetwork::broadcast(snd);
+        return;
     }
 
     if (holdToStart) {
@@ -168,7 +173,7 @@ void Game_Stopwatch::handleEvent(int pIdx, EventPacket event) {
         return;
     }
 
-    bool canInteract = (centralStart && gameState == SW_RUNNING) || (!centralStart);
+    bool canInteract = (gameState == SW_RUNNING);
     if (!canInteract) return;
 
     if (!centralStart && p->state == PL_IDLE && event.type == EVT_BTN_CLICK) {

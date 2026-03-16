@@ -83,9 +83,15 @@
                 let btnStart = document.getElementById('btnStart');
                 
                 if(!showStart) {
-                    btnStart.innerText = getTranslation('btn_reset');
-                    btnStart.style.background = "var(--success)";
-                    btnStart.setAttribute('onclick', "cmd('reset')");
+                    if (d.state == 0) {
+                        btnStart.innerText = getTranslation('btn_start_all');
+                        btnStart.style.background = "var(--primary)";
+                        btnStart.setAttribute('onclick', "cmd('start_all')");
+                    } else {
+                        btnStart.innerText = getTranslation('btn_reset');
+                        btnStart.style.background = "var(--success)";
+                        btnStart.setAttribute('onclick', "cmd('reset')");
+                    }
                 } else {
                     btnStart.setAttribute('onclick', "cmd('start_all')");
                     if (d.state == 5) { btnStart.innerText = getTranslation('btn_reset'); btnStart.style.background = "var(--success)"; }
