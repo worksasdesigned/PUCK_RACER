@@ -7,7 +7,7 @@ void Game_Whac::setup() {
 }
 
 void Game_Whac::processCommand(String cmd, int value) {
-    if (cmd == "setup") initGame();
+    if (cmd == "setup") { initGame(); setGlobalState(WHAC_LAYOUT); }
     else if (cmd == "show_layout") setGlobalState(WHAC_LAYOUT); 
     else if (cmd == "cfg_grp") numGroups = constrain(value, 1, 3);
     else if (cmd == "cfg_ppg") pucksPerGroup = constrain(value, 3, 10);
@@ -82,7 +82,7 @@ void Game_Whac::setGlobalState(WhacGlobalState newState) {
     globalStateTimer = millis();
     
     if (newState == WHAC_SETUP) {
-        setAllActivePucks(EFF_BREATHE_MOD4, CRGB::White, 50, 85);
+        setAllActivePucks(EFF_STATUS, CRGB::Green, 0, 255);
     }
     else if (newState == WHAC_LAYOUT) {
         for(int i=0; i<numGroups; i++) {

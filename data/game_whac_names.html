@@ -221,12 +221,10 @@
             let node = document.getElementById(`cn-${idx}`);
             let isSelected = (selectedMask & (1 << idx)) > 0;
             if (isSelected) {
-                if (selectedCount > 1) {
-                    selectedMask &= ~(1 << idx);
-                    selectedCount--;
-                    node.classList.remove('active');
-                    node.innerHTML = "";
-                }
+                selectedMask &= ~(1 << idx);
+                selectedCount--;
+                node.classList.remove('active');
+                node.innerHTML = "";
             } else {
                 if (selectedCount < maxTargets) {
                     selectedMask |= (1 << idx);

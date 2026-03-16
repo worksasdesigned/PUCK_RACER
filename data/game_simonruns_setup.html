@@ -98,6 +98,9 @@
                 html = `${groups} ${getTranslation('simr_ok_grp')}<br>${displayPucks} ${getTranslation('simr_ok_disp')} ${pucksPerGroup} ${getTranslation('simr_ok_inp')}`;
             }
             
+            if (valid && groups >= 2 && totalPucks < 6) {
+                html += `<br><span style="color:var(--warning)">⚠️ ${getTranslation('simr_warn_pucks')}</span>`;
+            }
             document.getElementById('calcInfo').innerHTML = html;
             document.getElementById('btnNext').disabled = !valid;
             document.getElementById('btnNext').style.opacity = valid ? 1 : 0.5;
