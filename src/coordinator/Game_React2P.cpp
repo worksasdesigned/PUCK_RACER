@@ -192,6 +192,19 @@ void Game_React2P::loop() {
             g->state != R2_FINISHED && g->state != R2_SETUP) {
             setGroupState(i, R2_FINISHED);
         }
+    }
+
+    if (gameStartTime > 0 && stoppedTime == 0) {
+        bool allDone = true;
+        for (int i=0; i<numGroups; i++) {
+            if (groups[i].active && groups[i].state != R2_FINISHED) { allDone = false; break; }
+        }
+        if (allDone) { stoppedTime = millis() - gameStartTime; gameStartTime = 0; }
+    }
+
+    for (int i=0; i<numGroups; i++) {
+        if (!groups[i].active) continue;
+        ReactGroup* g = &groups[i];
 
         // FIX: Deutlich längere Anzeige der Farben (1 Sekunde pro Farbe gleichzeitig auf beiden Pucks)
         if (g->state == R2_PRE_SHOW) {
