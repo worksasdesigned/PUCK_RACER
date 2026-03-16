@@ -167,27 +167,11 @@ void Game_SortingHat::handleEvent(int puckIndex, EventPacket event) {
     // --- SPIELENDE CHECK ---
     if (ticketBag.empty()) {
         state = SORT_FINISHED;
-        // Kurze Pause simulieren wir hier nicht blockierend, 
-        // das "Finished" Event kommt optisch beim nächsten Loop durch den Status
-        
-        // Wir senden den Sieger-Effekt sofort, aber nach dem Feedback
-        // Damit das nicht kollidiert, machen wir einen kleinen Hack:
-        // Wir lassen den Loop das nächste Mal einfach nichts tun, 
-        // aber senden den Win-Broadcast manuell verzögert via Frontend? 
-        // Nein, Backend ist besser:
-        
-        // Einfachste Lösung: Status ist FINISHED.
-        // Im nächsten Loop Durchlauf könnten wir den Win Sound senden.
-        // Aber für jetzt reicht ein Broadcast Sound direkt.
-        
         CommandPacket snd; snd.cmd=CMD_SOUND; snd.duration=1000;
-        // Wir senden den Win-Sound direkt (Broadcast ist seltener kritisch als Unicast burst)
-        // Aber idealerweise auch verzögert. Egal, Sound ist wichtiger.
         PuckNetwork::broadcast(snd);
         
         for(int idx : puckIndices) {
-            // Überschreibt Static? Ja. Aber das Kind sieht "Grün" = Fertig.
-            // Besser: Wir lassen das Static stehen und das Frontend zeigt "Finished"
+            if (idx == puckIndex) continue; // Letzter Spieler behält seine Gruppenfarbe
             setPuck(idx, EFF_WIN, CRGB::Green, 0, 200);
         }
     }
