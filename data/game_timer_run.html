@@ -29,13 +29,10 @@
             transition: background 0.3s;
         }
         
-        /* Deutlich sichtbare grüne Färbung für fertige Spieler */
-        .row-green { 
-            border-color: var(--success) !important; 
-            background-color: rgba(0, 255, 0, 0.25) !important; 
-        }
-        .row-red { border-color: var(--danger) !important; background: rgba(255, 0, 0, 0.1); }
-        .row-yellow { border-color: var(--warning) !important; background: rgba(255, 200, 0, 0.1); }
+        /* Deutlich sichtbare Färbung für Spieler-Status */
+        .row-green { background-color: rgba(0, 255, 0, 0.25) !important; }
+        .row-red { background: rgba(255, 0, 0, 0.1); }
+        .row-yellow { background: rgba(255, 200, 0, 0.1); }
         
         .r-head { display:flex; justify-content:space-between; align-items:center; margin-bottom: 8px; }
         .r-name { font-size:1.2rem; font-weight:bold; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
