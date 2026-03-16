@@ -131,7 +131,7 @@
                                 </div>
                                 <small id="rssi-${p.id}"></small>
                             </td>
-                            <td id="bat-${p.id}"></td>
+                            <td id="bat-${p.id}" style="line-height:1.2;"></td>
                             <td id="clk-${p.id}"></td>
                             <td id="tim-${p.id}" style="color:#aaa;"></td>
                         `;
@@ -147,7 +147,11 @@
                     rssiTxt.innerText = `${p.rssi}`;
                     rssiTxt.style.color = rssiColor;
 
-                    document.getElementById(`bat-${p.id}`).innerText = `${(p.bat/1000).toFixed(2)}V`;
+                    // Batterie Berechnung in Prozent (3.3V = 0%, 4.2V = 100%)
+                    let batV = (p.bat / 1000);
+                    let batPct = Math.max(0, Math.min(100, Math.round(((batV - 3.3) / (4.2 - 3.3)) * 100)));
+                    document.getElementById(`bat-${p.id}`).innerHTML = `${batV.toFixed(2)}V <br><small style="color:#aaa">${batPct}%</small>`;
+
                     document.getElementById(`ver-${p.id}`).innerText = `v${p.ver}`;
                     
                     // Stats einsetzen

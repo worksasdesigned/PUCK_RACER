@@ -162,16 +162,7 @@ After the real first beta is released il will provide the bin files in case of u
     - iOS meta Tags added  
     - App Icon added  
     - Check that only 1 device is connected via WiFi  
-<<<<<<< HEAD
-**V2.89.7**  
-    - Simple Statistics added for players maintained in Playermanager  
-        - CatReflexes (avarage reaction time)  
-        - BombSquad (avarage reaction time)  
-        - Shuttle run (time) assuming trainer always uses same distance, else its just a tracking of usage  
-        - Countdown (time and clicks) tracking of usage
-    - Fix of copy&paste error in game_simplecounter_setup.html
 
-=======
 **V2.89.7**   
     - Simple Statistics added for players maintained in Playermanager  
     - CatReflexes (avarage reaction time)  
@@ -192,7 +183,6 @@ After the real first beta is released il will provide the bin files in case of u
 **V2.89.15**   
     - Tutorial adjusted  
     
->>>>>>> prerelease
 --- 
 
 

@@ -41,6 +41,7 @@ private:
     bool isHolding[MAX_PEERS/2]; 
     unsigned long winnerTime = 0;
     int falseStartPlayer = -1;
+    unsigned long lastHitTime[MAX_PEERS/2]; 
     
     // Puck Management
     int activeTargetIdx[MAX_PEERS/2]; 

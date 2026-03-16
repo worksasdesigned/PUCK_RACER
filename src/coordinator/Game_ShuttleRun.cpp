@@ -41,6 +41,7 @@ void Game_ShuttleRun::startSequence(bool forceRestart) {
         hasFinished[p] = false;
         finishTimes[p] = 0; 
         isFlashing[p] = false;
+        lastHitTime[p] = 0;
         
         setPuck(getPuckIndex(p, 0), EFF_BLINK, PLAYER_COLORS[p], 200, 100);
         delay(15); 
@@ -152,6 +153,10 @@ void Game_ShuttleRun::handleEvent(int puckIndex, EventPacket event) {
         if (hasFinished[playerIdx]) return;
         if (event.type != EVT_BTN_CLICK) return; 
 
+        // NEU: Debouncing
+        if (millis() - lastHitTime[playerIdx] < 200) return;
+        lastHitTime[playerIdx] = millis();
+
         if (puckRole == activeTargetIdx[playerIdx]) {
             // TREFFER! 
             
@@ -213,11 +218,30 @@ void Game_ShuttleRun::triggerFalseStart(int playerIndex) {
     falseStartPlayer = playerIndex;
     Serial.println("GAME: FALSE START!");
     
-    for(int i=0; i<playerCount; i++) isHolding[i] = false;
+    // Stoppe alle Countdown-Sequenzen und setze den Status
+    for(int p=0; p<playerCount; p++) {
+        isHolding[p] = false;
+        int startPuckIdx = getPuckIndex(p, 0);
 
-    int startPuck = getPuckIndex(playerIndex, 0);
-    setPuck(startPuck, EFF_POLICE, CRGB::Red, 0, 255);
+        // FIX: Sende Befehl zum Stoppen der Sound-Sequenz an jeden Puck
+        CommandPacket stopSeq; memset(&stopSeq, 0, sizeof(stopSeq));
+        stopSeq.cmd = CMD_SEQUENCE;
+        stopSeq.extra = SEQ_OFF;
+        PuckNetwork::sendToPuck(PuckNetwork::getPucks()[startPuckIdx].mac, stopSeq);
+        delay(15);
+
+        if (p == playerIndex) {
+            // Verursacher
+            setPuck(startPuckIdx, EFF_POLICE, CRGB::Red, 0, 255);
+        } else {
+            // Die anderen
+            setPuck(startPuckIdx, EFF_STATUS, PLAYER_COLORS[p], 0, 50);
+        }
+        delay(15);
+    }
     
+    // Sound nur für Verursacher
+    int startPuck = getPuckIndex(playerIndex, 0);
     CommandPacket snd; memset(&snd, 0, sizeof(snd));
     snd.cmd = CMD_SOUND; snd.duration = 50;
     uint8_t* mac = PuckNetwork::getPucks()[startPuck].mac;

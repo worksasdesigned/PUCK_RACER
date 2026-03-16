@@ -1,5 +1,6 @@
 /*
  * PROJEKT: Puck Race - PUCK FIRMWARE
+ * Version: 80 Battery Update + Sound Fixes + Core 3.x Support
  * VERSION: 75 (FIX: ESP-NOW Core 2.x Kompatibilität + Promiscuous RSSI Sniffer)
  *
  * ÄNDERUNGEN v75:
@@ -24,11 +25,12 @@
 #include "Common.h"
 
 // --- HARDWARE ---
+#define PIN_BAT     2  // ADC Pin für den Batterie-Spannungsteiler
 #define PIN_LED     4
 #define PIN_BTN     3 
 #define PIN_BUZZER  5
 #define NUM_LEDS    35
-#define FW_VERSION  79
+#define FW_VERSION  80
 
 // --- AUDIO NOTEN ---
 #define NOTE_B0  31
@@ -115,8 +117,13 @@ void handleButton();
 void processIncomingCommands();
 void performOTA();
 void sendEvent(uint8_t type);
-// FIX: Signatur für Core 2.x
+
+// FIX: Signatur für ESP-NOW Empfang (Unterstützt Core 2.x und 3.x)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+void OnDataRecv(const esp_now_recv_info_t * info, const uint8_t *data, int len);
+#else
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *data, int len); 
+#endif
 
 
 // =========================================================================
@@ -140,6 +147,10 @@ void promiscuous_rx_cb(void *buf, wifi_promiscuous_pkt_type_t type) {
 
 void setup() {
     Serial.begin(115200);
+    
+    // Initialisiere ADC Pin (nicht zwingend nötig für analogRead, aber sauberer)
+    pinMode(PIN_BAT, INPUT);
+    
     pinMode(PIN_BTN, INPUT_PULLUP);
     pinMode(PIN_BUZZER, OUTPUT);
     digitalWrite(PIN_BUZZER, LOW);
@@ -343,10 +354,15 @@ void processIncomingCommands() {
 
 
 // =========================================================================
-// FIX: ESP-NOW CALLBACK FÜR CORE 2.x
-// Nutzt die klassische Signatur. Der RSSI Wert wird vom Promiscuous Sniffer geliefert.
+// ESP-NOW CALLBACK (Universal für Core 2.x und 3.x)
+// Nutzt die passende Signatur. Der RSSI Wert wird vom Promiscuous Sniffer geliefert.
 // =========================================================================
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+void OnDataRecv(const esp_now_recv_info_t * info, const uint8_t *data, int len) {
+#else
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *data, int len) {
+#endif
+
     if (len == sizeof(CommandPacket)) {
         CommandPacket* incoming = (CommandPacket*)data;
 
@@ -378,7 +394,12 @@ void sendEvent(uint8_t type) {
     EventPacket pkg;
     pkg.type = type;
     pkg.version = FW_VERSION; 
-    pkg.battery_mv = 3700; 
+    
+    // BERECHNUNG DER BATTERIESPANNUNG
+    // Liest den analogen Wert in Millivolt. Da der Spannungsteiler (100k/100k) 
+    // die Spannung halbiert, müssen wir den gemessenen Wert mit 2 multiplizieren.
+    uint32_t adc_mv = analogReadMilliVolts(PIN_BAT);
+    pkg.battery_mv = (uint16_t)(adc_mv * 2); 
     
     globalSeqCounter++;
     pkg.seqNr = globalSeqCounter;
