@@ -32,7 +32,7 @@
             </div>
             <input type="range" id="grpSlider" min="1" max="3" value="1" oninput="updateCalc()">
             
-            <div class="toggle-row" style="margin-top:15px;">
+            <div id="rowCentral" class="toggle-row" style="margin-top:15px;">
                 <span data-i18n="simr_lbl_cent">Central Display Puck</span>
                 <label class="switch">
                     <input type="checkbox" id="chkCentral" onchange="updateCalc()"> 
@@ -80,8 +80,9 @@
             document.getElementById('grpDisp').innerText = groups;
             
             let chkC = document.getElementById('chkCentral');
-            if(groups === 1) { chkC.disabled = true; chkC.checked = false; central = false; } 
-            else { chkC.disabled = false; }
+            let rowC = document.getElementById('rowCentral');
+            if(groups < 2) { rowC.style.display = 'none'; chkC.checked = false; central = false; }
+            else { rowC.style.display = ''; }
 
             let displayPucks = central ? 1 : groups;
             let availableForInput = totalPucks - displayPucks;
