@@ -30,6 +30,9 @@
 
         .color-dot { width: 12px; height: 12px; border-radius: 50%; display:inline-block; border:1px solid #fff;}
 
+        .g-timer { font-family: monospace; font-size: 1.1rem; font-weight: bold; color: var(--primary); }
+        .g-timer.urgent { color: var(--danger); }
+
         .action-btns { display: flex; gap: 10px; margin-top: 10px;}
         .btn-action { flex:1; border: none; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; text-transform: uppercase; }
         .btn-action:active { transform: scale(0.95); }
@@ -77,6 +80,15 @@
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
         const GRP_COLORS = ['#800080', '#40E0D0', '#FF7F50', '#7FFFD4', '#9370DB'];
         const STATES = ["SETUP", "GET READY", "COUNTDOWN", "WAITING...", "GO!", "ROUND OVER", "FINISHED"];
+
+        function fmtGrpTime(gT, limit) {
+            if (!gT || gT <= 0) return '--:--';
+            let remaining = Math.max(0, limit - gT);
+            let s = Math.floor(remaining / 1000);
+            let m = Math.floor(s / 60);
+            s = s % 60;
+            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+        }
         
         let nGrp = parseInt(sessionStorage.getItem('r2_groups') || 1);
 
@@ -209,13 +221,13 @@
                     });
                 }
 
-                renderTable(data.groups);
+                renderTable(data.groups, data.limit);
             }).catch(e => {
                 document.getElementById('cnt-green').style.opacity = 0.2;
             });
         }
 		
-        function renderTable(groups) {
+        function renderTable(groups, limit) {
             let container = document.getElementById('gameBoard');
             if (!groups) return;
 
@@ -251,11 +263,15 @@
                 let recP1 = sessionRecords['p1_'+i] ? `<div class="rec-icon" title="${recTitle}">📈</div>` : "";
                 let recP2 = sessionRecords['p2_'+i] ? `<div class="rec-icon" title="${recTitle}">📈</div>` : "";
 
+                let grpTimeTxt = fmtGrpTime(g.gT, limit);
+                let isUrgent = (g.gT > 0 && (limit - g.gT) < 15000 && g.st !== 6);
+
                 if (!rowEl) {
                     container.insertAdjacentHTML('beforeend', `
                     <div id="${rowId}" class="grp-box" style="border-left-color: ${color}">
                         <div class="grp-head">
                             <span class="g-name">Duell ${i+1}</span>
+                            <span id="grptime-${i}" class="g-timer${isUrgent ? ' urgent' : ''}">${grpTimeTxt}</span>
                             <span id="badge-${i}" class="g-badge" style="background:${badgeBg}; color:${badgeColor};">${stateTxt}</span>
                         </div>
                         <div class="duel-row">
@@ -286,6 +302,9 @@
                         badge.style.color = badgeColor;
                         rowEl.style.background = glowClass !== "" ? glowClass : "var(--card-hover)";
                     }
+                    let timerEl = document.getElementById(`grptime-${i}`);
+                    timerEl.innerText = grpTimeTxt;
+                    timerEl.className = 'g-timer' + (isUrgent ? ' urgent' : '');
 
                     document.getElementById(`p1s-${i}`).innerText = g.p1s;
                     document.getElementById(`p2s-${i}`).innerText = g.p2s;

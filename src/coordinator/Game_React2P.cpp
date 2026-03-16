@@ -22,13 +22,14 @@ void Game_React2P::processCommand(String cmd, int value) {
     else if (cmd == "cfg_fake") useFakeColors = (value == 1);
     
     else if (cmd == "start") {
-        gameStartTime = millis();
+        gameStartTime = 0; // wird beim ersten R2_WAITING gesetzt
         stoppedTime = 0;
         for(int i=0; i<numGroups; i++) {
             if(groups[i].active) {
-                // FIX: Setzt die Punkte und Zeiten bei "START ALL" sauber zurück
                 groups[i].p1.score = 0; groups[i].p1.totalReactionTime = 0;
                 groups[i].p2.score = 0; groups[i].p2.totalReactionTime = 0;
+                groups[i].groupStartTime = 0;
+                groups[i].groupStoppedTime = 0;
                 setGroupState(i, R2_PRE_SHOW);
             }
         }
@@ -54,6 +55,8 @@ void Game_React2P::processCommand(String cmd, int value) {
         if (value >= 0 && value < numGroups && groups[value].active) {
             groups[value].p1.score = 0; groups[value].p1.totalReactionTime = 0;
             groups[value].p2.score = 0; groups[value].p2.totalReactionTime = 0;
+            groups[value].groupStartTime = 0;
+            groups[value].groupStoppedTime = 0;
             setGroupState(value, R2_PRE_SHOW);
         }
     }
@@ -88,6 +91,8 @@ void Game_React2P::initGame() {
                 groups[i].groupColor = GROUP_COLORS[i];
                 groups[i].p1.score = 0; groups[i].p1.totalReactionTime = 0;
                 groups[i].p2.score = 0; groups[i].p2.totalReactionTime = 0;
+                groups[i].groupStartTime = 0;
+                groups[i].groupStoppedTime = 0;
                 setGroupState(i, R2_SETUP);
             }
         }
@@ -111,8 +116,10 @@ void Game_React2P::setGroupState(int gIdx, ReactState newState) {
         PuckNetwork::sendToPuck(PuckNetwork::getPucks()[g->puckIndices[0]].mac, snd);
     }
     else if (newState == R2_WAITING) {
+        if (g->groupStartTime == 0) g->groupStartTime = millis();
+        if (gameStartTime == 0) gameStartTime = millis();
         for(int pid : g->puckIndices) setPuck(pid, EFF_STATUS, g->groupColor, 0, 50);
-        g->nextWaitDuration = random(1500, 4000); 
+        g->nextWaitDuration = random(1500, 4000);
     }
     else if (newState == R2_RUNNING) {
         setupNextRound(gIdx);
@@ -129,16 +136,14 @@ void Game_React2P::setGroupState(int gIdx, ReactState newState) {
         PuckNetwork::sendToPuck(PuckNetwork::getPucks()[g->puckIndices[winPuck]].mac, snd);
     }
     else if (newState == R2_FINISHED) {
+        if (g->groupStartTime > 0 && g->groupStoppedTime == 0)
+            g->groupStoppedTime = millis() - g->groupStartTime;
         if (g->p1.score == g->p2.score) {
             for(int pid : g->puckIndices) setPuck(pid, EFF_RAINBOW, CRGB::Black, 0, 200);
         } else {
             int winner = (g->p1.score > g->p2.score) ? 1 : 2;
-            // FIX: Nimmt nur die Hauptfarbe (Index 0) für die Sieger-Animation
             CRGB c = (winner == 1) ? P1_POOL[0] : P2_POOL[0];
-            for(int i=0; i<g->puckIndices.size(); i++) {
-                setPuck(g->puckIndices[i], EFF_DOUBLE_CHASE, c, 30, 200);
-                delay(10);
-            }
+            for(int pid : g->puckIndices) setPuck(pid, EFF_STATIC, c, 0, 200);
         }
         CommandPacket snd; memset(&snd, 0, sizeof(snd)); snd.cmd = CMD_SEQUENCE; snd.extra = SEQ_FANFARE;
         PuckNetwork::sendToPuck(PuckNetwork::getPucks()[g->puckIndices[0]].mac, snd);
@@ -178,18 +183,15 @@ void Game_React2P::setupNextRound(int gIdx) {
 void Game_React2P::loop() {
     unsigned long now = millis();
     
-    if (gameStartTime > 0 && now - gameStartTime > timeLimit) {
-        gameStartTime = 0; 
-        for(int i=0; i<numGroups; i++) {
-            if (groups[i].active && groups[i].state != R2_FINISHED && groups[i].state != R2_SETUP) {
-                setGroupState(i, R2_FINISHED);
-            }
-        }
-    }
-
     for (int i=0; i<numGroups; i++) {
         if (!groups[i].active) continue;
         ReactGroup* g = &groups[i];
+
+        if (g->groupStartTime > 0 && g->groupStoppedTime == 0 &&
+            (now - g->groupStartTime > timeLimit) &&
+            g->state != R2_FINISHED && g->state != R2_SETUP) {
+            setGroupState(i, R2_FINISHED);
+        }
 
         // FIX: Deutlich längere Anzeige der Farben (1 Sekunde pro Farbe gleichzeitig auf beiden Pucks)
         if (g->state == R2_PRE_SHOW) {
@@ -295,6 +297,10 @@ String Game_React2P::getStatusJSON() {
         json += "{";
         json += "\"id\":" + String(groups[i].id) + ",";
         json += "\"st\":" + String(groups[i].state) + ",";
+        long gT = 0;
+        if (groups[i].groupStoppedTime > 0) gT = (long)groups[i].groupStoppedTime;
+        else if (groups[i].groupStartTime > 0) gT = (long)(millis() - groups[i].groupStartTime);
+        json += "\"gT\":" + String(gT) + ",";
         
         json += "\"p1s\":" + String(groups[i].p1.score) + ",";
         json += "\"p2s\":" + String(groups[i].p2.score) + ",";

@@ -39,6 +39,8 @@ struct ReactGroup {
     unsigned long roundStartTime;
     unsigned long nextWaitDuration;
     int preShowStep;
+    unsigned long groupStartTime;
+    unsigned long groupStoppedTime;
 };
 
 class Game_React2P : public Game {
