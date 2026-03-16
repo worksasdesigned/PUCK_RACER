@@ -96,7 +96,7 @@
                 document.getElementById('timer').innerText = formatTime(currentT);
                 
                 let btnStart = document.getElementById('btnStart');
-                if (data.state == 2) btnStart.innerText = "RUNNING"; 
+                if (data.state == 2) btnStart.innerText = getTranslation('btn_running') || "RUNNING";
                 else if (data.state == 3) btnStart.innerText = getTranslation('btn_reset') || "RESET"; 
                 else btnStart.innerText = getTranslation('btn_start') || "START";
 
