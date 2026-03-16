@@ -7,7 +7,14 @@ void Game_React2P::setup() {
 }
 
 void Game_React2P::processCommand(String cmd, int value) {
-    if (cmd == "setup") initGame();
+    if (cmd == "setup") {
+        initGame();
+        for(int i=0; i<numGroups; i++) {
+            if(groups[i].active) {
+                for(int pid : groups[i].puckIndices) setPuck(pid, EFF_BREATHE_MOD4, groups[i].groupColor, 50, 50);
+            }
+        }
+    }
     else if (cmd == "cfg_groups") numGroups = constrain(value, 1, 5);
     else if (cmd == "cfg_pucks") pucksPerGroup = constrain(value, 3, 10);
     else if (cmd == "cfg_time") timeLimit = value * 1000UL;
@@ -93,7 +100,7 @@ void Game_React2P::setGroupState(int gIdx, ReactState newState) {
     g->stateStartTime = millis();
     
     if (newState == R2_SETUP) {
-        for(int pid : g->puckIndices) setPuck(pid, EFF_BREATHE_MOD4, g->groupColor, 50, 50);
+        for(int pid : g->puckIndices) setPuck(pid, EFF_STATUS, g->groupColor, 0, 50);
     }
     else if (newState == R2_PRE_SHOW) {
         g->preShowStep = -1; // Trigger für den Loop
