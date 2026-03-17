@@ -21,8 +21,11 @@
         .row-false-start { border-color: var(--danger) !important; background: rgba(220,53,69,0.2) !important; }
         .p-status { font-size: 2rem; line-height:1;}
 
-        .controls { display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .controls { display: grid; grid-template-columns: 1fr 1.2fr 2fr 1.2fr 1fr; gap: 10px; margin-bottom: 15px; }
         .btn-ctrl { padding: 15px; font-size: 1.2rem; font-weight: bold; }
+        .btn-info { background: #0dcaf0; color: #000; }
+        .btn-info:hover { background: #31d2f2; }
+        .btn-info:disabled { background: var(--card-hover); color: var(--text-muted); opacity: 0.7; cursor: not-allowed; }
 
         .stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px;}
         .stat-box { background: var(--bg-color); padding: 15px 5px; border-radius: 8px; text-align: center; border: 1px solid var(--border-color);}
@@ -70,193 +73,216 @@
             </div>
         </div>
 
-        <div class="controls">
-            <button onclick="goBack()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
-            <button onclick="doAction('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
-            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
-        </div>
-
-        <div class="bottom-nav">
-            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
-        </div>
-    </main>
-
-    <script src="lang.js"></script>
-    <script src="script.js"></script>
-    <script>startStatusLoop();</script>
-    <script>
-        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
-        let numGroups = parseInt(sessionStorage.getItem('pm_grp') || 1);
-        let runnerColors = ['#00FF00', '#FF00FF'];
-        
-        let savedStats = false;
-        
-        function t(key, fallback) {
-            if (typeof getTranslation !== 'function') return fallback;
-            let val = getTranslation(key);
-            return (val && val !== key) ? val : fallback;
-        }
-
-        // Render die Grauen Boxen mit den Badges
-        let runnerHtml = "";
-        for(let i=0; i<numGroups; i++) {
-            let count = parseInt(sessionStorage.getItem(`pm_g${i}_count`) || 1);
-            let badges = "";
-            for(let p=0; p<count; p++) {
-                let n = sessionStorage.getItem(`pm_g${i}_name_${p}`) || `Runner ${p+1}`;
-                badges += `<span class="name-badge">${n}</span>`;
-            }
-            let grpTitle = `Gruppe ${i+1}`;
-            
-            runnerHtml += `
-            <div class="runner-row" id="r-row-${i}" style="border-left-color: ${runnerColors[i]};">
-                <div style="display:flex; flex-direction:column; justify-content:center;">
-                    <span style="color:${runnerColors[i]}; font-size:1.1rem; font-weight:bold;">${grpTitle}</span>
-                    <div>${badges}</div>
-                </div>
-                <div class="p-status" id="r-icon-${i}"></div>
-            </div>`;
-        }
-        document.getElementById('runnerList').innerHTML = runnerHtml;
-
-        setInterval(update, 400);
-
-        function update() {
-            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                        <div class="controls">
+                            <button onclick="goBack()" class="btn-warn btn-ctrl" data-i18n="btn_back">⬅</button>
+                            <button onclick="adjustValue(-1)" class="btn-info btn-ctrl" id="btnSlow">-10s</button>
+                            <button onclick="doAction('start')" class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
+                            <button onclick="adjustValue(1)" class="btn-info btn-ctrl" id="btnFast">+10s</button>
+                            <button onclick="doAction('stop')" class="btn-danger btn-ctrl" data-i18n="btn_stop">STOP</button>
+                        </div>
                 
-                if (data.st < 4) savedStats = false;
-
-                // STATISTIK SPEICHERUNG am Ende!
-                if (data.st === 5 && !savedStats) {
-                    let delay = 0;
-                    let modeStr = data.shut ? "Shuttle" : "Circle";
-                    let paceStr = "";
-                    let coveredDistStr = "N/A";
-                    
-                    // Tatsächliche Laufzeit = Gesamtlimit minus verbleibende Zeit (t)
-                    let actualDurationMs = data.lim - data.t;
-                    if (actualDurationMs < 0) actualDurationMs = 0;
-                    
-                    if (data.inpt === 1) {
-                        paceStr = formatTime(data.lapt * 1000) + " Lap";
-                    } else {
-                        let pm = Math.floor(data.pace / 60);
-                        let ps = data.pace % 60;
-                        paceStr = `${pm}:${ps.toString().padStart(2,'0')} min/km`;
+                        <div class="bottom-nav">
+                            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+                        </div>
+                    </main>
+                
+                    <script src="lang.js"></script>
+                    <script src="script.js"></script>
+                    <script>startStatusLoop();</script>
+                    <script>
+                        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+                        let numGroups = parseInt(sessionStorage.getItem('pm_grp') || 1);
+                        let runnerColors = ['#00FF00', '#FF00FF'];
                         
-                        // Tatsächlich zurückgelegte Strecke berechnen (ms / pace_in_sekunden = meter)
-                        if (data.pace > 0) {
-                            coveredDistStr = Math.floor(actualDurationMs / data.pace) + "m";
+                        let savedStats = false;
+                        let lastStatus = null;
+                        
+                        function t(key, fallback) {
+                            if (typeof getTranslation !== 'function') return fallback;
+                            let val = getTranslation(key);
+                            return (val && val !== key) ? val : fallback;
                         }
-                    }
-
-                    // Nur Speichern, wenn wirklich Zeit vergangen ist (nicht bei direktem Abbruch nach 0.1s)
-                    if (actualDurationMs > 2000) {
-                        for(let g=0; g<numGroups; g++) {
-                            let count = parseInt(sessionStorage.getItem(`pm_g${g}_count`) || 1);
+                
+                        // Render die Grauen Boxen mit den Badges
+                        let runnerHtml = "";
+                        for(let i=0; i<numGroups; i++) {
+                            let count = parseInt(sessionStorage.getItem(`pm_g${i}_count`) || 1);
+                            let badges = "";
                             for(let p=0; p<count; p++) {
-                                let pid = sessionStorage.getItem(`pm_g${g}_id_${p}`);
-                                if (pid && pid !== "0") {
-                                    setTimeout(() => {
-                                        let fd = new URLSearchParams();
-                                        fd.append('pid', pid);
-                                        fd.append('game', 18); 
-                                        fd.append('score', actualDurationMs); // Tatsächliche Dauer als Score
-                                        fd.append('ex1', paceStr);
-                                        fd.append('ex2', coveredDistStr); // Berechnete Distanz in Metern!
-                                        fd.append('ex3', modeStr);
-                                        fd.append('ts', Date.now());
-                                        fetch('/api/stats/player_save', { method: 'POST', body: fd });
-                                    }, delay);
-                                    delay += 200;
+                                let n = sessionStorage.getItem(`pm_g${i}_name_${p}`) || `Runner ${p+1}`;
+                                badges += `<span class="name-badge">${n}</span>`;
+                            }
+                            let grpTitle = `Gruppe ${i+1}`;
+                            
+                            runnerHtml += `
+                            <div class="runner-row" id="r-row-${i}" style="border-left-color: ${runnerColors[i]};">
+                                <div style="display:flex; flex-direction:column; justify-content:center;">
+                                    <span style="color:${runnerColors[i]}; font-size:1.1rem; font-weight:bold;">${grpTitle}</span>
+                                    <div>${badges}</div>
+                                </div>
+                                <div class="p-status" id="r-icon-${i}"></div>
+                            </div>`;
+                        }
+                        document.getElementById('runnerList').innerHTML = runnerHtml;
+                
+                        setInterval(update, 400);
+                
+                        function update() {
+                            fetch('/api/game/status').then(r=>r.json()).then(data => {
+                                
+                                if (data.st < 4) savedStats = false;
+                
+                                // STATISTIK SPEICHERUNG am Ende!
+                                if (data.st === 5 && !savedStats) {
+                                    let delay = 0;
+                                    let modeStr = data.shut ? "Shuttle" : "Circle";
+                                    let paceStr = "";
+                                    let coveredDistStr = "N/A";
+                                    
+                                    // Tatsächliche Laufzeit = Gesamtlimit minus verbleibende Zeit (t)
+                                    let actualDurationMs = data.lim - data.t;
+                                    if (actualDurationMs < 0) actualDurationMs = 0;
+                                    
+                                    if (data.inpt === 1) {
+                                        paceStr = formatTime(data.lapt * 1000) + " Lap";
+                                    } else {
+                                        let pm = Math.floor(data.pace / 60);
+                                        let ps = data.pace % 60;
+                                        paceStr = `${pm}:${ps.toString().padStart(2,'0')} min/km`;
+                                        
+                                        // Tatsächlich zurückgelegte Strecke berechnen (ms / pace_in_sekunden = meter)
+                                        if (data.pace > 0) {
+                                            coveredDistStr = Math.floor(actualDurationMs / data.pace) + "m";
+                                        }
+                                    }
+                
+                                    // Nur Speichern, wenn wirklich Zeit vergangen ist (nicht bei direktem Abbruch nach 0.1s)
+                                    if (actualDurationMs > 2000) {
+                                        for(let g=0; g<numGroups; g++) {
+                                            let count = parseInt(sessionStorage.getItem(`pm_g${g}_count`) || 1);
+                                            for(let p=0; p<count; p++) {
+                                                let pid = sessionStorage.getItem(`pm_g${g}_id_${p}`);
+                                                if (pid && pid !== "0") {
+                                                    setTimeout(() => {
+                                                        let fd = new URLSearchParams();
+                                                        fd.append('pid', pid);
+                                                        fd.append('game', 18); 
+                                                        fd.append('score', actualDurationMs); // Tatsächliche Dauer als Score
+                                                        fd.append('ex1', paceStr);
+                                                        fd.append('ex2', coveredDistStr); // Berechnete Distanz in Metern!
+                                                        fd.append('ex3', modeStr);
+                                                        fd.append('ts', Date.now());
+                                                        fetch('/api/stats/player_save', { method: 'POST', body: fd });
+                                                    }, delay);
+                                                    delay += 200;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    savedStats = true;
+                                }
+                
+                                lastStatus = data;
+                                render(data);
+                            }).catch(e => {});
+                        }
+                
+                        function formatTime(ms) {
+                            let sec = Math.ceil(ms / 1000);
+                            let m = Math.floor(sec / 60);
+                            let s = sec % 60;
+                            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                        }
+                
+                        function render(data) {
+                            document.getElementById('globalTime').innerText = formatTime(data.t);
+                            let stTxt = t(`pm_st_${data.st}`, "UNKNOWN");
+                            let stCol = "var(--warning)";
+                            if(data.st === 3) stCol = "var(--danger)";
+                            if(data.st === 4) stCol = "var(--success)"; 
+                            if(data.st === 5) stCol = "gold";
+                            
+                            document.getElementById('stateInfo').innerText = stTxt;
+                            document.getElementById('stateInfo').style.color = stCol;
+                            
+                            let btn = document.getElementById('btnStart');
+                            if (data.st === 0 || data.st === 5 || data.st === 3) { 
+                                btn.innerText = (data.st === 3) ? t('btn_reset', "RESET") : t('btn_start', "START"); 
+                                btn.style.background = "var(--primary)";
+                            } else { 
+                                btn.innerText = t('btn_running', "RUNNING"); 
+                                btn.style.background = "var(--card-hover)"; 
+                            }
+                
+                            if (data.run && Array.isArray(data.run)) {
+                                for(let i=0; i<numGroups; i++) {
+                                    let row = document.getElementById(`r-row-${i}`);
+                                    let iconEl = document.getElementById(`r-icon-${i}`);
+                                    if (row && iconEl && data.run[i]) {
+                                        let icon = "";
+                                        if (data.st === 1 || data.st === 2) {
+                                            if (data.run[i].h === 1) icon = "🖐️";
+                                        }
+                                        
+                                        if (data.st === 3 && data.fs === i) {
+                                            row.classList.add('row-false-start');
+                                            icon = "❌";
+                                        } else {
+                                            row.classList.remove('row-false-start');
+                                        }
+                                        
+                                        iconEl.innerText = icon;
+                                    }
                                 }
                             }
-                        }
-                    }
-                    savedStats = true;
-                }
-
-                render(data);
-            }).catch(e => {});
-        }
-
-        function formatTime(ms) {
-            let sec = Math.ceil(ms / 1000);
-            let m = Math.floor(sec / 60);
-            let s = sec % 60;
-            return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
-        }
-
-        function render(data) {
-            document.getElementById('globalTime').innerText = formatTime(data.t);
-            let stTxt = t(`pm_st_${data.st}`, "UNKNOWN");
-            let stCol = "var(--warning)";
-            if(data.st === 3) stCol = "var(--danger)";
-            if(data.st === 4) stCol = "var(--success)"; 
-            if(data.st === 5) stCol = "gold";
-            
-            document.getElementById('stateInfo').innerText = stTxt;
-            document.getElementById('stateInfo').style.color = stCol;
-            
-            let btn = document.getElementById('btnStart');
-            if (data.st === 0 || data.st === 5 || data.st === 3) { 
-                btn.innerText = (data.st === 3) ? t('btn_reset', "RESET") : t('btn_start', "START"); 
-                btn.style.background = "var(--primary)";
-            } else { 
-                btn.innerText = t('btn_running', "RUNNING"); 
-                btn.style.background = "var(--card-hover)"; 
-            }
-
-            if (data.run && Array.isArray(data.run)) {
-                for(let i=0; i<numGroups; i++) {
-                    let row = document.getElementById(`r-row-${i}`);
-                    let iconEl = document.getElementById(`r-icon-${i}`);
-                    if (row && iconEl && data.run[i]) {
-                        let icon = "";
-                        if (data.st === 1 || data.st === 2) {
-                            if (data.run[i].h === 1) icon = "🖐️";
+                
+                            document.getElementById('modeVal').innerText = data.shut ? t('pm_mode_shuttle', "Shuttle") : t('pm_mode_circle', "Circle");
+                            
+                            let btnSlow = document.getElementById('btnSlow');
+                            let btnFast = document.getElementById('btnFast');
+                
+                            if (data.inpt === 0) { // Pace Mode
+                                btnSlow.innerText = "-10s";
+                                btnFast.innerText = "+10s";
+                                btnSlow.disabled = false;
+                                btnFast.disabled = false;
+                                document.getElementById('lblMetric').innerText = t('pm_run_pace', "Target Pace");
+                                if (data.pace > 0) {
+                                    let m = Math.floor(data.pace / 60);
+                                    let s = data.pace % 60;
+                                    document.getElementById('paceVal').innerText = `${m}:${s.toString().padStart(2,'0')}`;
+                                    document.getElementById('kmhVal').innerText = (3600 / data.pace).toFixed(1) + " km/h";
+                                    document.getElementById('distVal').innerText = data.dist + " m";
+                
+                                    let elapsedMs = data.lim - data.t;
+                                    let runDist = 0;
+                                    if (data.st >= 4) { runDist = elapsedMs / data.pace; }
+                                    document.getElementById('runDistVal').innerText = Math.floor(runDist) + " m";
+                                }
+                            } else { // Lap Time Mode
+                                btnSlow.innerText = "-1s";
+                                btnFast.innerText = "+1s";
+                                btnSlow.disabled = false;
+                                btnFast.disabled = false;
+                                document.getElementById('lblMetric').innerText = t('pm_lbl_lap', "Lap Time");
+                                document.getElementById('paceVal').innerText = formatTime(data.lapt * 1000);
+                                document.getElementById('kmhVal').innerText = t('pm_mode_shuttle', "Shuttle");
+                                document.getElementById('distVal').innerText = "N/A";
+                                document.getElementById('runDistVal').innerText = "N/A";
+                            }
                         }
                         
-                        if (data.st === 3 && data.fs === i) {
-                            row.classList.add('row-false-start');
-                            icon = "❌";
-                        } else {
-                            row.classList.remove('row-false-start');
-                        }
-                        
-                        iconEl.innerText = icon;
-                    }
-                }
-            }
-
-            document.getElementById('modeVal').innerText = data.shut ? t('pm_mode_shuttle', "Shuttle") : t('pm_mode_circle', "Circle");
-
-            if (data.inpt === 1) { 
-                document.getElementById('lblMetric').innerText = "Lap Time";
-                document.getElementById('paceVal').innerText = formatTime(data.lapt * 1000);
-                document.getElementById('kmhVal').innerText = "Runde";
-                document.getElementById('distVal').innerText = "N/A";
-                document.getElementById('runDistVal').innerText = "N/A";
-            } else { 
-                if (data.pace > 0) {
-                    let m = Math.floor(data.pace / 60);
-                    let s = data.pace % 60;
-                    document.getElementById('paceVal').innerText = `${m}:${s.toString().padStart(2,'0')}`;
-                    document.getElementById('kmhVal').innerText = (3600 / data.pace).toFixed(1) + " km/h";
-                    document.getElementById('distVal').innerText = data.dist + " m";
-
-                    // Berechnete aktuell abgelaufene Strecke live updaten
-                    let elapsedMs = data.lim - data.t;
-                    let runDist = 0;
-                    if (data.st >= 4) { runDist = elapsedMs / data.pace; }
-                    document.getElementById('runDistVal').innerText = Math.floor(runDist) + " m";
-                }
-            }
-        }
-
-        function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
-        function goBack() { doAction('reset'); location.href = 'game_pacemaker_names.html'; }
-        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
-    </script>
-</body>
-</html>
+                        function adjustValue(direction) {
+                            if (!lastStatus) return;
+                            if (lastStatus.inpt === 0) {
+                                fetch(`/api/game/action?cmd=change_pace&val=${direction * 10}`);
+                            } else {
+                                fetch(`/api/game/action?cmd=change_lap&val=${direction}`);
+                            }
+                        }                
+                        function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
+                        function goBack() { doAction('reset'); location.href = 'game_pacemaker_names.html'; }
+                        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+                    </script>
+                </body>
+                </html>

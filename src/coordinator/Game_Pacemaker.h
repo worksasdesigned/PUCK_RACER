@@ -38,6 +38,7 @@ private:
     PM_State gameState = PM_SETUP;
     unsigned long stateStartTime = 0;
     unsigned long runStartTime = 0;
+    unsigned long stoppedElapsedMs = 0;
     
     int activePucksCount = 0;
     int puckGlobalIds[MAX_PEERS]; // Mappt den logischen Pfad auf die echten Pucks

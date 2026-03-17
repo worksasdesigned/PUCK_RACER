@@ -17,9 +17,24 @@ void Game_Pacemaker::processCommand(String cmd, int value) {
     else if (cmd == "cfg_inpt") inputMode = value;
     else if (cmd == "cfg_lapt") lapTimeMs = value * 1000UL;
     else if (cmd == "cfg_grp") numGroups = constrain(value, 1, 2);
+
+    else if (cmd == "change_pace" && inputMode == 0) {
+        paceSecondsPerKm += value;
+        paceSecondsPerKm = constrain(paceSecondsPerKm, 150, 480); // 2:30 to 8:00 min/km
+        msPerPuck = paceSecondsPerKm * distanceBetweenPucks;
+    }
+    else if (cmd == "change_lap" && inputMode == 1) {
+        long newLap = (long)lapTimeMs + (long)value * 1000L;
+        lapTimeMs = (unsigned long)constrain(newLap, 5000L, 240000L); // 5s to 4min
+        int steps_per_lap = shuttleMode ? ((activePucksCount - 1) * 2) : activePucksCount;
+        if (steps_per_lap <= 0) steps_per_lap = 1;
+        msPerPuck = lapTimeMs / steps_per_lap;
+    }
     
     else if (cmd == "start") startGameSequence();
     else if (cmd == "stop") {
+        if (gameState == PM_RUNNING) stoppedElapsedMs = millis() - runStartTime;
+        else stoppedElapsedMs = durationMs;
         gameState = PM_FINISHED;
         for(int i=0; i<activePucksCount; i++) setPuck(puckGlobalIds[i], EFF_STATUS, CRGB::Green, 0, 85);
     }
@@ -54,6 +69,7 @@ void Game_Pacemaker::initGame() {
     currentSegment = -1;
     halfPassedFlag = false;
     falseStartPlayer = -1;
+    stoppedElapsedMs = 0;
     gameState = PM_SETUP;
 }
 
@@ -147,6 +163,7 @@ void Game_Pacemaker::loop() {
         unsigned long elapsed = now - runStartTime;
         
         if (elapsed >= durationMs) {
+            stoppedElapsedMs = durationMs;
             gameState = PM_FINISHED;
             for(int r=0; r<numGroups; r++) {
                 sendSequence(puckGlobalIds[getSequencePuck(r, currentSegment)], SEQ_FANFARE);
@@ -264,8 +281,9 @@ String Game_Pacemaker::getStatusJSON() {
     
     long t = 0;
     if (gameState == PM_RUNNING) t = durationMs - (millis() - runStartTime);
-    if (t < 0 || gameState == PM_FINISHED) t = 0;
-    if (gameState == PM_SETUP || gameState == PM_WAIT_HANDS || gameState == PM_COUNTDOWN) t = durationMs;
+    else if (gameState == PM_FINISHED) t = durationMs - (long)stoppedElapsedMs;
+    else if (gameState == PM_SETUP || gameState == PM_WAIT_HANDS || gameState == PM_COUNTDOWN) t = durationMs;
+    if (t < 0) t = 0;
     
     json += "\"t\":" + String(t) + ",";
     json += "\"lim\":" + String(durationMs) + ",";
