@@ -136,20 +136,18 @@
             fetch('/api/who_is_active')
                 .then(r => r.text())
                 .then(name => {
-                    document.getElementById('activeDevice').innerText = name;
+                    if (!name || name.trim() === '') {
+                        location.href = '/'; // Session free — claim it
+                    } else {
+                        document.getElementById('activeDevice').innerText = name;
+                    }
                 })
                 .catch(e => {
                     document.getElementById('activeDevice').innerText = "Unbekannt";
                 });
         }
         fetchActiveDevice();
-
-        function checkSystemFree() {
-            fetch('/api/status').then(r => {
-                if(r.status === 200) location.href = '/'; 
-            }).catch(e => {});
-        }
-        setInterval(checkSystemFree, 4000);
+        setInterval(fetchActiveDevice, 4000);
 
 
         // --- 4. AUDIO ENGINE ---
@@ -194,8 +192,7 @@
         let waitingForInput = false;
 
         function startGame() {
-            initAudio(); 
-            checkSystemFree(); 
+            initAudio();
             sequence = [];
             score = 0;
             isPlaying = true;
@@ -231,9 +228,7 @@
         }
 
         function handleInput(color) {
-            initAudio(); 
-            checkSystemFree();
-
+            initAudio();
             if (!isPlaying || !waitingForInput) return;
             
             if (color !== sequence[playerStep]) {

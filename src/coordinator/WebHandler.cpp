@@ -12,6 +12,28 @@
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;
 
+IPAddress WebHandler::activeClientIP;
+unsigned long WebHandler::lastActivityTime = 0;
+String WebHandler::activeClientName = "";
+
+#define SESSION_TIMEOUT_MS 45000UL
+
+bool WebHandler::isClientAllowed(AsyncWebServerRequest *req) {
+    unsigned long now = millis();
+    IPAddress clientIP = req->client()->remoteIP();
+    if (lastActivityTime == 0 || (now - lastActivityTime > SESSION_TIMEOUT_MS)) {
+        activeClientIP = clientIP;
+        lastActivityTime = now;
+        activeClientName = clientIP.toString();
+        return true;
+    }
+    if (clientIP == activeClientIP) {
+        lastActivityTime = now;
+        return true;
+    }
+    return false;
+}
+
 static size_t debugUploadSize = 0;
 
 // --- Die Welcome / Setup Page (wird direkt aus dem RAM geladen, falls LittleFS leer ist) ---
@@ -118,6 +140,10 @@ void WebHandler::begin() {
     
     // --- BASIS ROUTING & CAPTIVE PORTAL ---
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *req){
+        if (!isClientAllowed(req)) {
+            req->redirect("/only1device.html");
+            return;
+        }
         if (LittleFS.exists("/index.html")) {
             req->send(LittleFS, "/index.html", "text/html");
         } else {
@@ -130,7 +156,18 @@ void WebHandler::begin() {
         req->send(200, "text/plain", SYS_VER);
     });
 
+    server.on("/api/who_is_active", HTTP_GET, [](AsyncWebServerRequest *req){
+        unsigned long now = millis();
+        if (lastActivityTime > 0 && (now - lastActivityTime <= SESSION_TIMEOUT_MS)) {
+            req->send(200, "text/plain", activeClientName);
+        } else {
+            req->send(200, "text/plain", "");
+        }
+    });
+
     server.on("/api/status", HTTP_GET, [](AsyncWebServerRequest *req){
+        IPAddress ip = req->client()->remoteIP();
+        if (lastActivityTime > 0 && ip == activeClientIP) lastActivityTime = millis();
         String json = "[";
         PuckInfo* p = PuckNetwork::getPucks();
         bool first = true;
