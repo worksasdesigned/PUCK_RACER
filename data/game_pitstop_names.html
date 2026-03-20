@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PuckRacer">
+    <title>Players - Pitstop</title>
+    <link rel="stylesheet" href="style.css?v=6">
+    <style>
+        .player-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background:var(--card-bg); padding:10px; border-radius:8px; border-left:1px solid var(--border-color);}
+        .color-box { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; flex-shrink: 0; transition: all 0.3s;}
+        .puck-ids { font-size:0.8rem; color:var(--text-muted); margin-left:10px;}
+        input[type=text] { flex-grow: 1; padding: 12px; font-size: 1.1rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-main); min-width: 0; }
+        
+        .stat-icon { font-size: 1.3rem; opacity: 0.2; transition: all 0.3s; cursor: help; user-select: none; filter: grayscale(100%); }
+        .stat-icon.active { opacity: 1; filter: none; text-shadow: 0 0 8px rgba(13, 110, 253, 0.5); }
+        
+        .arena-legend { font-size:0.75rem; color:var(--text-muted); text-align:center; margin-top:4px; }
+        .hidden { display: none; }
+        #toggleIcon { transition: transform 0.3s; display: inline-block; }
+        .rotate { transform: rotate(-90deg); }
+    </style>
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_pitstop">Pitstop 🏎️⏱️</div></header>
+    <main>
+        <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">Loading...</div>
+        <div id="content" style="display:none;">
+
+            <div class="layout-card">
+                <div class="layout-header" onclick="toggleLayout()">
+                    <span data-i18n="ps_names_layout">Station Layout</span>
+                    <span id="toggleIcon">▼</span>
+                </div>
+                <div class="layout-body" id="layoutBody">
+                    <div style="text-align:center; width:100%;">
+                        <p id="layoutHint" style="font-size:0.85rem; color:var(--text-muted); text-align:center; margin:0 0 10px 0;"></p>
+                        <div id="arenaContainer" style="overflow-x:auto; overflow-y:visible; margin-bottom:10px;"></div>
+                        <div class="arena-legend" id="arenaLegend"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom:15px;">
+                <button onclick="loadFromPicker()" class="btn-primary" style="font-size:1.1rem; background:var(--card-hover); border:1px dashed var(--primary); color:var(--primary);">
+                    👥 <span data-i18n="pp_load_players">Load Players from List</span>
+                </button>
+            </div>
+
+            <div id="playerList" class="card"></div>
+
+            <div style="display:flex; flex-direction:column; gap:10px; margin-top:20px;">
+                <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="ps_btn_run">TO RUN SCREEN 🏁</button>
+                <button onclick="location.href='game_pitstop_setup.html'" class="btn-back" data-i18n="btn_back">⬅ BACK</button>
+            </div>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="player_picker.js"></script>
+    <script>
+        if (localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const numPlayers = parseInt(sessionStorage.getItem('ps_players')   || 2);
+        const timeVal    = parseInt(sessionStorage.getItem('ps_time')      || 10);
+        const pitlane    = parseInt(sessionStorage.getItem('ps_pitlane')   || 0) === 1;
+        const countdown  = parseInt(sessionStorage.getItem('ps_countdown') || 1) === 1;
+        const alwyellow  = parseInt(sessionStorage.getItem('ps_alwyellow') || 0) === 1;
+        const statuspuck = parseInt(sessionStorage.getItem('ps_statuspuck')|| 0) === 1;
+        const exitTimeVal= parseInt(sessionStorage.getItem('ps_exittime')  || 10);
+        const exitbtn    = parseInt(sessionStorage.getItem('ps_exitbtn')   || 0) === 1;
+
+        const COLORS = ['#0000FF','#8800FF','#0088FF','#FFFF00','#FF00FF','#00FFFF','#FF8800','#FFFFFF','#FF69B4','#00FFAA'];
+        
+        let entryAssign    = [];
+        let exitAssign     = [];
+        let statusPuckAssign = -1;
+        let activePuckCount  = 0;
+
+        document.addEventListener('DOMContentLoaded', () => setTimeout(initPage, 400));
+
+        async function initPage() {
+            try {
+                await fetch('/api/game/load?id=28');
+                await fetch(`/api/game/action?cmd=cfg_players&val=${numPlayers}`);
+                await fetch(`/api/game/action?cmd=cfg_time&val=${timeVal}`);
+                await fetch(`/api/game/action?cmd=cfg_pitlane&val=${pitlane ? 1 : 0}`);
+                await fetch(`/api/game/action?cmd=cfg_countdown&val=${countdown ? 1 : 0}`);
+                await fetch(`/api/game/action?cmd=cfg_alwyellow&val=${alwyellow ? 1 : 0}`);
+                await fetch(`/api/game/action?cmd=cfg_exittime&val=${exitTimeVal}`);
+                await fetch(`/api/game/action?cmd=cfg_exitbtn&val=${exitbtn ? 1 : 0}`);
+                await fetch('/api/game/action?cmd=setup');
+
+                let res  = await fetch('/api/status');
+                let data = await res.json();
+                let active = data.filter(p => p.active);
+                activePuckCount = active.length;
+
+                for (let i = 0; i < numPlayers; i++) {
+                    if (pitlane) {
+                        entryAssign[i] = (i * 2     < activePuckCount) ? active[i * 2].id     : -1;
+                        exitAssign[i]  = (i * 2 + 1 < activePuckCount) ? active[i * 2 + 1].id : -1;
+                    } else {
+                        entryAssign[i] = (i < activePuckCount) ? active[i].id : -1;
+                        exitAssign[i]  = -1;
+                    }
+                }
+                
+                if (statuspuck) {
+                    let nextIdx = pitlane ? numPlayers * 2 : numPlayers;
+                    statusPuckAssign = (nextIdx < activePuckCount) ? active[nextIdx].id : -1;
+                }
+
+                await sendAssignments();
+                await fetch('/api/game/action?cmd=show_track');
+                
+                buildArena();
+                renderInputs();
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+                setInterval(pollPuckEffects, 1500);
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loading').innerText = 'Error loading game.';
+            }
+        }
+
+        async function sendAssignments() {
+            for (let i = 0; i < numPlayers; i++) {
+                if (entryAssign[i] >= 0)
+                    await fetch(`/api/game/action?cmd=cfg_entry&val=${i * 100 + entryAssign[i]}`);
+                if (pitlane && exitAssign[i] >= 0)
+                    await fetch(`/api/game/action?cmd=cfg_exit&val=${i * 100 + exitAssign[i]}`);
+            }
+            await fetch(`/api/game/action?cmd=cfg_statuspuck_en&val=${statuspuck ? 1 : 0}`);
+            if (statuspuck && statusPuckAssign >= 0)
+                await fetch(`/api/game/action?cmd=cfg_statuspuck&val=${statusPuckAssign}`);
+        }
+
+        function buildArena() {
+            const cols = ['A','B','C','D','E'];
+            let tableHtml = `<table class="arena-table">`;
+            for (let r = 1; r <= 5; r++) {
+                tableHtml += `<tr>`;
+                for (let c = 0; c < 5; c++) {
+                    tableHtml += `<td id="cell-${cols[c]}${r}"></td>`;
+                }
+                tableHtml += `</tr>`;
+            }
+            tableHtml += `</table>`;
+            document.getElementById('arenaContainer').innerHTML = tableHtml;
+
+            for (let i = 0; i < numPlayers; i++) {
+                let row = (i % 5) + 1;
+                if (!pitlane) {
+                    let puckCol = (i < 5) ? 'A' : 'C';
+                    let carCol  = (i < 5) ? 'B' : 'D';
+                    let puckCell = document.getElementById(`cell-${puckCol}${row}`);
+                    let carCell  = document.getElementById(`cell-${carCol}${row}`);
+                    if (puckCell) puckCell.innerHTML = `<div class="puck-icon entry-puck" id="puck_vis_${entryAssign[i]}">${entryAssign[i] >= 0 ? entryAssign[i]+1 : '?'}</div>`;
+                    if (carCell)  carCell.innerHTML  = `<div style="font-size:1.4rem; line-height:1;">🏎️</div>`;
+                } else {
+                    if (i >= 5) row = 5; 
+                    let cellA = document.getElementById(`cell-A${row}`);
+                    let cellB = document.getElementById(`cell-B${row}`);
+                    let cellD = document.getElementById(`cell-D${row}`);
+                    if (cellA) cellA.innerHTML = `<div style="font-size:1.4rem; line-height:1; display:inline-block; transform:scaleX(-1);">🏎️</div>`;
+                    if (cellB) cellB.innerHTML = `<div class="puck-icon entry-puck" id="puck_vis_${entryAssign[i]}">${entryAssign[i] >= 0 ? entryAssign[i]+1 : '?'}</div>`;
+                    if (cellD) cellD.innerHTML = `<div class="puck-icon exit-puck"  id="puck_vis_${exitAssign[i]}">${exitAssign[i] >= 0 ? exitAssign[i]+1 : '?'}</div>`;
+                }
+            }
+
+            if (statuspuck) {
+                let cellS = document.getElementById('cell-E3');
+                if (cellS) cellS.innerHTML = `<div class="puck-icon entry-puck" id="puck_vis_${statusPuckAssign}" title="Status Puck">${statusPuckAssign >= 0 ? statusPuckAssign + 1 : '?'}</div>`;
+            }
+
+            let hintKey  = pitlane ? 'ps_layout_pitlane' : 'ps_layout_simple';
+            let hintFall = pitlane ? 'A = Car | B = Entry puck | D = Exit puck' : 'A/C = Puck | B/D = Car';
+            document.getElementById('layoutHint').innerText = (typeof getTranslation === 'function') ? (getTranslation(hintKey) || hintFall) : hintFall;
+
+            let legKey  = pitlane ? 'ps_legend_pitlane' : 'ps_legend_simple';
+            let legFall = pitlane ? 'Entry: Chase | Exit: Breathe' : 'Each puck glows in player color';
+            document.getElementById('arenaLegend').innerText = (typeof getTranslation === 'function') ? (getTranslation(legKey) || legFall) : legFall;
+        }
+
+        function renderInputs() {
+            let container = document.getElementById('playerList');
+            container.innerHTML = "";
+            let puckTxt = (typeof getTranslation === 'function') ? getTranslation('sr_names_pucks') || "Pucks" : "Pucks";
+
+            for(let i=0; i<numPlayers; i++) {
+                let color = COLORS[i % 10];
+                let name = sessionStorage.getItem(`p_name_${i}`) || `Player ${i+1}`;
+                let pid = sessionStorage.getItem(`p_id_${i}`);
+                
+                let puckStr = "";
+                if(pitlane) {
+                    puckStr = `${puckTxt} ${entryAssign[i] !== -1 ? entryAssign[i]+1 : '?'} & ${exitAssign[i] !== -1 ? exitAssign[i]+1 : '?'}`;
+                } else {
+                    puckStr = `Puck ${entryAssign[i] !== -1 ? entryAssign[i]+1 : '?'}`;
+                }
+
+                let hasStats = (pid && pid !== "0");
+                let statClass = hasStats ? "active" : "";
+                let statTitle = hasStats ? "Statistik wird gespeichert" : "Gastspieler (Keine Statistik)";
+
+                container.innerHTML += `
+                <div class="player-row" style="border-left: 5px solid ${color}">
+                    <div class="color-box" id="cb_${i}" style="background:${color}; box-shadow:0 0 10px ${color};"></div>
+                    <input type="text" id="name_${i}" value="${name}" placeholder="Name" oninput="clearPlayerId(${i})">
+                    <span class="stat-icon ${statClass}" id="stat_icon_${i}" title="${statTitle}">📊</span>
+                    <div class="puck-ids">${puckStr}</div>
+                </div>`;
+            }
+        }
+
+        function clearPlayerId(idx) {
+            sessionStorage.setItem(`p_id_${idx}`, 0);
+            let icon = document.getElementById(`stat_icon_${idx}`);
+            if(icon) {
+                icon.classList.remove('active');
+                icon.title = "Gastspieler (Keine Statistik)";
+            }
+        }
+
+        function loadFromPicker() {
+            openPlayerPicker(numPlayers, function(selected) {
+                selected.forEach((p, i) => {
+                    let inp = document.getElementById('name_' + i);
+                    if (inp) { 
+                        inp.value = p.name; 
+                        sessionStorage.setItem(`p_name_${i}`, p.name); 
+                        sessionStorage.setItem(`p_id_${i}`, p.id); 
+                        
+                        let icon = document.getElementById(`stat_icon_${i}`);
+                        if(icon) {
+                            icon.classList.add('active');
+                            icon.title = "Statistik wird gespeichert";
+                        }
+                    }
+                });
+            });
+        }
+
+        async function pollPuckEffects() {
+            try {
+                let r = await fetch('/api/effects');
+                let data = await r.json();
+                data.forEach(eff => {
+                    const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
+                    
+                    let pId = entryAssign.indexOf(eff.id);
+                    if(pId === -1 && pitlane) pId = exitAssign.indexOf(eff.id);
+                    if(pId !== -1) {
+                        let cb = document.getElementById(`cb_${pId}`);
+                        if(cb) { cb.style.background = rgb; cb.style.boxShadow = `0 0 10px ${rgb}`; }
+                    }
+
+                    let vis = document.getElementById(`puck_vis_${eff.id}`);
+                    if(vis) {
+                        vis.classList.remove('eff-breathe', 'eff-chase', 'eff-rainbow');
+                        
+                        if(eff.eff == 3 || eff.eff == 4 || eff.eff == 5) vis.classList.add('eff-breathe');
+                        if(eff.eff == 6 || eff.eff == 7) vis.classList.add('eff-chase');
+                        
+                        if(eff.eff == 9) {
+                            vis.classList.add('eff-rainbow');
+                            // Farbverlauf für den Rainbow-Effekt des Extra-Pucks
+                            vis.style.background = 'linear-gradient(45deg, red, orange, yellow, green, blue, purple)';
+                            vis.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.6)';
+                            vis.style.border = "2px solid #fff";
+                        } else if(eff.eff == 18) {
+                            let percent = Math.round(eff.dur / 2.55);
+                            vis.style.background = `conic-gradient(${rgb} ${percent}%, var(--border-color) ${percent}%)`;
+                            vis.style.border = `2px solid ${rgb}`;
+                            vis.style.boxShadow = `0 0 15px ${rgb}`;
+                        } else {
+                            vis.style.background = rgb;
+                            vis.style.border = (eff.r===0 && eff.g===0 && eff.b===0) ? "2px solid #444" : "2px solid #fff";
+                            vis.style.boxShadow = `0 0 15px ${rgb}`;
+                        }
+                    }
+                });
+            } catch (e) {}
+        }
+
+        function toggleLayout() {
+            document.getElementById('layoutBody').classList.toggle('hidden');
+            document.getElementById('toggleIcon').classList.toggle('rotate');
+        }
+
+        function startGame() {
+            let inputs = document.querySelectorAll('input[type=text]');
+            inputs.forEach(inp => {
+                let idx = inp.id.split('_')[1];
+                sessionStorage.setItem(`p_name_${idx}`, inp.value);
+                sessionStorage.setItem(`ps_name_${idx}`, inp.value);
+                if (!sessionStorage.getItem(`p_id_${idx}`)) {
+                    sessionStorage.setItem(`p_id_${idx}`, 0);
+                }
+            });
+            setTimeout(() => { location.href = 'game_pitstop_run.html'; }, 200);
+        }
+    </script>
+</body>
+</html>

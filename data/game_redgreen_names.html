@@ -79,18 +79,25 @@
                 await fetch(`/api/game/action?cmd=cfg_time&val=${time}`);
                 await fetch('/api/game/action?cmd=setup');
 
-                // Hole Puck Anzahl um Pucks pro Gruppe (nPpg) zu berechnen
+                // Pucks per Gruppe via Round-Robin zuweisen (spiegelt Backend-Logik exakt)
                 let res = await fetch('/api/status');
                 let data = await res.json();
-                let pCount = data.filter(p => p.active).length;
-                let nPpg = Math.floor(pCount / grps);
+                let activePucks = data.filter(p => p.active);
+
+                let groupPucks = [];
+                for (let g = 0; g < grps; g++) groupPucks[g] = [];
+                activePucks.forEach((puck, idx) => {
+                    groupPucks[idx % grps].push(puck);
+                });
+
+                let maxPpg = Math.max(...groupPucks.map(g => g.length));
 
                 let arenaContainer = document.getElementById('arenaContainer');
                 let listContainer = document.getElementById('playerList');
                 arenaContainer.innerHTML = "";
                 listContainer.innerHTML = "";
 
-                let layoutKey = [1, 2, 3, 4, 5].find(n => n >= nPpg) || 5;
+                let layoutKey = [1, 2, 3, 4, 5].find(n => n >= maxPpg) || 5;
                 let activeLayout = RG_LAYOUTS[layoutKey];
 
                 for(let i=0; i<grps; i++) {
@@ -128,13 +135,13 @@
                         if(cellRun) cellRun.innerHTML = `<div style="font-size:1.5rem; display:inline-block;">🏃‍♂️</div>`;
                     }
 
-                    // Pucks in E-Reihe
-                    for(let p = 0; p < nPpg && p < activeLayout.length; p++) {
+                    // Pucks in E-Reihe (Round-Robin Zuweisung wie Backend)
+                    for(let p = 0; p < groupPucks[i].length && p < activeLayout.length; p++) {
                         let coord = activeLayout[p];
                         let cell = document.getElementById(`cell-${i}-${coord}`);
-                        let globalIdx = (i * nPpg) + p;
+                        let actualPuckId = groupPucks[i][p].id;
                         if(cell) {
-                            cell.innerHTML = `<div class="puck-icon" id="puck_vis_${globalIdx}" style="background:${colorName}">${p+1}</div>`;
+                            cell.innerHTML = `<div class="puck-icon" id="puck_vis_${actualPuckId}" style="background:${colorName}">${p+1}</div>`;
                         }
                     }
                 }

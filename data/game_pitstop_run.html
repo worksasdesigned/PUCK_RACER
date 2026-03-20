@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PuckRacer">
+    <title>Pitstop Live</title>
+    <link rel="stylesheet" href="style.css?v=6">
+    <style>
+        .top-info    { background:var(--card-bg); border-radius:8px; padding:15px; text-align:center; margin-bottom:15px; border:1px solid var(--border-color); }
+        .big-count   { font-size:5rem; font-family:monospace; color:var(--text-main); font-weight:bold; line-height:1; }
+        .status-txt  { font-size:1.4rem; color:var(--warning); text-transform:uppercase; margin-top:8px; font-weight:bold; }
+
+        .controls    { display:grid; grid-template-columns:1fr 1.5fr 1fr; gap:10px; margin-bottom:15px; }
+        .btn-ctrl    { padding:15px; font-size:1.2rem; font-weight:bold; }
+
+        .player-card  { background:var(--card-bg); border-radius:8px; border-left:6px solid transparent; padding:12px; margin-bottom:10px; transition:background 0.2s; }
+        .player-card.active { cursor:pointer; }
+        .player-card.active:hover { background:var(--card-hover); }
+        .player-card.inactive { opacity:0.4; }
+
+        .pc-top      { display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+        .pc-name     { font-size:1.1rem; font-weight:bold; color:var(--text-main); flex:1; }
+        .pc-stops    { font-size:1.6rem; font-weight:bold; font-family:monospace; color:var(--text-main); }
+        .pc-stop-lbl { font-size:0.7rem; color:var(--text-muted); text-transform:uppercase; text-align:right; }
+
+        .pc-bars     { display:flex; flex-direction:column; gap:5px; margin-bottom:8px; }
+        .bar-row     { display:flex; align-items:center; gap:6px; }
+        .bar-lbl     { font-size:0.75rem; color:var(--text-muted); width:40px; flex-shrink:0; }
+        .bar-track   { flex:1; height:14px; background:var(--bg-color); border-radius:6px; overflow:hidden; border:1px solid var(--border-color); }
+        .bar-fill    { height:100%; border-radius:6px; transition:width 0.35s linear; }
+        .bar-fill.entry { background:#0dcaf0; }
+        .bar-fill.exit  { background:#20c997; }
+        .bar-time    { font-size:0.8rem; font-family:monospace; color:var(--text-main); width:38px; text-align:right; flex-shrink:0; }
+        .bar-pending { font-size:0.75rem; margin-left:2px; }
+
+        .pc-actions  { display:flex; gap:4px; align-items:center; flex-wrap:nowrap; overflow:hidden; }
+        .btn-pen     { background:var(--card-hover); border:1px solid var(--border-color); color:var(--warning); font-size:0.8rem; padding:5px 8px; border-radius:6px; cursor:pointer; font-weight:bold; white-space:nowrap; }
+        .btn-pen:hover { background:var(--warning); color:#000; }
+        .btn-act     { background:var(--card-hover); border:1px solid var(--border-color); color:var(--text-muted); font-size:0.8rem; padding:5px 8px; border-radius:6px; cursor:pointer; white-space:nowrap; }
+        .btn-act:hover { background:var(--primary); color:#fff; }
+        .pen-badge   { background:rgba(220,53,69,0.2); color:var(--danger); border:1px solid var(--danger); border-radius:4px; padding:2px 5px; font-size:0.75rem; margin-left:auto; white-space:nowrap; cursor:pointer; }
+
+        .bottom-nav  { margin-top:20px; border-top:1px solid var(--border-color); padding-top:15px; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" data-i18n="g_pitstop">Pitstop 🏎️⏱️</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green"  id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red"    id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="top-info">
+            <div style="color:var(--text-muted); font-size:0.9rem; margin-bottom:4px;" data-i18n="ps_run_total">Total Stops</div>
+            <div class="big-count" id="totalStops">0</div>
+            <div class="status-txt" id="stateInfo">WAITING</div>
+        </div>
+
+        <div class="controls">
+            <button onclick="goBack()"          class="btn-warn btn-ctrl"    data-i18n="btn_back">⬅</button>
+            <button onclick="onStartBtn()"      class="btn-primary btn-ctrl" id="btnStart" data-i18n="btn_start">START</button>
+            <button onclick="doAction('stop')"  class="btn-danger btn-ctrl"  data-i18n="btn_stop">STOP</button>
+        </div>
+        
+        <div style="text-align:center; margin-bottom:10px;">
+            <button onclick="doAction('pause')" class="btn-primary" style="width:100%; font-size:1.2rem; padding:10px; transition:all 0.3s;" id="btnPause" data-i18n="btn_pause">PAUSE ⏸</button>
+        </div>
+
+        <div id="playerCards"></div>
+
+        <div class="bottom-nav">
+            <button onclick="goHome()" class="btn-back" style="width:100%;" data-i18n="btn_home">🏠 Home</button>
+        </div>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if (localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+        const numPlayers     = parseInt(sessionStorage.getItem('ps_players')  || 2);
+        const isPitlane      = parseInt(sessionStorage.getItem('ps_pitlane')  || 0) === 1;
+        const pitstopTotalMs = parseInt(sessionStorage.getItem('ps_time')     || 10) * 500;
+        const exitTotalMs    = parseInt(sessionStorage.getItem('ps_exittime') || 10) * 500;
+
+        const COLORS = ['#0000FF','#8800FF','#0088FF','#FFFF00','#FF00FF','#00FFFF','#FF8800','#FFFFFF','#FF69B4','#00FFAA'];
+        let lastData = null;
+
+        function t(key, fallback) {
+            if (typeof getTranslation !== 'function') return fallback;
+            let v = getTranslation(key);
+            return (v && v !== key) ? v : fallback;
+        }
+
+        function buildCards() {
+            let html = '';
+            for (let i = 0; i < numPlayers; i++) {
+                let col  = COLORS[i % 10];
+                let name = sessionStorage.getItem(`ps_name_${i}`) || `Player ${i+1}`;
+
+                let bars = isPitlane
+                    ? `<div class="pc-bars">
+                           <div class="bar-row">
+                               <div class="bar-lbl" data-i18n="ps_entry">Entry</div>
+                               <div class="bar-track"><div class="bar-fill entry" id="bar_entry_${i}" style="width:0%"></div></div>
+                               <div class="bar-time" id="time_entry_${i}">--</div>
+                           </div>
+                           <div class="bar-row">
+                               <div class="bar-lbl" data-i18n="ps_exit">Exit</div>
+                               <div class="bar-track"><div class="bar-fill exit" id="bar_exit_${i}" style="width:0%"></div></div>
+                               <div class="bar-time" id="time_exit_${i}">--</div>
+                               <div class="bar-pending" id="pend_${i}" style="display:none;" title="Queued">⏳</div>
+                           </div>
+                       </div>`
+                    : `<div class="pc-bars">
+                           <div class="bar-row">
+                               <div class="bar-lbl" data-i18n="ps_pitstop">Pitstop</div>
+                               <div class="bar-track"><div class="bar-fill entry" id="bar_entry_${i}" style="width:0%"></div></div>
+                               <div class="bar-time" id="time_entry_${i}">--</div>
+                           </div>
+                       </div>`;
+
+                html += `
+                <div class="player-card active" id="card_${i}" style="border-left-color:${col};">
+                    <div class="pc-top">
+                        <div style="width:12px;height:12px;border-radius:50%;background:${col};flex-shrink:0;box-shadow:0 0 6px ${col};"></div>
+                        <div class="pc-name">${name}</div>
+                        <div style="text-align:right;">
+                            <div class="pc-stops" id="stops_${i}">0</div>
+                            <div class="pc-stop-lbl" data-i18n="ps_stops">Stops</div>
+                        </div>
+                    </div>
+                    ${bars}
+                    <div class="pc-actions">
+                        <button class="btn-pen" onclick="addPenalty(event,${i},1)">+1s</button>
+                        <button class="btn-pen" onclick="addPenalty(event,${i},2)">+2s</button>
+                        <button class="btn-pen" onclick="addPenalty(event,${i},3)">+3s</button>
+                        <button class="btn-pen" onclick="addPenalty(event,${i},5)">+5s</button>
+                        <button class="btn-act" onclick="toggleActive(event,${i})" id="btn_act_${i}">Deactivate</button>
+                        <span class="pen-badge" id="pen_badge_${i}" style="display:none;" onclick="clearPenalty(event,${i})" title="Clear Penalty"></span>
+                    </div>
+                </div>`;
+            }
+            document.getElementById('playerCards').innerHTML = html;
+        }
+        buildCards();
+
+        setInterval(update, 400);
+
+        function update() {
+            fetch('/api/game/status').then(r => r.json()).then(data => {
+                lastData = data;
+                render(data);
+            }).catch(e => {});
+        }
+
+        function fmtMs(ms) {
+            if (ms <= 0) return '0.0s';
+            return (ms / 1000).toFixed(1) + 's';
+        }
+
+        function render(data) {
+            document.getElementById('totalStops').innerText = data.total || 0;
+
+            const stateMap = { 0:'SETUP', 1:'RUNNING', 2:'PAUSED', 3:'FINISHED' };
+            const stateCol = { 0:'var(--warning)', 1:'var(--success)', 2:'var(--warning)', 3:'gold' };
+            let stTxt = t(`ps_st_${data.st}`, stateMap[data.st] || 'UNKNOWN');
+            
+            document.getElementById('stateInfo').innerText    = stTxt;
+            document.getElementById('stateInfo').style.color = stateCol[data.st] || 'var(--warning)';
+
+            // --- Pause Button Logik ---
+            let btnP = document.getElementById('btnPause');
+            if (btnP) {
+                if (data.st === 2) {
+                    btnP.innerText = t('btn_resume', 'RESUME ▶');
+                    btnP.style.background = 'var(--warning)';
+                    btnP.style.color = '#000';
+                } else {
+                    btnP.innerText = t('btn_pause', 'PAUSE ⏸');
+                    btnP.style.background = 'var(--card-hover)';
+                    btnP.style.color = 'var(--text-main)';
+                }
+            }
+
+            if (!data.slots) return;
+
+            data.slots.forEach((slot, i) => {
+                let card     = document.getElementById(`card_${i}`);
+                let stopsEl  = document.getElementById(`stops_${i}`);
+                let penBadge = document.getElementById(`pen_badge_${i}`);
+                let btnAct   = document.getElementById(`btn_act_${i}`);
+              
+                if (!card) return;
+
+                stopsEl.innerText = slot.sc;
+
+                if (slot.pen > 0) {
+                    penBadge.style.display = 'inline';
+                    penBadge.innerText = '+' + (slot.pen / 1000).toFixed(1) + 's ❌';
+                } else {
+                    penBadge.style.display = 'none';
+                }
+
+                card.classList.toggle('active',   !!slot.act);
+                card.classList.toggle('inactive', !slot.act);
+                if (btnAct) btnAct.innerText = slot.act ? t('ps_deactivate', 'Deactivate') : t('ps_activate', 'Activate');
+
+                let entryEl  = document.getElementById(`bar_entry_${i}`);
+                let entryTxt = document.getElementById(`time_entry_${i}`);
+                
+                if (entryEl && entryTxt) {
+                    if (slot.entr) {
+                        let totalDur = pitstopTotalMs + slot.pen;
+                        if (totalDur <= 0) totalDur = pitstopTotalMs;
+                        let pct = Math.max(0, Math.min(100, (slot.erem / totalDur) * 100));
+                        entryEl.style.width = pct + '%';
+                        entryEl.style.background = '#0dcaf0'; 
+                        entryEl.style.opacity = '1';
+                        entryTxt.innerText  = fmtMs(slot.erem);
+                    } else if (slot.edone) {
+                        entryEl.style.width = '100%';
+                        entryEl.style.background = '#198754'; 
+                        entryEl.style.opacity = '1';
+                        entryTxt.innerText  = 'GO!';
+                    } else {
+                        entryEl.style.width = slot.act && data.st === 1 ? '100%' : '0%';
+                        entryEl.style.background = '#0dcaf0';
+                        entryEl.style.opacity = slot.act && data.st === 1 ? '0.15' : '1';
+                        entryTxt.innerText  = slot.act && data.st === 1 ? '🏁' : '--';
+                    }
+                }
+
+                if (isPitlane) {
+                    let exitEl  = document.getElementById(`bar_exit_${i}`);
+                    let exitTxt = document.getElementById(`time_exit_${i}`);
+                    let pendEl  = document.getElementById(`pend_${i}`);
+                    
+                    if (exitEl && exitTxt) {
+                        if (slot.ewfb) {
+                            exitEl.style.width      = '100%';
+                            exitEl.style.background = '#FFD700'; 
+                            exitEl.style.opacity    = '1';
+                            exitTxt.innerText       = '👆';
+                        } else if (slot.exit || slot.pend) { 
+                            // GRAUE LEISTE für wartende Fahrer im Hintergrund
+                            let pct = Math.max(0, Math.min(100, (slot.xrem / exitTotalMs) * 100));
+                            exitEl.style.width      = pct + '%';
+                            exitEl.style.background = slot.pend ? '#6c757d' : '#20c997'; 
+                            exitEl.style.opacity    = slot.pend ? '0.7' : '1';
+                            exitTxt.innerText       = fmtMs(slot.xrem);
+                        } else if (slot.xdone) {
+                            exitEl.style.width      = '100%';
+                            exitEl.style.background = '#198754'; 
+                            exitEl.style.opacity    = '1';
+                            exitTxt.innerText       = '🏁';
+                        } else {
+                            exitEl.style.width      = '0%';
+                            exitEl.style.background = '#20c997';
+                            exitEl.style.opacity    = '1';
+                            exitTxt.innerText       = '--';
+                        }
+                    }
+                    if (pendEl) pendEl.style.display = slot.pend ? 'inline' : 'none';
+                }
+            });
+        }
+
+        function onStartBtn() {
+            if (!lastData) { doAction('start'); return; }
+            if (lastData.st === 0 || lastData.st === 3) doAction('start');
+        }
+
+        function addPenalty(evt, i, secs) {
+            evt.stopPropagation();
+            fetch(`/api/game/action?cmd=penalty&val=${i * 100 + secs}`);
+            evt.target.blur(); 
+        }
+
+        function clearPenalty(evt, i) {
+            evt.stopPropagation();
+            fetch(`/api/game/action?cmd=clr_pen&val=${i}`);
+        }
+
+        function toggleActive(evt, i) {
+            evt.stopPropagation();
+            fetch(`/api/game/action?cmd=toggle_active&val=${i}`);
+        }
+
+        function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
+
+        function goBack() {
+            doAction('reset');
+            setTimeout(() => { location.href = 'game_pitstop_names.html'; }, 300);
+        }
+
+        function goHome() {
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
+        }
+    </script>
+</body>
+</html>

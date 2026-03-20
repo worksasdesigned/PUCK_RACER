@@ -114,6 +114,7 @@ After the real first beta is released il will provide the bin files in case of u
 | 🏃‍♂️ **Luc Léger (Beep Test)** | 1–10 | 2/player | 🫀 | Official VO₂max tables, false start detection |
 | 🏃‍♂️ **Shuttle Run** | 1–5 | 2/player | 🏃‍♂️ 🫀 | Winner detection, false start detection |
 | 🧟 **Zombie Escape** | 1–10 groups | 2/group | 🫀 🧠 🤪 | Auto time reduction, sudden death mode |
+| 🏎️ **Pit Stop** | 1–10 groups | 1-2/group | 🫀 | Making a break. Defined PitStops. Pitlane mode. |
 
 ---
 
@@ -182,7 +183,16 @@ After the real first beta is released il will provide the bin files in case of u
         - fix for Whac-A-Mole color picker  
 **V2.89.15**   
     - Tutorial adjusted  
-    
+
+**V2.90.12**   
+    - RSSI fixed  
+    - 12 games small fixes (puck colo) fixed  
+    - snall enhancements in various games after Beta Test 1  
+
+**V2.91.1**   
+    - new game: Pit Stop  
+    - Red Light Green Light small adjustments and fixes  
+
 --- 
 
 

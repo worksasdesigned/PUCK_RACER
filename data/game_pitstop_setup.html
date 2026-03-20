@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PuckRacer">
+    <title>Setup - Pitstop</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_pitstop">Pitstop 🏎️⏱️</div></header>
+    <main>
+
+        <div class="card">
+            <div class="slider-header">
+                <h3 data-i18n="ps_setup_players" style="margin:0;">👥 Players / Stations</h3>
+                <span id="playerDisp" class="slider-val">2</span>
+            </div>
+            <input type="range" id="playerSlider" min="1" max="10" value="2" oninput="updatePlayers()">
+            <p id="puckInfo" class="info-txt" data-i18n="loading_pucks">Loading Pucks...</p>
+        </div>
+
+        <div class="card">
+            <div class="slider-header">
+                <h3 data-i18n="ps_setup_time" style="margin:0;">⏱️ Pitstop Duration</h3>
+                <span id="timeDisp" class="slider-val">5.0s</span>
+            </div>
+            <input type="range" id="timeSlider" min="0" max="40" value="10" oninput="updateTime()">
+            <div class="info-txt" data-i18n="ps_setup_time_hint">(0 – 20 seconds in 0.5s steps)</div>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="tgt_setup_rules" style="margin-top:0;">⚙️ Options</h3>
+
+            <div class="toggle-row">
+                <div>
+                    <span data-i18n="ps_opt_pitlane">Pitlane Mode</span>
+                    <div style="font-size:0.8rem; color:var(--text-muted);" data-i18n="ps_opt_pitlane_hint">2 pucks per station (entry + exit)</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="chkPitlane" onchange="onPitlaneChange()">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row" style="margin-top:10px;">
+                <span data-i18n="ps_opt_countdown">Show countdown on pucks</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkCountdown" checked>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row" style="margin-top:10px;">
+                <div>
+                    <span data-i18n="ps_opt_alwyellow">Yellow Effect</span>
+                    <div style="font-size:0.8rem; color:var(--text-muted);" data-i18n="ps_opt_alwyellow_hint">all pucks in idle mode show yellow effect</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="chkAlwYellow">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row" style="margin-top:10px;">
+                <div>
+                    <span data-i18n="ps_opt_statuspuck">Show pitlane status on extra puck</span>
+                    <div style="font-size:0.8rem; color:var(--text-muted);" data-i18n="ps_opt_statuspuck_hint">1 extra puck shows green/red pitlane open state</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="chkStatusPuck" onchange="updatePlayers()">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="card" id="pitlaneCard" style="display:none;">
+            <h3 data-i18n="ps_pitlane_settings" style="margin-top:0;">🔧 Pitlane Settings</h3>
+
+            <div class="slider-header">
+                <h3 data-i18n="ps_exit_time" style="margin:0;">🏁 Pitlane Travel Time</h3>
+                <span id="exitTimeDisp" class="slider-val">5.0s</span>
+            </div>
+            <input type="range" id="exitTimeSlider" min="2" max="40" value="10" oninput="updateExitTime()">
+            <div class="info-txt" data-i18n="ps_exit_time_hint">(1 – 20 seconds in 0.5s steps)</div>
+
+            <div class="toggle-row" style="margin-top:15px;">
+                <div>
+                    <span data-i18n="ps_opt_exitbtn">Pitlane End Buzzer</span>
+                    <div style="font-size:0.8rem; color:var(--text-muted);" data-i18n="ps_opt_exitbtn_hint">Driver presses exit puck to confirm pitlane done</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="chkExitBtn">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <button id="btnNext" onclick="nextStep()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="btn_next">NEXT ➡</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:10px;" data-i18n="btn_cancel">Cancel</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script>
+        if (localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        let connectedPucks = 0;
+
+        fetch('/api/status').then(r => r.json()).then(data => {
+            connectedPucks = data.filter(p => p.active).length;
+            updatePlayers();
+        });
+
+        function updateTime() {
+            let val  = parseInt(document.getElementById('timeSlider').value);
+            let secs = (val * 0.5).toFixed(1);
+            document.getElementById('timeDisp').innerText = secs + 's';
+            return val;
+        }
+
+        function updatePlayers() {
+            let n          = parseInt(document.getElementById('playerSlider').value);
+            let pitlane    = document.getElementById('chkPitlane').checked;
+            let statuspuck = document.getElementById('chkStatusPuck').checked;
+            let required   = (pitlane ? n * 2 : n) + (statuspuck ? 1 : 0);
+            
+            document.getElementById('playerDisp').innerText = n;
+
+            let infoEl = document.getElementById('puckInfo');
+            let btn    = document.getElementById('btnNext');
+            let reqTxt = (typeof getTranslation === 'function') ? getTranslation('req_pucks') : 'Required:';
+            let conTxt = (typeof getTranslation === 'function') ? getTranslation('conn_pucks') : 'Connected:';
+            infoEl.innerHTML = `${reqTxt} ${required} | ${conTxt} ${connectedPucks}`;
+            
+            if (required > connectedPucks) {
+                infoEl.classList.add('warn-txt');
+                btn.style.opacity = '0.5';
+            } else {
+                infoEl.classList.remove('warn-txt');
+                btn.style.opacity = '1';
+            }
+        }
+
+        function updateExitTime() {
+            let val = parseInt(document.getElementById('exitTimeSlider').value);
+            document.getElementById('exitTimeDisp').innerText = (val * 0.5).toFixed(1) + 's';
+        }
+
+        function onPitlaneChange() {
+            let pitlane    = document.getElementById('chkPitlane').checked;
+            let statuspuck = document.getElementById('chkStatusPuck').checked;
+            let available  = connectedPucks - (statuspuck ? 1 : 0);
+            let maxPlayers = pitlane ? Math.floor(available / 2) : available;
+            
+            maxPlayers = Math.max(1, Math.min(maxPlayers, 10));
+            document.getElementById('pitlaneCard').style.display = pitlane ? 'block' : 'none';
+            
+            let slider = document.getElementById('playerSlider');
+            slider.max = maxPlayers;
+            if (parseInt(slider.value) > maxPlayers) slider.value = maxPlayers;
+            updatePlayers();
+        }
+
+        function nextStep() {
+            let n          = parseInt(document.getElementById('playerSlider').value);
+            let timeVal    = parseInt(document.getElementById('timeSlider').value);
+            let pitlane    = document.getElementById('chkPitlane').checked   ? 1 : 0;
+            let countdown  = document.getElementById('chkCountdown').checked ? 1 : 0;
+            let alwyellow  = document.getElementById('chkAlwYellow').checked   ? 1 : 0;
+            let statuspuck = document.getElementById('chkStatusPuck').checked  ? 1 : 0;
+            let required   = (pitlane ? n * 2 : n) + (statuspuck ? 1 : 0);
+            
+            if (required > connectedPucks) {
+                let msg = (typeof getTranslation === 'function') ? getTranslation('confirm_not_enough_pucks') : 'Not enough pucks connected! Continue anyway?';
+                if (!confirm(msg)) return;
+            }
+
+            sessionStorage.setItem('ps_players',   n);
+            sessionStorage.setItem('ps_time',      timeVal);
+            sessionStorage.setItem('ps_pitlane',   pitlane);
+            sessionStorage.setItem('ps_countdown', countdown);
+            sessionStorage.setItem('ps_alwyellow',  alwyellow);
+            sessionStorage.setItem('ps_statuspuck', statuspuck);
+            
+            if (pitlane) {
+                sessionStorage.setItem('ps_exittime', parseInt(document.getElementById('exitTimeSlider').value));
+                sessionStorage.setItem('ps_exitbtn',  document.getElementById('chkExitBtn').checked ? 1 : 0);
+            } else {
+                sessionStorage.setItem('ps_exittime', 10);
+                sessionStorage.setItem('ps_exitbtn',  0);
+            }
+
+            location.href = 'game_pitstop_names.html';
+        }
+
+        function cancelSetup() {
+            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
+        }
+
+        updateTime();
+        updateExitTime();
+        updatePlayers();
+    </script>
+</body>
+</html>

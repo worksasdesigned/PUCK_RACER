@@ -27,8 +27,9 @@
 #include "Game_Whac.h"
 #include "Game_CatReflex.h"
 #include "Game_Musical.h" 
-#include "Game_TTTT.h" 
-#include "StatsManager.h" 
+#include "Game_TTTT.h"
+#include "Game_Pitstop.h"
+#include "StatsManager.h"
 
 
 Game* GameManager::currentGame = nullptr;
@@ -59,7 +60,8 @@ Game_Ball gameBall;          // ID 23
 Game_Whac gameWhac; // ID 24
 Game_CatReflex gameCatReflex;   // ID 25
 Game_Musical gameMusical;   // ID 26
-Game_TTTT gameTTTT;   // ID 27
+Game_TTTT gameTTTT;       // ID 27
+Game_Pitstop gamePitstop; // ID 28
 
 // Global Variables form RAM watchdog
 int lowestHeapGameId = 0;
@@ -108,8 +110,9 @@ void GameManager::startGame(int gameID) {
         case 24: currentGame = &gameWhac; break;
         case 25: currentGame = &gameCatReflex; break;
         case 26: currentGame = &gameMusical; break;
-        case 27: currentGame = &gameTTTT; break;
-        
+        case 27: currentGame = &gameTTTT;   break;
+        case 28: currentGame = &gamePitstop; break;
+
         default: Serial.println("Unbekannte ID"); return;
     }
     

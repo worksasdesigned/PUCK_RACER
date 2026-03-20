@@ -2,7 +2,7 @@
 #include "PuckNetwork.h"
 
 Preferences statsPrefs;
-uint32_t gameStarts[30] = {0}; // index 1..27 used
+uint32_t gameStarts[30] = {0}; // index 1..28 used
 
 // Helfer um MAC Adresse in einen kurzen String (die letzten 6 Zeichen) als Speicher-Key zu wandeln
 String macToStr(const uint8_t* mac) {
@@ -13,7 +13,7 @@ String macToStr(const uint8_t* mac) {
 
 void StatsManager::begin() {
     statsPrefs.begin("pr_stats", false);
-    for(int i=1; i<=27; i++) {
+    for(int i=1; i<=28; i++) {
         gameStarts[i] = statsPrefs.getUInt(String("g" + String(i)).c_str(), 0);
     }
     statsPrefs.end();
@@ -21,13 +21,13 @@ void StatsManager::begin() {
 }
 
 void StatsManager::addGameStart(int gameID) {
-    if(gameID >= 1 && gameID <= 27) {
+    if(gameID >= 1 && gameID <= 28) {
         gameStarts[gameID]++;
     }
 }
 
 uint32_t StatsManager::getGameStarts(int gameID) {
-    if(gameID >= 1 && gameID <= 27) return gameStarts[gameID];
+    if(gameID >= 1 && gameID <= 28) return gameStarts[gameID];
     return 0;
 }
 
@@ -52,7 +52,7 @@ void StatsManager::saveAll() {
     statsPrefs.begin("pr_stats", false);
     
     // Spiel-Aufrufe speichern
-    for(int i=1; i<=27; i++) {
+    for(int i=1; i<=28; i++) {
         statsPrefs.putUInt(String("g" + String(i)).c_str(), gameStarts[i]);
     }
     
