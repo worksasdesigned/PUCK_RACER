@@ -35,13 +35,16 @@ enum EffectID {
 
 // --- BEFEHLSTYPEN ---
 enum CommandType {
-    CMD_PING = 0,            
-    CMD_PAIR_ACK = 1,        
-    CMD_UPDATE_MODE = 2,     
-    CMD_EFFECT = 10,         
-    CMD_SOUND = 11,          
-    CMD_SEQUENCE = 12,       
-    CMD_RESET = 99           
+    CMD_PING = 0,
+    CMD_PAIR_ACK = 1,
+    CMD_UPDATE_MODE = 2,
+    CMD_KEEPALIVE = 3,       // Bidirektionaler Heartbeat: Coordinator → Puck (zyklisch)
+                             // Dient der Verbindungsüberwachung: Puck erkennt damit,
+                             // ob der Coordinator noch erreichbar ist.
+    CMD_EFFECT = 10,
+    CMD_SOUND = 11,
+    CMD_SEQUENCE = 12,
+    CMD_RESET = 99
 };
 
 // --- SOUND IDs ---

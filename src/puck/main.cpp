@@ -1,5 +1,6 @@
 /*
  * PROJEKT: Puck Race - PUCK FIRMWARE
+ * Version 81 stability fixes, bidirectional heartbeats
  * Version: 80 Battery Update + Sound Fixes + Core 3.x Support
  * VERSION: 75 (FIX: ESP-NOW Core 2.x Kompatibilität + Promiscuous RSSI Sniffer)
  *
@@ -30,7 +31,7 @@
 #define PIN_BTN     3 
 #define PIN_BUZZER  5
 #define NUM_LEDS    35
-#define FW_VERSION  80
+#define FW_VERSION  81
 
 // --- AUDIO NOTEN ---
 #define NOTE_B0  31
@@ -59,6 +60,17 @@ bool updateRequested = false;
 unsigned long lastHeartbeat = 0;
 String updateSSID = "";
 String updatePW = "";
+
+// STABILITÄTS-FIX: Zeitpunkt des letzten empfangenen Coordinator-Befehls.
+// Wird bei jedem eingehenden Kommando (CMD_KEEPALIVE, CMD_EFFECT, etc.) aktualisiert.
+// Wenn dieser Wert > 15 Sekunden alt ist, geht der Puck davon aus, dass die
+// Verbindung verloren wurde, und wechselt auf roten Status + schnelleres Re-Pairing.
+unsigned long lastCommandFromCoordinator = 0;
+
+// STABILITÄTS-FIX: Timeout-Schwelle in ms, ab der der Puck die Verbindung
+// als verloren betrachtet. Der Coordinator sendet alle 10s einen CMD_KEEPALIVE,
+// also sollte bei stabiler Verbindung nie ein 15s-Timeout auftreten.
+#define COORDINATOR_TIMEOUT_MS 15000
 
 // GLOBALE RSSI VARIABLE (wird nun vom Sniffer befüllt)
 volatile int currentRSSI = 0;
@@ -164,11 +176,20 @@ void setup() {
     WiFi.mode(WIFI_STA); 
     WiFi.disconnect();
     
-    // Sniffer aktivieren, um RSSI Werte abzugreifen
-    esp_wifi_set_promiscuous(true);
+    // RSSI Sniffer: Callback registrieren, aber standardmäßig DEAKTIVIERT lassen.
+    // -------------------------------------------------------------------------
+    // STABILITÄTS-FIX: Der Promiscuous Mode war bisher permanent aktiv. Das bedeutet,
+    // dass JEDES WiFi-Paket in der Luft (auch von fremden Netzwerken, Handys, etc.)
+    // einen ISR-Callback auf dem Puck auslöst. Bei 4 Pucks in einer WiFi-dichten
+    // Umgebung erzeugt das erhebliche CPU-Last und kann dazu führen, dass ESP-NOW
+    // Pakete (Heartbeats, Button-Events) verloren gehen.
+    //
+    // Der Sniffer wird jetzt nur noch aktiviert, wenn EFF_STATUS gesetzt wird
+    // (dort wird currentRSSI für die Rot/Grün-Anzeige gebraucht), und bei allen
+    // anderen Effekten wieder deaktiviert. Siehe setEffect().
     esp_wifi_set_promiscuous_rx_cb(&promiscuous_rx_cb);
     esp_wifi_set_channel(WIFI_CHANNEL, WIFI_SECOND_CHAN_NONE);
-    // esp_wifi_set_promiscuous(false); // Auskommentiert, damit der Sniffer aktiv bleibt
+    esp_wifi_set_promiscuous(false); // Standardmäßig AUS → weniger CPU-Last
 
     if (esp_now_init() != ESP_OK) ESP.restart();
     esp_now_register_recv_cb(OnDataRecv);
@@ -194,15 +215,46 @@ void loop() {
     runSound(); 
 
     unsigned long now = millis();
+
+    // =========================================================================
+    // DISCONNECT-ERKENNUNG: Coordinator → Puck Verbindungsüberwachung
+    // =========================================================================
+    // Der Coordinator sendet alle 10s einen CMD_KEEPALIVE Broadcast.
+    // Wenn wir seit COORDINATOR_TIMEOUT_MS (15s) keinen einzigen Befehl mehr
+    // empfangen haben, ist die Verbindung sehr wahrscheinlich unterbrochen.
+    //
+    // Reaktion:
+    //   1. LED auf ROT setzen → visuelles Feedback für den Benutzer
+    //   2. isPaired = false → Puck sendet jetzt alle 2s EVT_HELLO statt
+    //      alle 5s EVT_HEARTBEAT, was das Re-Pairing beschleunigt
+    //   3. Promiscuous Sniffer deaktivieren → CPU-Last reduzieren
+    //
+    // lastCommandFromCoordinator == 0 bedeutet: noch nie ein Befehl empfangen
+    // (Startup-Phase), dann wird kein Timeout ausgelöst.
+    if (isPaired && lastCommandFromCoordinator > 0 &&
+        now - lastCommandFromCoordinator > COORDINATOR_TIMEOUT_MS) {
+
+        Serial.printf("DISCONNECT: Kein Coordinator-Signal seit %lums → Verbindung verloren!\n",
+                      now - lastCommandFromCoordinator);
+        isPaired = false;
+        lastHeartbeat = 0;  // Sofort EVT_HELLO senden beim nächsten Loop-Durchlauf
+
+        // Visuelles Feedback: Status-LED auf ROT
+        setEffect(EFF_STATUS, 255, 0, 0, 0, 255, 0);
+
+        // Sniffer aus (spart CPU während der Reconnect-Phase)
+        esp_wifi_set_promiscuous(false);
+    }
+
     if (!isPaired) {
-        if (now - lastHeartbeat > 2000) { 
+        if (now - lastHeartbeat > 2000) {
             sendEvent(EVT_HELLO);
-            lastHeartbeat = now; 
+            lastHeartbeat = now;
         }
     } else {
         if (now - lastHeartbeat > 5000) {
             sendEvent(EVT_HEARTBEAT);
-            lastHeartbeat = now; 
+            lastHeartbeat = now;
         }
     }
 }
@@ -318,17 +370,27 @@ void processIncomingCommands() {
 
         if (!hasData) break;
 
+        // STABILITÄTS-FIX: Bei JEDEM empfangenen Befehl den Zeitstempel aktualisieren.
+        // So weiß der Puck, dass der Coordinator noch erreichbar ist.
+        // Wird in loop() gegen COORDINATOR_TIMEOUT_MS geprüft.
+        lastCommandFromCoordinator = millis();
+
         if (cmd.cmd == CMD_PING) {
             isPaired = false;
-            lastHeartbeat = 0; 
+            lastHeartbeat = 0;
             Serial.println("PING empfangen – Re-Pairing...");
         }
-        else if (cmd.cmd == CMD_PAIR_ACK) { 
+        else if (cmd.cmd == CMD_KEEPALIVE) {
+            // Bidirektionaler Heartbeat vom Coordinator (alle ~10 Sekunden).
+            // Hauptzweck: lastCommandFromCoordinator wird oben bereits aktualisiert.
+            // Keine weitere Aktion nötig – der Puck weiß jetzt, dass die Verbindung steht.
+        }
+        else if (cmd.cmd == CMD_PAIR_ACK) {
             if (!isPaired) isPaired = true;
         }
         else if (cmd.cmd == CMD_EFFECT) {
         if (cmd.effectID != EFF_FLASH && cmd.effectID != EFF_STATIC && cmd.effectID != EFF_STATUS && cmd.effectID != EFF_FLASH_BEEP) {
-                if (anim.id == cmd.effectID && 
+                if (anim.id == cmd.effectID &&
                     anim.color1.r == cmd.r && anim.color1.g == cmd.g && anim.color1.b == cmd.b &&
                     anim.speed == cmd.duration &&
                     anim.brightness == cmd.extra) {
@@ -337,7 +399,7 @@ void processIncomingCommands() {
             }
             setEffect(cmd.effectID, cmd.r, cmd.g, cmd.b, cmd.duration, cmd.extra, cmd.extra);
         }
-        else if (cmd.cmd == CMD_SOUND) { 
+        else if (cmd.cmd == CMD_SOUND) {
             sound.active = true; sound.isExplosion = false;
             sound.seqIndex = 0; sound.seqLength = 0;
             addNote(600, cmd.duration); 
@@ -444,15 +506,26 @@ void setEffect(uint8_t id, uint8_t r, uint8_t g, uint8_t b, int speed, uint8_t b
     anim.speed = speed;
     anim.brightness = bright;
     anim.step = 0;
-    anim.counter = extra; 
+    anim.counter = extra;
 
     FastLED.setBrightness(bright);
-    
+
+    // STABILITÄTS-FIX: Promiscuous Sniffer nur bei EFF_STATUS aktivieren.
+    // EFF_STATUS nutzt currentRSSI (Zeile in runAnimation), um bei schwachem
+    // Signal die LED rot statt grün anzuzeigen. Für alle anderen Effekte wird
+    // der Sniffer deaktiviert, um CPU-Last zu reduzieren und ESP-NOW Stabilität
+    // zu verbessern.
+    if (id == EFF_STATUS) {
+        esp_wifi_set_promiscuous(true);
+    } else {
+        esp_wifi_set_promiscuous(false);
+    }
+
     if (id == EFF_FLASH_BEEP) {
-        startSoundSequence(SEQ_DINGDONG); 
+        startSoundSequence(SEQ_DINGDONG);
         fill_solid(leds, NUM_LEDS, anim.color1);
         FastLED.show();
-        anim.lastUpdate = millis(); 
+        anim.lastUpdate = millis();
     }
     else if (id != EFF_STATIC && id != EFF_STATUS && id != EFF_PROGRESS) {
         FastLED.clear();

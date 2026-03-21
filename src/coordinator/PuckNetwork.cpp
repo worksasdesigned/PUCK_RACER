@@ -1,7 +1,8 @@
 #include "PuckNetwork.h"
 #include "GameManager.h"
-#include <Preferences.h> 
+#include <Preferences.h>
 #include "StatsManager.h"
+#include <esp_wifi.h>       // Für esp_wifi_set_ps() – WiFi Power-Save Steuerung
 
 PuckInfo PuckNetwork::pucks[MAX_PEERS];
 volatile QueueItem PuckNetwork::eventQueue[QUEUE_SIZE];
@@ -32,9 +33,18 @@ void PuckNetwork::begin() {
     currentPW = prefs.getString("pw", "");
     prefs.end();
 
-    // FIX 1: AP_STA Modus aktivieren! So können Pucks auf dem STA-Interface laufen 
+    // FIX 1: AP_STA Modus aktivieren! So können Pucks auf dem STA-Interface laufen
     // und kollidieren nicht mit dem SoftAP Limit (Handys).
-    WiFi.mode(WIFI_AP_STA); 
+    WiFi.mode(WIFI_AP_STA);
+
+    // STABILITÄTS-FIX: WiFi Power-Save komplett deaktivieren.
+    // Der ESP32 kann im Default-Modus (WIFI_PS_MIN_MODEM) den Funkchip periodisch
+    // in den Schlaf versetzen, um Strom zu sparen. Das führt bei ESP-NOW dazu, dass
+    // Pakete (Heartbeats, Events) sporadisch verloren gehen und Pucks als
+    // "disconnected" erscheinen, obwohl sie physisch in Reichweite sind.
+    // Da der Coordinator am Netzteil hängt, ist Stromsparen hier nicht relevant.
+    esp_wifi_set_ps(WIFI_PS_NONE);
+
     WiFi.softAPConfig(local_IP, gateway, subnet);
     if (currentPW.length() > 0) WiFi.softAP(currentSSID.c_str(), currentPW.c_str(), WIFI_CHANNEL, 0, MAX_PEERS);
     else WiFi.softAP(currentSSID.c_str(), NULL, WIFI_CHANNEL, 0, MAX_PEERS);
@@ -160,8 +170,25 @@ void PuckNetwork::update() {
         }
     }
 
+    // =========================================================================
+    // BIDIREKTIONALER HEARTBEAT: Coordinator → Pucks (alle 10 Sekunden)
+    // =========================================================================
+    // Ohne diesen Keepalive hat der Puck KEINE Möglichkeit zu erkennen, dass
+    // der Coordinator ihn nicht mehr sieht. Das führte dazu, dass Pucks
+    // minutenlang grün leuchteten (EFF_STATUS), obwohl sie längst getrennt waren.
+    // Der Puck wertet CMD_KEEPALIVE aus und setzt sich selbst auf "disconnected",
+    // wenn er länger als 15 Sekunden keinen Keepalive mehr empfängt.
+    static unsigned long lastKeepalive = 0;
+    if (now_ms - lastKeepalive > 10000) {
+        lastKeepalive = now_ms;
+        CommandPacket ka;
+        memset(&ka, 0, sizeof(ka));
+        ka.cmd = CMD_KEEPALIVE;
+        broadcast(ka);
+    }
+
     static unsigned long lastStatsPrint = 0;
-    if (millis() - lastStatsPrint > 5000) { 
+    if (millis() - lastStatsPrint > 5000) {
         lastStatsPrint = millis();
         printStats(); 
     }
