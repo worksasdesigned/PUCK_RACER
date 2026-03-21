@@ -12,6 +12,8 @@ void Game_Domination::processCommand(String cmd, int value) {
     else if (cmd == "cfg_time") durationMs = value * 1000UL;
     else if (cmd == "cfg_block") blockTimeMs = value * 1000UL;
     else if (cmd == "cfg_sync") groupStart = (value == 1);
+    else if (cmd == "cfg_mode") { deathmatch = (value == 1); Serial.printf("DOM: mode=%s\n", deathmatch ? "DEATHMATCH" : "STANDARD"); }
+    else if (cmd == "cfg_hp") { hpPerTeam = constrain(value, 100, 2000); Serial.printf("DOM: hp=%d\n", hpPerTeam); }
     
     else if (cmd == "start") {
         globalCountdownStart = 0;
@@ -88,6 +90,11 @@ void Game_Domination::setGroupState(int gIdx, DomState newState) {
         g->holdT2 = false;
         g->scoreT1 = 0;
         g->scoreT2 = 0;
+        g->hpT1 = hpPerTeam;
+        g->hpT2 = hpPerTeam;
+        g->dmgT1 = 0;
+        g->dmgT2 = 0;
+        g->lastHpTick = 0;
         g->finishedAnimDone = false;
         
         // Im Setup zeigen die Pucks die Arena-Farbe (Lila/Türkis) zur Identifikation
@@ -129,6 +136,11 @@ void Game_Domination::setGroupState(int gIdx, DomState newState) {
     }
     else if (newState == DOM_RUNNING) {
         g->runStartTime = millis();
+        g->lastHpTick = millis();
+        g->hpT1 = hpPerTeam;
+        g->hpT2 = hpPerTeam;
+        g->dmgT1 = 0;
+        g->dmgT2 = 0;
         // Im Spiel sind neutrale Pucks Weiß
         for(size_t p=0; p<g->pucks.size(); p++) {
             g->pucks[p].owner = 0;
@@ -142,14 +154,24 @@ void Game_Domination::setGroupState(int gIdx, DomState newState) {
         PuckNetwork::sendToPuck(PuckNetwork::getPucks()[g->pucks[0].globalIdx].mac, snd);
     }
     else if (newState == DOM_FINISHED) {
-        g->finishedAnimDone = false; 
+        g->finishedAnimDone = false;
         updateScores();
-        
+
+        // Determine winner
+        bool isTie;
+        CRGB winColor;
+        if (deathmatch) {
+            isTie = (g->hpT1 == g->hpT2);
+            winColor = (g->hpT1 > g->hpT2) ? g->colorT1 : g->colorT2;
+        } else {
+            isTie = (g->scoreT1 == g->scoreT2);
+            winColor = (g->scoreT1 > g->scoreT2) ? g->colorT1 : g->colorT2;
+        }
+
         for(size_t p=0; p<g->pucks.size(); p++) {
-            if (g->scoreT1 == g->scoreT2) {
+            if (isTie) {
                 setPuck(g->pucks[p].globalIdx, EFF_RAINBOW, CRGB::Black, 0, 200);
             } else {
-                CRGB winColor = (g->scoreT1 > g->scoreT2) ? g->colorT1 : g->colorT2;
                 setPuck(g->pucks[p].globalIdx, EFF_DOUBLE_CHASE, winColor, 30, 255);
             }
             delay(10);
@@ -229,9 +251,47 @@ void Game_Domination::loop() {
         }
 
         if (g->state == DOM_RUNNING) {
-            if (currentNow - g->runStartTime >= durationMs) {
+            // Standard mode: time limit
+            if (!deathmatch && currentNow - g->runStartTime >= durationMs) {
                 setGroupState(i, DOM_FINISHED);
                 continue;
+            }
+
+            // Deathmatch: HP tick every second
+            if (deathmatch && currentNow - g->lastHpTick >= 1000) {
+                g->lastHpTick = currentNow;
+                updateScores();
+
+                int totalPucks = g->pucks.size();
+                int ownedT1 = g->scoreT1;
+                int ownedT2 = g->scoreT2;
+
+                int lossT1 = 0;
+                int lossT2 = 0;
+
+                if (ownedT1 == totalPucks && totalPucks > 0) {
+                    // Team 1 owns ALL pucks -> Team 2 loses double
+                    lossT2 = 2 * totalPucks;
+                } else if (ownedT2 == totalPucks && totalPucks > 0) {
+                    // Team 2 owns ALL pucks -> Team 1 loses double
+                    lossT1 = 2 * totalPucks;
+                } else {
+                    // Normal: lose 1 HP per enemy puck
+                    lossT1 = ownedT2;  // T1 loses HP for pucks T2 owns
+                    lossT2 = ownedT1;  // T2 loses HP for pucks T1 owns
+                }
+
+                g->dmgT1 = lossT1;
+                g->dmgT2 = lossT2;
+                g->hpT1 -= lossT1;
+                g->hpT2 -= lossT2;
+                if (g->hpT1 < 0) g->hpT1 = 0;
+                if (g->hpT2 < 0) g->hpT2 = 0;
+
+                if (g->hpT1 <= 0 || g->hpT2 <= 0) {
+                    setGroupState(i, DOM_FINISHED);
+                    continue;
+                }
             }
 
             for (size_t p=0; p<g->pucks.size(); p++) {
@@ -424,13 +484,21 @@ void Game_Domination::sendSequence(int index, int seqID) {
 String Game_Domination::getStatusJSON() {
     updateScores();
     String json = "{";
-    json += "\"st\":" + String(groups[0].state) + ","; 
-    
+    json += "\"st\":" + String(groups[0].state) + ",";
+    json += "\"dm\":" + String(deathmatch ? 1 : 0) + ",";
+
     long t = 0;
-    if (groups[0].state == DOM_RUNNING) t = durationMs - (millis() - groups[0].runStartTime);
-    if (t < 0 || groups[0].state == DOM_FINISHED) t = 0;
-    if (groups[0].state <= DOM_COUNTDOWN) t = durationMs;
-    
+    if (deathmatch) {
+        // Count up in deathmatch
+        if (groups[0].state == DOM_RUNNING) t = millis() - groups[0].runStartTime;
+        else if (groups[0].state == DOM_FINISHED) t = groups[0].stateStartTime - groups[0].runStartTime;
+        else t = 0;
+    } else {
+        if (groups[0].state == DOM_RUNNING) t = durationMs - (millis() - groups[0].runStartTime);
+        if (t < 0 || groups[0].state == DOM_FINISHED) t = 0;
+        if (groups[0].state <= DOM_COUNTDOWN) t = durationMs;
+    }
+
     json += "\"t\":" + String(t) + ",";
     
     json += "\"grps\":[";
@@ -443,6 +511,10 @@ String Game_Domination::getStatusJSON() {
         json += "\"h1\":" + String(groups[i].holdT1 ? 1 : 0) + ",";
         json += "\"h2\":" + String(groups[i].holdT2 ? 1 : 0) + ",";
         json += "\"fs\":" + String(groups[i].falseStart ? 1 : 0) + ",";
+        json += "\"hp1\":" + String(groups[i].hpT1) + ",";
+        json += "\"hp2\":" + String(groups[i].hpT2) + ",";
+        json += "\"d1\":" + String(groups[i].dmgT1) + ",";
+        json += "\"d2\":" + String(groups[i].dmgT2) + ",";
         
         json += "\"pucks\":[";
         for(size_t p=0; p<groups[i].pucks.size(); p++) {

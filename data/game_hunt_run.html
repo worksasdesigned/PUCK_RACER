@@ -21,7 +21,7 @@
         .p-name { font-size: 1.5rem; font-weight: bold; color:var(--text-main);}
         .p-score { font-family: monospace; font-size: 2.5rem; font-weight: bold; color: var(--text-main); text-align:right;}
         
-        .row-win { background: rgba(255, 215, 0, 0.2); border-color: gold !important; }
+        .row-win { background: rgba(0, 200, 0, 0.2); }
 
         .bottom-nav { margin-top: 30px; border-top: 1px solid var(--border-color); padding-top: 15px; }
     </style>
@@ -127,12 +127,12 @@
                     <div id="${rowId}" class="${rowClass}" style="border-left-color: ${col}; order:${index}">
                         <div class="color-dot" style="background:${col}; box-shadow:0 0 10px ${col}"></div>
                         <div class="p-name">${name}</div>
-                        <div class="p-score" id="sc-${p.id}">${p.sc}</div>
+                        <div class="p-score" id="sc-${p.id}">${isWin ? `${p.sc} 🥇` : p.sc}</div>
                     </div>`);
                 } else {
                     rowEl.className = rowClass;
                     rowEl.style.order = index;
-                    document.getElementById(`sc-${p.id}`).innerText = p.sc;
+                    document.getElementById(`sc-${p.id}`).innerHTML = isWin ? `${p.sc} 🥇` : p.sc;
                 }
             });
         }

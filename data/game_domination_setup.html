@@ -9,28 +9,53 @@
     <title>Setup - Domination</title>
     <link rel="stylesheet" href="style.css?v=2">
     <style>
-        .hint-box { 
-            background: rgba(0,0,0,0.3); 
-            border:1px solid var(--border-color); 
-            padding:15px; 
-            border-radius:6px; 
-            font-size:0.9rem; 
-            color:var(--text-muted); 
+        .hint-box {
+            background: rgba(0,0,0,0.3);
+            border:1px solid var(--border-color);
+            padding:15px;
+            border-radius:6px;
+            font-size:0.9rem;
+            color:var(--text-muted);
             margin-top:20px;
             text-align:center;
         }
+        .mode-tabs { display:flex; gap:10px; margin-bottom:15px; }
+        .mode-tab {
+            flex:1; padding:10px; text-align:center; background:var(--bg-color);
+            border-radius:6px; cursor:pointer; font-weight:bold; border:2px solid transparent;
+        }
+        .mode-tab.active { background: var(--primary); color:white; border-color:#fff; }
+        .est-time { font-size:0.9rem; color:var(--text-muted); text-align:center; margin-top:10px; }
     </style>
 </head>
 <body>
     <header><div class="logo" data-i18n="g_domination">Domination ⚔️</div></header>
     <main>
         <div class="card">
+            <h3 data-i18n="dom_setup_mode">🎮 Game Mode</h3>
+            <div class="mode-tabs">
+                <div id="tabStandard" class="mode-tab active" onclick="setMode(0)" data-i18n="dom_mode_standard">⚔️ Standard</div>
+                <div id="tabDeathmatch" class="mode-tab" onclick="setMode(1)" data-i18n="dom_mode_deathmatch">💀 Deathmatch</div>
+            </div>
+        </div>
+
+        <div id="blockTime" class="card">
             <h3 data-i18n="dom_setup_time">⏱️ Game Time</h3>
             <div class="slider-header">
                 <span data-i18n="lbl_time_limit">Duration:</span>
                 <span id="timeDisp" class="slider-val">3m 00s</span>
             </div>
             <input type="range" id="timeSlider" min="3" max="30" value="18" oninput="updateTime()">
+        </div>
+
+        <div id="blockHP" class="card" style="display:none;">
+            <h3 data-i18n="dom_setup_hp">❤️ Hit Points</h3>
+            <div class="slider-header">
+                <span data-i18n="dom_lbl_hp">HP per Team:</span>
+                <span id="hpDisp" class="slider-val">600</span>
+            </div>
+            <input type="range" id="hpSlider" min="100" max="2000" value="600" step="50" oninput="updateHP()">
+            <div id="estTime" class="est-time"></div>
         </div>
 
         <div class="card">
@@ -74,12 +99,40 @@
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
         let connectedPucks = 0;
+        let currentMode = 0; // 0=Standard, 1=Deathmatch
 
-        fetch('/api/game/load?id=20'); 
+        fetch('/api/game/load?id=20');
         fetch('/api/status').then(r=>r.json()).then(data => {
             connectedPucks = data.filter(p => p.active).length;
-            calcPucks(); 
+            calcPucks();
+            updateHP();
         });
+
+        function setMode(m) {
+            currentMode = m;
+            document.getElementById('tabStandard').className = (m === 0) ? "mode-tab active" : "mode-tab";
+            document.getElementById('tabDeathmatch').className = (m === 1) ? "mode-tab active" : "mode-tab";
+            document.getElementById('blockTime').style.display = (m === 0) ? 'block' : 'none';
+            document.getElementById('blockHP').style.display = (m === 1) ? 'block' : 'none';
+            if (m === 1) updateHP();
+        }
+
+        function updateHP() {
+            let hp = parseInt(document.getElementById('hpSlider').value);
+            document.getElementById('hpDisp').innerText = hp;
+
+            let nGrp = parseInt(document.getElementById('grpSlider').value);
+            let pucksPerArena = (connectedPucks > 0 && nGrp > 0) ? Math.floor(connectedPucks / nGrp) : 0;
+
+            if (pucksPerArena > 0) {
+                let avgSec = Math.round(hp / (0.5 * pucksPerArena));
+                let m = Math.floor(avgSec / 60);
+                let s = avgSec % 60;
+                document.getElementById('estTime').innerText = `~ ${m}m ${s.toString().padStart(2,'0')}s ${getTranslation('dom_est_time')}`;
+            } else {
+                document.getElementById('estTime').innerText = '';
+            }
+        }
 
         function updateTime() {
             let val = parseInt(document.getElementById('timeSlider').value) * 10;
@@ -110,6 +163,7 @@
                 infoEl.classList.remove('warn-txt');
                 btn.style.opacity = 1;
             }
+            if (currentMode === 1) updateHP();
         }
 
         function nextStep() {
@@ -119,7 +173,9 @@
             }
             
             sessionStorage.setItem('dom_groups', nGrp);
+            sessionStorage.setItem('dom_mode', currentMode);
             sessionStorage.setItem('dom_time', updateTime());
+            sessionStorage.setItem('dom_hp', document.getElementById('hpSlider').value);
             sessionStorage.setItem('dom_block', document.getElementById('blockSlider').value);
             sessionStorage.setItem('dom_sync', document.getElementById('chkSync').checked ? 1 : 0);
             
@@ -133,7 +189,8 @@
         { key:'timeSlider',  el:'timeSlider' },
         { key:'blockSlider', el:'blockSlider' },
         { key:'grpSlider',   el:'grpSlider' },
-        { key:'chkSync',     el:'chkSync', type:'check' }
+        { key:'chkSync',     el:'chkSync', type:'check' },
+        { key:'hpSlider',    el:'hpSlider' }
     ];
     </script>
     <script src="training_config.js"></script>

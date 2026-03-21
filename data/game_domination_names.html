@@ -75,7 +75,9 @@
             
             let nGrp = parseInt(sessionStorage.getItem('dom_groups') || 1);
             await fetch(`/api/game/action?cmd=cfg_groups&val=${nGrp}`);
+            await fetch(`/api/game/action?cmd=cfg_mode&val=${sessionStorage.getItem('dom_mode') || 0}`);
             await fetch(`/api/game/action?cmd=cfg_time&val=${sessionStorage.getItem('dom_time')}`);
+            await fetch(`/api/game/action?cmd=cfg_hp&val=${sessionStorage.getItem('dom_hp') || 600}`);
             await fetch(`/api/game/action?cmd=cfg_block&val=${sessionStorage.getItem('dom_block')}`);
             await fetch(`/api/game/action?cmd=cfg_sync&val=${sessionStorage.getItem('dom_sync')}`);
             

@@ -37,14 +37,20 @@ struct DomGroup {
     
     int scoreT1;
     int scoreT2;
-    
+
+    int hpT1;
+    int hpT2;
+    int dmgT1;
+    int dmgT2;
+    unsigned long lastHpTick;
+
     bool holdT1;
     bool holdT2;
     bool falseStart;
-    
+
     unsigned long stateStartTime;
     unsigned long runStartTime;
-    
+
     bool finishedAnimDone;
 };
 
@@ -63,6 +69,8 @@ private:
     unsigned long durationMs = 180000;
     unsigned long blockTimeMs = 2000;
     bool groupStart = true;
+    bool deathmatch = false;
+    int hpPerTeam = 600;
 
     DomGroup groups[2]; 
     unsigned long globalCountdownStart = 0;
