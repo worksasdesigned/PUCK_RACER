@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
-    <title>Batak Aufbau - PuckRacer</title>
+    <title>Catch the Light Pro Aufbau - PuckRacer</title>
     <link rel="stylesheet" href="style.css?v=4">
     <style>
         .hidden { display: none; }
@@ -18,7 +18,7 @@
 </head>
 <body>
     <header>
-        <div class="logo" data-i18n="bat_names_title">Batak Pro</div>
+        <div class="logo" data-i18n="ctl_names_title">Catch the Light Pro</div>
     </header>
     <main>
         <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">Initialisierung...</div>
@@ -56,7 +56,7 @@
 
             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
                 <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">START 🏁</button>
-                <button onclick="location.href='game_batak_setup.html'" class="btn-back" data-i18n="btn_back">⬅ ZURÜCK</button>
+                <button onclick="location.href='game_ctl_setup.html'" class="btn-back" data-i18n="btn_back">⬅ ZURÜCK</button>
             </div>
         </div>
     </main>
@@ -111,17 +111,17 @@
             
             await fetch('/api/game/load?id=21');
 
-            let numPucks = parseInt(sessionStorage.getItem('batak_pucks') || 4);
-            let holdStart = sessionStorage.getItem('batak_hold') == '1';
+            let numPucks = parseInt(sessionStorage.getItem('ctl_pucks') || 4);
+            let holdStart = sessionStorage.getItem('ctl_hold') == '1';
             
             await fetch(`/api/game/action?cmd=cfg_pucks&val=${numPucks}`);
-            await fetch(`/api/game/action?cmd=cfg_time&val=${sessionStorage.getItem('batak_time')}`);
-            await fetch(`/api/game/action?cmd=cfg_diff&val=${sessionStorage.getItem('batak_diff')}`);
+            await fetch(`/api/game/action?cmd=cfg_time&val=${sessionStorage.getItem('ctl_time')}`);
+            await fetch(`/api/game/action?cmd=cfg_diff&val=${sessionStorage.getItem('ctl_diff')}`);
             await fetch(`/api/game/action?cmd=cfg_hold&val=${holdStart ? 1 : 0}`);
-            await fetch(`/api/game/action?cmd=cfg_speedup&val=${sessionStorage.getItem('batak_speedup') || '1'}`);
-            await fetch(`/api/game/action?cmd=cfg_color&val=${sessionStorage.getItem('batak_color') || '2'}`);
-            await fetch(`/api/game/action?cmd=cfg_sound&val=${sessionStorage.getItem('batak_sound') || '1'}`);
-            await fetch(`/api/game/action?cmd=cfg_fake&val=${sessionStorage.getItem('batak_fake') || '0'}`);
+            await fetch(`/api/game/action?cmd=cfg_speedup&val=${sessionStorage.getItem('ctl_speedup') || '1'}`);
+            await fetch(`/api/game/action?cmd=cfg_color&val=${sessionStorage.getItem('ctl_color') || '2'}`);
+            await fetch(`/api/game/action?cmd=cfg_sound&val=${sessionStorage.getItem('ctl_sound') || '1'}`);
+            await fetch(`/api/game/action?cmd=cfg_fake&val=${sessionStorage.getItem('ctl_fake') || '0'}`);
             
             await fetch('/api/game/action?cmd=setup'); 
             await fetch('/api/game/action?cmd=show_layout'); 
@@ -206,7 +206,7 @@
 
         function startGame() { 
             sessionStorage.setItem('p_name_0', document.getElementById('name_0').value);
-            setTimeout(() => { location.href = 'game_batak_run.html'; }, 200);
+            setTimeout(() => { location.href = 'game_ctl_run.html'; }, 200);
         }
     </script>
 </body>

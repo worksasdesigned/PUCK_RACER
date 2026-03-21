@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
-    <title>Batak Live</title>
+    <title>Catch the Light Live</title>
     <link rel="stylesheet" href="style.css?v=5">
     <style>
         .player-info { text-align:center; margin-bottom:15px; background:var(--card-bg); padding:15px; border-radius:8px; border:1px solid var(--border-color); }
@@ -77,7 +77,7 @@
 </head>
 <body>
     <header>
-        <div class="logo" data-i18n="g_batak">Batak Pro ⚡</div>
+        <div class="logo" data-i18n="g_ctl">Catch the Light Pro ⚡</div>
         <div class="status-bar">
             <div class="status-dot dot-green" id="cnt-green">0</div>
             <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
@@ -207,9 +207,9 @@
             let pid = sessionStorage.getItem(`p_id_0`);
             if (!pid || pid === "0") return;
             
-            let time = sessionStorage.getItem('batak_time') || 60;
-            let diff = sessionStorage.getItem('batak_diff') || 2;
-            let pucks = sessionStorage.getItem('batak_pucks') || 4;
+            let time = sessionStorage.getItem('ctl_time') || 60;
+            let diff = sessionStorage.getItem('ctl_diff') || 2;
+            let pucks = sessionStorage.getItem('ctl_pucks') || 4;
 
             let fd = new URLSearchParams();
             fd.append('pid', pid);
@@ -256,8 +256,8 @@
             document.getElementById('sysRecordVal').innerText = data.avg + "ms"; // Ohne Leerzeichen!
             btn.style.display = 'block';
             
-            let diffCfg = sessionStorage.getItem('batak_diff') || 2;
-            let puckCfg = sessionStorage.getItem('batak_pucks') || 4;
+            let diffCfg = sessionStorage.getItem('ctl_diff') || 2;
+            let puckCfg = sessionStorage.getItem('ctl_pucks') || 4;
             
             systemRecord = {
                 name: pName,
@@ -418,7 +418,7 @@
         function closeRecordModal() { document.getElementById('recordModal').classList.remove('show'); }
 
         function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
-        function goBack() { doAction('reset'); location.href = 'game_batak_names.html'; }
+        function goBack() { doAction('reset'); location.href = 'game_ctl_names.html'; }
         function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
     </script>
 </body>

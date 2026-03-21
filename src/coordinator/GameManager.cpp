@@ -21,7 +21,7 @@
 #include "Game_Pacemaker.h"
 #include "Game_Memory.h"
 #include "Game_Domination.h"
-#include "Game_Batak.h"
+#include "Game_CTL.h"
 #include "Game_Tabata.h"
 #include "Game_Ball.h"
 #include "Game_Whac.h"
@@ -54,7 +54,7 @@ Game_Hunt gameHunt;              // ID 17
 Game_Pacemaker gamePacemaker;        // ID 18
 Game_Memory gameMemory;          // ID 19
 Game_Domination gameDomination;    // ID 20
-Game_Batak gameBatak;          // ID 21
+Game_CTL gameCTL;          // ID 21
 Game_Tabata gameTabata;          // ID 22
 Game_Ball gameBall;          // ID 23
 Game_Whac gameWhac; // ID 24
@@ -104,7 +104,7 @@ void GameManager::startGame(int gameID) {
         case 18: currentGame = &gamePacemaker; break;
         case 19: currentGame = &gameMemory; break;
         case 20: currentGame = &gameDomination; break;
-        case 21: currentGame = &gameBatak; break;
+        case 21: currentGame = &gameCTL; break;
         case 22: currentGame = &gameTabata; break;
         case 23: currentGame = &gameBall; break;
         case 24: currentGame = &gameWhac; break;

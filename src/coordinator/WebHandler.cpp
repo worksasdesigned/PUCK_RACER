@@ -250,7 +250,7 @@ void WebHandler::begin() {
     // GameID 13 (React 2P)      : Score = Reaction Time (ms)    | Ex1 = 1 (Win) or 0 (Loss)
     // GameID 14 (T-Test)        : Score = Time (ms)             | Ex1 = 0
     // GameID 15 (Target)        : Score = Hits                  | Ex1 = Time (ms)
-    // GameID 21 (Batak Pro)     : Score = Avg Reaction (ms)     | Ex1 = Hits | Ex2 = Misses | Ex3 = Time (s) | Ex4 = Level | Ex5 = Pucks
+    // GameID 21 (Catch the Light Pro) : Score = Avg Reaction (ms)     | Ex1 = Hits | Ex2 = Misses | Ex3 = Time (s) | Ex4 = Level | Ex5 = Pucks
     // GameID 24 (Whac-A-Mole)   : Score = Hits                  | Ex1 = Fails
     // GameID 25 (Katzenreflexe) : Score = Avg Reaction (ms)     | Ex1 = Points
     // =========================================================================

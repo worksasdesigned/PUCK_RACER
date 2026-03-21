@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
-    <title>Setup - Batak Pro</title>
+    <title>Setup - Catch the Light Pro</title>
     <link rel="stylesheet" href="style.css?v=2">
     <style>
         .diff-text {
@@ -23,7 +23,7 @@
     </style>
 </head>
 <body>
-    <header><div class="logo" data-i18n="g_batak">Batak Pro ⚡</div></header>
+    <header><div class="logo" data-i18n="g_ctl">Catch the Light Pro ⚡</div></header>
     <main>
         <div class="card">
             <h3 data-i18n="bat_setup_time">⏱️ Duration</h3>
@@ -157,16 +157,16 @@
                 if(!confirm("Not enough pucks connected! Continue anyway?")) return;
             }
             
-            sessionStorage.setItem('batak_pucks', p);
-            sessionStorage.setItem('batak_time', document.getElementById('timeSlider').value);
-            sessionStorage.setItem('batak_diff', document.getElementById('diffSlider').value);
-            sessionStorage.setItem('batak_color', document.getElementById('colSelect').value);
-            sessionStorage.setItem('batak_sound', document.getElementById('chkSound').checked ? 1 : 0);
-            sessionStorage.setItem('batak_fake', document.getElementById('chkFake').checked ? 1 : 0);
-            sessionStorage.setItem('batak_hold', document.getElementById('chkHold').checked ? 1 : 0);
-            sessionStorage.setItem('batak_speedup', document.getElementById('chkSpeedup').checked ? 1 : 0);
+            sessionStorage.setItem('ctl_pucks', p);
+            sessionStorage.setItem('ctl_time', document.getElementById('timeSlider').value);
+            sessionStorage.setItem('ctl_diff', document.getElementById('diffSlider').value);
+            sessionStorage.setItem('ctl_color', document.getElementById('colSelect').value);
+            sessionStorage.setItem('ctl_sound', document.getElementById('chkSound').checked ? 1 : 0);
+            sessionStorage.setItem('ctl_fake', document.getElementById('chkFake').checked ? 1 : 0);
+            sessionStorage.setItem('ctl_hold', document.getElementById('chkHold').checked ? 1 : 0);
+            sessionStorage.setItem('ctl_speedup', document.getElementById('chkSpeedup').checked ? 1 : 0);
             
-            location.href = 'game_batak_names.html';
+            location.href = 'game_ctl_names.html';
         }
 
         function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }

@@ -49,6 +49,7 @@ private:
     bool roundEarly[MAX_PEERS];          // Hat der Spieler in dieser Runde zu frueh gedrueckt?
     bool roundPressed[MAX_PEERS];        // Hat der Spieler in dieser Runde ueberhaupt gedrueckt?
     bool isRoundWinner[MAX_PEERS];       // Flag fuer das Frontend (wird gruen hervorgehoben)
+    bool highlanderEffectShown = false;  // Wurde das WIN/FAIL Feedback bereits zurueckgesetzt?
 
     // Farbauswahl fuer die Spielerpucks
     const CRGB PLAYER_COLORS[12] = {

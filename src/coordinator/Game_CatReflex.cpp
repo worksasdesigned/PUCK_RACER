@@ -129,6 +129,14 @@ void Game_CatReflex::loop() {
         }
 
         case CR_ROUND_RESULT:
+            // Highlander WIN/FAIL Effekte nach 1 Sekunde zuruecksetzen
+            if (highlanderEffectShown && (now - stateStartTime >= 1000)) {
+                highlanderEffectShown = false;
+                for(int p=1; p<=playerCount; p++) {
+                    setPuck(p, EFF_STATIC, PLAYER_COLORS[p-1], 0, 150);
+                    delay(10);
+                }
+            }
             // 3 Sekunden Pause zur Ergebnisanzeige im Frontend
             if (now - stateStartTime >= 3000) {
                 // Neustart der Runde
@@ -242,6 +250,19 @@ void Game_CatReflex::evaluateRound() {
                         }
                     }
                 }
+            }
+        }
+
+        // Highlander: Visuelles Feedback - Gewinner EFF_WIN, Verlierer EFF_FAIL (1 Sek)
+        if (highlanderMode) {
+            highlanderEffectShown = true;
+            for(int p=1; p<=playerCount; p++) {
+                if (isRoundWinner[p]) {
+                    setPuck(p, EFF_WIN, PLAYER_COLORS[p-1], 0, 255);
+                } else {
+                    setPuck(p, EFF_FAIL, CRGB::Red, 0, 255);
+                }
+                delay(10);
             }
         }
     }
