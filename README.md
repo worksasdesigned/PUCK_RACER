@@ -102,7 +102,7 @@ After the real first beta is released il will provide the bin files in case of u
 | 🎯 **Target Touch** | 1–5 groups | 2–10/group | ⚡ 🛠️ | Sequence or random mode, rest time control |
 | 🏃‍♂️ **Agility T-Test** | 1–2 groups | 4/group | 🏃‍♂️ | Standard T-test layout, mandatory touch mode |
 | 🐱 **Cat Reflex** | 1–11 | 1/player + 1 center | ⚡ | Highlander mode, Color Chaos (false-start training) |
-| ⚡🎯 **Batak Pro** | 1 | 3–20 | ⚡ 🧠 | Adaptive speed, fake colors, per-puck reaction analysis |
+| ⚡🎯 **Catch the light Pro** | 1 | 3–20 | ⚡ 🧠 | Adaptive speed, fake colors, per-puck reaction analysis |
 
 ---
 
@@ -177,7 +177,7 @@ After the real first beta is released il will provide the bin files in case of u
         - React2Player  
         - T-Test  
         - Beep Test  
-        - Bataka (incl. System record)  
+        - Catch the light (incl. System record)  
     - Player manager with extended Export and Import incl. highscores and statistics   
     - Minor bugfixes in some games (Player-List added, minor layout changes)  
         - fix for Whac-A-Mole color picker  
@@ -192,6 +192,11 @@ After the real first beta is released il will provide the bin files in case of u
 **V2.91.1**   
     - new game: Pit Stop  
     - Red Light Green Light small adjustments and fixes  
+
+**V2.92.3**   
+    - rename a game to catch the light  
+    - Cat Reflex Highlander Mode adjusted  
+    
 
 --- 
 
