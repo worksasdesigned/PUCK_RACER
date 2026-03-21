@@ -12,3 +12,9 @@
 *.o
 *.a
 *.py
+
+# Lokale Helfer-Skripte und Notizen ignorieren
+Fehlende Übersetzungen.txt
+LLM_Export.txt
+htmlexport.py
+linecounter.py
