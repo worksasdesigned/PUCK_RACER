@@ -86,18 +86,36 @@
                     if (d.state == 0) {
                         btnStart.innerText = getTranslation('btn_start_all');
                         btnStart.style.background = "var(--primary)";
+                        btnStart.style.color = "white";
                         btnStart.setAttribute('onclick', "cmd('start_all')");
                     } else {
                         btnStart.innerText = getTranslation('btn_reset');
                         btnStart.style.background = "var(--success)";
+                        btnStart.style.color = "white";
                         btnStart.setAttribute('onclick', "cmd('reset')");
                     }
                 } else {
                     btnStart.setAttribute('onclick', "cmd('start_all')");
-                    if (d.state == 5) { btnStart.innerText = getTranslation('btn_reset'); btnStart.style.background = "var(--success)"; }
-                    else if (d.state == 3) { btnStart.innerText = getTranslation('btn_reset'); btnStart.style.background = "var(--danger)"; }
-                    else if (d.state == 0) { btnStart.innerText = getTranslation('btn_start_all'); btnStart.style.background = "var(--primary)"; }
-                    else { btnStart.innerText = getTranslation('btn_running'); btnStart.style.background = "var(--card-hover)"; }
+                    if (d.state == 5) { 
+                        btnStart.innerText = getTranslation('btn_reset'); 
+                        btnStart.style.background = "var(--success)"; 
+                        btnStart.style.color = "white";
+                    }
+                    else if (d.state == 3) { 
+                        btnStart.innerText = getTranslation('btn_reset'); 
+                        btnStart.style.background = "var(--danger)"; 
+                        btnStart.style.color = "white";
+                    }
+                    else if (d.state == 0) { 
+                        btnStart.innerText = getTranslation('btn_start_all'); 
+                        btnStart.style.background = "var(--primary)"; 
+                        btnStart.style.color = "white";
+                    }
+                    else { 
+                        btnStart.innerText = getTranslation('btn_running'); 
+                        btnStart.style.background = "var(--card-hover)"; 
+                        btnStart.style.color = "var(--text-muted)";
+                    }
                 }
                 
                 let container = document.getElementById('list');

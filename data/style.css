@@ -8,301 +8,331 @@
     font-display: swap;
 }
 
-/* Zentrale CSS Variablen für Theming */
+/* =========================================
+   1. VARIABLEN & GRUNDLAGEN (STANDARD = HELL)
+   ========================================= */
 :root {
-    --bg-color: #121212;
-    --card-bg: #1e1e1e;
-    --card-hover: #2a2a2a;
-    --text-main: #e0e0e0;
-    --text-muted: #888888;
-    --border-color: #333333;
+    --bg-color: #f0f4f8;
+    --card-bg: rgba(255, 255, 255, 0.75);
+    --card-hover: rgba(255, 255, 255, 0.95);
+    --text-main: #1a202c;
+    --text-muted: #718096;
+    --border-color: rgba(255, 255, 255, 0.5);
     
-    --primary: #0d6efd;
-    --primary-hover: #0b5ed7;
-    --danger: #dc3545;
-    --danger-hover: #b02a37;
-    --warning: #ffc107;
-    --success: #00ff00;
+    --primary: #3182ce;
+    --primary-hover: #2b6cb0;
+    --danger: #e53e3e;
+    --danger-hover: #c53030;
+    --warning: #ecc94b;
+    --success: #48bb78;
 }
 
-/* Optionales helles Theme */
-.theme-light {
-    --bg-color: #f4f4f9;
-    --card-bg: #ffffff;
-    --card-hover: #e9ecef;
-    --text-main: #212529;
-    --text-muted: #6c757d;
-    --border-color: #dee2e6;
-    --success: #198754;
+/* Dark Theme Support (Wird über Menü getoggelt) */
+body.theme-dark {
+    --bg-color: #121212;
+    --card-bg: rgba(30, 30, 30, 0.75);
+    --card-hover: rgba(45, 45, 45, 0.95);
+    --text-main: #e0e0e0;
+    --text-muted: #888888;
+    --border-color: rgba(255, 255, 255, 0.15);
 }
+
+* { box-sizing: border-box; }
 
 body {
     background-color: var(--bg-color);
     color: var(--text-main);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    margin: 0; padding: 0;
+    display: flex; flex-direction: column;
+    min-height: 100vh; position: relative;
     transition: background-color 0.3s, color 0.3s;
 }
 
-/* HEADER & LOGO */
-header {
-    background: #000;
-    padding: 10px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid var(--border-color);
+/* Ambiente-Hintergrund - fixiert, damit man scrollen kann */
+.bg-blobs {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1; overflow: hidden;
+    background: radial-gradient(circle at 15% 50%, rgba(72, 187, 120, 0.2), transparent 30%),
+                radial-gradient(circle at 85% 30%, rgba(49, 130, 206, 0.2), transparent 30%);
 }
 
-.version { font-size: 0.8rem; color: var(--text-muted); }
+/* =========================================
+   2. HEADER & LOGO
+   ========================================= */
+header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 15px 20px;
+    background: var(--card-bg);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border-color);
+    z-index: 100;
+}
+
+.top-tools { display: flex; align-items: center; gap: 15px; }
 
 .logo {
     font-family: 'puckracer', 'Segoe UI', sans-serif;
-    font-size: 1.5rem;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    animation: neon-rainbow 4s linear infinite;
-    text-align: center;
-    flex-grow: 1;
+    font-size: 1.5rem; font-weight: bold; letter-spacing: 2px;
+    cursor: pointer; user-select: none;
+    background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+    background-size: 200% auto; color: transparent;
+    -webkit-background-clip: text; background-clip: text;
+    animation: text-rainbow 5s linear infinite;
+    flex-grow: 1; text-align: center;
 }
 
-.logo span {
-    display: inline-block;
-}
+@keyframes text-rainbow { to { background-position: 200% center; } }
 
-@keyframes neon-rainbow {
-    0% { color: #ff0000; text-shadow: 0 0 2px #ff0000; }
-    20% { color: #ffff00; text-shadow: 0 0 2px #ffff00; }
-    40% { color: #00ff00; text-shadow: 0 0 2px #00ff00; }
-    60% { color: #00ffff; text-shadow: 0 0 2px #00ffff; }
-    80% { color: #0000ff; text-shadow: 0 0 2px #0000ff; }
-    100% { color: #ff00ff; text-shadow: 0 0 2px #ff00ff; }
+/* Dropdown Menü Styling */
+.dropdown { position: relative; display: inline-block; }
+.btn-menu { 
+    background: none; border: 1px solid var(--border-color); color: var(--text-main); 
+    border-radius: 4px; padding: 4px 12px; cursor: pointer; font-size: 1.5rem; font-weight: bold; transition: 0.2s; 
 }
+.btn-menu:hover { border-color: var(--primary); color: var(--primary); }
 
-/* STATUS BAR */
-.status-bar { display: flex; gap: 5px; }
+.dropdown-content {
+    display: none; position: absolute; background-color: var(--card-bg); min-width: 250px; 
+    box-shadow: 0px 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; 
+    z-index: 2000; left: 0; top: 45px; overflow: hidden;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.dropdown-content.show { display: block; animation: fade 0.2s; }
+.dropdown-content a, .dropdown-content .menu-item {
+    color: var(--text-main); padding: 12px 16px; text-decoration: none; display: block; border-bottom: 1px solid var(--border-color); font-size: 1rem; cursor: pointer;
+}
+.dropdown-content a:hover, .dropdown-content .menu-item:hover { background-color: var(--card-hover); color: var(--primary); }
+.dropdown-content select { background: var(--bg-color); color: var(--text-main); border: 1px solid var(--border-color); padding: 4px; border-radius: 4px; font-size: 0.9rem; float: right; outline: none;}
+
+@keyframes fade { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Status Bar */
+.status-bar { display: flex; gap: 6px; }
 .status-dot {
-    width: 25px; height: 25px; border-radius: 4px;
+    width: 22px; height: 22px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
-    font-weight: bold; font-size: 0.8rem; color: #000;
+    font-size: 0.7rem; font-weight: bold; color: white;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.2);
 }
-.dot-green { background-color: var(--success); box-shadow: 0 0 5px var(--success); }
-.dot-yellow { background-color: var(--warning); box-shadow: 0 0 5px var(--warning); }
-.dot-red { background-color: var(--danger); box-shadow: 0 0 5px var(--danger); }
+.dot-green { background-color: var(--success); }
+.dot-yellow { background-color: var(--warning); }
+.dot-red { background-color: var(--danger); }
 
-/* MAIN CONTENT */
+/* =========================================
+   3. MAIN CONTENT (GLOBALE REGELN FÜR ALLE SEITEN)
+   ========================================= */
+
+/* STANDARD-LAYOUT FÜR SETUP-SEITEN (Vertikal, zentriert) */
 main {
     padding: 20px;
     flex: 1;
-    max-width: 1000px;
+    max-width: 800px; /* Hält die Setup-Formulare auf Tablets/PC gut lesbar */
     margin: 0 auto;
     width: 100%;
     box-sizing: border-box;
+    display: block; /* WICHTIG: Überschreibt Flex, damit Setup-Karten untereinander stehen */
 }
 
-/* FILTER BAR */
-.filter-bar {
+/* SPEZIAL-LAYOUT NUR FÜR DAS DASHBOARD CAROUSEL (Waagerecht, volle Breite) */
+main.dashboard-main {
+    padding: 0;
+    max-width: 100%;
     display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    overflow-x: auto;
+    align-items: center;
     padding-bottom: 10px;
+    overflow: hidden; /* Auf dem Dashboard darf die ganze Seite nicht scrollen */
 }
 
-.filter-btn {
-    background: var(--card-bg);
-    color: var(--text-main);
-    border: 1px solid var(--border-color);
-    padding: 8px 15px;
-    border-radius: 20px;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: all 0.2s;
-}
+/* =========================================
+   4. KARTEN & FORMULARE (FÜR SETUP-SEITEN)
+   ========================================= */
 
-.filter-btn.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-}
-
-/* GRID & TILES */
-.grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-    gap: 15px;
-}
-
-.tile {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    cursor: grab; 
-    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
-    border: 1px solid var(--border-color);
-    aspect-ratio: 1;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    
-    -webkit-touch-callout: none; 
-    -webkit-user-select: none;
-    user-select: none;
-    touch-action: pan-y;
-}
-
-.tile:active { cursor: grabbing; }
-.tile h3 { margin: 10px 0 0 0; font-size: 1rem; color: var(--text-main); }
-.tile-icon { font-size: 2rem; pointer-events: none; }
-
-/* Drag & Drop Visuals */
-.tile.dragging {
-    opacity: 0.5;
-    transform: scale(0.95);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    z-index: 100;
-}
-.tile.drag-over {
-    border: 2px dashed var(--primary);
-    background: var(--card-hover);
-}
-
-.help-btn {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 24px;
-    height: 24px;
-    background: rgba(128, 128, 128, 0.2);
-    border-radius: 50%;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid var(--border-color);
-    transition: all 0.2s;
-    z-index: 10;
-    cursor: pointer;
-}
-
-.help-btn:hover {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-    transform: scale(1.1);
-}
-
-.tile-settings { background: var(--card-hover); border-style: dashed; }
-
-/* CARDS & FORMS */
+/* Das ist die Klasse für alle deine alten Spieleseiten! Sie erstrahlt jetzt im neuen Look */
 .card { 
-    background: var(--card-bg); 
+    background-color: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 2px solid var(--border-color);
+    border-radius: 24px;
     padding: 20px; 
     margin-bottom: 20px; 
-    border-radius: 12px; 
-    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
 }
 
+/* Alle Formular-Eingabefelder */
+input[type="file"], input[type="text"], input[type="password"], input[type="number"] { 
+    background: var(--bg-color); 
+    color: var(--text-main); 
+    border: 1px solid var(--border-color);
+    padding: 10px; width: 100%; border-radius: 8px; box-sizing: border-box;
+    font-size: 1rem;
+}
+
+/* Tabellen (für Statistiken, Highscores etc.) */
+table { width: 100%; border-collapse: collapse; }
+td, th { text-align: left; padding: 10px; border-bottom: 1px solid var(--border-color); }
+th { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; }
+
+
+/* =========================================
+   5. FILTER & CAROUSEL (NUR DASHBOARD)
+   ========================================= */
+.filter-container { padding: 15px 20px 5px 20px; background: transparent; }
+.filter-scroll {
+    display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; 
+    scrollbar-width: thin; scrollbar-color: var(--border-color) transparent;
+}
+.filter-scroll::-webkit-scrollbar { height: 4px; }
+.filter-scroll::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 4px; }
+
+.filter-btn {
+    background: var(--card-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--border-color); color: var(--text-muted);
+    padding: 8px 16px; border-radius: 20px; font-weight: bold; font-size: 0.9rem;
+    cursor: pointer; white-space: nowrap; transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+.filter-btn.active { background: var(--text-main); color: var(--bg-color); border-color: var(--text-main); transform: scale(1.05); }
+
+.indicator-container { text-align: center; margin-top: 5px; }
+.card-badge {
+    display: inline-block; background: var(--card-bg); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--border-color); padding: 4px 15px; border-radius: 15px;
+    font-size: 0.85rem; font-weight: bold; color: var(--text-muted); box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.carousel {
+    display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+    gap: 20px; padding: 20px calc(50vw - 140px); align-items: center; height: 100%;
+    scrollbar-width: thin; scrollbar-color: rgba(49, 130, 206, 0.5) transparent;
+}
+.carousel::-webkit-scrollbar { height: 6px; background: transparent; }
+.carousel::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); border-radius: 10px; }
+.carousel::-webkit-scrollbar-thumb { background: rgba(49, 130, 206, 0.4); border-radius: 10px; }
+
+.game-card {
+    scroll-snap-align: center; flex: 0 0 280px; height: 420px;
+    background-color: var(--card-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 2px solid var(--border-color); border-radius: 24px; padding: 20px;
+    display: flex; flex-direction: column; transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    position: relative; user-select: none;
+}
+
+.game-card.focused {
+    transform: scale(1.1); z-index: 10; box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+    border: 4px solid transparent; 
+    background-image: linear-gradient(var(--card-hover), var(--card-hover)), linear-gradient(60deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+    background-origin: padding-box, border-box; background-clip: padding-box, border-box;
+    background-size: 100% 100%, 300% 300%; animation: waber-rainbow-bg 4s linear infinite;
+}
+@keyframes waber-rainbow-bg {
+    0%   { background-position: 0% 0%, 0% 50%; }
+    50%  { background-position: 0% 0%, 100% 50%; }
+    100% { background-position: 0% 0%, 0% 50%; }
+}
+
+/* =========================================
+   KARTEN INHALT & ICONS FIX
+   ========================================= */
+.card-header { 
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; 
+}
+
+.card-icon {
+    font-size: 2rem;
+    margin-bottom: 10px; 
+    background: var(--bg-color); 
+    min-width: 70px; 
+    width: max-content; 
+    height: 70px;
+    padding: 0 15px; 
+    border-radius: 20px; 
+    display: flex; justify-content: center; align-items: center; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    white-space: nowrap; 
+}
+
+.card-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+
+.help-btn {
+    width: 28px; height: 28px; border-radius: 50%; background: rgba(0,0,0,0.05); color: var(--text-muted);
+    display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 0.9rem;
+    cursor: pointer; transition: all 0.2s; border: 1px solid var(--border-color);
+}
+.help-btn:hover { background: var(--primary); color: white; }
+
+.fav-star { font-size: 1.5rem; color: #cbd5e0; cursor: pointer; transition: color 0.2s, transform 0.2s; }
+.fav-star.is-fav { color: var(--warning); transform: scale(1.1); text-shadow: 0 0 10px rgba(236, 201, 75, 0.5); }
+
+.card-title { font-size: 1.4rem; font-weight: 800; margin: 10px 0 5px 0; color: var(--text-main); }
+.card-tags { font-size: 0.75rem; color: var(--primary); text-transform: uppercase; font-weight: bold; margin-bottom: 15px; letter-spacing: 1px; }
+.card-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; flex-grow: 1; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; }
+
+
+/* Play Count (Statistik Badge) */
+.play-count { 
+    position: absolute; bottom: 80px; right: 20px; font-size: 0.8rem; color: var(--bg-color); font-weight: bold; 
+    background: var(--text-main); padding: 4px 8px; border-radius: 8px; pointer-events: none; display: none; 
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+body.show-stats .play-count { display: block; }
+
+/* =========================================
+   6. MODALS (POPUPS) & BUTTONS GLOBALS
+   ========================================= */
+.modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px);
+    z-index: 2000; display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;
+}
+.modal-content {
+    background: var(--card-hover); border: 1px solid var(--border-color); border-radius: 20px;
+    max-width: 500px; width: 100%; position: relative; max-height: 90vh; overflow-y: auto;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3); animation: modalFadeIn 0.3s ease;
+}
+@keyframes modalFadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+.modal-header { padding: 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+.modal-header h2 { margin: 0; color: var(--primary); font-size: 1.4rem; font-weight: 800;}
+.close-modal { background: none; border: none; font-size: 1.8rem; color: var(--text-muted); cursor: pointer; padding: 0; margin: 0; line-height: 1; transition: color 0.2s; }
+.close-modal:hover { color: var(--text-main); }
+.modal-body { padding: 20px; line-height: 1.6; font-size: 0.95rem; color: var(--text-main); }
+.modal-body h4 { margin: 15px 0 5px 0; color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem; border-bottom: 1px solid var(--border-color); padding-bottom: 5px;}
+.modal-body img { max-width: 100%; border-radius: 12px; margin-top: 10px; border: 1px solid var(--border-color); }
+
+/* Global Buttons for external pages */
 button, input[type="submit"], .btn {
-    width: 100%; padding: 12px; border: none; border-radius: 6px;
-    font-weight: bold; cursor: pointer; margin-top: 10px;
-    font-size: 1rem; text-decoration: none; display: inline-block;
-    box-sizing: border-box; text-align: center;
-    transition: background 0.2s, transform 0.1s;
+    width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px;
+    font-size: 1rem; text-decoration: none; display: inline-block; box-sizing: border-box; text-align: center; transition: background 0.2s, transform 0.1s;
 }
 button:active, .btn:active { transform: scale(0.98); }
-
 .btn-primary { background: var(--primary); color: white; }
 .btn-primary:hover { background: var(--primary-hover); }
 .btn-danger { background: var(--danger); color: white; }
 .btn-danger:hover { background: var(--danger-hover); }
 .btn-warn { background: var(--warning); color: black; }
-.btn-back { background: var(--border-color); color: var(--text-main); margin-bottom: 20px; }
+.btn-back { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); margin-bottom: 20px; }
+.game-card.focused .btn-play { background: var(--primary); color: white; box-shadow: 0 4px 15px rgba(49, 130, 206, 0.4); }
 
-input[type="file"], input[type="text"], input[type="password"] { 
-    background: var(--bg-color); 
-    color: var(--text-main); 
-    border: 1px solid var(--border-color);
-    padding: 10px; width: 100%; border-radius: 6px; box-sizing: border-box;
-}
 
-table { width: 100%; border-collapse: collapse; }
-td, th { text-align: left; padding: 10px; border-bottom: 1px solid var(--border-color); }
-th { color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; }
+/* =========================================
+   7. EASTER EGGS & SYSTEM 
+   ========================================= */
+footer { text-align: center; padding: 15px; font-size: 0.8rem; color: var(--text-muted); font-weight: bold; border-top: 1px solid var(--border-color); z-index: 100; margin-top: auto;}
+footer span { cursor: pointer; user-select: none;}
 
-footer {
-    text-align: center; padding: 10px; font-size: 0.7rem; color: var(--text-muted); border-top: 1px solid var(--border-color);
-}
-
-/* MODAL (POPUP) STYLES */
-.modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.85); 
-    backdrop-filter: blur(5px);
-    z-index: 1000;
-    display: none; 
-    align-items: center; justify-content: center;
-    padding: 20px; box-sizing: border-box;
-}
-
-.modal-content {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    max-width: 500px;
-    width: 100%;
-    position: relative;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 0 20px rgba(0,0,0,0.8);
-}
-
-.modal-header {
-    background: var(--bg-color);
-    padding: 15px;
-    border-bottom: 1px solid var(--border-color);
-    display: flex; justify-content: space-between; align-items: center;
-}
-.modal-header h2 { margin: 0; color: var(--primary); font-size: 1.2rem; }
-.close-modal {
-    background: none; border: none; color: var(--text-main); font-size: 1.5rem; cursor: pointer; padding: 0; margin: 0; width: auto;
-}
-
-.modal-body { padding: 20px; line-height: 1.5; font-size: 0.95rem; color: var(--text-main); }
-.modal-body h4 { margin-top: 15px; margin-bottom: 5px; color: var(--text-muted); text-transform: uppercase; font-size: 0.8rem; border-bottom: 1px solid var(--border-color); padding-bottom: 2px;}
-.modal-body img { max-width: 100%; border-radius: 6px; margin-top: 10px; border: 1px solid var(--border-color); }
-
-/* --- EASTER EGG CSS --- */
 .easter-egg-overlay {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    pointer-events: none; z-index: 9999;
-    display: none; align-items: center;
-    background: rgba(0,0,0,0.6); backdrop-filter: blur(4px);
-    overflow: hidden;
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 9999;
+    display: none; align-items: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); overflow: hidden;
 }
 .easter-egg-text {
     white-space: nowrap; font-family: 'puckracer', sans-serif; font-size: 6vw; font-weight: bold; position: absolute;
-    animation: scroll-text 5s linear forwards, neon-rainbow 1s linear infinite;
-    text-shadow: 0 0 20px rgba(255,255,255,0.5); letter-spacing: 2px;
+    animation: scroll-text 5s linear forwards, neon-rainbow 1s linear infinite; text-shadow: 0 0 20px rgba(255,255,255,0.5); letter-spacing: 2px;
 }
-@keyframes scroll-text {
-    0% { left: 100%; transform: translateX(0); }
-    100% { left: 0; transform: translateX(-100%); }
-}
-.tile.dance {
-    animation: wild-dance 0.6s infinite alternate ease-in-out;
-    z-index: 1000; pointer-events: none;
-}
+@keyframes scroll-text { 0% { left: 100%; transform: translateX(0); } 100% { left: 0; transform: translateX(-100%); } }
+
+.tile.dance { animation: wild-dance 0.6s infinite alternate ease-in-out; z-index: 1000; pointer-events: none; }
 @keyframes wild-dance {
     0% { transform: translate(0, 0) rotate(0deg) scale(1); }
     25% { transform: translate(-15px, 15px) rotate(-15deg) scale(1.1); }
@@ -311,256 +341,94 @@ footer {
     100% { transform: translate(15px, 15px) rotate(25deg) scale(0.95); }
 }
 
-/* -----------------------------------------------------
-   TUTORIAL OVERLAY SYSTEM
-   ----------------------------------------------------- */
+/* 3D Puck CSS System */
+#puckEasterEggOverlay {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; 
+    justify-content: center; align-items: center; flex-direction: column; opacity: 0; transition: opacity 0.5s ease; cursor: pointer;
+}
+#puckEasterEggOverlay.active { display: flex; opacity: 1; }
+.puck-scene { width: 300px; height: 300px; perspective: 1200px; display: flex; justify-content: center; align-items: center; }
+.puck-assembly { position: relative; width: 180px; height: 180px; transform-style: preserve-3d; transform: rotateX(70deg) rotateZ(0deg); transition: transform 2s cubic-bezier(0.25, 1, 0.5, 1); }
+.puck-part { position: absolute; border-radius: 50%; top: 0; left: 0; right: 0; bottom: 0; margin: auto; opacity: 0; transition: all 1.2s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.puck-base { width: 180px; height: 180px; background: rgba(180, 180, 180, 0.15); border: 2px solid rgba(200, 200, 200, 0.4); transform: translateZ(-400px); }
+.puck-base:first-of-type { box-shadow: 0 30px 60px 10px rgba(0,0,0,0.9); } 
+.puck-base:last-of-type { background: rgba(220, 220, 220, 0.3); }
+.puck-led { width: 160px; height: 160px; background: #87ceeb; border: 1px solid rgba(255,255,255,0.5); transform: translateZ(0px) scale(0.1); }
+.puck-button { width: 110px; height: 110px; background: #1a1a1a; border: 2px solid #050505; transform: translateZ(400px); }
+.puck-button:last-of-type { background: radial-gradient(circle at 30% 30%, #555, #0a0a0a); box-shadow: inset 0 -5px 15px rgba(0,0,0,0.9); }
+.puck-assembly.assembled { transform: rotateX(65deg) rotateZ(360deg); }
+.puck-assembly.assembled .puck-base { transform: translateZ(var(--z)); opacity: 1; transition-delay: 0.1s;}
+.puck-assembly.assembled .puck-led { transform: translateZ(var(--z)); opacity: 1; transition-delay: 0.3s;}
+.puck-assembly.assembled .puck-button { transform: translateZ(var(--z)); opacity: 1; transition-delay: 0.5s;}
+.puck-assembly.glowing .puck-led { animation: rgb-color 3s linear infinite; }
+.puck-assembly.glowing .puck-led:last-of-type { animation: rgb-pulse 3s linear infinite; }
+.puck-assembly.glowing .puck-button { animation: ee-button-press 2.5s ease-in-out infinite; }
+@keyframes rgb-color { 0% { background: #ff0000; border-color: #ffaa00; filter: blur(1px) brightness(1.5); } 33% { background: #00ff00; border-color: #aaffaa; filter: blur(1px) brightness(1.5); } 66% { background: #0000ff; border-color: #aaaaff; filter: blur(1px) brightness(1.5); } 100% { background: #ff0000; border-color: #ffaa00; filter: blur(1px) brightness(1.5); } }
+@keyframes rgb-pulse { 0% { box-shadow: 0 0 50px 20px rgba(255,0,0,0.8), inset 0 0 20px rgba(255,0,0,0.9); filter: blur(2px) brightness(2); } 33% { box-shadow: 0 0 50px 20px rgba(0,255,0,0.8), inset 0 0 20px rgba(0,255,0,0.9); filter: blur(2px) brightness(2); } 66% { box-shadow: 0 0 50px 20px rgba(0,0,255,0.8), inset 0 0 20px rgba(0,0,255,0.9); filter: blur(2px) brightness(2); } 100% { box-shadow: 0 0 50px 20px rgba(255,0,0,0.8), inset 0 0 20px rgba(255,0,0,0.9); filter: blur(2px) brightness(2); } }
+@keyframes ee-button-press { 0%, 100% { transform: translateZ(var(--z)); } 50% { transform: translateZ(calc(var(--z) - 4px)); } }
+.core-ver-text { color: var(--primary); font-size: 1.2rem; font-family: 'puckracer', monospace; font-weight: bold; margin-top: 50px; letter-spacing: 3px; opacity: 0; transform: translateY(20px); transition: all 1s ease 1.5s; }
+#puckEasterEggOverlay.active .core-ver-text { opacity: 1; transform: translateY(0); }
+
+/* =========================================
+   8. EXTERNE MODULE (Tour, Slider etc.)
+   ========================================= */
 .tour-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); z-index: 9998; display: none; }
-
-.tour-highlight { 
-    z-index: 9999 !important; 
-    box-shadow: 0 0 0 4px var(--primary), 0 0 20px rgba(0,255,0,0.5) !important; 
-    background-color: #1a1a1a; 
-    border-radius: 8px; 
-}
-
-.tour-bubble { position: fixed; z-index: 10000; background: #222; border: 2px solid var(--primary); color: #fff; padding: 20px; border-radius: 8px; max-width: 280px; font-size: 1rem; display: none; box-shadow: 0 15px 30px rgba(0,0,0,0.8); }
-.tour-bubble::after { 
-    content: ''; position: absolute; border-width: 10px; border-style: solid; 
-    border-color: var(--arrow-color, transparent transparent var(--primary) transparent); 
-    top: var(--arrow-top, -22px); left: var(--arrow-left, 20px); 
-}
+.tour-highlight { z-index: 9999 !important; box-shadow: 0 0 0 4px var(--primary), 0 0 20px rgba(0,255,0,0.5) !important; background-color: var(--card-bg); border-radius: 8px; }
+.tour-bubble { position: fixed; z-index: 10000; background: var(--card-bg); border: 2px solid var(--primary); color: var(--text-main); padding: 20px; border-radius: 8px; max-width: 280px; font-size: 1rem; display: none; box-shadow: 0 15px 30px rgba(0,0,0,0.8); }
+.tour-bubble::after { content: ''; position: absolute; border-width: 10px; border-style: solid; border-color: var(--arrow-color, transparent transparent var(--primary) transparent); top: var(--arrow-top, -22px); left: var(--arrow-left, 20px); }
 .tour-bubble-buttons { display: flex; justify-content: space-between; margin-top: 15px; }
-.tour-btn { background: var(--primary); border: none; padding: 8px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; color: #000; }
-.tour-btn-cancel { background: transparent; border: 1px solid #666; color: #aaa; padding: 8px 15px; border-radius: 4px; cursor: pointer;}
+.tour-btn { background: var(--primary); border: none; padding: 8px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; color: #fff; }
+.tour-btn-cancel { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 8px 15px; border-radius: 4px; cursor: pointer;}
 
 /* -----------------------------------------------------
    SETUP-SEITEN HARMONISIERUNG (NEU)
    ----------------------------------------------------- */
+.slider-header { display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; }
+.slider-val { font-size: 1.5rem; color: var(--primary); font-weight: bold; text-align: right; }
+input[type=range] { width: 100%; height: 40px; margin-top: 10px; margin-bottom: 10px; cursor: pointer; }
+.info-txt { text-align: center; font-size: 0.9rem; margin-top: 10px; color: var(--text-muted); }
+.warn-txt { color: var(--danger); font-weight: bold; }
+select { width: 100%; padding: 10px; background: var(--bg-color); color: var(--text-main); border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem; font-weight: bold; margin-top: 5px; }
 
-/* Container für Beschriftung und Wert über dem Slider */
-.slider-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 1.1rem;
-}
-
-/* Großer, gut lesbarer Wert rechts neben/über dem Slider */
-.slider-val {
-    font-size: 1.5rem;
-    color: var(--primary);
-    font-weight: bold;
-    text-align: right;
-}
-
-/* Vergrößerter Slider für bessere Touch-Bedienung */
-input[type=range] {
-    width: 100%;
-    height: 40px; 
-    margin-top: 10px;
-    margin-bottom: 10px;
-    cursor: pointer;
-}
-
-/* Standardisiertes Info-Text-Feld (z.B. für benötigte Pucks) */
-.info-txt {
-    text-align: center;
-    font-size: 0.9rem;
-    margin-top: 10px;
-    color: var(--text-muted);
-}
-
-/* Fehler-Text (z.B. wenn zu wenige Pucks verbunden sind) */
-.warn-txt {
-    color: var(--danger);
-    font-weight: bold;
-}
-
-/* Dropdown-Menüs in den Setup-Seiten */
-select {
-    width: 100%;
-    padding: 10px;
-    background: var(--bg-color);
-    color: var(--text-main);
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    font-size: 1rem;
-    font-weight: bold;
-    margin-top: 5px;
-}
-
-/* Zeile für Toggle-Schalter (Text links, Schalter rechts) */
-.toggle-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 1.1rem;
-    margin-bottom: 15px;
-    cursor: pointer;
-}
-
-/* Styling für den Schiebeschalter */
-.switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 28px;
-    flex-shrink: 0; /* Verhindert, dass der Schalter gestaucht wird */
-    margin-left: 10px;
-}
-
-.switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-/* Hintergrund des Schalters */
-.switch .slider-bg {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #444;
-    transition: .4s;
-    border-radius: 34px;
-}
-
-/* Der bewegliche Knopf im Schalter */
-.switch .slider-bg:before {
-    position: absolute;
-    content: "";
-    height: 20px;
-    width: 20px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
-
-/* Aktiver Zustand des Schalters */
-.switch input:checked + .slider-bg {
-    background-color: var(--primary);
-}
-
-.switch input:checked + .slider-bg:before {
-    transform: translateX(22px);
-}
+.toggle-row { display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; margin-bottom: 15px; cursor: pointer; }
+.switch { position: relative; display: inline-block; width: 50px; height: 28px; flex-shrink: 0; margin-left: 10px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .slider-bg { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #444; transition: .4s; border-radius: 34px; }
+.switch .slider-bg:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+.switch input:checked + .slider-bg { background-color: var(--primary); }
+.switch input:checked + .slider-bg:before { transform: translateX(22px); }
 
 /* --- PUCK ARENA & GRID SYSTEM (5x5) --- */
-.layout-card {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    margin-bottom: 20px;
-    overflow: hidden;
-}
+.layout-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 20px; overflow: hidden; }
+.layout-header { padding: 12px 15px; background: var(--card-hover); display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; }
+.layout-body { padding: 20px; display: flex; justify-content: center; }
 
-.layout-header {
-    padding: 12px 15px;
-    background: var(--card-hover);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-    font-weight: bold;
-}
-
-.layout-body {
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-}
-
-/* Das 5x5 Raster */
-/* --- PUCK ARENA (TABELLEN-LAYOUT) --- */
 .arena-table {
-    margin: 0 auto;
-    border-collapse: separate;
-    border-spacing: 10px; /* Abstand der Pucks */
+    margin: 0 auto; border-collapse: separate; border-spacing: 10px; 
     background: radial-gradient(circle, var(--card-hover) 0%, var(--bg-color) 100%);
-    padding: 15px;
-    border-radius: 12px;
-    border: 2px solid var(--border-color);
+    padding: 15px; border-radius: 12px; border: 2px solid var(--border-color);
 }
+.arena-table td { width: 45px; height: 45px; padding: 0; border: none !important; text-align: center; vertical-align: middle; }
 
-.arena-table td {
-    width: 45px;
-    height: 45px;
-    padding: 0;
-    border: none !important; /* Verhindert die globalen Tabellen-Linien! */
-    text-align: center;
-    vertical-align: middle;
-}
-
-/* Puck Icon Basis */
 .puck-icon {
-    width: 45px;
-    height: 45px;
-    border-radius: 50%;
-    border: 2px solid #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    font-size: 0.9rem;
-    color: white;
-    position: relative;
-    transition: all 0.3s;
-    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    width: 45px; height: 45px; border-radius: 50%; border: 2px solid #fff; display: flex; justify-content: center; align-items: center;
+    font-weight: bold; font-size: 0.9rem; color: white; position: relative; transition: all 0.3s; box-shadow: 0 0 10px rgba(0,0,0,0.5);
 }
 
 /* --- EFFEKT SIMULATIONEN --- */
-
-/* EFF_BREATHE (ID 3) */
-/* EFF_BREATHE (ID 3, 4, 5) - Kräftigeres Atmen */
-.eff-breathe {
-    animation: ani-breathe 2s infinite ease-in-out;
-}
+.eff-breathe { animation: ani-breathe 2s infinite ease-in-out; }
 @keyframes ani-breathe {
-    0%, 100% { 
-        opacity: 1; 
-        transform: scale(1); 
-        filter: brightness(1.2);
-    }
-    50% { 
-        opacity: 0.2; 
-        transform: scale(0.8); /* Deutlicheres Schrumpfen */
-        filter: brightness(0.5); /* Nimmt zusätzlich die Leuchtkraft weg */
-    }
+    0%, 100% { opacity: 1; transform: scale(1); filter: brightness(1.2); }
+    50% { opacity: 0.2; transform: scale(0.8); filter: brightness(0.5); }
 }
 
-/* EFF_SINGLE_CHASE (ID 6) */
 .eff-chase::after {
-    content: '';
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    background: white;
-    border-radius: 50%;
-    top: 2px;
-    animation: ani-chase 1.5s infinite linear;
-    transform-origin: 50% 20px;
+    content: ''; position: absolute; width: 8px; height: 8px; background: white; border-radius: 50%;
+    top: 2px; animation: ani-chase 1.5s infinite linear; transform-origin: 50% 20px;
 }
-@keyframes ani-chase {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
+@keyframes ani-chase { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-/* EFF_RAINBOW (ID 9) */
-.eff-rainbow {
-    background: linear-gradient(45deg, red, yellow, green, cyan, blue, magenta);
-    background-size: 400% 400%;
-    animation: ani-rainbow 3s infinite linear;
-}
-@keyframes ani-rainbow {
-    0% { filter: hue-rotate(0deg); }
-    100% { filter: hue-rotate(360deg); }
-}
+.eff-rainbow { background: linear-gradient(45deg, red, yellow, green, cyan, blue, magenta); background-size: 400% 400%; animation: ani-rainbow 3s infinite linear; }
+@keyframes ani-rainbow { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
 
-/* Helfer für Grid-Positionen */
 .pos-a1 { grid-column: 1; grid-row: 1; } .pos-c3 { grid-column: 3; grid-row: 3; }
-/* ... (weitere Positionen werden nach Bedarf im HTML gesetzt) */

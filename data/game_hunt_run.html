@@ -96,14 +96,17 @@
             if (data.st === 0 || data.st === 5) { 
                 btn.innerText = getTranslation('btn_start'); 
                 btn.style.background = "var(--primary)"; 
+                btn.style.color = "white";
             }
             else if (data.st === 3 || data.st === 4) { 
                 btn.innerText = getTranslation('btn_reset'); 
                 btn.style.background = "var(--success)"; 
+                btn.style.color = "white";
             }
             else { 
                 btn.innerText = getTranslation('btn_running'); 
                 btn.style.background = "var(--card-hover)"; 
+                btn.style.color = "var(--text-muted)";
             }
 
             let container = document.getElementById('playerList');

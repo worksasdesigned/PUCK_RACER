@@ -133,6 +133,7 @@
                 if (data.state == 2) {
                     btnStart.innerText = "RUNNING"; 
                     btnStart.style.background = "var(--card-hover)";
+                    btnStart.style.color = "var(--text-muted)";
                     btnStart.removeAttribute('onclick');
                     savedStats = false;
                     sessionRecords = {};
@@ -140,11 +141,13 @@
                 else if (data.state == 3) {
                     btnStart.innerText = getTranslation('btn_reset') || "RESET"; 
                     btnStart.style.background = "var(--success)";
+                    btnStart.style.color = "white";
                     btnStart.setAttribute('onclick', "doAction('reset')");
                 } 
                 else {
                     btnStart.innerText = getTranslation('btn_start') || "START";
                     btnStart.style.background = "var(--primary)";
+                    btnStart.style.color = "white";
                     btnStart.setAttribute('onclick', "doAction('start')");
                     savedStats = false;
                 }

@@ -130,9 +130,11 @@
             if (data.st === 0 || data.st === 5 || data.st === 3) { 
                 btn.innerText = (data.st === 3) ? getTranslation('btn_reset') : getTranslation('btn_start'); 
                 btn.style.background = "var(--primary)"; 
+                btn.style.color = "white";
             } else { 
                 btn.innerText = getTranslation('btn_running'); 
                 btn.style.background = "var(--card-hover)"; 
+                btn.style.color = "var(--text-muted)";
             }
 
             renderArenas(data);

@@ -111,9 +111,9 @@
                 document.getElementById('limit').innerText = d.state==2 ? tRem : `${getTranslation('lbl_time_limit')} ${limit}s`;
                 
                 let b = document.getElementById('btnStart');
-                if(d.state==0) { b.innerText = getTranslation('btn_start'); b.style.background = "var(--primary)"; }
-                else if(d.state==3) { b.innerText = getTranslation('btn_reset'); b.style.background = "var(--success)"; }
-                else { b.innerText = getTranslation('btn_running'); b.style.background = "var(--card-hover)"; }
+                if(d.state==0) { b.innerText = getTranslation('btn_start'); b.style.background = "var(--primary)"; b.style.color = "white"; }
+                else if(d.state==3) { b.innerText = getTranslation('btn_reset'); b.style.background = "var(--success)"; b.style.color = "white"; }
+                else { b.innerText = getTranslation('btn_running'); b.style.background = "var(--card-hover)"; b.style.color = "var(--text-muted)"; }
 
                 renderGroups(d.groups);
                 

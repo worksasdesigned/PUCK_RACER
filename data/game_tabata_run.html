@@ -155,9 +155,11 @@
             if (data.st === 0 || data.st === 4) { 
                 btnStart.innerText = getTranslation('btn_start'); 
                 btnStart.style.background = "var(--primary)"; 
+                btnStart.style.color = "white";
             } else { 
                 btnStart.innerText = getTranslation('btn_reset'); 
                 btnStart.style.background = "var(--card-hover)"; 
+                btnStart.style.color = "var(--text-muted)";
             }
 
             if (data.st === 5) {

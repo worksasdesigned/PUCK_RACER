@@ -209,9 +209,11 @@
                             if (data.st === 0 || data.st === 5 || data.st === 3) { 
                                 btn.innerText = (data.st === 3) ? t('btn_reset', "RESET") : t('btn_start', "START"); 
                                 btn.style.background = "var(--primary)";
+                                btn.style.color = "white";
                             } else { 
                                 btn.innerText = t('btn_running', "RUNNING"); 
                                 btn.style.background = "var(--card-hover)"; 
+                                btn.style.color = "var(--text-muted)";
                             }
                 
                             if (data.run && Array.isArray(data.run)) {

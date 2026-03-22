@@ -156,9 +156,11 @@
                     if (firstSt === 0 || firstSt === 5) { 
                         btn.innerText = (firstSt === 5) ? t('btn_reset', 'RESET') : t('btn_start_all', 'START ALL'); 
                         btn.style.background = "var(--primary)"; 
+                        btn.style.color = "white";
                     } else { 
                         btn.innerText = t('btn_running', 'RUNNING');
                         btn.style.background = "var(--card-hover)"; 
+                        btn.style.color = "var(--text-muted)";
                     }
                 }
 

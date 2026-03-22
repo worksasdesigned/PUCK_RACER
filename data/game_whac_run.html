@@ -68,6 +68,7 @@
     <script src="script.js"></script>
     <script>startStatusLoop();</script>
     <script>
+        // Setzt den Body auf Light-Mode, falls in den Einstellungen gewählt
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
         
         const GRP_COLORS = ['#800080', '#00FFFF', '#FFA500'];
@@ -161,10 +162,12 @@
                 if (data.st === 0 || data.st === 1 || data.st >= 5) { 
                     btn.innerText = t('btn_start_all', 'START ALL'); 
                     btn.style.background = "var(--primary)"; 
+                    btn.style.color = "white"; // FIX: Textfarbe explizit auf weiß für den primären Button
                     btn.setAttribute('onclick', "doAction('start')");
                 } else { 
                     btn.innerText = t('btn_running', 'RUNNING');
                     btn.style.background = "var(--card-hover)"; 
+                    btn.style.color = "var(--text-muted)"; // FIX: Textfarbe auf dunkelgrau ändern, damit es auf hellem Grund lesbar ist
                     btn.removeAttribute('onclick');
                 }
 
