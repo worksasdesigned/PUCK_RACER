@@ -198,8 +198,12 @@ After the real first beta is released il will provide the bin files in case of u
     - Cat Reflex Highlander Mode adjusted  
 
 **V2.93.0**   
-    - Bidirectional heartbeat puck firmware 81
-  
+    - Bidirectional heartbeat puck firmware 81  
+
+**V2.94.2**   
+    - UI 2.0 new design    
+
+
 --- 
 
 
