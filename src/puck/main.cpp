@@ -175,7 +175,12 @@ void setup() {
     startSoundSequence(SEQ_MARIO);
 
     // WATCHDOG: 3s Timeout, automatischer Reboot bei Hänger
-    esp_task_wdt_init(3, true);
+    esp_task_wdt_config_t wdt_config = {
+        .timeout_ms = 3000,
+        .idle_core_mask = 0,
+        .trigger_panic = true
+    };
+    esp_task_wdt_init(&wdt_config);
     esp_task_wdt_add(NULL);
 
     // WIFI SETUP

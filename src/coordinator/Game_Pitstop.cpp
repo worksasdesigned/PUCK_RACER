@@ -446,21 +446,32 @@ void Game_Pitstop::updateStatusPuck() {
     if (!statusPuckEnabled || statusPuckIdx < 0) return;
     if (gameState != PS_RUNNING && gameState != PS_PAUSED) return;
 
-    int newState = 2; 
+    // State 1 = Grün (mindestens eine Box frei)
+    // State 2 = Rot  (Pause oder alle Lanes deaktiviert)
+    // State 3 = Gelb (alle Boxen belegt, aber Lanes aktiv & Spiel läuft)
+    int newState = 2;
     if (gameState == PS_RUNNING) {
         bool anyOpen = false;
+        bool anyActive = false;
         for (int i = 0; i < numPlayers; i++) {
-            if (slots[i].isActive && !slots[i].entryRunning && slots[i].entryDoneAt == 0) { 
-                anyOpen = true; 
-                break; 
+            if (!slots[i].isActive) continue;
+            anyActive = true;
+            if (!slots[i].entryRunning && slots[i].entryDoneAt == 0) {
+                anyOpen = true;
+                break;
             }
         }
-        newState = anyOpen ? 1 : 2; 
+        if (anyOpen)       newState = 1; // Grün: mindestens eine Box frei
+        else if (anyActive) newState = 3; // Gelb: alle belegt, aber Spiel läuft
+        else                newState = 2; // Rot:  alle deaktiviert
     }
 
     if (newState == lastStatusState) return;
     lastStatusState = newState;
-    CRGB col = (newState == 1) ? CRGB::Green : CRGB::Red;
+    CRGB col;
+    if      (newState == 1) col = CRGB::Green;
+    else if (newState == 3) col = CRGB::Yellow;
+    else                    col = CRGB::Red;
     setPuck(statusPuckIdx, EFF_DOUBLE_CHASE, col, 20, 220);
 }
 
