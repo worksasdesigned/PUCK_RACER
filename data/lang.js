@@ -5,7 +5,7 @@ const TRANSLATIONS = {
         "btn_back": "⬅ BACK",
         "btn_next": "NEXT ➡",
         "btn_cancel": "Cancel",
-        "btn_start_game": "START GAME 🏁",
+        "btn_start_game": "START GAME",
         "btn_start": "START",
         "btn_stop": "STOP",
         "btn_reset": "RESET",
@@ -269,6 +269,9 @@ const TRANSLATIONS = {
         "ex_training": 'Create "PE Lesson Friday": Warm-up with Tabata (20s/10s, 6 rounds), main part Whac-A-Mole (Level 3, 90s), then Shuttle Run (8 rounds). Configure each game with your preferred settings. On Friday, open the training, hit Start, and step through each activity. No fiddling with settings during class!',
         "img_training": 'img_training.webp',
         "desc_settings": 'Translation / Text Editor, Connected Puck Overview and Wifi Settings. You can also update your Puckracer System and Pucks over the Air. (Just download the latest bin files and use the built in update tool. The Admin Tool is for the nerdy Trainers, see the technical background, WiFi Analyzer RAM usage and game statistics.',
+        "setup_settings": 'Open via the ⚙️ Settings tile on the dashboard.',
+        "ex_settings": 'Change the language, check connected pucks, update firmware over the air, or explore the admin tools.',
+        "img_settings": 'img_settings.webp',
 
         // --- PLAYER MANAGER ---
         "pm_title": "Player Manager",
@@ -1029,7 +1032,7 @@ const TRANSLATIONS = {
         "btn_back": "⬅ ZURÜCK",
         "btn_next": "WEITER ➡",
         "btn_cancel": "Abbrechen",
-        "btn_start_game": "ZUM SPIEL 🏁",
+        "btn_start_game": "ZUM SPIEL",
         "btn_start": "START",
         "btn_stop": "STOPP",
         "btn_reset": "NEUSTART",
@@ -1293,6 +1296,9 @@ const TRANSLATIONS = {
         "ex_training": 'Erstelle "Sportstunde Freitag": Aufwärmen mit Tabata (20s/10s, 6 Runden), Hauptteil Whac-A-Mole (Level 3, 90s), dann Pendellauf (8 Runden). Konfiguriere jedes Spiel mit deinen gewünschten Einstellungen. Am Freitag: Training öffnen, Start drücken und Schritt für Schritt durcharbeiten. Kein Gefummel mit Einstellungen während des Unterrichts!',
         "img_training": 'img_training.webp',
         "desc_settings": 'Übersetzungs- / Text Editor, Liste der verbundenen Pucks und WLAN Einstellungen (Jugendliche und ein WLAN ohne Passwort könnte spannend werden.... Du kannst den Coordinator und die Pucks auch bequem updaten, ohne die Geräte per USB zu verbinden (OTA Update). Der Admin Bereich zeigt Statistiken über die Pucks, die Spiele , hat einen WLAN Frequenzscanner und sogar einen sehr technischen ESPNOW Paket-Analyzer. (Das dürfte wohl nur für die w i r k l i c h technisch Interessierten trainer relevant sein).',
+        "setup_settings": 'Öffne über die ⚙️ Einstellungen-Kachel auf dem Dashboard.',
+        "ex_settings": 'Sprache ändern, verbundene Pucks prüfen, Firmware per OTA updaten oder die Admin-Tools erkunden.',
+        "img_settings": 'img_settings.webp',
 
         // --- PLAYER MANAGER ---
         "pm_title": "Spieler Verwaltung",
