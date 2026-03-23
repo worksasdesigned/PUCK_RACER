@@ -23,6 +23,7 @@
 #include <FastLED.h>
 #include <HTTPClient.h>
 #include <HTTPUpdate.h>
+#include <esp_task_wdt.h>
 #include "Common.h"
 
 // --- HARDWARE ---
@@ -31,7 +32,7 @@
 #define PIN_BTN     3 
 #define PIN_BUZZER  5
 #define NUM_LEDS    35
-#define FW_VERSION  81
+#define FW_VERSION  82
 
 // --- AUDIO NOTEN ---
 #define NOTE_B0  31
@@ -169,8 +170,13 @@ void setup() {
     
     FastLED.addLeds<WS2812B, PIN_LED, GRB>(leds, NUM_LEDS);
     FastLED.setBrightness(50);
+    FastLED.setMaxPowerInVoltsAndMilliamps(5, 1200); // Sicherheitslimit: max 1,2A bei 5V (35 LEDs * 60mA = 2100mA max, aber wir begrenzen auf 1200mA wegen TP4056)
     
     startSoundSequence(SEQ_MARIO);
+
+    // WATCHDOG: 3s Timeout, automatischer Reboot bei Hänger
+    esp_task_wdt_init(3, true);
+    esp_task_wdt_add(NULL);
 
     // WIFI SETUP
     WiFi.mode(WIFI_STA); 
@@ -206,6 +212,7 @@ void setup() {
 }
 
 void loop() {
+    esp_task_wdt_reset();
     if (updateRequested) { performOTA(); return; }
     
     if (cmdHead != cmdTail) { processIncomingCommands(); }
@@ -631,6 +638,7 @@ void runAnimation() {
 }
 
 void performOTA() {
+    esp_task_wdt_delete(NULL);
     Serial.println("\n--- OTA START ---");
     fill_solid(leds, NUM_LEDS, CRGB::Purple); FastLED.show();
     
