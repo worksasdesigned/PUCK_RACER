@@ -12,6 +12,7 @@ function updateStatus() {
             if(document.getElementById('puckTableBody')) {
                 updateSettingsTable(data);
             }
+            checkBatteryLevels(data);
         })
         .catch(err => console.error("API Error:", err));
 }
@@ -44,9 +45,10 @@ function updateSettingsTable(pucks) {
                 if(p.rssi >= -65) color = '#00ff00';
                 else if(p.rssi >= -80) color = '#ffff00';
 
+                let batText = p.bat < 1000 ? '???' : p.bat + ' mV';
                 html += `<tr>
                     <td>#${i + 1}</td>
-                    <td>${p.bat} mV</td>
+                    <td>${batText}</td>
                     <td style="color:${color}">${p.rssi} dBm</td>
                     <td>v${p.ver}</td>
                 </tr>`;
@@ -78,6 +80,49 @@ setInterval(function() {
         }
     }).catch(()=>{});
 }, 10000);
+
+// === BATTERY TOAST SYSTEM ===
+const _batDismissed = new Set();
+
+function checkBatteryLevels(pucks) {
+    pucks.forEach((p, i) => {
+        if (!p.active) return;
+        const num = i + 1;
+        if (p.bat < 1000) return; // Kein Batterie-Sensor verbaut
+        if (p.bat <= 3400) {
+            _showBatToast(i, 'critical', (typeof getTranslation === 'function' ? getTranslation('bat_critical') : 'Puck #{n} battery empty!').replace('{n}', num), '#c53030');
+        } else if (p.bat <= 3600) {
+            _showBatToast(i, 'warning', (typeof getTranslation === 'function' ? getTranslation('bat_warning') : 'Puck #{n} battery low!').replace('{n}', num), '#c05621');
+        }
+    });
+}
+
+function _showBatToast(puckIdx, level, msg, color) {
+    const key = puckIdx + '-' + level;
+    if (_batDismissed.has(key)) return;
+    if (document.getElementById('bat-t-' + key)) return;
+
+    let c = document.getElementById('toast-container');
+    if (!c) {
+        c = document.createElement('div');
+        c.id = 'toast-container';
+        c.style.cssText = 'position:fixed;top:60px;right:15px;z-index:100000;display:flex;flex-direction:column;gap:8px;max-width:340px;';
+        document.body.appendChild(c);
+    }
+
+    const t = document.createElement('div');
+    t.id = 'bat-t-' + key;
+    t.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:8px;color:#fff;font-size:0.85rem;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,0.3);animation:toastIn 0.3s ease;background:' + color + ';';
+    t.innerHTML = '<span>' + msg + '</span><button onclick="_dismissBatToast(\'' + key + '\')" style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;margin-left:12px;padding:0 4px;">✕</button>';
+    c.appendChild(t);
+    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
+}
+
+function _dismissBatToast(key) {
+    _batDismissed.add(key);
+    const el = document.getElementById('bat-t-' + key);
+    if (el) el.remove();
+}
 
 // Haptisches Feedback auf der Webseite, wenn man einen Knopf drückt.
 function haptic(ms) { if(navigator.vibrate) navigator.vibrate(ms || 20); }

@@ -56,6 +56,8 @@ const TRANSLATIONS = {
         "alert_cmd_sent": "Command sent!",
         "alert_error": "Error: ",
         "warn_low_memory": "⚠️ LOW MEMORY: {kb}KB free – System may become unstable!",
+        "bat_warning": "⚠️ Puck #{n} battery low!",
+        "bat_critical": "🔴 Puck #{n} battery empty – shutdown!",
 
         "g_counter": "Simple Counter",
         "g_timer": "Simple Timer",
@@ -1083,6 +1085,8 @@ const TRANSLATIONS = {
         "alert_cmd_sent": "Befehl gesendet!",
         "alert_error": "Fehler: ",
         "warn_low_memory": "⚠️ WENIG SPEICHER: {kb}KB frei – System kann instabil werden!",
+        "bat_warning": "⚠️ Puck #{n} Akku schwach!",
+        "bat_critical": "🔴 Puck #{n} Akku leer – Abschaltung!",
 
         "g_counter": "Einfacher Zähler",
         "g_timer": "Einfacher Timer",

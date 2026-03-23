@@ -27,12 +27,20 @@
 #include "Common.h"
 
 // --- HARDWARE ---
-#define PIN_BAT     2  // ADC Pin für den Batterie-Spannungsteiler
+#define PIN_BAT     0  // ADC Pin für den Batterie-Spannungsteiler
 #define PIN_LED     4
 #define PIN_BTN     3 
 #define PIN_BUZZER  5
 #define NUM_LEDS    35
-#define FW_VERSION  82
+#define FW_VERSION  83
+
+// --- BATTERIE ---
+#define BAT_CALIBRATION       1.0    // Platzhalter: Feinabstimmung nach Messung (z.B. 1.02)
+#define BAT_LOW_BOOT_MV       3700   // Boot-Schwelle: darunter → Notaus
+#define BAT_WARNING_MV        3600   // Warnung: darunter → Battery Save (50% Helligkeit)
+#define BAT_CRITICAL_MV       3400   // Laufzeit-Schwelle: darunter → Notaus
+#define BAT_CHECK_INTERVAL_MS 2000   // Prüfintervall in ms
+#define BAT_SAVE_BRIGHTNESS   128    // 50% max Helligkeit im Battery Save Modus
 
 // --- AUDIO NOTEN ---
 #define NOTE_B0  31
@@ -59,6 +67,8 @@ const uint8_t broadcastMac[] = BROADCAST_MAC;
 bool isPaired = false;
 bool updateRequested = false;
 unsigned long lastHeartbeat = 0;
+uint8_t coordinatorMac[6] = {0};
+bool coordinatorMacKnown = false;
 String updateSSID = "";
 String updatePW = "";
 
@@ -67,6 +77,15 @@ String updatePW = "";
 // Wenn dieser Wert > 15 Sekunden alt ist, geht der Puck davon aus, dass die
 // Verbindung verloren wurde, und wechselt auf roten Status + schnelleres Re-Pairing.
 unsigned long lastCommandFromCoordinator = 0;
+
+// --- BATTERIE SCHUTZ ---
+bool lowBatteryMode = false;
+bool batterySaveMode = false;
+unsigned long lastBatteryCheck = 0;
+#define BAT_AVG_SAMPLES 5
+uint16_t batHistory[BAT_AVG_SAMPLES] = {0};
+uint8_t  batHistoryIdx = 0;
+uint8_t  batHistoryCount = 0;
 
 // STABILITÄTS-FIX: Timeout-Schwelle in ms, ab der der Puck die Verbindung
 // als verloren betrachtet. Der Coordinator sendet alle 10s einen CMD_KEEPALIVE,
@@ -144,23 +163,31 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *data, int len);
 // Belauscht die WLAN Pakete im Hintergrund, um die Signalstärke zu lesen
 // =========================================================================
 void promiscuous_rx_cb(void *buf, wifi_promiscuous_pkt_type_t type) {
+    if (!coordinatorMacKnown) return;
     wifi_promiscuous_pkt_t *pkt = (wifi_promiscuous_pkt_t *)buf;
-    // Prüfen, ob das Paket lang genug ist (MAC-Header)
-    if (pkt->rx_ctrl.sig_len >= 24) { 
-        // Lese die Sender-MAC (Offset 10 im 802.11 Header)
-        uint8_t *mac = pkt->payload + 10; 
-        
-        // Da wir nur vom Coordinator Pakete annehmen, reicht es, wenn wir
-        // bei jedem Management/Data Paket die RSSI Variable aktualisieren.
-        // Ein genauerer MAC-Filter ist für dieses Projekt nicht zwingend nötig.
-        currentRSSI = pkt->rx_ctrl.rssi;
+    if (pkt->rx_ctrl.sig_len >= 24) {
+        // Sender-MAC (Offset 10 im 802.11 Header)
+        uint8_t *mac = pkt->payload + 10;
+        // Nur Pakete vom Coordinator akzeptieren
+        if (memcmp(mac, coordinatorMac, 6) == 0) {
+            currentRSSI = pkt->rx_ctrl.rssi;
+        }
     }
 }
 
+uint16_t readBatteryMV() {
+    uint32_t adc_mv = analogReadMilliVolts(PIN_BAT);
+    return (uint16_t)(adc_mv * 2 * BAT_CALIBRATION);
+}
 
 void setup() {
+    // Buzzer sofort aus (falls Watchdog-Reset während aktivem Ton)
+    pinMode(PIN_BUZZER, OUTPUT);
+    digitalWrite(PIN_BUZZER, LOW);
+    noTone(PIN_BUZZER);
+
     Serial.begin(115200);
-    
+
     // Initialisiere ADC Pin (nicht zwingend nötig für analogRead, aber sauberer)
     pinMode(PIN_BAT, INPUT);
     
@@ -171,8 +198,37 @@ void setup() {
     FastLED.addLeds<WS2812B, PIN_LED, GRB>(leds, NUM_LEDS);
     FastLED.setBrightness(50);
     FastLED.setMaxPowerInVoltsAndMilliamps(5, 1200); // Sicherheitslimit: max 1,2A bei 5V (35 LEDs * 60mA = 2100mA max, aber wir begrenzen auf 1200mA wegen TP4056)
-    
-    startSoundSequence(SEQ_MARIO);
+
+    // --- BATTERIE BOOT-CHECK ---
+    {
+        uint32_t sum = 0;
+        for (int i = 0; i < 8; i++) { sum += readBatteryMV(); delay(5); }
+        uint16_t avgMv = sum / 8;
+        Serial.printf("Boot battery: %u mV\n", avgMv);
+        if (avgMv < 1000) {
+            Serial.println("No battery sensor detected – skipping battery protection");
+        } else if (avgMv < BAT_CRITICAL_MV) {
+            lowBatteryMode = true;
+            // Countdown: 35 → 0 LEDs in 1 Sekunde
+            for (int n = NUM_LEDS; n >= 0; n--) {
+                FastLED.clear();
+                for (int j = 0; j < n; j++) leds[j] = CRGB::Red;
+                FastLED.show();
+                delay(1000 / (NUM_LEDS + 1));
+            }
+            // 2x rot blinken
+            for (int b = 0; b < 2; b++) {
+                fill_solid(leds, NUM_LEDS, CRGB::Red); FastLED.show(); delay(150);
+                FastLED.clear(); FastLED.show(); delay(150);
+            }
+            Serial.println("LOW BATTERY MODE at boot!");
+        } else if (avgMv < BAT_LOW_BOOT_MV) {
+            batterySaveMode = true;
+            Serial.printf("Battery Save Mode at boot (%u mV)\n", avgMv);
+        }
+    }
+
+    if (!lowBatteryMode) startSoundSequence(SEQ_MARIO);
 
     // WATCHDOG: 3s Timeout, automatischer Reboot bei Hänger
     esp_task_wdt_config_t wdt_config = {
@@ -228,6 +284,49 @@ void loop() {
 
     unsigned long now = millis();
 
+    // --- RUNTIME LOW BATTERY CHECK (alle 2s, Entscheidung nach 5 Messungen = 10s Mittelwert) ---
+    if (!lowBatteryMode && now - lastBatteryCheck >= BAT_CHECK_INTERVAL_MS) {
+        lastBatteryCheck = now;
+        uint16_t batNow = readBatteryMV();
+
+        // Ringpuffer befüllen
+        batHistory[batHistoryIdx] = batNow;
+        batHistoryIdx = (batHistoryIdx + 1) % BAT_AVG_SAMPLES;
+        if (batHistoryCount < BAT_AVG_SAMPLES) batHistoryCount++;
+
+        // Erst auswerten wenn Puffer voll (5 Messungen = 10s)
+        if (batHistoryCount >= BAT_AVG_SAMPLES) {
+            uint32_t sum = 0;
+            for (uint8_t i = 0; i < BAT_AVG_SAMPLES; i++) sum += batHistory[i];
+            uint16_t batAvg = sum / BAT_AVG_SAMPLES;
+
+            if (batAvg >= 1000 && batAvg <= BAT_CRITICAL_MV) {
+                Serial.printf("CRITICAL: Battery avg %u mV → lowBatteryMode!\n", batAvg);
+                noTone(PIN_BUZZER);
+                sound.active = false;
+                // Countdown-Animation VOR dem Sperren zeigen
+                FastLED.setBrightness(200);
+                for (int n = NUM_LEDS; n >= 0; n--) {
+                    FastLED.clear();
+                    for (int j = 0; j < n; j++) leds[j] = CRGB::Red;
+                    FastLED.show();
+                    delay(1000 / (NUM_LEDS + 1));
+                }
+                for (int b = 0; b < 2; b++) {
+                    fill_solid(leds, NUM_LEDS, CRGB::Red); FastLED.show(); delay(150);
+                    FastLED.clear(); FastLED.show(); delay(150);
+                }
+                // Jetzt sperren
+                lowBatteryMode = true;
+                anim.id = EFF_OFF;
+            } else if (batAvg >= 1000 && batAvg <= BAT_WARNING_MV && !batterySaveMode) {
+                batterySaveMode = true;
+                Serial.printf("WARNING: Battery avg %u mV → batterySaveMode (50%% brightness)\n", batAvg);
+                FastLED.setBrightness(min(anim.brightness, (uint8_t)BAT_SAVE_BRIGHTNESS));
+            }
+        }
+    }
+
     // =========================================================================
     // DISCONNECT-ERKENNUNG: Coordinator → Puck Verbindungsüberwachung
     // =========================================================================
@@ -249,6 +348,7 @@ void loop() {
         Serial.printf("DISCONNECT: Kein Coordinator-Signal seit %lums → Verbindung verloren!\n",
                       now - lastCommandFromCoordinator);
         isPaired = false;
+        coordinatorMacKnown = false;
         lastHeartbeat = 0;  // Sofort EVT_HELLO senden beim nächsten Loop-Durchlauf
 
         // Visuelles Feedback: Status-LED auf ROT
@@ -314,7 +414,8 @@ void addNote(int freq, int dur) {
 }
 
 void startSoundSequence(uint8_t id) {
-    noTone(PIN_BUZZER); 
+    if (lowBatteryMode) { noTone(PIN_BUZZER); sound.active = false; return; }
+    noTone(PIN_BUZZER);
     sound.active = true;
     sound.isExplosion = false;
     sound.seqIndex = 0;
@@ -389,6 +490,7 @@ void processIncomingCommands() {
 
         if (cmd.cmd == CMD_PING) {
             isPaired = false;
+            coordinatorMacKnown = false;
             lastHeartbeat = 0;
             Serial.println("PING empfangen – Re-Pairing...");
         }
@@ -437,6 +539,16 @@ void OnDataRecv(const esp_now_recv_info_t * info, const uint8_t *data, int len) 
 void OnDataRecv(const uint8_t * mac_addr, const uint8_t *data, int len) {
 #endif
 
+    // Coordinator-MAC beim ersten Paket merken (für Sniffer MAC-Filter)
+    if (!coordinatorMacKnown && len == sizeof(CommandPacket)) {
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
+        memcpy(coordinatorMac, info->src_addr, 6);
+#else
+        memcpy(coordinatorMac, mac_addr, 6);
+#endif
+        coordinatorMacKnown = true;
+    }
+
     if (len == sizeof(CommandPacket)) {
         CommandPacket* incoming = (CommandPacket*)data;
 
@@ -469,11 +581,14 @@ void sendEvent(uint8_t type) {
     pkg.type = type;
     pkg.version = FW_VERSION; 
     
-    // BERECHNUNG DER BATTERIESPANNUNG
-    // Liest den analogen Wert in Millivolt. Da der Spannungsteiler (100k/100k) 
-    // die Spannung halbiert, müssen wir den gemessenen Wert mit 2 multiplizieren.
-    uint32_t adc_mv = analogReadMilliVolts(PIN_BAT);
-    pkg.battery_mv = (uint16_t)(adc_mv * 2); 
+    // Geglätteten Mittelwert senden (falls Ringpuffer voll), sonst Einzelmessung
+    if (batHistoryCount >= BAT_AVG_SAMPLES) {
+        uint32_t sum = 0;
+        for (uint8_t i = 0; i < BAT_AVG_SAMPLES; i++) sum += batHistory[i];
+        pkg.battery_mv = sum / BAT_AVG_SAMPLES;
+    } else {
+        pkg.battery_mv = readBatteryMV();
+    }
     
     globalSeqCounter++;
     pkg.seqNr = globalSeqCounter;
@@ -513,6 +628,9 @@ void handleButton() {
 }
 
 void setEffect(uint8_t id, uint8_t r, uint8_t g, uint8_t b, int speed, uint8_t bright, uint8_t extra) {
+    // Low Battery Guard: nur EFF_OFF und EFF_STATUS erlaubt
+    if (lowBatteryMode && id != EFF_OFF && id != EFF_STATUS) return;
+
     anim.id = id;
     anim.color1 = CRGB(r, g, b);
     anim.speed = speed;
@@ -520,6 +638,7 @@ void setEffect(uint8_t id, uint8_t r, uint8_t g, uint8_t b, int speed, uint8_t b
     anim.step = 0;
     anim.counter = extra;
 
+    if (batterySaveMode && bright > BAT_SAVE_BRIGHTNESS) bright = BAT_SAVE_BRIGHTNESS;
     FastLED.setBrightness(bright);
 
     // STABILITÄTS-FIX: Promiscuous Sniffer nur bei EFF_STATUS aktivieren.
@@ -555,7 +674,9 @@ void runAnimation() {
         return;
     }
 
-    if (anim.speed > 0 && now - anim.lastUpdate < (unsigned long)anim.speed && anim.id != EFF_PROGRESS) return;
+    unsigned long minInterval = (anim.speed > 0) ? (unsigned long)anim.speed : 100; // min 100ms bei speed=0
+    if (anim.id == EFF_PROGRESS) minInterval = 0; // Progress: sofort updaten
+    if (minInterval > 0 && now - anim.lastUpdate < minInterval) return;
     anim.lastUpdate = now;
 
     switch (anim.id) {
