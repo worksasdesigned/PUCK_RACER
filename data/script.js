@@ -21,7 +21,50 @@ fetch('/api/version')
     .catch(() => {});
 
 function _vUrl(url) { return url.split('?')[0] + (_fwVer ? '?v=' + _fwVer : ''); }
-function nav(url) { location.href = _vUrl(url); }
+
+function nav(url) {
+    // Auto-save: Formularwerte sichern wenn man eine Setup-Seite verlässt
+    if (_isSetupPage()) _saveFormState();
+    // Navigation zum Dashboard → gespeicherte Formwerte löschen (frischer Start)
+    if (url === '/' || url === '/index.html')
+        Object.keys(sessionStorage).forEach(k => { if (k.startsWith('_fs_')) sessionStorage.removeItem(k); });
+    location.href = _vUrl(url);
+}
+
+// === FORM STATE PERSISTENCE ===
+// Speichert/stellt Formularwerte auf game_*_setup Seiten automatisch wieder her.
+// Eigener _fs_ Namespace, kollidiert nicht mit tc_ (Training) oder Game-Keys.
+function _isSetupPage() {
+    return location.pathname.replace(/\\/g, '/').split('/').pop().indexOf('_setup') > -1;
+}
+function _fsPrefix() {
+    var m = location.pathname.replace(/\\/g, '/').split('/').pop().match(/^game_([^_]+)_/);
+    return m ? '_fs_' + m[1] + '_' : '';
+}
+function _saveFormState() {
+    var px = _fsPrefix(); if (!px) return;
+    document.querySelectorAll('input[id], select[id]').forEach(function(el) {
+        if (el.type === 'hidden' || el.type === 'button' || el.type === 'submit') return;
+        sessionStorage.setItem(px + el.id, el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value);
+    });
+}
+function _restoreFormState() {
+    var px = _fsPrefix(); if (!px) return;
+    var found = false;
+    document.querySelectorAll('input[id], select[id]').forEach(function(el) {
+        var val = sessionStorage.getItem(px + el.id);
+        if (val === null) return;
+        if (el.type === 'checkbox') el.checked = val === '1';
+        else el.value = val;
+        try { el.dispatchEvent(new Event('input', {bubbles:true})); el.dispatchEvent(new Event('change', {bubbles:true})); } catch(e) {}
+        found = true;
+    });
+    if (found) console.log('[FormRestore] ' + px);
+}
+// Auto-Restore auf Setup-Seiten (nicht im Training-Modus)
+if (_isSetupPage() && !sessionStorage.getItem('training_config_id') && !sessionStorage.getItem('training_play_mode')) {
+    setTimeout(_restoreFormState, 500);
+}
 
 // Globale Funktion zum Laden des Status
 function startStatusLoop() {
