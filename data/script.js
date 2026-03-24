@@ -134,32 +134,51 @@ function triggerPuckUpdate() {
     }
 }
 
+// === SYSTEM PREFERENCES ===
+function _getSysPrefs() {
+    try { return JSON.parse(localStorage.getItem('sys_prefs') || '{}'); } catch(e) { return {}; }
+}
+
 // === RAM WATCHDOG ===
 setInterval(function() {
+    if (!_getSysPrefs().heap_warn) return;
     fetch('/api/heap').then(r=>r.json()).then(d => {
         if (d.free < 20000 && !document.getElementById('ramWarn')) {
-            let t = document.createElement('div');
-            t.id = 'ramWarn';
-            t.style.cssText = 'position:fixed;top:0;left:0;right:0;background:#aa0000;color:#fff;padding:10px 15px;z-index:99999;text-align:center;font-size:0.85rem;font-weight:bold;animation:fade 0.3s;';
-            t.innerHTML = getTranslation('warn_low_memory').replace('{kb}', Math.round(d.free/1024));
-            document.body.appendChild(t);
+            _showSysToast('ramWarn', (typeof getTranslation === 'function' ? getTranslation('warn_low_memory') : 'LOW MEMORY: {kb}KB free').replace('{kb}', Math.round(d.free/1024)), '#aa0000');
         } else if (d.free >= 25000 && document.getElementById('ramWarn')) {
             document.getElementById('ramWarn').remove();
         }
     }).catch(()=>{});
 }, 10000);
 
+// === LITTLEFS STORAGE CHECK ===
+// Prüft einmalig ob der Speicherplatz knapp ist (nur auf index.html und game_musical_setup.html)
+(function() {
+    var page = location.pathname.replace(/\\/g, '/').split('/').pop() || 'index.html';
+    if (page !== 'index.html' && page !== 'game_musical_setup.html') return;
+    if (!_getSysPrefs().fs_warn) return;
+    fetch('/api/sysinfo').then(r => r.json()).then(d => {
+        if (!d.fsTotal || !d.fsUsed) return;
+        var freePct = Math.round((1 - d.fsUsed / d.fsTotal) * 100);
+        var freeKB = Math.round((d.fsTotal - d.fsUsed) / 1024);
+        if (freePct < 15) {
+            _showSysToast('fsWarn', (typeof getTranslation === 'function' ? getTranslation('warn_low_storage') : 'LOW STORAGE: {kb}KB free ({pct}%)').replace('{kb}', freeKB).replace('{pct}', freePct), '#b45309');
+        }
+    }).catch(()=>{});
+})();
+
 // === BATTERY TOAST SYSTEM ===
 const _batDismissed = new Set();
 
 function checkBatteryLevels(pucks) {
+    var prefs = _getSysPrefs();
     pucks.forEach((p, i) => {
         if (!p.active) return;
         const num = i + 1;
-        if (p.bat < 1000) return; // Kein Batterie-Sensor verbaut
-        if (p.bat <= 3400) {
+        if (p.bat < 1000) return;
+        if (p.bat <= 3400 && prefs.bat_crit !== false) {
             _showBatToast(i, 'critical', (typeof getTranslation === 'function' ? getTranslation('bat_critical') : 'Puck #{n} battery empty!').replace('{n}', num), '#c53030');
-        } else if (p.bat <= 3600) {
+        } else if (p.bat <= 3600 && prefs.bat_low !== false) {
             _showBatToast(i, 'warning', (typeof getTranslation === 'function' ? getTranslation('bat_warning') : 'Puck #{n} battery low!').replace('{n}', num), '#c05621');
         }
     });
@@ -190,6 +209,22 @@ function _dismissBatToast(key) {
     _batDismissed.add(key);
     const el = document.getElementById('bat-t-' + key);
     if (el) el.remove();
+}
+
+function _showSysToast(id, msg, color) {
+    if (document.getElementById(id)) return;
+    var c = document.getElementById('toast-container');
+    if (!c) {
+        c = document.createElement('div');
+        c.id = 'toast-container';
+        c.style.cssText = 'position:fixed;top:60px;right:15px;z-index:100000;display:flex;flex-direction:column;gap:8px;max-width:340px;';
+        document.body.appendChild(c);
+    }
+    var t = document.createElement('div');
+    t.id = id;
+    t.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:8px;color:#fff;font-size:0.85rem;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,0.3);animation:toastIn 0.3s ease;background:' + color + ';';
+    t.innerHTML = '<span>' + msg + '</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;margin-left:12px;padding:0 4px;">&#10005;</button>';
+    c.appendChild(t);
 }
 
 // Haptisches Feedback auf der Webseite, wenn man einen Knopf drückt.

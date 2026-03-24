@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PuckRacer">
+    <title>Parameters - Puck Racer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo" style="font-size: 1rem;" data-i18n="param_title">Parameters</div>
+    </header>
+
+    <main>
+        <button onclick="nav('/settings.html')" class="btn btn-back" data-i18n="btn_back">&#11013; BACK</button>
+
+        <div class="card">
+            <h3 data-i18n="param_notifications">Notifications</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted);" data-i18n="param_notifications_desc">Enable or disable system warning messages.</p>
+
+            <div class="toggle-row" onclick="this.querySelector('input').click()">
+                <span data-i18n="param_bat_low">Battery Low Warning</span>
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="chkBatLow" checked onchange="saveSysPref('bat_low', this.checked)">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row" onclick="this.querySelector('input').click()">
+                <span data-i18n="param_bat_crit">Battery Critical Warning</span>
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="chkBatCrit" checked onchange="saveSysPref('bat_crit', this.checked)">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row" onclick="this.querySelector('input').click()">
+                <span data-i18n="param_heap_warn">Low Heap Memory Warning</span>
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="chkHeapWarn" onchange="saveSysPref('heap_warn', this.checked)">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row" onclick="this.querySelector('input').click()">
+                <span data-i18n="param_fs_warn">Low Storage Warning (LittleFS)</span>
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="chkFsWarn" onchange="saveSysPref('fs_warn', this.checked)">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="card" style="opacity: 0.5; border: 1px dashed var(--border-color);">
+            <h3 data-i18n="param_future">Future Settings</h3>
+            <p style="font-size:0.85rem; color:var(--warning); margin-bottom:15px;" data-i18n="param_future_hint">These settings are not yet functional and are shown as a preview.</p>
+
+            <label style="display:block; margin-bottom:15px;">
+                <span data-i18n="param_led_brightness">LED Max Brightness</span>
+                <input type="range" id="sldBrightness" min="10" max="100" value="80" disabled
+                       style="width:100%; margin-top:5px;">
+                <div style="text-align:center; font-size:0.9rem; color:var(--text-muted);">80%</div>
+            </label>
+
+            <div class="toggle-row" style="cursor:default;">
+                <span data-i18n="param_mute_sounds">Deactivate All Sounds</span>
+                <label class="switch">
+                    <input type="checkbox" id="chkMute" disabled>
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+
+            <label style="display:block; margin-bottom:15px;">
+                <span data-i18n="param_shutdown_pct">Shut Down Pucks at Battery %</span>
+                <input type="range" id="sldShutdown" min="15" max="25" value="20" disabled
+                       style="width:100%; margin-top:5px;">
+                <div style="text-align:center; font-size:0.9rem; color:var(--text-muted);">20%</div>
+            </label>
+
+            <label style="display:block; margin-bottom:15px;">
+                <span data-i18n="param_batwarn_pct">Show Battery Warning at %</span>
+                <input type="range" id="sldBatWarn" min="25" max="75" value="35" disabled
+                       style="width:100%; margin-top:5px;">
+                <div style="text-align:center; font-size:0.9rem; color:var(--text-muted);">35%</div>
+            </label>
+
+            <label style="display:block; margin-bottom:15px;">
+                <span data-i18n="param_time_reminder">Show Time Reminder Every</span>
+                <input type="range" id="sldReminder" min="10" max="60" step="5" value="30" disabled
+                       style="width:100%; margin-top:5px;">
+                <div style="text-align:center; font-size:0.9rem; color:var(--text-muted);">30 min</div>
+            </label>
+        </div>
+    </main>
+
+    <footer>by WorksAsDesigned</footer>
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>
+        // --- Preferences in localStorage ---
+        function loadSysPrefs() {
+            var prefs = JSON.parse(localStorage.getItem('sys_prefs') || '{}');
+            document.getElementById('chkBatLow').checked  = prefs.bat_low  !== false;
+            document.getElementById('chkBatCrit').checked  = prefs.bat_crit !== false;
+            document.getElementById('chkHeapWarn').checked  = prefs.heap_warn === true;
+            document.getElementById('chkFsWarn').checked    = prefs.fs_warn  === true;
+        }
+        function saveSysPref(key, val) {
+            var prefs = JSON.parse(localStorage.getItem('sys_prefs') || '{}');
+            prefs[key] = val;
+            localStorage.setItem('sys_prefs', JSON.stringify(prefs));
+        }
+        loadSysPrefs();
+    </script>
+</body>
+</html>
