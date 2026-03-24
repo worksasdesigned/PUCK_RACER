@@ -75,6 +75,8 @@ public:
     static void setRssiMode(bool active);
     static void setQuietMode(bool active);
     static bool getQuietMode();
+    static void setBrightnessLimit(uint8_t percent);
+    static uint8_t getBrightnessLimit();
     static void clearList();
     
     static NetworkStats getStats();
@@ -104,6 +106,7 @@ private:
     static volatile int queueTail; 
     static bool rssiModeActive;
     static bool quietModeActive;
+    static uint8_t brightnessLimit;
     
     static NetworkStats stats;
 

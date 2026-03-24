@@ -44,6 +44,7 @@ enum CommandType {
     CMD_EFFECT = 10,
     CMD_SOUND = 11,
     CMD_SEQUENCE = 12,
+    CMD_SET_BRIGHTNESS = 13,  // Max-Helligkeit in % (extra = 10..100)
     CMD_RESET = 99
 };
 

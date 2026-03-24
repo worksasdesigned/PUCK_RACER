@@ -7,7 +7,7 @@
 #include "StatsManager.h" 
 #include "WifiScanner.h"
 
-#define SYS_VER "v2.97.3" 
+#define SYS_VER "v2.97.4" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;
@@ -409,6 +409,13 @@ void WebHandler::begin() {
             PuckNetwork::setQuietMode(req->getParam("val")->value().toInt() == 1);
         }
         req->send(200, "text/plain", PuckNetwork::getQuietMode() ? "1" : "0");
+    });
+
+    server.on("/api/brightness_limit", HTTP_GET, [](AsyncWebServerRequest *req){
+        if (req->hasParam("val")) {
+            PuckNetwork::setBrightnessLimit(req->getParam("val")->value().toInt());
+        }
+        req->send(200, "text/plain", String(PuckNetwork::getBrightnessLimit()));
     });
 
     server.on("/api/puck_reset", HTTP_GET, [](AsyncWebServerRequest *request){

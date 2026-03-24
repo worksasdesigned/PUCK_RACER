@@ -32,7 +32,7 @@
 #define PIN_BTN     3 
 #define PIN_BUZZER  5
 #define NUM_LEDS    35
-#define FW_VERSION  83
+#define FW_VERSION  84
 
 // --- BATTERIE ---
 #define BAT_CALIBRATION       1.0    // Platzhalter: Feinabstimmung nach Messung (z.B. 1.02)
@@ -112,6 +112,9 @@ struct {
     bool lastReading;
     unsigned long lastDebounceTime;
 } button = {false, false, 0};
+
+// --- BRIGHTNESS LIMIT ---
+uint8_t maxBrightnessPercent = 100;  // Vom Coordinator einstellbar (10-100%)
 
 // --- ANIMATION ENGINE ---
 struct {
@@ -197,7 +200,7 @@ void setup() {
     
     FastLED.addLeds<WS2812B, PIN_LED, GRB>(leds, NUM_LEDS);
     FastLED.setBrightness(50);
-    FastLED.setMaxPowerInVoltsAndMilliamps(5, 1200); // Sicherheitslimit: max 1,2A bei 5V (35 LEDs * 60mA = 2100mA max, aber wir begrenzen auf 1200mA wegen TP4056)
+    FastLED.setMaxPowerInVoltsAndMilliamps(5, 1500); // Sicherheitslimit: max 1,5A bei 5V (real <1A, FastLED schätzt konservativ)
 
     // --- BATTERIE BOOT-CHECK ---
     {
@@ -522,6 +525,9 @@ void processIncomingCommands() {
         else if (cmd.cmd == CMD_SEQUENCE) {
             startSoundSequence(cmd.extra); 
         }
+        else if (cmd.cmd == CMD_SET_BRIGHTNESS) {
+            maxBrightnessPercent = constrain(cmd.extra, 10, 100);
+        }
         else if (cmd.cmd == CMD_RESET) {
             ESP.restart();
         }
@@ -638,6 +644,7 @@ void setEffect(uint8_t id, uint8_t r, uint8_t g, uint8_t b, int speed, uint8_t b
     anim.step = 0;
     anim.counter = extra;
 
+    if (maxBrightnessPercent < 100) bright = (uint8_t)((uint16_t)bright * maxBrightnessPercent / 100);
     if (batterySaveMode && bright > BAT_SAVE_BRIGHTNESS) bright = BAT_SAVE_BRIGHTNESS;
     FastLED.setBrightness(bright);
 

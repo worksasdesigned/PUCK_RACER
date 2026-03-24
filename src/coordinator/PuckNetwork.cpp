@@ -10,6 +10,7 @@ volatile int PuckNetwork::queueHead = 0;
 volatile int PuckNetwork::queueTail = 0;
 bool PuckNetwork::rssiModeActive = false;
 bool PuckNetwork::quietModeActive = false;
+uint8_t PuckNetwork::brightnessLimit = 100;
 static uint8_t globalCmdSeq = 0;
 
 // Quiet Mode: verzögerter Countdown-Beep
@@ -132,9 +133,15 @@ void PuckNetwork::update() {
             }
         }
 
-        if (item.evt.type == EVT_HELLO) { 
+        if (item.evt.type == EVT_HELLO) {
             CommandPacket ack; ack.cmd = CMD_PAIR_ACK;
             sendToPuck(item.mac, ack);
+
+            if (brightnessLimit < 100) {
+                CommandPacket brt; memset(&brt, 0, sizeof(brt));
+                brt.cmd = CMD_SET_BRIGHTNESS; brt.extra = brightnessLimit;
+                sendToPuck(item.mac, brt);
+            }
 
             bool restored = false;
             for (int i = 0; i < MAX_PEERS; i++) {
@@ -437,6 +444,20 @@ void PuckNetwork::OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingDat
 
 void PuckNetwork::setQuietMode(bool active) { quietModeActive = active; }
 bool PuckNetwork::getQuietMode() { return quietModeActive; }
+
+void PuckNetwork::setBrightnessLimit(uint8_t percent) {
+    brightnessLimit = constrain(percent, 10, 100);
+    CommandPacket cmd; memset(&cmd, 0, sizeof(cmd));
+    cmd.cmd = CMD_SET_BRIGHTNESS; cmd.extra = brightnessLimit;
+    broadcast(cmd);
+    // Gecachten Effekt erneut senden, damit Helligkeit sofort sichtbar wird
+    for (int i = 0; i < MAX_PEERS; i++) {
+        if (pucks[i].active && pucks[i].hasLastEffect) {
+            sendToPuck(pucks[i].mac, pucks[i].lastEffect);
+        }
+    }
+}
+uint8_t PuckNetwork::getBrightnessLimit() { return brightnessLimit; }
 
 // Quiet Mode: Sounds filtern. Countdowns → verzögerter Beep am Ende, Rest → stumm.
 // SEQ_SKI:  3x (100ms+900ms) = 3000ms bis GO-Ton

@@ -67,16 +67,23 @@
             </div>
         </div>
 
+        <div class="card">
+            <h3 data-i18n="param_led_brightness">LED Max Brightness</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted);" data-i18n="param_brightness_desc">Limits the maximum LED brightness of all pucks.</p>
+
+            <label style="display:block; margin-bottom:5px;">
+                <input type="range" id="sldBrightness" min="10" max="100" value="100"
+                       oninput="updBrightLabel(this.value)"
+                       onchange="fetch('/api/brightness_limit?val='+this.value)"
+                       style="width:100%; margin-top:5px;">
+                <div id="lblBright" style="text-align:center; font-size:0.9rem; color:var(--text-muted);">100%</div>
+                <div id="lblRuntime" style="text-align:center; font-size:0.8rem; color:var(--text-muted);"></div>
+            </label>
+        </div>
+
         <div class="card" style="opacity: 0.5; border: 1px dashed var(--border-color);">
             <h3 data-i18n="param_future">Future Settings</h3>
             <p style="font-size:0.85rem; color:var(--warning); margin-bottom:15px;" data-i18n="param_future_hint">These settings are not yet functional and are shown as a preview.</p>
-
-            <label style="display:block; margin-bottom:15px;">
-                <span data-i18n="param_led_brightness">LED Max Brightness</span>
-                <input type="range" id="sldBrightness" min="10" max="100" value="80" disabled
-                       style="width:100%; margin-top:5px;">
-                <div style="text-align:center; font-size:0.9rem; color:var(--text-muted);">80%</div>
-            </label>
 
             <label style="display:block; margin-bottom:15px;">
                 <span data-i18n="param_shutdown_pct">Shut Down Pucks at Battery %</span>
@@ -105,6 +112,7 @@
     <script src="lang.js"></script>
     <script src="script.js"></script>
     <script>
+        startStatusLoop();
         // --- Preferences in localStorage ---
         function loadSysPrefs() {
             var prefs = JSON.parse(localStorage.getItem('sys_prefs') || '{}');
@@ -123,6 +131,26 @@
         fetch('/api/quiet_mode').then(r => r.text()).then(v => {
             document.getElementById('chkQuiet').checked = v.trim() === '1';
         }).catch(() => {});
+        // Brightness Limit vom Coordinator laden
+        fetch('/api/brightness_limit').then(r => r.text()).then(v => {
+            var val = parseInt(v.trim()) || 100;
+            document.getElementById('sldBrightness').value = val;
+            updBrightLabel(val);
+        }).catch(() => {});
+
+        function updBrightLabel(pct) {
+            document.getElementById('lblBright').textContent = pct + '%';
+            var led = 350 * pct / 100;
+            var h = 2000 / (150 + led);
+            var hrs = Math.floor(h);
+            var min = Math.floor((h - hrs) * 60);
+            var rt = document.getElementById('lblRuntime');
+            var time = hrs + 'h ' + min + 'm';
+            if (pct < 20) time += ' (' + (typeof getTranslation === 'function' ? getTranslation('param_optimistic') : 'might be optimistic :-)') + ')';
+            var t = (typeof getTranslation === 'function' ? getTranslation('param_est_runtime') : 'Est. runtime: ~{t}').replace('{t}', time);
+            rt.textContent = t;
+        }
+        updBrightLabel(document.getElementById('sldBrightness').value);
     </script>
 </body>
 </html>
