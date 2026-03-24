@@ -16,7 +16,7 @@
             <h3 data-i18n="mus_setup_mp3">🎵 Background Music (MP3)</h3>
             <div id="mp3Status" style="font-weight:bold; color:var(--primary); margin-bottom:15px;">Scanning...</div>
             
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Max. 3MB. Uploading a new file will delete the old one!</p>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Max. 4MB. Uploading a new file will delete the old one!</p>
             <input type="file" id="mp3Upload" accept=".mp3" style="display:none;" onchange="uploadMp3()">
             <button onclick="document.getElementById('mp3Upload').click()" class="btn-warn" style="font-size:1rem; padding:10px;">Upload new MP3</button>
             <div id="upProgress" style="display:none; color:var(--warning); margin-top:10px; font-weight:bold;">Uploading... Please wait.</div>
@@ -96,8 +96,8 @@
             if(fileInput.files.length === 0) return;
             let file = fileInput.files[0];
             
-            if(file.size > 3 * 1024 * 1024) {
-                alert("File too large! Maximum is 3MB.");
+            if(file.size > 4 * 1024 * 1024) {
+                alert("File too large! Maximum is 4MB.");
                 return;
             }
             if(!confirm("Uploading will delete your current MP3. Proceed?")) return;
