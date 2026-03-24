@@ -26,9 +26,14 @@
     <main>
         <a href="/" class="btn btn-back">⬅ Back to Dashboard</a>
 		<div class="card" style="border-left: 5px solid #ffc107;">
-            <h3>Translations and Description</h3>
-            <p>Edit Translations, change texts as you wish. (e.g. game descriptions)</p>
+            <h3 data-i18n="settings_translations">Translations and Description</h3>
+            <p data-i18n="settings_translations_desc">Edit Translations, change texts as you wish. (e.g. game descriptions)</p>
             <button onclick="nav('lang_editor.html')" class="btn-primary" style="margin-bottom:10px;">🌍 Translation Editor</button>
+        </div>
+		<div class="card" style="border-left: 5px solid #ffc107;">
+            <h3 data-i18n="settings_parameters">Parameters</h3>
+            <p data-i18n="settings_parameters_desc">Configure system warnings, notifications and display preferences.</p>
+            <button onclick="nav('parameters.html')" class="btn-primary" style="margin-bottom:10px;" data-i18n="settings_parameters_btn">⚙ Open Parameters</button>
         </div>
 		<div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -81,6 +86,7 @@
     </main>
 
     <footer>by WorksAsDesigned</footer>
+    <script src="lang.js"></script>
     <script src="script.js"></script>
     <script>
         startStatusLoop(); 
