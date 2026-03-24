@@ -203,6 +203,13 @@ After the real first beta is released il will provide the bin files in case of u
 **V2.94.2**   
     - UI 2.0 new design    
 
+**V2.96.1**   
+    - Battery Management and auto Power Saving Mode   
+    - Toast Message "low Battery level", "shutdown Puck due to critical battery level"   
+    - Puck shutdown (deepsleep) at low Battery level (safety)   
+    - Puck blocks reboot under 3,6V Battery level (safety)  
+    - Max LED Power Consumption reduced to 1.2A (should only effect white @35LEDs) (safety)   
+    - Hardware Watchdog implemented (Puck restarts after 3s off non-reactivity)   
 
 --- 
 
