@@ -8,8 +8,14 @@ PuckInfo PuckNetwork::pucks[MAX_PEERS];
 volatile QueueItem PuckNetwork::eventQueue[QUEUE_SIZE];
 volatile int PuckNetwork::queueHead = 0;
 volatile int PuckNetwork::queueTail = 0;
-bool PuckNetwork::rssiModeActive = false; 
-static uint8_t globalCmdSeq = 0; 
+bool PuckNetwork::rssiModeActive = false;
+bool PuckNetwork::quietModeActive = false;
+static uint8_t globalCmdSeq = 0;
+
+// Quiet Mode: verzögerter Countdown-Beep
+static unsigned long quietBeepTime = 0;
+static bool quietBeepBroadcast = false;
+static uint8_t quietBeepMac[6] = {};
 
 NetworkStats PuckNetwork::stats = {0, 0, 0, 0, 0, 0};
 
@@ -219,6 +225,20 @@ void PuckNetwork::update() {
         }
     }
 
+    // Quiet Mode: verzögerter Countdown-Beep
+    if (quietBeepTime != 0 && millis() >= quietBeepTime) {
+        quietBeepTime = 0;
+        CommandPacket beep;
+        memset(&beep, 0, sizeof(beep));
+        beep.cmd = CMD_SOUND;
+        beep.duration = 80;
+        // Quiet Mode temporär deaktivieren, damit der Beep durchkommt
+        quietModeActive = false;
+        if (quietBeepBroadcast) broadcast(beep);
+        else sendToPuck(quietBeepMac, beep);
+        quietModeActive = true;
+    }
+
     if (otaStatus.state != OTA_IDLE) {
         updateOtaStateMachine();
     }
@@ -415,7 +435,35 @@ void PuckNetwork::OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingDat
     }
 }
 
+void PuckNetwork::setQuietMode(bool active) { quietModeActive = active; }
+bool PuckNetwork::getQuietMode() { return quietModeActive; }
+
+// Quiet Mode: Sounds filtern. Countdowns → verzögerter Beep am Ende, Rest → stumm.
+// SEQ_SKI:  3x (100ms+900ms) = 3000ms bis GO-Ton
+// SEQ_RACE: 2x (400ms+400ms) = 1600ms bis GO-Ton
+static bool filterSoundForQuietMode(CommandPacket &cmd, bool isBroadcast = false, const uint8_t* mac = nullptr) {
+    if (!PuckNetwork::getQuietMode()) return true;
+    if (cmd.cmd == CMD_SOUND) return false;
+    if (cmd.cmd == CMD_SEQUENCE) {
+        if (cmd.extra == SEQ_SKI) {
+            quietBeepTime = millis() + 3000;
+            quietBeepBroadcast = isBroadcast;
+            if (mac) memcpy(quietBeepMac, mac, 6);
+            return false;
+        }
+        if (cmd.extra == SEQ_RACE) {
+            quietBeepTime = millis() + 1600;
+            quietBeepBroadcast = isBroadcast;
+            if (mac) memcpy(quietBeepMac, mac, 6);
+            return false;
+        }
+        return false;
+    }
+    return true;
+}
+
 void PuckNetwork::sendToPuck(const uint8_t* mac, CommandPacket cmd) {
+    if (!filterSoundForQuietMode(cmd, false, mac)) return;
     globalCmdSeq++;
     cmd.seqNr = globalCmdSeq;
 
@@ -453,6 +501,7 @@ void PuckNetwork::sendToPuck(const uint8_t* mac, CommandPacket cmd) {
 }
 
 void PuckNetwork::broadcast(CommandPacket cmd) {
+    if (!filterSoundForQuietMode(cmd, true, nullptr)) return;
     globalCmdSeq++;
     cmd.seqNr = globalCmdSeq;
 

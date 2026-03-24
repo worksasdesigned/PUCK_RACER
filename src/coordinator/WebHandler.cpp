@@ -7,7 +7,7 @@
 #include "StatsManager.h" 
 #include "WifiScanner.h"
 
-#define SYS_VER "v2.97.2" 
+#define SYS_VER "v2.97.3" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;
@@ -404,6 +404,13 @@ void WebHandler::begin() {
         req->send(200, "text/plain", val ? "RSSI ON" : "RSSI OFF");
     });
     
+    server.on("/api/quiet_mode", HTTP_GET, [](AsyncWebServerRequest *req){
+        if (req->hasParam("val")) {
+            PuckNetwork::setQuietMode(req->getParam("val")->value().toInt() == 1);
+        }
+        req->send(200, "text/plain", PuckNetwork::getQuietMode() ? "1" : "0");
+    });
+
     server.on("/api/puck_reset", HTTP_GET, [](AsyncWebServerRequest *request){
         PuckNetwork::clearList();
         request->send(200, "text/plain", "OK");

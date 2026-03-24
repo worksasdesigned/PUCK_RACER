@@ -17,6 +17,19 @@
     <main>
         <button onclick="nav('/settings.html')" class="btn btn-back" data-i18n="btn_back">&#11013; BACK</button>
 
+        <div class="card" style="border-left: 5px solid var(--warning);">
+            <h3 data-i18n="param_quiet_mode">Quiet Mode</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted);" data-i18n="param_quiet_desc">Mutes all puck sounds. Countdowns are replaced with a short beep.</p>
+
+            <div class="toggle-row" onclick="this.querySelector('input').click()">
+                <span data-i18n="param_quiet_toggle">🔇 Quiet Mode</span>
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="chkQuiet" onchange="toggleQuietMode(this.checked)">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
         <div class="card">
             <h3 data-i18n="param_notifications">Notifications</h3>
             <p style="font-size:0.85rem; color:var(--text-muted);" data-i18n="param_notifications_desc">Enable or disable system warning messages.</p>
@@ -65,14 +78,6 @@
                 <div style="text-align:center; font-size:0.9rem; color:var(--text-muted);">80%</div>
             </label>
 
-            <div class="toggle-row" style="cursor:default;">
-                <span data-i18n="param_mute_sounds">Deactivate All Sounds</span>
-                <label class="switch">
-                    <input type="checkbox" id="chkMute" disabled>
-                    <span class="slider-bg"></span>
-                </label>
-            </div>
-
             <label style="display:block; margin-bottom:15px;">
                 <span data-i18n="param_shutdown_pct">Shut Down Pucks at Battery %</span>
                 <input type="range" id="sldShutdown" min="15" max="25" value="20" disabled
@@ -114,6 +119,10 @@
             localStorage.setItem('sys_prefs', JSON.stringify(prefs));
         }
         loadSysPrefs();
+        // Quiet Mode State vom Coordinator laden
+        fetch('/api/quiet_mode').then(r => r.text()).then(v => {
+            document.getElementById('chkQuiet').checked = v.trim() === '1';
+        }).catch(() => {});
     </script>
 </body>
 </html>

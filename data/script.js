@@ -227,6 +227,35 @@ function _showSysToast(id, msg, color) {
     c.appendChild(t);
 }
 
+// === QUIET MODE INDICATOR ===
+// Zeigt 🔇 oben links auf jeder Seite wenn Quiet Mode aktiv ist.
+fetch('/api/quiet_mode').then(r => r.text()).then(v => {
+    if (v.trim() === '1') _showQuietBadge();
+}).catch(() => {});
+
+function _showQuietBadge() {
+    if (document.getElementById('quietBadge')) return;
+    var b = document.createElement('div');
+    b.id = 'quietBadge';
+    b.style.cssText = 'font-size:1.1rem;opacity:0.7;margin-left:4px;';
+    b.textContent = '\uD83D\uDD07';
+    var logo = document.querySelector('.logo');
+    if (logo) logo.insertAdjacentElement('afterend', b);
+}
+function _removeQuietBadge() {
+    var b = document.getElementById('quietBadge');
+    if (b) b.remove();
+}
+function toggleQuietMode(on) {
+    return fetch('/api/quiet_mode?val=' + (on ? '1' : '0'))
+        .then(r => r.text())
+        .then(v => {
+            if (v.trim() === '1') _showQuietBadge();
+            else _removeQuietBadge();
+            return v.trim() === '1';
+        });
+}
+
 // Haptisches Feedback auf der Webseite, wenn man einen Knopf drückt.
 function haptic(ms) { if(navigator.vibrate) navigator.vibrate(ms || 20); }
 document.addEventListener('click', function(e) {

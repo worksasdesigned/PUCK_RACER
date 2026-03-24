@@ -73,6 +73,8 @@ public:
     static String getOtaStatusJSON();
 
     static void setRssiMode(bool active);
+    static void setQuietMode(bool active);
+    static bool getQuietMode();
     static void clearList();
     
     static NetworkStats getStats();
@@ -101,6 +103,7 @@ private:
     static volatile int queueHead; 
     static volatile int queueTail; 
     static bool rssiModeActive;
+    static bool quietModeActive;
     
     static NetworkStats stats;
 

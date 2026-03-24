@@ -69,6 +69,9 @@ const TRANSLATIONS = {
 
         // --- PARAMETERS ---
         "param_title": "Parameters",
+        "param_quiet_mode": "Quiet Mode",
+        "param_quiet_desc": "Mutes all puck sounds. Countdowns are replaced with a short beep.",
+        "param_quiet_toggle": "🔇 Quiet Mode",
         "param_notifications": "Notifications",
         "param_notifications_desc": "Enable or disable system warning messages.",
         "param_bat_low": "Battery Low Warning",
@@ -1122,6 +1125,9 @@ const TRANSLATIONS = {
 
         // --- PARAMETER ---
         "param_title": "Parameter",
+        "param_quiet_mode": "Ruhemodus",
+        "param_quiet_desc": "Schaltet alle Puck-Töne stumm. Countdowns werden durch einen kurzen Beep ersetzt.",
+        "param_quiet_toggle": "🔇 Ruhemodus",
         "param_notifications": "Benachrichtigungen",
         "param_notifications_desc": "Systemwarnungen aktivieren oder deaktivieren.",
         "param_bat_low": "Akku-Warnung (niedrig)",
