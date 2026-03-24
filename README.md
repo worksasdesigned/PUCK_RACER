@@ -211,6 +211,9 @@ After the real first beta is released il will provide the bin files in case of u
     - Max LED Power Consumption reduced to 1.2A (should only effect white @35LEDs) (safety)   
     - Hardware Watchdog implemented (Puck restarts after 3s off non-reactivity)   
 
+**V2.97.1**   
+    - Anti-cache links added (Core version behind urls)   
+    - _setup.html remembers settings, when navigation back from _run to _names  to _setup.html    
 --- 
 
 
