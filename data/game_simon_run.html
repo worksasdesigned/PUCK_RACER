@@ -241,8 +241,8 @@
         }
         
         function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
-        function goBack() { location.href = 'game_simon_names.html'; }
-        function goHome() { doAction('exit'); setTimeout(() => location.href = '/', 100); }
+        function goBack() { nav('game_simon_names.html'); }
+        function goHome() { doAction('exit'); setTimeout(() => nav('/'), 100); }
     </script>
 </body>
 </html>

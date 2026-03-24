@@ -10,7 +10,7 @@
     <link rel="icon" type="image/png" href="/appicon_alphaklein.png">
     <title>Puck Racer Dashboard</title>
     <link rel="stylesheet" href="style.css">
-    <script src="tour.js?v=6" defer></script>
+    <script src="tour.js" defer></script>
 </head>
 <body>
     <div id="splashScreen" style="
@@ -259,7 +259,7 @@
                     <div class="card-title">${localizedTitle}</div>
                     <div class="card-tags">${tagsText}</div>
                     <div class="card-desc">${localizedDesc}</div>
-                    <button class="btn-play" onclick="location.href='${game.url}'" data-i18n="btn_start_game">ZUM SPIEL 🏁</button>
+                    <button class="btn-play" onclick="nav('${game.url}')" data-i18n="btn_start_game">ZUM SPIEL 🏁</button>
                     ${statBadge}
                 `;
                 carousel.appendChild(card);
@@ -475,7 +475,7 @@
                 return;
             }
             sessionStorage.setItem('training_game_finished', '1');
-            location.href = '/training.html';
+            nav('/training.html');
         })();
 
         // Startet das automatische Puck Status Update aus der script.js

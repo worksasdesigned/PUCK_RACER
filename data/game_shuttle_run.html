@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>RUN - Shuttle</title>
     <link rel="stylesheet" href="style.css">
-    <script src="tour.js?v=6" defer></script>
+    <script src="tour.js" defer></script>
 	<style>
         .timer-box { text-align: center; margin-bottom: 20px; }
         .big-time { font-size: 5rem; font-weight: bold; color: var(--text-main); font-family: 'Courier New', monospace; line-height: 1; text-shadow: 0 0 20px rgba(255,255,255,0.2); }
@@ -254,13 +254,13 @@
         function doAction(act) {
             if(act === 'reset') {
                 fetch(`/api/game/action?cmd=reset`);
-                location.href = 'game_shuttle_names.html'; 
+                nav('game_shuttle_names.html'); 
             } else {
                 fetch(`/api/game/action?cmd=${act}`);
             }
         }
 
-        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/'); }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => nav('/')).catch(() => nav('/')); }
 
         function formatTime(ms) {
             let totalSec = Math.floor(ms / 1000);

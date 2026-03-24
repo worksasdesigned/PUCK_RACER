@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Setup - Musical Chairs</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header><div class="logo" data-i18n="g_musical">Reise nach Jerusalem 🪑🎵</div></header>
@@ -59,6 +59,7 @@
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
@@ -121,10 +122,10 @@
             sessionStorage.setItem('mus_base', document.getElementById('baseSlider').value);
             sessionStorage.setItem('mus_var', document.getElementById('varSlider').value);
             sessionStorage.setItem('mus_pause', document.getElementById('pauseSlider').value);
-            location.href = 'game_musical_names.html';
+            nav('game_musical_names.html');
         }
 
-        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
 	<script>
     window.TRAINING_FIELDS = [

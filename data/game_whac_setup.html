@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Setup - Whac-A-Mole</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css">
     <style>
         /* Spezifische Text-Box für Difficulty */
         .diff-text { 
@@ -85,6 +85,7 @@
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
@@ -168,10 +169,10 @@
             sessionStorage.setItem('whac_snd', document.getElementById('chkSound').checked ? 1 : 0);
             sessionStorage.setItem('whac_shw', document.getElementById('chkShow').checked ? 1 : 0);
             
-            location.href = 'game_whac_names.html';
+            nav('game_whac_names.html');
         }
 
-        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/'); }
+        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => nav('/')).catch(() => nav('/')); }
     </script>
     <script>
     window.TRAINING_FIELDS = [

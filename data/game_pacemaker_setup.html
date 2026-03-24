@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Setup - Pacemaker</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css">
     <style>
         .sub-text { font-size: 0.9rem; color: var(--text-muted); text-align: right; margin-top: 2px;}
         .mode-tabs { display:flex; gap:10px; margin-bottom:15px; }
@@ -100,6 +100,7 @@
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
@@ -202,11 +203,11 @@
             sessionStorage.setItem('pm_lapt', updateLap());
 			sessionStorage.setItem('pm_hold', document.getElementById('chkHold').checked ? 1 : 0);
 			
-			location.href = 'game_pacemaker_names.html';
+			nav('game_pacemaker_names.html');
 		}
 
         function cancelSetup() {
-            fetch('/api/game/action?cmd=exit').then(() => location.href = '/');
+            fetch('/api/game/action?cmd=exit').then(() => nav('/'));
         }
         
         updatePace();

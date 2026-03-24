@@ -1,3 +1,28 @@
+// === CACHE BUSTING ===
+// Holt die Firmware-Version vom ESP und hängt ?v=VERSION an alle lokalen Links,
+// Stylesheets und Script-Referenzen. So wird bei einem Firmware-Update
+// automatisch der Browser-Cache umgangen.
+var _fwVer = '';
+fetch('/api/version')
+    .then(r => r.text())
+    .then(ver => {
+        _fwVer = ver.trim().replace(/^v/, '');
+        console.log('[CacheBust] v' + _fwVer);
+        document.querySelectorAll('a[href]').forEach(el => {
+            const h = el.getAttribute('href');
+            if (h && !h.startsWith('http') && !h.startsWith('#') && !h.startsWith('mailto:'))
+                el.setAttribute('href', _vUrl(h));
+        });
+        document.querySelectorAll('link[rel="stylesheet"]').forEach(el => {
+            const h = el.getAttribute('href');
+            if (h && !h.startsWith('http')) el.setAttribute('href', _vUrl(h));
+        });
+    })
+    .catch(() => {});
+
+function _vUrl(url) { return url.split('?')[0] + (_fwVer ? '?v=' + _fwVer : ''); }
+function nav(url) { location.href = _vUrl(url); }
+
 // Globale Funktion zum Laden des Status
 function startStatusLoop() {
     updateStatus();

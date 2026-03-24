@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Layout - TTTT</title>
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css">
     <style>
         .player-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background:var(--card-bg); padding:10px; border-radius:8px; border-left: 5px solid #fff;}
         .color-box { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; flex-shrink: 0; transition: all 0.3s;}
@@ -47,13 +47,14 @@
             <div id="playerList"></div>
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="location.href='game_tttt_setup.html'" class="btn-warn" style="font-size:1.2rem;" data-i18n="btn_back">⬅ BACK</button>
+                <button onclick="nav('game_tttt_setup.html')" class="btn-warn" style="font-size:1.2rem;" data-i18n="btn_back">⬅ BACK</button>
                 <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">START GAME 🏁</button>
             </div>
         </div>
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
     <script src="player_picker.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
@@ -184,7 +185,7 @@
             for(let i=0; i<numPlayers; i++) {
                 sessionStorage.setItem(`p_name_${i}`, document.getElementById(`name_${i}`).value);
             }
-            setTimeout(() => { location.href = 'game_tttt_run.html'; }, 200);
+            setTimeout(() => { nav('game_tttt_run.html'); }, 200);
         }
     </script>
 </body>

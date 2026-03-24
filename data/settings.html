@@ -28,7 +28,7 @@
 		<div class="card" style="border-left: 5px solid #ffc107;">
             <h3>Translations and Description</h3>
             <p>Edit Translations, change texts as you wish. (e.g. game descriptions)</p>
-            <button onclick="location.href='lang_editor.html'" class="btn-primary" style="margin-bottom:10px;">🌍 Translation Editor</button>
+            <button onclick="nav('lang_editor.html')" class="btn-primary" style="margin-bottom:10px;">🌍 Translation Editor</button>
         </div>
 		<div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
@@ -65,7 +65,7 @@
         <div class="card" style="border-left: 5px solid #ffc107;">
             <h3>System Maintenance</h3>
             <p>Firmware Updates & File Management. Here you can trigger Over the Air (OTA) firmware updates of pucks and coordinators. You can also upload single files.</p>
-            <button onclick="location.href='firmware_update.html'" class="btn-warn">🛠️ Open Update Center</button>
+            <button onclick="nav('firmware_update.html')" class="btn-warn">🛠️ Open Update Center</button>
         </div>
 		
 		 <div class="card" style="border-left: 5px solid #555; background: rgba(0,0,0,0.3);">
@@ -175,7 +175,7 @@
             let answer = prompt("What's the Answer to the Ultimate Question of Life, the Universe, and Everything?");
             if (answer === null) return; // cancelled
             if (answer.trim() === '42') {
-                location.href = '/admin.html';
+                nav('/admin.html');
             } else {
                 document.getElementById('adminFail').style.display = 'block';
             }

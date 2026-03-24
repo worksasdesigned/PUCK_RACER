@@ -181,8 +181,8 @@
         }
         
         function cmd(c) { fetch(`/api/game/action?cmd=${c}`); }
-        function back() { cmd('setup'); location.href='game_stopwatch_names.html'; }
-        function home() { fetch('/api/game/action?cmd=exit'); setTimeout(()=>{location.href='/'},100); }
+        function back() { cmd('setup'); nav('game_stopwatch_names.html'); }
+        function home() { fetch('/api/game/action?cmd=exit'); setTimeout(()=>{nav('/')},100); }
     </script>
 </body>
 </html>

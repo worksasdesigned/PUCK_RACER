@@ -7,7 +7,7 @@
 #include "StatsManager.h" 
 #include "WifiScanner.h"
 
-#define SYS_VER "v2.96.1" 
+#define SYS_VER "v2.97.0" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;
@@ -733,7 +733,7 @@ void WebHandler::begin() {
     // Static files last — all /api/ routes are matched first
     server.serveStatic("/", LittleFS, "/")
           .setDefaultFile("index.html")
-          .setCacheControl("no-store, no-cache, must-revalidate, max-age=0");
+          .setCacheControl("max-age=86400");
 
     server.begin();
 

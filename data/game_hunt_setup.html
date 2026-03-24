@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Setup - Hunt!</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css">
     <style>
         .diff-text { 
             font-size: 0.9rem; 
@@ -80,6 +80,7 @@
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
@@ -140,10 +141,10 @@
             sessionStorage.setItem('h_diff', document.getElementById('diffSlider').value);
             sessionStorage.setItem('h_snd', document.getElementById('chkSound').checked ? 1 : 0);
             
-            location.href = 'game_hunt_names.html';
+            nav('game_hunt_names.html');
         }
 
-        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
     <script>
     window.TRAINING_FIELDS = [

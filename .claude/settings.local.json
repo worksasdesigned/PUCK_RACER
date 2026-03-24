@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for f:*)",
+      "Bash(do grep:*)",
+      "Bash(echo \"$f\")",
+      "Bash(done)"
+    ]
+  }
+}

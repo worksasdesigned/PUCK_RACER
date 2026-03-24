@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Names - Domination</title>
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css">
     <style>
         .grp-card { background:var(--card-bg); padding:15px; border-radius:8px; border-left:8px solid #fff; margin-bottom:15px;}
         .grp-title { display:flex; align-items:center; gap:10px; margin-bottom:15px; font-weight:bold; border-bottom:1px solid var(--border-color); padding-bottom:10px; color:var(--text-main);}
@@ -42,11 +42,12 @@
             <div id="groupList"></div>
 
             <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="dom_btn_arena">TO ARENA 🏁</button>
-            <button onclick="location.href='game_domination_setup.html'" class="btn-back" style="margin-top:10px;" data-i18n="btn_back">⬅ BACK</button>
+            <button onclick="nav('game_domination_setup.html')" class="btn-back" style="margin-top:10px;" data-i18n="btn_back">⬅ BACK</button>
         </div>
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
         const T1_COLORS = ['#FF0000', '#00FF00']; 
@@ -205,7 +206,7 @@
                 sessionStorage.setItem(`dom_t1name_${i}`, document.getElementById(`t1name_${i}`).value);
                 sessionStorage.setItem(`dom_t2name_${i}`, document.getElementById(`t2name_${i}`).value);
             }
-            setTimeout(() => { location.href = 'game_domination_run.html'; }, 200);
+            setTimeout(() => { nav('game_domination_run.html'); }, 200);
         }
     </script>
 </body>
