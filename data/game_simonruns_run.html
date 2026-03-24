@@ -159,8 +159,8 @@
         }
 
         function send(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
-        function goBack() { location.href = 'game_simonruns_names.html'; }
-        function goHome() { send('exit'); setTimeout(() => location.href = '/', 200); }
+        function goBack() { nav('game_simonruns_names.html'); }
+        function goHome() { send('exit'); setTimeout(() => nav('/'), 200); }
     </script>
 </body>
 </html>

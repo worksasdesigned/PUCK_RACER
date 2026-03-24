@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Setup - Red Light Green Light</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header><div class="logo" data-i18n="g_redgreen">Red Light 🚦 Green Light</div></header>
@@ -42,6 +42,7 @@
     </main>
     
     <script src="lang.js"></script>
+    <script src="script.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
@@ -65,9 +66,9 @@
 			sessionStorage.setItem('rg_groups', g);
 			sessionStorage.setItem('rg_time', t);
 			sessionStorage.setItem('rg_speed', s);
-			location.href='game_redgreen_names.html';
+			nav('game_redgreen_names.html');
 		}
-        function home() { fetch('/api/game/action?cmd=exit'); location.href='/'; }
+        function home() { fetch('/api/game/action?cmd=exit'); nav('/'); }
     </script>
     <script>
     window.TRAINING_FIELDS = [

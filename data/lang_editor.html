@@ -45,7 +45,7 @@
             <button class="btn-danger" id="btnReset" onclick="restoreFactory()" style="padding: 10px; margin-right: 20px;" title="Benötigt lang.bac auf dem System">↺ Factory Reset</button>
             <label style="color:#aaa;">Edit Language:</label>
             <select id="langSelect" onchange="renderEditor()"></select>
-            <button class="btn-warn" onclick="location.href='/settings.html'" style="padding: 10px;">⬅ BACK</button>
+            <button class="btn-warn" onclick="nav('/settings.html')" style="padding: 10px;">⬅ BACK</button>
             <button class="btn-primary" id="btnSave" onclick="saveTranslations()" style="padding: 10px 20px; font-weight:bold;">💾 SAVE TO COORDINATOR</button>
         </div>
     </header>
@@ -60,6 +60,7 @@
     </div>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
     
     <script>
         const CATEGORIES = [

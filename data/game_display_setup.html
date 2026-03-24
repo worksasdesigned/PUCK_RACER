@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Setup - Display</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header><div class="logo" data-i18n="g_display">Display Mode ▶️✨</div></header>
@@ -25,10 +25,11 @@
         </div>
 
         <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem; margin-top:20px;" data-i18n="disp_btn_dj">TO DJ CONSOLE 🎛️</button>
-        <button onclick="location.href='/'" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
+        <button onclick="nav('/')" class="btn-back" style="margin-top:20px;" data-i18n="btn_cancel">Cancel</button>
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
         fetch('/api/game/load?id=5'); 
@@ -43,7 +44,7 @@
             fetch(`/api/game/action?cmd=cfg_time&val=${time}`)
             .then(() => fetch(`/api/game/action?cmd=setup`)) 
             .then(() => {
-                 setTimeout(() => location.href = 'game_display_run.html', 200);
+                 setTimeout(() => nav('game_display_run.html'), 200);
             });
         }
     </script>

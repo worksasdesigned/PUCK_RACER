@@ -161,12 +161,12 @@
         
         function back() {
             cmd('setup'); 
-            location.href='game_redgreen_names.html';
+            nav('game_redgreen_names.html');
         }
 
         function home() { 
             fetch('/api/game/action?cmd=exit');
-            setTimeout(() => { location.href='/'; }, 100); 
+            setTimeout(() => { nav('/'); }, 100); 
         }
     </script>
 </body>

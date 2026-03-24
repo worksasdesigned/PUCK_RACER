@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Setup - Countdown</title>
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <header><div class="logo" data-i18n="g_countdown">Countdown</div></header>
@@ -58,6 +58,7 @@
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
@@ -116,11 +117,11 @@
             sessionStorage.setItem('cd_warn', document.getElementById('chkWarn').checked ? 1 : 0);
             sessionStorage.setItem('cd_stopwin', document.getElementById('chkStopWin').checked ? 1 : 0);
             
-            location.href = 'game_countdown_names.html';
+            nav('game_countdown_names.html');
         }
 
         function cancelSetup() {
-            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
+            fetch('/api/game/action?cmd=exit').then(() => nav('/')).catch(() => nav('/'));
         }
     </script>
     

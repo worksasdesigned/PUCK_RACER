@@ -193,8 +193,8 @@
         }
 
         function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
-        function goBack() { fetch('/api/game/action?cmd=exit'); location.href = 'game_sorting_setup.html'; }
-        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        function goBack() { fetch('/api/game/action?cmd=exit'); nav('game_sorting_setup.html'); }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
 </body>
 </html>

@@ -200,7 +200,7 @@
         }
         
         function setMode(m) { fetch('/api/game/action?cmd=mode_' + m); }
-        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
 </body>
 </html>

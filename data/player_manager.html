@@ -161,7 +161,7 @@
 
         <div id="groupList"></div>
 
-        <button onclick="location.href='/'" class="btn-back" style="margin-top:30px;" data-i18n="btn_home">🏠 Home</button>
+        <button onclick="nav('/')" class="btn-back" style="margin-top:30px;" data-i18n="btn_home">🏠 Home</button>
     </main>
 
     <div class="modal-overlay" id="importOverlay">
@@ -347,7 +347,7 @@
                             <div class="player-item">
                                 <span style="color:var(--text-muted); font-size:0.8rem; width:24px;">${pi+1}.</span>
                                 <input class="player-name-input" value="${escHTML(p.name)}" maxlength="20" onchange="renamePlayer(${g.id}, ${p.id}, this.value)">
-                                <button id="btn-stat-${p.id}" class="player-btn-stats" onclick="location.href='player_stats.html?pid=${p.id}&name=${encodeURIComponent(p.name)}'" title="${t('pm_stat_view', 'Statistiken ansehen')}" style="display:${pStatDisplay};">📊</button>
+                                <button id="btn-stat-${p.id}" class="player-btn-stats" onclick="nav('player_stats.html?pid=${p.id}&name=${encodeURIComponent(p.name)}')" title="${t('pm_stat_view', 'Statistiken ansehen')}" style="display:${pStatDisplay};">📊</button>
                                 <button class="player-del" onclick="deletePlayer(${g.id}, ${p.id})" title="Löschen">✕</button>
                             </div>`;
                 });

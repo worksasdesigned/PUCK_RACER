@@ -355,8 +355,8 @@
         }
 
         function doAction(act) { fetch(`/api/game/action?cmd=${act}`); }
-        function goBack() { doAction('reset'); location.href = 'game_zombie_names.html'; }
-        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        function goBack() { doAction('reset'); nav('game_zombie_names.html'); }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
 </body>
 </html>

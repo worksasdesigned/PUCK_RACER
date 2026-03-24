@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Catch the Light Live</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css">
     <style>
         .player-info { text-align:center; margin-bottom:15px; background:var(--card-bg); padding:15px; border-radius:8px; border:1px solid var(--border-color); }
         .top-info { position: relative; background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 15px; border: 1px solid var(--border-color);}
@@ -420,8 +420,8 @@
         function closeRecordModal() { document.getElementById('recordModal').classList.remove('show'); }
 
         function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
-        function goBack() { doAction('reset'); location.href = 'game_ctl_names.html'; }
-        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        function goBack() { doAction('reset'); nav('game_ctl_names.html'); }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
 </body>
 </html>

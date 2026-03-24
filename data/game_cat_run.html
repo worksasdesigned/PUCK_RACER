@@ -289,14 +289,14 @@
         function doAction(act) {
             if(act === 'reset') {
                 fetch(`/api/game/action?cmd=reset`);
-                location.href = 'game_cat_names.html'; 
+                nav('game_cat_names.html'); 
             } else {
                 fetch(`/api/game/action?cmd=${act}`);
             }
         }
 
         function goHome() {
-            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
+            fetch('/api/game/action?cmd=exit').then(() => nav('/')).catch(() => nav('/'));
         }
 
         function formatTime(ms) {
