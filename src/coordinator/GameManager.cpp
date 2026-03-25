@@ -81,6 +81,7 @@ void GameManager::update() {
 void GameManager::startGame(int gameID) {
     Serial.printf("GM: Starte Spiel ID %d\n", gameID);
     StatsManager::addGameStart(gameID);
+    StatsManager::startPlaytime();
     currentGame = nullptr;
 
     switch(gameID) {

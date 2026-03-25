@@ -7,7 +7,7 @@
 #include "StatsManager.h" 
 #include "WifiScanner.h"
 
-#define SYS_VER "v2.97.5" 
+#define SYS_VER "v2.97.6" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;
@@ -219,6 +219,7 @@ void WebHandler::begin() {
             g->processCommand(cmd, val);
             
             if (cmd == "exit") {
+                StatsManager::stopPlaytime();
                 StatsManager::saveAll();
             }
             
@@ -234,6 +235,11 @@ void WebHandler::begin() {
         }
         json += "}";
         req->send(200, "application/json", json);
+    });
+
+    server.on("/api/stats/playtime", HTTP_GET, [](AsyncWebServerRequest *req){
+        uint32_t m = StatsManager::getTotalPlaytimeMinutes();
+        req->send(200, "text/plain", String(m));
     });
 
 // =========================================================================
@@ -742,8 +748,6 @@ void WebHandler::begin() {
         if (final) Update.end(true);
     });
 
-    // Static files last — all /api/ routes are matched first
-    // server.serveStatic("/", LittleFS, "/");
     // Static files last — all /api/ routes are matched first
     server.serveStatic("/", LittleFS, "/")
           .setDefaultFile("index.html")

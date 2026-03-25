@@ -49,7 +49,7 @@
 
         fetch('/api/status').then(r=>r.json()).then(data => {
             connectedPucks = data.filter(p => p.active).length;
-            calcPucks(); 
+            calcPucks();
         });
 
         function updateTime() {

@@ -167,7 +167,14 @@
             }
         });
 
-        setInterval(updateStatus, 400); 
+        setInterval(updateStatus, 400);
+
+        // Timer-Spiel: Brightness auf 33% dimmen, vorherigen Wert merken
+        fetch('/api/brightness_limit').then(r=>r.text()).then(v => {
+            sessionStorage.setItem('_prev_bright', v.trim());
+            fetch('/api/brightness_limit?val=33');
+            document.getElementById('brightSlider').value = 33;
+        });
 
         function setBrightness(val) {
             fetch(`/api/game/action?cmd=set_bright&val=${val}`);
@@ -245,9 +252,10 @@
             });
         }
 
+        function restoreBrightness() { var prev = sessionStorage.getItem('_prev_bright') || '100'; fetch('/api/brightness_limit?val=' + prev); }
         function doAction(act) { fetch(`/api/game/action?cmd=${act}`); }
-        function goBack() { doAction('reset'); nav('game_timer_names.html'); }
-        function goHome() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
+        function goBack() { restoreBrightness(); doAction('reset'); nav('game_timer_names.html'); }
+        function goHome() { restoreBrightness(); fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
 </body>
 </html>

@@ -28,18 +28,18 @@
         <div class="card">
             <div style="display:flex; justify-content:space-between; align-items:center;">
                 <h3 data-i18n="set_pucks">Connected Pucks</h3>
-                <button onclick="flushPucks()" class="btn-warn" style="padding:5px 10px; font-size:0.8rem;">♻️ Flush Dead Pucks</button>
+                <button onclick="flushPucks()" class="btn-warn" style="padding:5px 10px; font-size:0.8rem;" data-i18n="pucks_flush">♻️ Flush Dead Pucks</button>
             </div>
 
             <table style="width:100%; table-layout: fixed; font-size: 0.9rem;">
                 <thead>
                     <tr>
-                        <th style="width: 15%">ID</th>
-                        <th style="width: 10%">Ver</th>
-                        <th style="width: 25%">Signal</th>
-                        <th style="width: 15%">Batt</th>
-                        <th style="width: 15%">Clicks</th>
-                        <th style="width: 20%">Uptime</th>
+                        <th style="width: 15%" data-i18n="pucks_id">ID</th>
+                        <th style="width: 10%" data-i18n="pucks_ver">Ver</th>
+                        <th style="width: 25%" data-i18n="pucks_signal">Signal</th>
+                        <th style="width: 15%" data-i18n="pucks_batt">Batt</th>
+                        <th style="width: 15%" data-i18n="pucks_clicks">Clicks</th>
+                        <th style="width: 20%" data-i18n="pucks_uptime">Uptime</th>
                     </tr>
                 </thead>
                 <tbody id="puckTableContent">
@@ -125,7 +125,7 @@
         }
 
         function flushPucks() {
-            if(!confirm("Liste leeren? Aktive Pucks wählen sich in ca. 5s automatisch wieder ein.")) return;
+            if(!confirm(getTranslation("pucks_flush_confirm"))) return;
             document.getElementById('puckTableContent').innerHTML = '';
             document.getElementById('loadingMsg').style.display = 'block';
             fetch('/api/puck_reset');

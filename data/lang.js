@@ -77,6 +77,17 @@ const TRANSLATIONS = {
         "btn_open": "OPEN",
         "btn_back_dashboard": "&#11013; Back to Dashboard",
         "pucks_searching": "Searching Pucks...",
+        "pucks_flush": "♻️ Flush Dead Pucks",
+        "pucks_flush_confirm": "Clear list? Active pucks will reconnect in ~5s automatically.",
+        "pucks_id": "ID",
+        "pucks_ver": "Ver",
+        "pucks_signal": "Signal",
+        "pucks_batt": "Batt",
+        "pucks_clicks": "Clicks",
+        "pucks_uptime": "Uptime",
+        "wifi_ssid_ph": "SSID Name (max 16)",
+        "wifi_pw_ph": "Password (max 10, leave empty for Open)",
+        "wifi_save_btn": "Save & Reboot AP",
 
         // --- PARAMETERS ---
         "param_title": "Parameters",
@@ -1147,6 +1158,17 @@ const TRANSLATIONS = {
         "btn_open": "ÖFFNEN",
         "btn_back_dashboard": "&#11013; Zurück zum Dashboard",
         "pucks_searching": "Suche Pucks...",
+        "pucks_flush": "♻️ Inaktive Pucks entfernen",
+        "pucks_flush_confirm": "Liste leeren? Aktive Pucks wählen sich in ca. 5s automatisch wieder ein.",
+        "pucks_id": "ID",
+        "pucks_ver": "Ver",
+        "pucks_signal": "Signal",
+        "pucks_batt": "Akku",
+        "pucks_clicks": "Klicks",
+        "pucks_uptime": "Laufzeit",
+        "wifi_ssid_ph": "SSID Name (max. 16)",
+        "wifi_pw_ph": "Passwort (max. 10, leer für offen)",
+        "wifi_save_btn": "Speichern & AP neu starten",
 
         // --- PARAMETER ---
         "param_title": "Parameter",
@@ -2160,7 +2182,9 @@ function applyTranslations() {
     document.querySelectorAll('[data-i18n]').forEach(el => {
         let key = el.getAttribute('data-i18n');
         let text = getTranslation(key);
-        if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
+        if (el.tagName === 'INPUT' && el.type === 'submit') {
+            el.value = text;
+        } else if (el.tagName === 'INPUT' && el.hasAttribute('placeholder')) {
             el.setAttribute('placeholder', text);
         } else {
             el.innerHTML = text;

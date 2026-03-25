@@ -21,14 +21,6 @@
             background: radial-gradient(circle at 15% 50%, rgba(72, 187, 120, 0.1), transparent 50%),
                         radial-gradient(circle at 85% 30%, rgba(49, 130, 206, 0.1), transparent 50%);
         }
-        .settings-back {
-            display: block;
-            margin: 10px 20px 0 20px;
-            padding: 12px;
-            text-align: center;
-            font-size: 1rem;
-            font-weight: bold;
-        }
         .set-card-icon { font-size: 2.5rem; margin-bottom: 10px; }
         .set-card-title { font-size: 1.3rem; font-weight: 800; margin-bottom: 8px; color: var(--text-main); }
         .set-card-desc { font-size: 0.85rem; color: var(--text-muted); line-height: 1.5; flex-grow: 1; }
@@ -38,7 +30,7 @@
     <div class="bg-blobs"></div>
 
     <header>
-        <div class="version" style="font-size:0.7rem; color:var(--text-muted);">Core: <span id="sys-ver">...</span></div>
+        <div class="version" style="font-size:0.7rem; color:var(--text-muted);">Core: <span id="sys-ver">...</span><br>⏱ <span id="sys-pt">...</span></div>
         <div class="logo" style="font-size: 1rem;">System Settings</div>
         <div class="status-bar">
             <div class="status-dot dot-green" id="cnt-green">0</div>
@@ -47,10 +39,11 @@
         </div>
     </header>
 
-    <button onclick="nav('/')" class="btn btn-back settings-back" data-i18n="btn_back_dashboard">&#11013; Back to Dashboard</button>
-
-    <div class="indicator-container">
-        <span class="card-badge" id="cardIndicator">1 / 6</span>
+    <div style="text-align:center; margin-top:10px;">
+        <button onclick="nav('/')" class="btn btn-back" style="padding:8px 24px; font-size:0.85rem;" data-i18n="btn_back_dashboard">&#11013; Back to Dashboard</button>
+        <div class="indicator-container">
+            <span class="card-badge" id="cardIndicator">1 / 6</span>
+        </div>
     </div>
 
     <main class="dashboard-main">
@@ -109,6 +102,10 @@
         startStatusLoop();
 
         fetch('/api/version').then(r=>r.text()).then(v => document.getElementById('sys-ver').innerText = v);
+        fetch('/api/stats/playtime').then(r=>r.text()).then(m => {
+            var h = Math.floor(m / 60); var min = m % 60;
+            document.getElementById('sys-pt').innerText = h + 'h ' + min + 'm';
+        });
 
         // --- CAROUSEL FOCUS ---
         var visibleCards = 6;

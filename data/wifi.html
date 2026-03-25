@@ -26,9 +26,9 @@
             <h3 data-i18n="set_wifi">Wi-Fi Security</h3>
             <p style="font-size:0.8rem; color:#aaa;" data-i18n="set_wifi_desc">Changes require reboot. Pucks will receive new credentials automatically on update.</p>
             <form method="POST" action="/api/wifi_config">
-                <input type="text" id="ssid_input" name="ssid" placeholder="SSID Name (max 16)" required maxlength="16" style="width:100%; padding:10px; margin-bottom:5px; background:#333; color:white; border:none; border-radius:4px;">
-                <input type="password" name="pw" placeholder="Password (max 10, leave empty for Open)" maxlength="10" style="width:100%; padding:10px; background:#333; color:white; border:none; border-radius:4px;">
-                <input type="submit" value="Save & Reboot AP" class="btn-warn">
+                <input type="text" id="ssid_input" name="ssid" placeholder="SSID Name (max 16)" required maxlength="16" data-i18n="wifi_ssid_ph" style="width:100%; padding:10px; margin-bottom:5px; background:#333; color:white; border:none; border-radius:4px;">
+                <input type="password" name="pw" placeholder="Password (max 10, leave empty for Open)" maxlength="10" data-i18n="wifi_pw_ph" style="width:100%; padding:10px; background:#333; color:white; border:none; border-radius:4px;">
+                <input type="submit" value="Save & Reboot AP" class="btn-warn" data-i18n="wifi_save_btn">
             </form>
         </div>
     </main>
