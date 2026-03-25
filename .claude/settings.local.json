@@ -4,7 +4,8 @@
       "Bash(for f:*)",
       "Bash(do grep:*)",
       "Bash(echo \"$f\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(~/.platformio/penv/Scripts/pio.exe run:*)"
     ]
   }
 }

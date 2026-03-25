@@ -61,11 +61,22 @@ const TRANSLATIONS = {
         "bat_critical": "🔴 Puck #{n} battery empty – shutdown!",
 
         // --- SETTINGS ---
-        "settings_translations": "Translations and Description",
+        "settings_translations": "Translations",
         "settings_translations_desc": "Edit Translations, change texts as you wish. (e.g. game descriptions)",
         "settings_parameters": "Parameters",
         "settings_parameters_desc": "Configure system warnings, notifications and display preferences.",
         "settings_parameters_btn": "⚙ Open Parameters",
+        "set_pucks": "Connected Pucks",
+        "set_pucks_desc": "View all connected pucks with signal strength, battery level, firmware version and uptime.",
+        "set_maintenance": "System Maintenance",
+        "set_maintenance_desc": "Firmware Updates & File Management. Trigger OTA updates for pucks and coordinators.",
+        "set_wifi": "Wi-Fi Settings",
+        "set_wifi_desc": "Change the wireless network name and password. Pucks receive new credentials on next update.",
+        "set_admin": "Admin Area",
+        "set_admin_desc": "Advanced diagnostic tools. For users with a healthy dose of nerd curiosity.",
+        "btn_open": "OPEN",
+        "btn_back_dashboard": "&#11013; Back to Dashboard",
+        "pucks_searching": "Searching Pucks...",
 
         // --- PARAMETERS ---
         "param_title": "Parameters",
@@ -1114,11 +1125,22 @@ const TRANSLATIONS = {
         "bat_critical": "🔴 Puck #{n} Akku leer – Abschaltung!",
 
         // --- EINSTELLUNGEN ---
-        "settings_translations": "Übersetzungen und Beschreibung",
+        "settings_translations": "Übersetzungen",
         "settings_translations_desc": "Übersetzungen bearbeiten, Texte nach Wunsch ändern. (z.B. Spielbeschreibungen)",
         "settings_parameters": "Parameter",
         "settings_parameters_desc": "Systemwarnungen, Benachrichtigungen und Anzeigeeinstellungen konfigurieren.",
         "settings_parameters_btn": "⚙ Parameter öffnen",
+        "set_pucks": "Verbundene Pucks",
+        "set_pucks_desc": "Alle verbundenen Pucks mit Signalstärke, Akkustand, Firmware-Version und Laufzeit anzeigen.",
+        "set_maintenance": "Systemwartung",
+        "set_maintenance_desc": "Firmware-Updates & Dateiverwaltung. OTA-Updates für Pucks und Coordinator auslösen.",
+        "set_wifi": "WLAN-Einstellungen",
+        "set_wifi_desc": "Netzwerkname und Passwort ändern. Pucks erhalten neue Zugangsdaten beim nächsten Update.",
+        "set_admin": "Admin-Bereich",
+        "set_admin_desc": "Erweiterte Diagnosetools. Für Nutzer mit einer gesunden Portion Nerd-Neugier.",
+        "btn_open": "ÖFFNEN",
+        "btn_back_dashboard": "&#11013; Zurück zum Dashboard",
+        "pucks_searching": "Suche Pucks...",
 
         // --- PARAMETER ---
         "param_title": "Parameter",
