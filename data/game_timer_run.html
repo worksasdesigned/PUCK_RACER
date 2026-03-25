@@ -252,10 +252,10 @@
             });
         }
 
-        function restoreBrightness() { var prev = sessionStorage.getItem('_prev_bright') || '100'; fetch('/api/brightness_limit?val=' + prev); }
-        function doAction(act) { fetch(`/api/game/action?cmd=${act}`); }
-        function goBack() { restoreBrightness(); doAction('reset'); nav('game_timer_names.html'); }
-        function goHome() { restoreBrightness(); fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
+        function restoreBrightness() { var prev = sessionStorage.getItem('_prev_bright') || '100'; return fetch('/api/brightness_limit?val=' + prev); }
+        function doAction(act) { return fetch(`/api/game/action?cmd=${act}`); }
+        function goBack() { doAction('reset').then(() => restoreBrightness()).then(() => nav('game_timer_names.html')); }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => restoreBrightness()).then(() => nav('/')); }
     </script>
 </body>
 </html>

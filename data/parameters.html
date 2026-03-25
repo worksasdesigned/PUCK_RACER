@@ -86,23 +86,32 @@
             </label>
         </div>
 
+        <div class="card">
+            <h3 data-i18n="param_bat_thresholds">Battery Thresholds</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted);" data-i18n="param_bat_thresholds_desc">Set voltage levels for battery warning and critical shutdown notifications.</p>
+
+            <label style="display:block; margin-bottom:15px;">
+                <span data-i18n="param_batwarn_mv">⚠️ Battery Warning (mV)</span>
+                <input type="range" id="sldBatWarn" min="3600" max="3800" step="50" value="3600"
+                       oninput="document.getElementById('lblBatWarn').textContent=this.value+'mV ('+mvToPct(this.value)+'%)'"
+                       onchange="saveSysPref('bat_warn_mv', parseInt(this.value))"
+                       style="width:100%; margin-top:5px;">
+                <div id="lblBatWarn" style="text-align:center; font-size:0.9rem; color:var(--text-muted);">3600mV (33%)</div>
+            </label>
+
+            <label style="display:block; margin-bottom:15px;">
+                <span data-i18n="param_batcrit_mv">🔴 Battery Critical (mV)</span>
+                <input type="range" id="sldBatCrit" min="3450" max="3600" step="50" value="3500"
+                       oninput="document.getElementById('lblBatCrit').textContent=this.value+'mV ('+mvToPct(this.value)+'%)'"
+                       onchange="saveSysPref('bat_crit_mv', parseInt(this.value))"
+                       style="width:100%; margin-top:5px;">
+                <div id="lblBatCrit" style="text-align:center; font-size:0.9rem; color:var(--text-muted);">3400mV (11%)</div>
+            </label>
+        </div>
+
         <div class="card" style="opacity: 0.5; border: 1px dashed var(--border-color);">
             <h3 data-i18n="param_future">Future Settings</h3>
             <p style="font-size:0.85rem; color:var(--warning); margin-bottom:15px;" data-i18n="param_future_hint">These settings are not yet functional and are shown as a preview.</p>
-
-            <label style="display:block; margin-bottom:15px;">
-                <span data-i18n="param_shutdown_pct">Shut Down Pucks at Battery %</span>
-                <input type="range" id="sldShutdown" min="15" max="25" value="20" disabled
-                       style="width:100%; margin-top:5px;">
-                <div style="text-align:center; font-size:0.9rem; color:var(--text-muted);">20%</div>
-            </label>
-
-            <label style="display:block; margin-bottom:15px;">
-                <span data-i18n="param_batwarn_pct">Show Battery Warning at %</span>
-                <input type="range" id="sldBatWarn" min="25" max="75" value="35" disabled
-                       style="width:100%; margin-top:5px;">
-                <div style="text-align:center; font-size:0.9rem; color:var(--text-muted);">35%</div>
-            </label>
 
             <label style="display:block; margin-bottom:15px;">
                 <span data-i18n="param_time_reminder">Show Time Reminder Every</span>
@@ -119,12 +128,22 @@
     <script>
         startStatusLoop();
         // --- Preferences in localStorage ---
+        function mvToPct(mv) {
+            return Math.max(0, Math.min(100, Math.round(((mv / 1000 - 3.3) / (4.2 - 3.3)) * 100)));
+        }
         function loadSysPrefs() {
             var prefs = JSON.parse(localStorage.getItem('sys_prefs') || '{}');
             document.getElementById('chkBatLow').checked  = prefs.bat_low  !== false;
             document.getElementById('chkBatCrit').checked  = prefs.bat_crit !== false;
             document.getElementById('chkHeapWarn').checked  = prefs.heap_warn === true;
             document.getElementById('chkFsWarn').checked    = prefs.fs_warn  === true;
+            // Battery threshold sliders
+            var warnMv = prefs.bat_warn_mv || 3600;
+            var critMv = prefs.bat_crit_mv || 3400;
+            document.getElementById('sldBatWarn').value = warnMv;
+            document.getElementById('lblBatWarn').textContent = warnMv + 'mV (' + mvToPct(warnMv) + '%)';
+            document.getElementById('sldBatCrit').value = critMv;
+            document.getElementById('lblBatCrit').textContent = critMv + 'mV (' + mvToPct(critMv) + '%)';
         }
         function saveSysPref(key, val) {
             var prefs = JSON.parse(localStorage.getItem('sys_prefs') || '{}');

@@ -172,13 +172,15 @@ const _batDismissed = new Set();
 
 function checkBatteryLevels(pucks) {
     var prefs = _getSysPrefs();
+    var critMv = prefs.bat_crit_mv || 3400;
+    var warnMv = prefs.bat_warn_mv || 3600;
     pucks.forEach((p, i) => {
         if (!p.active) return;
         const num = i + 1;
         if (p.bat < 1000) return;
-        if (p.bat <= 3400 && prefs.bat_crit !== false) {
+        if (p.bat <= critMv && prefs.bat_crit !== false) {
             _showBatToast(i, 'critical', (typeof getTranslation === 'function' ? getTranslation('bat_critical') : 'Puck #{n} battery empty!').replace('{n}', num), '#c53030');
-        } else if (p.bat <= 3600 && prefs.bat_low !== false) {
+        } else if (p.bat <= warnMv && prefs.bat_low !== false) {
             _showBatToast(i, 'warning', (typeof getTranslation === 'function' ? getTranslation('bat_warning') : 'Puck #{n} battery low!').replace('{n}', num), '#c05621');
         }
     });
