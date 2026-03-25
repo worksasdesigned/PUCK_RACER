@@ -10,7 +10,13 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header><div class="logo" data-i18n="g_react2p">React 2-Player ⚡</div></header>
+    <header><div class="logo" data-i18n="g_react2p">React 2-Player ⚡</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div class="card">
             <h3 data-i18n="r2_setup_time">⏱️ Game Time</h3>
@@ -60,6 +66,7 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 

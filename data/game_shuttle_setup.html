@@ -11,7 +11,13 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header><div class="logo" data-i18n="g_shuttle">Shuttle Run</div></header>
+    <header><div class="logo" data-i18n="g_shuttle">Shuttle Run</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div class="card">
             <div class="slider-header">
@@ -37,6 +43,7 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
         let players = 1;

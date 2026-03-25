@@ -25,7 +25,13 @@
     </style>
 </head>
 <body>
-    <header><div class="logo" data-i18n="g_pacemaker">The Pacemaker 🏃⏱️</div></header>
+    <header><div class="logo" data-i18n="g_pacemaker">The Pacemaker 🏃⏱️</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div class="card">
             <h3 data-i18n="pm_setup_route">📍 Route Layout</h3>
@@ -101,6 +107,7 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 

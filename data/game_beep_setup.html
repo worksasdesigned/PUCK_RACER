@@ -22,7 +22,13 @@
     </style>
 </head>
 <body>
-    <header><div class="logo" data-i18n="g_beep">Luc Léger Test ⏱️</div></header>
+    <header><div class="logo" data-i18n="g_beep">Luc Léger Test ⏱️</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div class="warn-box">
             <strong data-i18n="bp_setup_warn" style="color:var(--danger)">⚠️ IMPORTANT WARNING ⚠️</strong><br>
@@ -44,6 +50,7 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
         let connectedPucks = 0;

@@ -15,7 +15,13 @@
     </style>
 </head>
 <body>
-    <header><div class="logo" data-i18n="sw_names_title">Players</div></header>
+    <header><div class="logo" data-i18n="sw_names_title">Players</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div id="pickerBar" style="display:none; margin-bottom:15px;">
             <button onclick="loadFromPicker()" class="btn-primary" style="font-size:1.1rem; background:var(--card-hover); border:1px dashed var(--primary); color:var(--primary);">
@@ -35,6 +41,7 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script src="player_picker.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');

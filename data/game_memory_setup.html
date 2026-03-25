@@ -22,7 +22,13 @@
     </style>
 </head>
 <body>
-    <header><div class="logo" data-i18n="g_memory">Memory Sprint 🧠🏃</div></header>
+    <header><div class="logo" data-i18n="g_memory">Memory Sprint 🧠🏃</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div class="card">
             <h3 data-i18n="mem_setup_pucks">👥 Pucks (Pairs)</h3>
@@ -74,6 +80,7 @@
 
     <script src="lang.js"></script>
     <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
         let connPucks = 0;
