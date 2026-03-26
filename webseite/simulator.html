@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Demo - PUCK RACER</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ============================================
+           iPhone Frame
+           ============================================ */
+        .iphone-scene { display: flex; justify-content: center; margin: 30px 0; }
+        .iphone {
+            width: 375px; height: 812px;
+            background: #000;
+            border-radius: 55px;
+            border: 6px solid #2a2a2a;
+            box-shadow: 0 0 0 2px #1a1a1a, 0 30px 80px rgba(0,0,0,0.6), inset 0 0 0 2px #3a3a3a;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        .dynamic-island {
+            width: 126px; height: 37px; background: #000; border-radius: 20px;
+            position: absolute; top: 11px; left: 50%; transform: translateX(-50%); z-index: 100;
+        }
+        .iphone-statusbar {
+            height: 54px; padding: 14px 30px 0;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 0.75rem; font-weight: 600; color: #fff;
+            background: var(--ip-header-bg); flex-shrink: 0; z-index: 50;
+        }
+        .home-indicator {
+            height: 34px; display: flex; align-items: flex-end; justify-content: center;
+            padding-bottom: 8px; flex-shrink: 0; background: var(--ip-bg);
+        }
+        .home-indicator div { width: 134px; height: 5px; background: var(--ip-muted); border-radius: 3px; opacity: 0.4; }
+
+        /* ============================================
+           App Screen
+           ============================================ */
+        .app-screen {
+            flex: 1; overflow-y: auto; overflow-x: hidden;
+            background: var(--ip-bg); scrollbar-width: none;
+        }
+        .app-screen::-webkit-scrollbar { display: none; }
+
+        /* App Header — matches real PuckRacer */
+        .app-header {
+            background: var(--ip-header-bg); padding: 8px 16px 12px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--ip-border);
+            position: sticky; top: 0; z-index: 40;
+        }
+        .app-header .version-info { font-size: 0.6rem; color: var(--ip-muted); line-height: 1.4; }
+        .app-logo {
+            font-size: 1rem; font-weight: bold; letter-spacing: 2px;
+            background: linear-gradient(90deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+            background-size: 200% auto;
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+            animation: text-rainbow 5s linear infinite;
+        }
+        @keyframes text-rainbow { to { background-position: 200% center; } }
+        .status-dots { display: flex; gap: 6px; }
+        .dot { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: bold; color: #fff; }
+        .dot-g { background: #48bb78; } .dot-y { background: #ecc94b; color: #333; } .dot-r { background: #f56565; }
+
+        /* Menu */
+        .menu-btn {
+            background: none; border: 1px solid var(--ip-border); color: var(--ip-text);
+            border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 1.2rem; font-weight: bold;
+        }
+        .ip-dropdown { position: relative; }
+        .ip-dropdown-content {
+            display: none; position: absolute; right: 0; top: 100%;
+            background: var(--ip-card); border: 1px solid var(--ip-border);
+            border-radius: 12px; min-width: 180px; z-index: 200;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4); overflow: hidden; margin-top: 5px;
+        }
+        .ip-dropdown-content.show { display: block; }
+        .ip-dropdown-content .menu-item {
+            display: block; padding: 12px 16px; color: var(--ip-text);
+            font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid var(--ip-border); text-decoration: none;
+        }
+        .ip-dropdown-content .menu-item:hover { background: var(--ip-card-hover); }
+        .ip-dropdown-content .menu-item:last-child { border-bottom: none; }
+        .lang-row { display: flex; justify-content: space-between; align-items: center; }
+        .lang-select {
+            background: var(--ip-bg); color: var(--ip-text); border: 1px solid var(--ip-border);
+            border-radius: 4px; padding: 3px 6px; font-size: 0.8rem; outline: none; cursor: pointer;
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            display: flex; gap: 8px; padding: 10px 16px; overflow-x: auto;
+            scrollbar-width: none; flex-shrink: 0;
+        }
+        .filter-bar::-webkit-scrollbar { display: none; }
+        .filter-btn {
+            background: var(--ip-card); border: 1px solid var(--ip-border); color: var(--ip-muted);
+            padding: 6px 14px; border-radius: 20px; font-weight: bold; font-size: 0.75rem;
+            cursor: pointer; white-space: nowrap; transition: all 0.3s;
+        }
+        .filter-btn.active { background: var(--ip-text); color: var(--ip-bg); border-color: var(--ip-text); }
+
+        /* Card Counter */
+        .card-counter { text-align: center; padding: 5px; font-size: 0.75rem; color: var(--ip-muted); font-weight: bold; }
+
+        /* ============================================
+           Game Cards — matches real PuckRacer layout
+           ============================================ */
+        .card-carousel {
+            display: flex; gap: 16px; overflow-x: auto; scroll-snap-type: x mandatory;
+            padding: 15px calc(50% - 120px);
+            scrollbar-width: thin;
+            scrollbar-color: var(--ip-primary) transparent;
+        }
+        .card-carousel::-webkit-scrollbar { height: 6px; }
+        .card-carousel::-webkit-scrollbar-track { background: transparent; }
+        .card-carousel::-webkit-scrollbar-thumb { background: var(--ip-primary); border-radius: 3px; opacity: 0.5; }
+
+        .sim-card {
+            scroll-snap-align: center;
+            flex: 0 0 240px; min-height: 360px;
+            background: var(--ip-card);
+            border: 1px solid var(--ip-border);
+            border-radius: 20px;
+            display: flex; flex-direction: column;
+            padding: 15px;
+            transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+            position: relative;
+        }
+        .sim-card.focused {
+            transform: scale(1.08); z-index: 10;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+            border: 3px solid transparent;
+            background-image: linear-gradient(var(--ip-card-hover), var(--ip-card-hover)), linear-gradient(60deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
+            background-origin: padding-box, border-box;
+            background-clip: padding-box, border-box;
+            background-size: 100% 100%, 300% 300%;
+            animation: rainbow-card 4s linear infinite;
+        }
+        @keyframes rainbow-card {
+            0% { background-position: 0 0, 0% 50%; }
+            100% { background-position: 0 0, 100% 50%; }
+        }
+
+        /* Card Header: Icon left, ? and star right */
+        .sim-card-header {
+            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;
+        }
+        .sim-card-icon {
+            font-size: 1.8rem;
+            background: var(--ip-bg);
+            min-width: 55px; height: 55px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 15px; border: 1px solid var(--ip-border);
+        }
+        .sim-card-actions { display: flex; gap: 6px; align-items: center; }
+        .sim-help-btn {
+            width: 24px; height: 24px; border-radius: 50%;
+            background: rgba(0,0,0,0.05); color: var(--ip-muted);
+            display: flex; justify-content: center; align-items: center;
+            font-weight: bold; font-size: 0.8rem; cursor: pointer;
+            border: 1px solid var(--ip-border); transition: all 0.2s;
+        }
+        .sim-help-btn:hover { background: var(--ip-primary); color: #fff; }
+        .sim-fav-star {
+            font-size: 1.3rem; cursor: pointer; transition: color 0.2s, transform 0.2s;
+        }
+        .sim-fav-star.is-fav { color: #ecc94b !important; transform: scale(1.1); }
+
+        /* Card Body */
+        .sim-card-title { font-size: 0.95rem; font-weight: 800; color: var(--ip-text); margin-bottom: 3px; }
+        .sim-card-tags { font-size: 0.65rem; color: var(--ip-muted); margin-bottom: 6px; }
+        .sim-card-desc { font-size: 0.7rem; color: var(--ip-muted); line-height: 1.4; flex-grow: 1; }
+
+        /* Start Game Button */
+        .btn-start-game {
+            width: 100%; padding: 10px; border: none; border-radius: 12px;
+            font-weight: bold; font-size: 0.85rem; cursor: pointer;
+            background: transparent; color: var(--ip-muted);
+            border: 1px solid var(--ip-border);
+            transition: all 0.2s; margin-top: 10px;
+        }
+        .sim-card.focused .btn-start-game {
+            background: var(--ip-primary); color: #fff;
+            border-color: var(--ip-primary);
+            box-shadow: 0 4px 15px rgba(49,130,206,0.4);
+        }
+
+        /* ============================================
+           Setup Screen (replaces carousel)
+           ============================================ */
+        .setup-screen {
+            display: none; flex-direction: column;
+            height: 100%; overflow-y: auto; scrollbar-width: none;
+        }
+        .setup-screen::-webkit-scrollbar { display: none; }
+        .setup-screen.active { display: flex; }
+        .dashboard-screen.hidden { display: none; }
+
+        .setup-header {
+            background: var(--ip-header-bg); padding: 12px 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--ip-border);
+            position: sticky; top: 0; z-index: 40;
+        }
+        .setup-header .setup-title {
+            font-size: 1rem; font-weight: bold; color: var(--ip-text);
+        }
+        .setup-dots { display: flex; gap: 6px; }
+
+        .setup-body { padding: 16px; flex: 1; }
+        .setup-card {
+            background: var(--ip-card); border: 1px solid var(--ip-border);
+            border-radius: 12px; padding: 16px; margin-bottom: 12px;
+        }
+        .setup-card h4 {
+            font-size: 0.85rem; color: var(--ip-text); margin: 0 0 12px 0;
+        }
+        .setup-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; font-size: 0.8rem; color: var(--ip-text);
+        }
+        .setup-row + .setup-row { border-top: 1px solid var(--ip-border); }
+        .setup-row .label { flex: 1; }
+        .setup-slider-wrap { flex: 1; display: flex; align-items: center; gap: 8px; }
+        .setup-slider {
+            flex: 1; height: 6px; -webkit-appearance: none; appearance: none;
+            background: var(--ip-border); border-radius: 3px; outline: none;
+        }
+        .setup-slider::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 18px; height: 18px;
+            background: var(--ip-primary); border-radius: 50%; cursor: pointer;
+        }
+        .setup-val {
+            background: var(--ip-bg); padding: 3px 10px; border-radius: 6px;
+            font-size: 0.75rem; font-weight: bold; border: 1px solid var(--ip-border);
+            min-width: 40px; text-align: center;
+        }
+        .setup-toggle-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; font-size: 0.8rem; color: var(--ip-text);
+        }
+        .setup-toggle-row + .setup-toggle-row { border-top: 1px solid var(--ip-border); }
+        .sim-switch {
+            position: relative; display: inline-block; width: 42px; height: 24px; flex-shrink: 0;
+        }
+        .sim-switch input { opacity: 0; width: 0; height: 0; }
+        .sim-slider {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background: var(--ip-border); border-radius: 24px; cursor: pointer; transition: 0.3s;
+        }
+        .sim-slider:before {
+            content: ''; position: absolute; width: 18px; height: 18px;
+            left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s;
+        }
+        .sim-switch input:checked + .sim-slider { background: var(--ip-primary); }
+        .sim-switch input:checked + .sim-slider:before { transform: translateX(18px); }
+
+        .setup-select {
+            background: var(--ip-bg); color: var(--ip-text); border: 1px solid var(--ip-border);
+            border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; outline: none;
+        }
+
+        .btn-setup-next {
+            width: 100%; padding: 14px; border: none; border-radius: 12px;
+            background: var(--ip-primary); color: #fff;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            margin-top: 10px; transition: filter 0.2s;
+        }
+        .btn-setup-next:hover { filter: brightness(1.1); }
+        .btn-setup-cancel {
+            width: 100%; padding: 12px; border: 1px solid var(--ip-border); border-radius: 12px;
+            background: var(--ip-card); color: var(--ip-muted);
+            font-size: 0.9rem; cursor: pointer; margin-top: 8px;
+        }
+
+        /* "Game would start" overlay */
+        .game-start-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            z-index: 300; flex-direction: column; align-items: center; justify-content: center;
+            padding: 40px 20px; text-align: center;
+        }
+        .game-start-overlay.show { display: flex; }
+        .game-start-overlay .gso-icon { font-size: 4rem; margin-bottom: 20px; }
+        .game-start-overlay .gso-title {
+            font-size: 1.3rem; font-weight: bold; color: #fff; margin-bottom: 10px;
+        }
+        .game-start-overlay .gso-text {
+            font-size: 0.85rem; color: #aaa; line-height: 1.6; margin-bottom: 30px; max-width: 280px;
+        }
+        .gso-btn {
+            padding: 12px 30px; border: none; border-radius: 12px;
+            background: var(--ip-primary); color: #fff; font-size: 1rem; font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* ============================================
+           Theme Variables
+           ============================================ */
+        .iphone[data-theme="light"] {
+            --ip-bg: #f5f5f5; --ip-header-bg: rgba(255,255,255,0.95);
+            --ip-text: #1a202c; --ip-muted: #718096;
+            --ip-card: rgba(255,255,255,0.9); --ip-card-hover: rgba(245,245,245,0.95);
+            --ip-border: #e2e8f0; --ip-primary: #3182ce;
+        }
+        .iphone[data-theme="dark"] {
+            --ip-bg: #1a202c; --ip-header-bg: rgba(26,32,44,0.95);
+            --ip-text: #e2e8f0; --ip-muted: #718096;
+            --ip-card: rgba(45,55,72,0.9); --ip-card-hover: rgba(45,55,72,0.95);
+            --ip-border: rgba(255,255,255,0.1); --ip-primary: #63b3ed;
+        }
+
+        @media (max-width: 500px) {
+            .iphone { width: 100%; max-width: 375px; height: 85vh; border-radius: 40px; border-width: 4px; }
+            .dynamic-island { width: 100px; height: 30px; top: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="main-nav">
+            <button class="nav-toggle" aria-label="Menü öffnen" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Menü</button>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="features.html">Features</a></li>
+                <li><a href="downloads.html">Downloads</a></li>
+                <li><a href="hardware.html">Hardware</a></li>
+                <li><a href="spiele.html">Spiele</a></li>
+                <li><a href="map.html">PUCK RACER Map</a></li>
+                <li><a href="demo.html" class="active">Demo</a></li>
+                <li><a href="infos.html">Infos</a></li>
+                <li><a href="faq.html">FAQ</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="rainbow-border-wrapper">
+        <div class="main-container">
+            <h1>Live Demo</h1>
+            <p class="subtitle">Swipe through the games, change the language and explore the interface.</p>
+
+            <div class="iphone-scene">
+                <div class="iphone" data-theme="dark">
+                    <div class="dynamic-island"></div>
+                    <div class="iphone-statusbar">
+                        <span class="time" style="font-weight:700">9:41</span>
+                        <span style="font-size:0.7rem">5G 📶 🔋</span>
+                    </div>
+
+                    <div class="app-screen">
+                        <!-- === Dashboard View === -->
+                        <div class="dashboard-screen" id="dashboardScreen">
+                            <div class="app-header">
+                                <div class="version-info">Core: v2.97.8<br>⏱ 142h</div>
+                                <div class="app-logo">PUCK RACER</div>
+                                <div style="display:flex; align-items:center; gap:8px;">
+                                    <div class="status-dots">
+                                        <div class="dot dot-g">8</div>
+                                        <div class="dot dot-y">0</div>
+                                        <div class="dot dot-r">0</div>
+                                    </div>
+                                    <div class="ip-dropdown">
+                                        <button class="menu-btn" id="menuBtn">⋮</button>
+                                        <div class="ip-dropdown-content" id="ipMenu">
+                                            <div class="menu-item">
+                                                <div class="lang-row">
+                                                    <span>🌐 Language</span>
+                                                    <select class="lang-select" id="langSelect">
+                                                        <option value="en" selected>English</option>
+                                                        <option value="de">Deutsch</option>
+                                                        <option value="fr">Français</option>
+                                                        <option value="es">Español</option>
+                                                        <option value="it">Italiano</option>
+                                                        <option value="nl">Nederlands</option>
+                                                        <option value="pl">Polski</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="menu-item" onclick="toggleIphoneTheme()">🎨 Toggle Theme</div>
+                                            <div class="menu-item">📊 Statistics</div>
+                                            <div class="menu-item">ℹ️ System Info</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="filter-bar" id="filterBar">
+                                <button class="filter-btn active" data-filter="all">All</button>
+                                <button class="filter-btn" data-filter="fav">⭐ Favorites</button>
+                                <button class="filter-btn" data-filter="reaction">⚡ Reaction</button>
+                                <button class="filter-btn" data-filter="sport">🏃 Sport</button>
+                                <button class="filter-btn" data-filter="brain">🧠 Brain</button>
+                                <button class="filter-btn" data-filter="tool">🛠️ Tools</button>
+                            </div>
+
+                            <div class="card-counter" id="cardCounter">27 Games</div>
+                            <div class="card-carousel" id="carousel"></div>
+                        </div>
+
+                        <!-- === Setup View === -->
+                        <div class="setup-screen" id="setupScreen">
+                            <div class="setup-header">
+                                <div class="setup-title" id="setupTitle">Setup</div>
+                                <div class="setup-dots">
+                                    <div class="dot dot-g">8</div>
+                                    <div class="dot dot-y">0</div>
+                                    <div class="dot dot-r">0</div>
+                                </div>
+                            </div>
+                            <div class="setup-body" id="setupBody"></div>
+                        </div>
+                    </div>
+
+                    <!-- Game Start Overlay -->
+                    <div class="game-start-overlay" id="gameStartOverlay">
+                        <div class="gso-icon">🏁</div>
+                        <div class="gso-title" id="gsoTitle">Game Starting...</div>
+                        <div class="gso-text">This is where the game would start on a real PUCK RACER system. The pucks would now light up and wait for the players.<br><br>The game simulation is coming soon!</div>
+                        <button class="gso-btn" onclick="closeGameStart()">← Back to Setup</button>
+                    </div>
+
+                    <div class="home-indicator"><div></div></div>
+                </div>
+            </div>
+
+            <p style="color:#aaa; font-size:0.85rem; margin-top:10px;">Tip: Swipe left/right through the game cards. Click START GAME to see the setup screen.</p>
+
+            <footer>
+                <a href="Impressum.html">Impressum</a>
+            </footer>
+        </div>
+    </div>
+
+<script>
+// ============================================
+// Game Data with real setup parameters
+// ============================================
+const games = [
+    { id:'counter', icon:'🔢', img:'img_counter.webp', tags:['tool','sport'], setup:'game_counter_setup.html',
+      name:{de:'Einfacher Zähler', en:'Simple Counter', fr:'Compteur Simple', es:'Contador Simple', it:'Contatore', nl:'Eenvoudige Teller', pl:'Prosty Licznik'},
+      desc:{de:'Zählt Wiederholungen an jedem Puck.', en:'Counts reps at each puck. Perfect for station training.'},
+      params:[
+        {type:'slider', label:{de:'Spieler', en:'Players'}, min:1, max:12, def:2, unit:''},
+        {type:'slider', label:{de:'Zeitlimit', en:'Time Limit'}, min:0, max:60, def:0, unit:'s', note:{de:'0 = Unbegrenzt', en:'0 = Unlimited'}},
+        {type:'toggle', label:{de:'Ton-Warnung', en:'Sound Warning'}, def:false}
+      ]},
+    { id:'timer', icon:'⏱️', img:'img_timer.webp', tags:['tool'], setup:'game_timer_setup.html',
+      name:{de:'Einfacher Timer', en:'Simple Timer'},
+      desc:{de:'Visueller Countdown auf allen Pucks.', en:'Visual countdown timer on all pucks simultaneously.'},
+      params:[
+        {type:'slider', label:{de:'Dauer', en:'Duration'}, min:10, max:600, def:60, unit:'s'},
+        {type:'slider', label:{de:'Pucks/Schüler', en:'Pucks/Students'}, min:1, max:10, def:1, unit:''}
+      ]},
+    { id:'stopwatch', icon:'⏱⏱️', img:'img_stopwatch.webp', tags:['tool','sport'], setup:'game_stopwatch_setup.html',
+      name:{de:'Stoppuhr', en:'Stopwatch'},
+      desc:{de:'Stoppuhr mit Zwischenzeiten.', en:'Stopwatch with lap times across multiple pucks.'},
+      params:[
+        {type:'slider', label:{de:'Spieler/Pucks', en:'Players/Pucks'}, min:1, max:10, def:1, unit:''},
+        {type:'toggle', label:{de:'Zentraler Start', en:'Central Start'}, def:false},
+        {type:'toggle', label:{de:'Runden-Modus', en:'Lap Mode'}, def:false}
+      ]},
+    { id:'countdown', icon:'⏱️🧮', img:'img_countdown.webp', tags:['tool','sport'], setup:'game_countdown_setup.html',
+      name:{de:'Countdown', en:'Countdown'},
+      desc:{de:'Zählt von einer Startzahl herunter.', en:'Counts down from a start number. Ideal for exercise sets.'},
+      params:[
+        {type:'slider', label:{de:'Aktive Pucks', en:'Active Pucks'}, min:1, max:12, def:1, unit:''},
+        {type:'slider', label:{de:'Startzahl', en:'Start Count'}, min:1, max:100, def:10, unit:''},
+        {type:'toggle', label:{de:'Stop nach erstem Gewinner', en:'Stop after first winner'}, def:false}
+      ]},
+    { id:'shuttle', icon:'🏃‍♂️🔁', img:'img_shuttle.webp', tags:['sport'], setup:'game_shuttle_setup.html',
+      name:{de:'Pendellauf', en:'Shuttle Run'},
+      desc:{de:'Klassischer Pendellauf mit Zeitmessung.', en:'Classic shuttle run with automatic timing and beep signals.'},
+      params:[
+        {type:'slider', label:{de:'Spieler/Bahnen', en:'Players/Lanes'}, min:1, max:5, def:1, unit:''},
+        {type:'slider', label:{de:'Runden', en:'Rounds'}, min:1, max:20, def:5, unit:''}
+      ]},
+    { id:'simon', icon:'🔴🟢🔵🟡', img:'img_simon.webp', tags:['brain'], setup:'game_simon_setup.html',
+      name:{de:'Simon Says', en:'Simon Says'},
+      desc:{de:'Merke dir die Farbreihenfolge.', en:'Remember the color sequence and repeat it. Trains memory.'},
+      params:[
+        {type:'slider', label:{de:'Gruppen', en:'Groups'}, min:1, max:3, def:1, unit:''},
+        {type:'slider', label:{de:'Pucks pro Gruppe', en:'Pucks per Group'}, min:2, max:10, def:4, unit:''},
+        {type:'slider', label:{de:'Sequenzlänge', en:'Sequence Length'}, min:5, max:25, def:15, unit:''},
+        {type:'select', label:{de:'Geschwindigkeit', en:'Speed'}, options:[{v:'Slow',de:'Langsam',en:'Slow'},{v:'Medium',de:'Mittel',en:'Medium'},{v:'Fast',de:'Schnell',en:'Fast'}], def:'Medium'},
+        {type:'toggle', label:{de:'Farbenblind-Modus', en:'Color Blind Mode'}, def:false},
+        {type:'toggle', label:{de:'Auto Restart', en:'Auto Restart'}, def:true},
+        {type:'toggle', label:{de:'Sound', en:'Sound'}, def:true}
+      ]},
+    { id:'simonruns', icon:'🔴🟢🔵🏃‍♂️', img:'img_simonruns.webp', tags:['brain','sport'], setup:'game_simonruns_setup.html',
+      name:{de:'Simon Runs', en:'Simon Runs'},
+      desc:{de:'Simon Says mit Laufen!', en:'Simon Says but you run to the pucks! Cognitive + physical.'},
+      params:[
+        {type:'slider', label:{de:'Gruppen', en:'Groups'}, min:1, max:3, def:1, unit:''},
+        {type:'slider', label:{de:'Länge', en:'Length'}, min:5, max:20, def:10, unit:''},
+        {type:'toggle', label:{de:'Farbenblind-Modus', en:'Color Blind Mode'}, def:false}
+      ]},
+    { id:'zombie', icon:'🧟🏃‍♂️', img:'img_zombie.webp', tags:['sport','reaction'], setup:'game_zombie_setup.html',
+      name:{de:'Zombie Escape', en:'Zombie Escape'},
+      desc:{de:'Laufe weg bevor der Zombie dich fängt!', en:'Run before the zombie catches you! Fast reaction and sprint.'},
+      params:[
+        {type:'slider', label:{de:'Spieler/Gruppen', en:'Players/Groups'}, min:1, max:10, def:1, unit:''},
+        {type:'slider', label:{de:'Start-Zielzeit', en:'Start Target Time'}, min:3, max:20, def:10, unit:'s'},
+        {type:'slider', label:{de:'Reduktion/Runde', en:'Reduction/Round'}, min:1, max:20, def:5, unit:'×0.1s'},
+        {type:'toggle', label:{de:'Sudden Death', en:'Sudden Death'}, def:false},
+        {type:'toggle', label:{de:'Gruppenstart', en:'Group Start'}, def:true},
+        {type:'toggle', label:{de:'Pendellauf', en:'Shuttle Mode'}, def:false}
+      ]},
+    { id:'whac', icon:'🔨🧠', img:'img_whac.webp', tags:['reaction','brain'], setup:'game_whac_setup.html',
+      name:{de:'Whac-A-Mole', en:'Whac-A-Mole'},
+      desc:{de:'Drücke den aufleuchtenden Puck!', en:'Press the lit puck as fast as possible!'},
+      params:[
+        {type:'slider', label:{de:'Dauer', en:'Duration'}, min:30, max:300, def:60, unit:'s'},
+        {type:'slider', label:{de:'Gruppen', en:'Groups'}, min:1, max:3, def:1, unit:''},
+        {type:'slider', label:{de:'Pucks pro Gruppe', en:'Pucks per Group'}, min:3, max:10, def:5, unit:''},
+        {type:'slider', label:{de:'Level', en:'Level'}, min:1, max:5, def:1, unit:''},
+        {type:'slider', label:{de:'Farben im Spiel', en:'Colors in Game'}, min:1, max:10, def:3, unit:''},
+        {type:'toggle', label:{de:'Sound-Effekte', en:'Sound Effects'}, def:true}
+      ]},
+    { id:'sorting', icon:'🎩✨', img:'img_sorting.webp', tags:['tool'], setup:'game_sorting_setup.html',
+      name:{de:'Sprechender Hut', en:'Sorting Hat'},
+      desc:{de:'Teilt Spieler zufällig in Gruppen ein.', en:'Randomly assigns players to groups via puck press.'},
+      params:[
+        {type:'slider', label:{de:'Gruppen', en:'Groups (Houses)'}, min:2, max:8, def:2, unit:''},
+        {type:'slider', label:{de:'Spieler gesamt', en:'Total Players'}, min:2, max:100, def:20, unit:''},
+        {type:'slider', label:{de:'Aktive Pucks', en:'Active Pucks'}, min:1, max:3, def:1, unit:''}
+      ]},
+    { id:'bomb', icon:'💣⏰', img:'img_bomb.webp', tags:['reaction'], setup:'game_bomb_setup.html',
+      name:{de:'Bomb Squad', en:'Bomb Squad'},
+      desc:{de:'Drücke rechtzeitig bevor die Bombe explodiert!', en:'Press the right puck before the bomb explodes!'},
+      params:[
+        {type:'slider', label:{de:'Aktive Pucks', en:'Active Pucks'}, min:1, max:12, def:1, unit:''},
+        {type:'slider', label:{de:'Max Timer', en:'Max Timer'}, min:3, max:15, def:10, unit:'s'},
+        {type:'slider', label:{de:'Runden', en:'Rounds'}, min:1, max:20, def:5, unit:''},
+        {type:'select', label:{de:'Schwierigkeit', en:'Difficulty'}, options:[{v:'Easy',de:'Leicht (+/-750ms)',en:'Easy (+/-750ms)'},{v:'Medium',de:'Mittel (+/-500ms)',en:'Medium (+/-500ms)'},{v:'Hard',de:'Schwer (+/-250ms)',en:'Hard (+/-250ms)'}], def:'Medium'},
+        {type:'toggle', label:{de:'Gruppen-Sync', en:'Group Mode (Sync)'}, def:false}
+      ]},
+    { id:'redgreen', icon:'🚦🛑', img:'img_redgreen.webp', tags:['reaction','sport'], setup:'game_redgreen_setup.html',
+      name:{de:'Ochs am Berg', en:'Red Light Green Light'},
+      desc:{de:'Laufe bei Grün, stoppe bei Rot!', en:'Run on green, stop on red! The classic with auto detection.'},
+      params:[
+        {type:'slider', label:{de:'Gruppen', en:'Groups'}, min:1, max:10, def:1, unit:''},
+        {type:'slider', label:{de:'Zeitlimit', en:'Time Limit'}, min:10, max:300, def:60, unit:'s'},
+        {type:'select', label:{de:'Geschwindigkeit', en:'Speed'}, options:[{v:'Slow',de:'Langsam (Sicher)',en:'Slow (Safe)'},{v:'Medium',de:'Mittel',en:'Medium'},{v:'Fast',de:'Schnell (Panik!)',en:'Fast (Panic!)'}], def:'Medium'}
+      ]},
+    { id:'beep', icon:'🏃‍♂️🔁⏱️', img:'img_beep.webp', tags:['sport'], setup:'game_beep_setup.html',
+      name:{de:'Luc Léger (Beep Test)', en:'Beep Test (Luc Léger)'},
+      desc:{de:'Der berühmte Ausdauertest.', en:'The famous endurance test. Run between pucks to the beep.'},
+      params:[
+        {type:'slider', label:{de:'Spieler/Bahnen', en:'Players/Lanes'}, min:1, max:6, def:1, unit:''}
+      ]},
+    { id:'react2p', icon:'⚡🤜🤛', img:'img_react2p.webp', tags:['reaction'], setup:'game_react2p_setup.html',
+      name:{de:'React 2-Spieler', en:'React 2-Player'},
+      desc:{de:'Duell: Wer drückt zuerst?', en:'Duel! Who presses their colored puck first? Pure reaction.'},
+      params:[
+        {type:'slider', label:{de:'Zeitlimit', en:'Time Limit'}, min:30, max:180, def:90, unit:'s'},
+        {type:'slider', label:{de:'Pucks pro Gruppe', en:'Pucks per Group'}, min:3, max:10, def:3, unit:''},
+        {type:'slider', label:{de:'Gruppen', en:'Groups'}, min:1, max:5, def:1, unit:''},
+        {type:'slider', label:{de:'Farben/Spieler', en:'Colors/Player'}, min:1, max:3, def:1, unit:''},
+        {type:'toggle', label:{de:'Fake-Farben', en:'Fake Colors'}, def:false}
+      ]},
+    { id:'target', icon:'🎯', img:'img_target.webp', tags:['reaction','sport'], setup:'game_target_setup.html',
+      name:{de:'Target Touch', en:'Target Touch'},
+      desc:{de:'Perfekt für Rumpfstabilität.', en:'Press pucks in sequence or random. Perfect for core stability.'},
+      params:[
+        {type:'slider', label:{de:'Zeitlimit', en:'Time Limit'}, min:30, max:600, def:120, unit:'s'},
+        {type:'slider', label:{de:'Pucks pro Gruppe', en:'Pucks per Group'}, min:2, max:10, def:3, unit:''},
+        {type:'slider', label:{de:'Gruppen', en:'Groups'}, min:1, max:5, def:1, unit:''},
+        {type:'slider', label:{de:'Pause', en:'Pause Delay'}, min:0, max:30, def:2, unit:'s'},
+        {type:'select', label:{de:'Modus', en:'Mode'}, options:[{v:'Random',de:'Zufall',en:'Random'},{v:'Sequence',de:'Sequenz',en:'Sequence'}], def:'Random'},
+        {type:'toggle', label:{de:'Gruppenstart', en:'Group Start'}, def:false}
+      ]},
+    { id:'ball', icon:'🏀🏃‍♂️', img:'img_ball.webp', tags:['sport'], setup:'game_ball_setup.html',
+      name:{de:'Ball Handling', en:'Ball Handling'},
+      desc:{de:'Dribbel-Training mit Pucks.', en:'Dribble training with pucks as waypoints.'},
+      params:[
+        {type:'slider', label:{de:'Dauer', en:'Duration'}, min:30, max:300, def:60, unit:'s'},
+        {type:'slider', label:{de:'Pucks pro Gruppe', en:'Pucks per Group'}, min:3, max:5, def:3, unit:''},
+        {type:'slider', label:{de:'Gruppen', en:'Groups'}, min:1, max:4, def:1, unit:''},
+        {type:'select', label:{de:'Leuchtmodus', en:'Lighting Mode'}, options:[{v:'Sequence',de:'Sequenz',en:'Sequence'},{v:'Random',de:'Zufall',en:'Random'}], def:'Sequence'},
+        {type:'toggle', label:{de:'Sound-Effekte', en:'Sound Effects'}, def:true}
+      ]},
+    { id:'ttest', icon:'🏃‍♂️💨', img:'img_ttest.webp', tags:['sport'], setup:'game_ttest_setup.html',
+      name:{de:'Agilitäts T-Test', en:'Agility T-Test'},
+      desc:{de:'Standardisierter Agilitätstest in T-Form.', en:'Standardized T-shape agility test with automatic timing.'},
+      params:[
+        {type:'slider', label:{de:'Zeitlimit', en:'Time Limit'}, min:30, max:300, def:180, unit:'s'},
+        {type:'slider', label:{de:'Gruppen', en:'Groups'}, min:1, max:2, def:1, unit:''},
+        {type:'toggle', label:{de:'Gruppenstart', en:'Group Start'}, def:true},
+        {type:'toggle', label:{de:'Sound', en:'Sound'}, def:true},
+        {type:'toggle', label:{de:'Puck-Druck nötig', en:'Puck Press Required'}, def:true}
+      ]},
+    { id:'hunt', icon:'🏃‍♂️🎯🏃‍♀️', img:'img_hunt.webp', tags:['reaction','sport','brain'], setup:'game_hunt_setup.html',
+      name:{de:'Hunt! (Farbenjagd)', en:'Hunt! (Color Chase)'},
+      desc:{de:'Jage deine Farbe im Kreis!', en:'Chase your color! Cognition, peripheral vision, quick direction changes.'},
+      params:[
+        {type:'slider', label:{de:'Spielzeit', en:'Game Time'}, min:20, max:180, def:60, unit:'s'},
+        {type:'slider', label:{de:'Pucks', en:'Pucks'}, min:3, max:10, def:3, unit:''},
+        {type:'slider', label:{de:'Spieler', en:'Players'}, min:1, max:9, def:1, unit:''},
+        {type:'slider', label:{de:'Kreisradius', en:'Circle Radius'}, min:2, max:10, def:5, unit:'m'},
+        {type:'slider', label:{de:'Schwierigkeit', en:'Difficulty'}, min:1, max:5, def:3, unit:''},
+        {type:'toggle', label:{de:'Sound-Effekte', en:'Sound Effects'}, def:true}
+      ]},
+    { id:'pacemaker', icon:'🏃‍♂️⏱️🟢', img:'img_pacemaker.webp', tags:['sport'], setup:'game_pacemaker_setup.html',
+      name:{de:'Pacemaker', en:'Pacemaker'},
+      desc:{de:'Die Pucks geben das Tempo vor.', en:'Pucks set the pace. Run in the given rhythm.'},
+      params:[
+        {type:'select', label:{de:'Layout', en:'Route Layout'}, options:[{v:'Circle',de:'Kreis',en:'Circle'},{v:'Shuttle',de:'Pendel',en:'Shuttle'}], def:'Circle'},
+        {type:'slider', label:{de:'Distanz zwischen Pucks', en:'Distance between Pucks'}, min:5, max:50, def:10, unit:'m'},
+        {type:'slider', label:{de:'Gesamtzeit', en:'Total Time'}, min:60, max:600, def:180, unit:'s'},
+        {type:'toggle', label:{de:'Start-Puck halten', en:'Hold Start Puck'}, def:true}
+      ]},
+    { id:'memory', icon:'🧠🏃', img:'img_memory.webp', tags:['brain','sport'], setup:'game_memory_setup.html',
+      name:{de:'Memory', en:'Memory Sprint'},
+      desc:{de:'Finde die Farbpaare mit Laufen!', en:'Find the color pairs! Classic memory with running.'},
+      params:[
+        {type:'slider', label:{de:'Aktive Pucks', en:'Active Pucks'}, min:4, max:20, def:4, unit:''},
+        {type:'select', label:{de:'Geschwindigkeit', en:'Speed'}, options:[{v:'Fast',de:'Schnell',en:'Fast'},{v:'Normal',de:'Normal',en:'Normal'},{v:'Slow',de:'Langsam',en:'Slow'}], def:'Normal'},
+        {type:'toggle', label:{de:'Such-Modus', en:'Search Mode'}, def:false},
+        {type:'toggle', label:{de:'Auto Restart', en:'Auto Restart'}, def:false}
+      ]},
+    { id:'domination', icon:'🔴⚔🔵', img:'img_domination.webp', tags:['sport','reaction'], setup:'game_domination_setup.html',
+      name:{de:'Domination', en:'Domination'},
+      desc:{de:'Zwei Teams kämpfen um Kontrolle!', en:'Two teams fight for puck control. Capture more than your opponent!'},
+      params:[
+        {type:'select', label:{de:'Spielmodus', en:'Game Mode'}, options:[{v:'Standard',de:'Standard',en:'Standard'},{v:'Deathmatch',de:'Deathmatch',en:'Deathmatch'}], def:'Standard'},
+        {type:'slider', label:{de:'Dauer', en:'Duration'}, min:30, max:300, def:180, unit:'s'},
+        {type:'slider', label:{de:'Block-Zeit', en:'Block Time'}, min:0, max:10, def:2, unit:'s'},
+        {type:'slider', label:{de:'Arenen', en:'Arenas'}, min:1, max:2, def:1, unit:''},
+        {type:'toggle', label:{de:'Synchroner Start', en:'Sync Start'}, def:true}
+      ]},
+    { id:'ctl', icon:'⚡🎯👀', img:'img_ctl.webp', tags:['reaction','sport'], setup:'game_ctl_setup.html',
+      name:{de:'Catch the Light Pro', en:'Catch the Light Pro'},
+      desc:{de:'Licht an, drücken!', en:'The classic: light on, press! Suitable for all ages.'},
+      params:[
+        {type:'slider', label:{de:'Zeitlimit', en:'Time Limit'}, min:30, max:120, def:60, unit:'s'},
+        {type:'slider', label:{de:'Aktive Pucks', en:'Active Pucks'}, min:3, max:20, def:6, unit:''},
+        {type:'select', label:{de:'Zielfarbe', en:'Target Color'}, options:[{v:'Green',de:'Grün',en:'Green'},{v:'Red',de:'Rot',en:'Red'},{v:'Blue',de:'Blau',en:'Blue'},{v:'Yellow',de:'Gelb',en:'Yellow'}], def:'Green'},
+        {type:'slider', label:{de:'Level', en:'Level'}, min:1, max:3, def:2, unit:''},
+        {type:'toggle', label:{de:'Beschleunigung', en:'Speedup Mode'}, def:true},
+        {type:'toggle', label:{de:'Sound', en:'Sound Effects'}, def:true},
+        {type:'toggle', label:{de:'Fake-Farben', en:'Fake Colors (No-Go)'}, def:false}
+      ]},
+    { id:'tabata', icon:'⏱️🥵', img:'img_tabata.webp', tags:['tool','sport'], setup:'game_tabata_setup.html',
+      name:{de:'TABATA Timer', en:'HIIT / TABATA Timer'},
+      desc:{de:'Intervall-Timer für HIIT.', en:'Configurable interval timer for HIIT/Tabata training.'},
+      params:[
+        {type:'slider', label:{de:'Aktive Pucks', en:'Active Pucks'}, min:1, max:20, def:1, unit:''},
+        {type:'slider', label:{de:'WORK Phase', en:'WORK Phase'}, min:10, max:300, def:20, unit:'s'},
+        {type:'slider', label:{de:'REST Phase', en:'REST Phase'}, min:10, max:120, def:10, unit:'s'},
+        {type:'slider', label:{de:'Runden', en:'Rounds'}, min:1, max:20, def:3, unit:''},
+        {type:'select', label:{de:'Sound', en:'Sound Mode'}, options:[{v:'Countdown',de:'Countdown (3-2-1)',en:'Countdown (3-2-1)'},{v:'Beep',de:'Einzelner Beep',en:'Single Beep'},{v:'Silent',de:'Stumm',en:'Silent'}], def:'Countdown'}
+      ]},
+    { id:'catreflex', icon:'🐈⚡', img:'img_catreflex.webp', tags:['reaction'], setup:'game_cat_setup.html',
+      name:{de:'Katzenreflexe', en:'Cat Reflexes'},
+      desc:{de:'Reagiere blitzschnell wie eine Katze!', en:'React lightning-fast like a cat! Random delays.'},
+      params:[
+        {type:'slider', label:{de:'Spieler', en:'Players'}, min:1, max:11, def:1, unit:''},
+        {type:'slider', label:{de:'Spielzeit', en:'Game Time'}, min:10, max:300, def:60, unit:'s'},
+        {type:'toggle', label:{de:'Highlander-Modus', en:'Highlander Mode'}, def:true},
+        {type:'toggle', label:{de:'Farb-Chaos', en:'Color Chaos'}, def:false}
+      ]},
+    { id:'musical', icon:'🎵🪑🏃', img:'img_musical.webp', tags:['reaction'], setup:'game_musical_setup.html',
+      name:{de:'Reise nach Jerusalem', en:'Musical Chairs'},
+      desc:{de:'Musik stoppt, schnapp dir einen Puck!', en:'Music stops, grab a puck! Last one is out.'},
+      params:[
+        {type:'slider', label:{de:'Spieler gesamt', en:'Total Players'}, min:2, max:13, def:5, unit:''},
+        {type:'slider', label:{de:'Musik-Dauer', en:'Base Music Time'}, min:5, max:30, def:10, unit:'s'},
+        {type:'select', label:{de:'Varianz', en:'Variance'}, options:[{v:'Low',de:'Niedrig',en:'Low'},{v:'Medium',de:'Mittel',en:'Medium'},{v:'High',de:'Hoch',en:'High'}], def:'Medium'},
+        {type:'slider', label:{de:'Pause zwischen Runden', en:'Pause between rounds'}, min:3, max:20, def:5, unit:'s'}
+      ]},
+    { id:'tttt', icon:'❌⭕', img:'img_tttt.webp', tags:['brain'], setup:'game_tttt_setup.html',
+      name:{de:'Taktisches TicTacToe', en:'Tactical TicTacToe'},
+      desc:{de:'Strategie trifft Bewegung!', en:'TicTacToe on the gym floor! Strategy meets movement.'},
+      params:[
+        {type:'slider', label:{de:'Spieler', en:'Players'}, min:1, max:3, def:2, unit:''},
+        {type:'slider', label:{de:'Feldgröße', en:'Grid Size'}, min:1, max:4, def:4, unit:' Pucks'},
+        {type:'toggle', label:{de:'Hard-Mode', en:'Hard-Mode'}, def:false},
+        {type:'toggle', label:{de:'Auto-Restart', en:'Auto-Restart'}, def:false}
+      ]},
+    { id:'pitstop', icon:'🏎️⏱️', img:'img_pitstop.webp', tags:['sport','tool'], setup:'game_pitstop_setup.html',
+      name:{de:'Pit Stop', en:'Pit Stop'},
+      desc:{de:'Teamwork: Alle Pucks nacheinander!', en:'Teamwork: Press all pucks as fast as possible in sequence!'},
+      params:[
+        {type:'slider', label:{de:'Spieler/Stationen', en:'Players/Stations'}, min:1, max:10, def:2, unit:''},
+        {type:'slider', label:{de:'Pitstop-Dauer', en:'Pitstop Duration'}, min:0, max:20, def:5, unit:'s'},
+        {type:'toggle', label:{de:'Pitlane-Modus', en:'Pitlane Mode'}, def:false},
+        {type:'toggle', label:{de:'Countdown anzeigen', en:'Show Countdown'}, def:true}
+      ]},
+    { id:'display', icon:'▶️✨', img:'img_display.webp', tags:['tool'], setup:'game_display_setup.html',
+      name:{de:'Display Mode', en:'Display Mode'},
+      desc:{de:'Pucks zeigen Farben und Effekte.', en:'All pucks display colors, effects or patterns. For shows.'},
+      params:[
+        {type:'slider', label:{de:'Max. Dauer', en:'Max Duration'}, min:5, max:60, def:15, unit:' min'}
+      ]},
+];
+
+let currentLang = 'en';
+let currentFilter = 'all';
+let favorites = [];
+let currentSetupGame = null;
+
+const filterLabels = {
+    de:{all:'Alle', fav:'⭐ Favoriten', reaction:'⚡ Reaktion', sport:'🏃 Sport', brain:'🧠 Denken', tool:'🛠️ Tools'},
+    en:{all:'All', fav:'⭐ Favorites', reaction:'⚡ Reaction', sport:'🏃 Sport', brain:'🧠 Brain', tool:'🛠️ Tools'},
+    fr:{all:'Tous', fav:'⭐ Favoris', reaction:'⚡ Réaction', sport:'🏃 Sport', brain:'🧠 Réflexion', tool:'🛠️ Outils'},
+    es:{all:'Todos', fav:'⭐ Favoritos', reaction:'⚡ Reacción', sport:'🏃 Deporte', brain:'🧠 Pensar', tool:'🛠️ Herramientas'},
+    it:{all:'Tutti', fav:'⭐ Preferiti', reaction:'⚡ Reazione', sport:'🏃 Sport', brain:'🧠 Pensare', tool:'🛠️ Strumenti'},
+    nl:{all:'Alle', fav:'⭐ Favorieten', reaction:'⚡ Reactie', sport:'🏃 Sport', brain:'🧠 Denken', tool:'🛠️ Gereedschap'},
+    pl:{all:'Wszystkie', fav:'⭐ Ulubione', reaction:'⚡ Reakcja', sport:'🏃 Sport', brain:'🧠 Myślenie', tool:'🛠️ Narzędzia'},
+};
+const ui = {
+    de:{games:'Spiele', start:'ZUM SPIEL 🏁', next:'WEITER ➡', cancel:'Abbrechen', pucks:'Verbundene Pucks'},
+    en:{games:'Games', start:'START GAME 🏁', next:'NEXT ➡', cancel:'Cancel', pucks:'Connected Pucks'},
+    fr:{games:'Jeux', start:'JOUER 🏁', next:'SUIVANT ➡', cancel:'Annuler', pucks:'Pucks connectés'},
+    es:{games:'Juegos', start:'JUGAR 🏁', next:'SIGUIENTE ➡', cancel:'Cancelar', pucks:'Pucks conectados'},
+    it:{games:'Giochi', start:'GIOCA 🏁', next:'AVANTI ➡', cancel:'Annulla', pucks:'Puck collegati'},
+    nl:{games:'Spellen', start:'STARTEN 🏁', next:'VOLGENDE ➡', cancel:'Annuleren', pucks:'Verbonden Pucks'},
+    pl:{games:'Gry', start:'GRAJ 🏁', next:'DALEJ ➡', cancel:'Anuluj', pucks:'Podłączone Pucki'},
+};
+
+// ============================================
+// Render Carousel
+// ============================================
+function renderCarousel() {
+    const carousel = document.getElementById('carousel');
+    carousel.innerHTML = '';
+    let count = 0;
+    const L = ui[currentLang] || ui['en'];
+    const fl = filterLabels[currentLang] || filterLabels['en'];
+
+    games.forEach((g, i) => {
+        if (currentFilter === 'fav' && !favorites.includes(g.id)) return;
+        if (currentFilter !== 'all' && currentFilter !== 'fav' && !g.tags.includes(currentFilter)) return;
+        count++;
+
+        const name = g.name[currentLang] || g.name['en'];
+        const desc = g.desc[currentLang] || g.desc['en'];
+        const tags = g.tags.map(t => fl[t] || t).join(' · ');
+        const isFav = favorites.includes(g.id);
+
+        const card = document.createElement('div');
+        card.className = 'sim-card';
+        card.dataset.index = i;
+        card.innerHTML = `
+            <div class="sim-card-header">
+                <div class="sim-card-icon">${g.icon}</div>
+                <div class="sim-card-actions">
+                    <div class="sim-help-btn">?</div>
+                    <div class="sim-fav-star ${isFav ? 'is-fav' : ''}" style="color:${isFav ? '#ecc94b' : 'var(--ip-muted)'}" onclick="event.stopPropagation(); toggleFav('${g.id}')">★</div>
+                </div>
+            </div>
+            <div class="sim-card-title">${name}</div>
+            <div class="sim-card-tags">${tags}</div>
+            <div class="sim-card-desc">${desc}</div>
+            <button class="btn-start-game" onclick="openSetup('${g.id}')">${L.start}</button>
+        `;
+        carousel.appendChild(card);
+    });
+
+    document.getElementById('cardCounter').textContent = `${count} ${L.games}`;
+    requestAnimationFrame(() => updateFocus());
+}
+
+// ============================================
+// Card Focus
+// ============================================
+function updateFocus() {
+    const carousel = document.getElementById('carousel');
+    const cards = carousel.querySelectorAll('.sim-card');
+    const center = carousel.scrollLeft + carousel.offsetWidth / 2;
+    let closest = null, minDist = Infinity;
+    cards.forEach(c => {
+        const dist = Math.abs((c.offsetLeft + c.offsetWidth / 2) - center);
+        if (dist < minDist) { minDist = dist; closest = c; }
+    });
+    cards.forEach(c => c.classList.toggle('focused', c === closest));
+}
+
+// ============================================
+// Setup Screen — real parameters
+// ============================================
+function openSetup(gameId) {
+    const g = games.find(x => x.id === gameId);
+    if (!g) return;
+    currentSetupGame = g;
+
+    const L = ui[currentLang] || ui['en'];
+    const name = g.name[currentLang] || g.name['en'];
+    document.getElementById('setupTitle').textContent = g.icon + ' ' + name;
+
+    let html = `<div style="text-align:center; margin-bottom:12px; font-size:0.7rem; color:var(--ip-muted);">
+        ${L.pucks}: <strong style="color:#48bb78;">8</strong></div>`;
+
+    // Group params into cards by type
+    const sliders = g.params.filter(p => p.type === 'slider');
+    const toggles = g.params.filter(p => p.type === 'toggle');
+    const selects = g.params.filter(p => p.type === 'select');
+
+    if (sliders.length || selects.length) {
+        html += '<div class="setup-card">';
+        sliders.forEach(p => {
+            const label = p.label[currentLang] || p.label['en'];
+            const displayVal = p.def + (p.unit || '');
+            html += `<div class="setup-row">
+                <span class="label">${label}</span>
+                <div class="setup-slider-wrap">
+                    <input type="range" class="setup-slider" min="${p.min}" max="${p.max}" value="${p.def}"
+                        oninput="this.nextElementSibling.textContent=this.value+'${p.unit||''}'">
+                    <span class="setup-val">${displayVal}</span>
+                </div>
+            </div>`;
+        });
+        selects.forEach(p => {
+            const label = p.label[currentLang] || p.label['en'];
+            html += `<div class="setup-row">
+                <span class="label">${label}</span>
+                <select class="setup-select">
+                    ${p.options.map(o => `<option ${o.v===p.def?'selected':''}>${o[currentLang]||o['en']}</option>`).join('')}
+                </select>
+            </div>`;
+        });
+        html += '</div>';
+    }
+
+    if (toggles.length) {
+        html += '<div class="setup-card">';
+        toggles.forEach(p => {
+            const label = p.label[currentLang] || p.label['en'];
+            html += `<div class="setup-toggle-row">
+                <span>${label}</span>
+                <label class="sim-switch"><input type="checkbox" ${p.def?'checked':''}><span class="sim-slider"></span></label>
+            </div>`;
+        });
+        html += '</div>';
+    }
+
+    html += `<button class="btn-setup-next" onclick="showGameStart()">${L.next}</button>`;
+    html += `<button class="btn-setup-cancel" onclick="backToDashboard()">${L.cancel}</button>`;
+
+    document.getElementById('setupBody').innerHTML = html;
+    document.getElementById('dashboardScreen').classList.add('hidden');
+    document.getElementById('setupScreen').classList.add('active');
+}
+
+function backToDashboard() {
+    document.getElementById('setupScreen').classList.remove('active');
+    document.getElementById('dashboardScreen').classList.remove('hidden');
+    currentSetupGame = null;
+}
+
+function showGameStart() {
+    const name = currentSetupGame ? (currentSetupGame.name[currentLang] || currentSetupGame.name['en']) : 'Game';
+    const icon = currentSetupGame ? currentSetupGame.icon : '🏁';
+    document.getElementById('gsoTitle').textContent = icon + ' ' + name;
+    document.getElementById('gameStartOverlay').classList.add('show');
+}
+
+function closeGameStart() {
+    document.getElementById('gameStartOverlay').classList.remove('show');
+}
+
+// ============================================
+// Filters
+// ============================================
+document.getElementById('filterBar').addEventListener('click', (e) => {
+    if (!e.target.classList.contains('filter-btn')) return;
+    currentFilter = e.target.dataset.filter;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    renderCarousel();
+});
+
+// ============================================
+// Favorites
+// ============================================
+function toggleFav(id) {
+    const idx = favorites.indexOf(id);
+    if (idx >= 0) favorites.splice(idx, 1); else favorites.push(id);
+    renderCarousel();
+}
+
+// ============================================
+// Menu
+// ============================================
+document.getElementById('menuBtn').addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.getElementById('ipMenu').classList.toggle('show');
+});
+document.querySelector('.app-screen').addEventListener('click', (e) => {
+    if (!e.target.closest('.ip-dropdown')) document.getElementById('ipMenu').classList.remove('show');
+});
+
+// ============================================
+// Language
+// ============================================
+document.getElementById('langSelect').addEventListener('change', (e) => {
+    currentLang = e.target.value;
+    const fl = filterLabels[currentLang] || filterLabels['en'];
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        const key = btn.dataset.filter;
+        if (fl[key]) btn.textContent = fl[key];
+    });
+    renderCarousel();
+    // If on setup screen, re-render
+    if (currentSetupGame) openSetup(currentSetupGame.id);
+});
+
+// ============================================
+// Theme
+// ============================================
+function toggleIphoneTheme() {
+    const ip = document.querySelector('.iphone');
+    ip.dataset.theme = ip.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.getElementById('ipMenu').classList.remove('show');
+}
+
+// ============================================
+// Init
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('carousel').addEventListener('scroll', updateFocus);
+    renderCarousel();
+});
+</script>
+</body>
+</html>
