@@ -18,7 +18,8 @@
       "Bash(sed -n '/<header>/,/<\\\\/header>/p' game_ball_setup.html)",
       "Bash(sed -n '/<header>/,/<\\\\/header>/p' game_bomb_names.html)",
       "Bash(python find_unused_keys.py)",
-      "Bash(do sed:*)"
+      "Bash(do sed:*)",
+      "Bash(grep -n '\"\"desc_timer\\\\|\"\"desc_players' lang.js)"
     ]
   }
 }

@@ -278,6 +278,118 @@
             font-size: 0.9rem; cursor: pointer; margin-top: 8px;
         }
 
+        /* ============================================
+           Names Screen (between setup and game start)
+           ============================================ */
+        .names-screen {
+            display: none; flex-direction: column;
+            height: 100%; overflow-y: auto; scrollbar-width: none;
+        }
+        .names-screen::-webkit-scrollbar { display: none; }
+        .names-screen.active { display: flex; }
+
+        .arena-wrapper {
+            background: var(--ip-card); border: 1px solid var(--ip-border);
+            border-radius: 12px; margin-bottom: 12px; overflow: hidden;
+        }
+        .arena-header {
+            padding: 10px 14px; background: var(--ip-card-hover);
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; font-weight: bold; font-size: 0.8rem; color: var(--ip-text);
+        }
+        .arena-header span:last-child { font-size: 0.7rem; color: var(--ip-muted); }
+        .arena-grid-wrap { padding: 12px; display: flex; justify-content: center; }
+        .arena-grid {
+            display: grid; grid-template-columns: repeat(5, 32px); grid-template-rows: repeat(5, 32px);
+            gap: 4px; background: radial-gradient(circle, var(--ip-card-hover), var(--ip-bg));
+            padding: 8px; border-radius: 8px; border: 1px solid var(--ip-border);
+        }
+        .arena-cell {
+            width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.55rem; font-weight: bold; border-radius: 6px;
+        }
+        .arena-puck {
+            background: var(--ip-primary); color: #fff; border-radius: 50%;
+            box-shadow: 0 0 6px rgba(99,179,237,0.5);
+        }
+        .arena-runner { font-size: 0.8rem; }
+
+        .group-picker {
+            background: var(--ip-card); border: 1px solid var(--ip-border);
+            border-radius: 12px; padding: 12px 14px; margin-bottom: 12px;
+        }
+        .group-picker-title {
+            font-size: 0.75rem; font-weight: bold; color: var(--ip-muted);
+            text-transform: uppercase; margin-bottom: 8px; letter-spacing: 1px;
+        }
+        .group-tabs {
+            display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none;
+            padding-bottom: 4px;
+        }
+        .group-tabs::-webkit-scrollbar { display: none; }
+        .group-tab {
+            padding: 6px 14px; border-radius: 16px; font-size: 0.7rem; font-weight: bold;
+            cursor: pointer; white-space: nowrap; border: 1px solid var(--ip-border);
+            background: var(--ip-card); color: var(--ip-muted); transition: all 0.2s;
+        }
+        .group-tab.active { background: var(--ip-text); color: var(--ip-bg); border-color: var(--ip-text); }
+
+        .player-list { margin-bottom: 12px; }
+        .player-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 7px 0; border-bottom: 1px solid var(--ip-border);
+        }
+        .player-color {
+            width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+            box-shadow: 0 0 6px rgba(0,0,0,0.3);
+        }
+        .player-name-input {
+            flex: 1; background: var(--ip-bg); color: var(--ip-text);
+            border: 1px solid var(--ip-border); border-radius: 6px;
+            padding: 6px 10px; font-size: 0.75rem; outline: none;
+        }
+        .player-name-input:focus { border-color: var(--ip-primary); }
+        .player-stats-icon {
+            font-size: 0.75rem; opacity: 0.4; cursor: default;
+        }
+
+        /* ============================================
+           Help Modal (inside iPhone)
+           ============================================ */
+        .help-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+            z-index: 250; align-items: center; justify-content: center; padding: 20px 12px;
+        }
+        .help-overlay.show { display: flex; }
+        .help-modal {
+            background: var(--ip-card); border: 1px solid var(--ip-border);
+            border-radius: 20px; width: 100%; max-height: 85%; overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); scrollbar-width: none;
+        }
+        .help-modal::-webkit-scrollbar { display: none; }
+        .help-modal-header {
+            padding: 14px 18px; border-bottom: 1px solid var(--ip-border);
+            display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; background: var(--ip-card); z-index: 5;
+            border-radius: 20px 20px 0 0;
+        }
+        .help-modal-header h3 { margin: 0; font-size: 1rem; color: var(--ip-primary); }
+        .help-close {
+            background: none; border: none; font-size: 1.5rem; color: var(--ip-muted);
+            cursor: pointer; padding: 0; line-height: 1;
+        }
+        .help-modal-body { padding: 16px 18px; font-size: 0.8rem; color: var(--ip-text); line-height: 1.6; }
+        .help-modal-body h4 {
+            margin: 14px 0 5px 0; color: var(--ip-muted); text-transform: uppercase;
+            font-size: 0.7rem; border-bottom: 1px solid var(--ip-border); padding-bottom: 4px;
+        }
+        .help-modal-body img {
+            max-width: 100%; border-radius: 10px; margin-top: 8px;
+            border: 1px solid var(--ip-border);
+        }
+        .help-modal-body b { color: var(--ip-primary); }
+
         /* "Game would start" overlay */
         .game-start-overlay {
             display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -414,6 +526,30 @@
                             </div>
                             <div class="setup-body" id="setupBody"></div>
                         </div>
+
+                        <!-- === Names / Layout View === -->
+                        <div class="names-screen" id="namesScreen">
+                            <div class="setup-header">
+                                <div class="setup-title" id="namesTitle">Players</div>
+                                <div class="setup-dots">
+                                    <div class="dot dot-g">8</div>
+                                    <div class="dot dot-y">0</div>
+                                    <div class="dot dot-r">0</div>
+                                </div>
+                            </div>
+                            <div class="setup-body" id="namesBody"></div>
+                        </div>
+                    </div>
+
+                    <!-- Help Modal -->
+                    <div class="help-overlay" id="helpOverlay" onclick="if(event.target===this)closeHelp()">
+                        <div class="help-modal">
+                            <div class="help-modal-header">
+                                <h3 id="helpTitle">Help</h3>
+                                <button class="help-close" onclick="closeHelp()">&times;</button>
+                            </div>
+                            <div class="help-modal-body" id="helpBody"></div>
+                        </div>
                     </div>
 
                     <!-- Game Start Overlay -->
@@ -421,7 +557,7 @@
                         <div class="gso-icon">🏁</div>
                         <div class="gso-title" id="gsoTitle">Game Starting...</div>
                         <div class="gso-text">This is where the game would start on a real PUCK RACER system. The pucks would now light up and wait for the players.<br><br>The game simulation is coming soon!</div>
-                        <button class="gso-btn" onclick="closeGameStart()">← Back to Setup</button>
+                        <button class="gso-btn" onclick="closeGameStart()">← Back</button>
                     </div>
 
                     <div class="home-indicator"><div></div></div>
@@ -724,6 +860,178 @@ const ui = {
 };
 
 // ============================================
+// Help Data (English texts from lang.js)
+// ============================================
+const helpData = {
+    counter: {
+        desc: 'A training support tool. Simply counts how often a player presses their puck. (min 0.3s between inputs!)',
+        setup: '1 Puck per player. Adjustable time limit.',
+        ex: 'A child does an exercise, runs back, hits the puck, and repeats. Who has the most points after 3 minutes?'
+    },
+    timer: {
+        desc: 'A practical tool for teaching. Each puck serves as a personal countdown timer for a student.',
+        setup: 'Set base time. Pucks light up fully and the circle depletes like an hourglass. When a student is done, they press their puck. You see immediately who finished. Add/subtract time via app.',
+        ex: 'Ideal for circuit training, quiet work, vocabulary tests, or station timers.'
+    },
+    stopwatch: {
+        desc: 'A simple stopwatch. Every puck acts as its own stopwatch. Lap mode, Central Start with countdown and false start detection.',
+        setup: 'Select player count and mode.',
+        ex: 'Every player has their own stopwatch. 1st press = Start, 2nd = Stop. In Lap Mode: click records a lap, double-click stops the time. Central Start lets the trainer start all pucks simultaneously with a hold-and-countdown sequence.'
+    },
+    countdown: {
+        desc: 'Start with a number and count down to zero. Visualized via LED ring. More of a training tool than a game.',
+        setup: 'Choose starting number (1-100). Option: Stop on first winner.',
+        ex: 'Set to 30. Who can do 30 push-ups first (pressing the puck each time)?'
+    },
+    shuttle: {
+        desc: 'Classic endurance test. Run back and forth between start and target.',
+        setup: '2 Pucks per player. Start puck shows a running light, target breathes. Start: Hold pucks until the GO signal! False start detection active.',
+        ex: 'Hold start -> "GO" -> run to target & press -> run back to start & press.'
+    },
+    simon: {
+        desc: 'Remember the color pattern! The computer shows it, you repeat it.',
+        setup: 'Up to 3 groups parallel. Choose pucks per group. Each puck has a color. Adjustable sequence length. Auto-restart available.',
+        ex: 'Red blinks -> Press Red. Round 2: Red, Blue blinks -> Press Red, Blue...'
+    },
+    simonruns: {
+        desc: 'Remember the pattern! Run to the pucks and press them. Simon says, but with sweating!<br><b>Special: Group Mode</b><br>There is only one display puck, all groups solve the same sequence.',
+        setup: 'Up to 3 groups. Choose pucks per group. Each puck has a color. Adjustable sequence length.',
+        ex: 'Red blinks -> Run to Red, press it! Run back to display. Round 2: Red, Blue -> Run to Red, then Blue, then back...'
+    },
+    zombie: {
+        desc: 'Repeated sprints with decreasing time limits. Fail to make it in time, and you are out (bitten)!',
+        setup: 'Set start time (e.g. 10s) and reduction per round (e.g. 0.5s).<br><b>Sudden Death:</b> One fail = out.<br><b>Group Start:</b> All lanes start synchronously.<br><b>Shuttle Run:</b> Run as long as you can!',
+        ex: 'Hold start -> "GO" -> run to target. Next round: You have less time!'
+    },
+    whac: {
+        desc: 'The ultimate reaction and cognitive drill. Pucks spawn randomly. Find the valid colors and ignore the wrong ones!',
+        setup: 'Choose up to 3 groups. Define game colors and select which ones are valid targets. 5 difficulty levels (from endless to hardcore memory).',
+        ex: 'Level 4: Pucks light up in all colors but rotate every 1.5s! Stay focused and only hit your target color.'
+    },
+    sorting: {
+        desc: '"Not Slytherin, not Slytherin..." – Leave nothing to chance, but keep control! Fairly divides a large group of players into equal teams.',
+        setup: 'Choose number of houses (groups), total players, and how many pucks act as "sorting hats".',
+        ex: '20 students, 4 houses. Algorithm guarantees exactly 5 students per house.'
+    },
+    bomb: {
+        desc: 'Tick... Tock... Can you estimate time? Defuse the bomb at the exact right moment! Group mode gives every player the same target time.',
+        setup: 'Choose time (e.g. 5s), difficulty (tolerance), and rounds.',
+        ex: 'Puck blinks 5x (=5s). Then countdown. Then silence. Press exactly after 5 seconds! Green = Defused, Red = BOOM.'
+    },
+    redgreen: {
+        desc: 'The classic! Pucks indicate: Run (Green) or Freeze (Red). Reach the puck on Green to score. Pressing on Red gives a penalty.',
+        setup: 'Choose group count. Each group has its own rhythm.',
+        ex: 'Green -> Run fast! Red -> Freeze immediately! Only press when Green.'
+    },
+    beep: {
+        desc: 'The classic endurance test. Run 20m in rhythm with the signals. Speed increases every minute. Calculates VO²max.',
+        setup: 'Note: Distance between start and target MUST be exactly 20m. Choose player count.',
+        ex: 'Signal sounds -> Run to target and wait for next signal. Too early/late gives a yellow card. Second card = eliminated!'
+    },
+    react2p: {
+        desc: 'The ultimate duel! Two players face each other, a row of pucks between them. Hit your color first to score. Improves reaction & cognition.',
+        setup: 'Select time and pucks per group (min 3). Increase difficulty by assigning multiple colors per player or adding fake colors.',
+        ex: 'Pucks on the floor. P1 looks for Red, P2 looks for Blue. Pucks light up -> hit yours as fast as possible!'
+    },
+    target: {
+        desc: 'Trains core stability and reaction time. Perfect assistant for sit-ups or planks.',
+        setup: 'SIT-UPS: Attach pucks to the wall. Press a lit puck on every sit-up.<br>PLANKS: Place 3 pucks in a semicircle. Sequence or Random mode.',
+        ex: 'Choose Time mode (e.g. survive 60s) or Rounds mode (e.g. complete 30 sit-ups).'
+    },
+    ball: {
+        desc: 'Motor dribbling drill. Place pucks as stations (e.g. in a square). Player dribbles to the lit puck.',
+        setup: 'Choose pucks per station (3-5) and group count. App shows optimal geometric layout.',
+        ex: 'Set 4 pucks per group. Arrange as a square. One puck lights up -> Dribble to it, press it, next one lights up.'
+    },
+    ttest: {
+        desc: 'A global standard test for agility. Trains sprints and multi-directional changes under time pressure.',
+        setup: 'Place 4 pucks in a T-Shape.<br>1/4 ring: Start (A)<br>2/4 ring: Center (B, 10m from A)<br>3/4 ring: Left (C, 5m from B)<br>4/4 ring: Right (D, 10m from C)',
+        ex: 'Sprint A to B -> Side-step to C -> Side-step to D -> Side-step back to B -> Backpedal to A.'
+    },
+    hunt: {
+        desc: 'Hunt your own color in a circle! Cognition, peripheral vision, and rapid directional changes.',
+        setup: 'Place min. 3 pucks in a circle. Each player gets a color. A puck lights up in your color -> hit it -> a new one lights up instantly.<br><b>Difficulty:</b> Higher levels mean pucks disappear faster.',
+        ex: 'Red lights up back left -> sprint & press! Instantly, Red lights up front right. Who catches the most in 60s?'
+    },
+    pacemaker: {
+        desc: 'Trains perfect pacing! Pucks act as a virtual "rabbit" showing the exact running speed.',
+        setup: 'Place pucks at set distances (e.g. 10m) in a circle or straight line. Pucks dim down and show a countdown before you need to be there.',
+        ex: 'Set 5:00 min/km and 10m distance. Light travels exactly at 12 km/h. Be at the puck exactly when the light goes out!'
+    },
+    memory: {
+        desc: 'Brain jogging! Trains spatial working memory under physical load (Dual-Tasking).',
+        setup: 'Scatter pucks over a large area. Pucks show color pairs, then go neutral. Find and press the matching pairs!<br><b>Search Mode:</b> Pucks show no initial colors (hidden memory).',
+        ex: 'Run to a neutral puck, press it -> Turns Red. Remember where the other red puck was, sprint there, press it. Match = Green!'
+    },
+    domination: {
+        desc: 'Intense endurance game. Two teams fight for control over the field. Capture pucks and steal them from the opponent!',
+        setup: 'Scatter pucks on the field. Team 1 clicks ONCE to capture. Team 2 DOUBLE-CLICKS to steal.',
+        ex: 'Scatter many pucks. Team 1 runs and clicks (turns Red). Team 2 chases and double-clicks (turns Blue). Who has more after 2 minutes?'
+    },
+    ctl: {
+        desc: 'Reaction and peripheral vision training like in Formula 1. A stress test for hand-eye coordination.',
+        setup: 'Mount pucks wide on a wall or scatter on the floor. Pucks light up randomly and briefly. Hit them before they fade!',
+        ex: 'Mount 12 pucks on a wall. Set 60s and "Medium". Pucks light up and vanish after 1.2s. Frequency increases rapidly.'
+    },
+    tabata: {
+        desc: 'Visual and acoustic controller for group training (e.g. circuit training). Takes the stopwatch out of the trainer\'s hand.',
+        setup: 'Place pucks at stations. Set WORK and REST times. Pucks light up and ring depletes during work. Beeps 3 seconds before switching.',
+        ex: '20s Work, 10s Rest. Pucks show depleting green ring. At 3s: Beep.. Beep.. Beep. Then red breathing for 10s rest.'
+    },
+    catreflex: {
+        desc: 'A central indicator puck dictates when to react. Who can press their puck the fastest?<br><b>Highlander Mode:</b> Only the absolute fastest player scores!<br><b>Color Chaos:</b> Only press on GREEN! False starts give a penalty.',
+        setup: 'Select the number of players, game duration, and special rules (Highlander / Color Chaos).',
+        ex: 'The indicator puck flickers. Suddenly it turns green. You press your puck first -> Point!'
+    },
+    musical: {
+        desc: 'Action, fun, and reaction speed! The party classic for the gym. Trains quick thinking and explosive acceleration.',
+        setup: 'Spread the pucks across the room. Upload an MP3 (max 3MB). One less puck lights up each round!<br><b>Combine with ball dribbling for extra challenge!</b>',
+        ex: 'Music plays and pucks glow rainbow. Music stops -> pucks flash purple. Sprint to a free puck and press it! Anyone left out is eliminated!'
+    },
+    tttt: {
+        desc: 'Precision meets tactics! Classic TicTacToe, but you have to hit the fields with a ball.',
+        setup: 'Mount pucks as a grid on a wall or boxes. Place a separate "Selector Puck" near the thrower. Choose grid size.',
+        ex: 'Selector Puck shows whose turn it is. Throw a ball at the grid. Hit a puck to claim it! First to get 3 in a row wins!'
+    },
+    pitstop: {
+        desc: 'GoKart pitstop trainer! Tap a puck or click the player card to start the pitstop countdown. Add penalty seconds when rules are broken.',
+        setup: 'One puck per player station (simple mode) or two pucks per station (pitlane mode). Configure target pitstop duration.',
+        ex: 'Set pitstop to 3s. Car arrives, tap puck -> countdown. Done = green flash. Use +5s/+10s for penalties.'
+    },
+    display: {
+        desc: 'Simple display mode to control all pucks and play visual effects.',
+        setup: 'The Puck List shows connected pucks and Connection Quality. Every puck shows the RSSI Value in % with its 35 LEDs.',
+        ex: 'Setting - everyone loves detailed complex settings ;-)'
+    },
+};
+
+// ============================================
+// Help Functions
+// ============================================
+function openHelp(gameId) {
+    const g = games.find(x => x.id === gameId);
+    const h = helpData[gameId];
+    if (!g || !h) return;
+
+    const name = g.name[currentLang] || g.name['en'];
+    document.getElementById('helpTitle').textContent = g.icon + ' ' + name;
+
+    let body = '';
+    // Cover image
+    body += `<img src="pictures/${g.img}" alt="${name}" onerror="this.style.display='none'">`;
+    body += `<h4>Description</h4><p>${h.desc}</p>`;
+    body += `<h4>Setup</h4><p>${h.setup}</p>`;
+    body += `<h4>Example</h4><p>${h.ex}</p>`;
+
+    document.getElementById('helpBody').innerHTML = body;
+    document.getElementById('helpOverlay').classList.add('show');
+}
+
+function closeHelp() {
+    document.getElementById('helpOverlay').classList.remove('show');
+}
+
+// ============================================
 // Render Carousel
 // ============================================
 function renderCarousel() {
@@ -750,7 +1058,7 @@ function renderCarousel() {
             <div class="sim-card-header">
                 <div class="sim-card-icon">${g.icon}</div>
                 <div class="sim-card-actions">
-                    <div class="sim-help-btn">?</div>
+                    <div class="sim-help-btn" onclick="event.stopPropagation(); openHelp('${g.id}')">?</div>
                     <div class="sim-fav-star ${isFav ? 'is-fav' : ''}" style="color:${isFav ? '#ecc94b' : 'var(--ip-muted)'}" onclick="event.stopPropagation(); toggleFav('${g.id}')">★</div>
                 </div>
             </div>
@@ -839,7 +1147,7 @@ function openSetup(gameId) {
         html += '</div>';
     }
 
-    html += `<button class="btn-setup-next" onclick="showGameStart()">${L.next}</button>`;
+    html += `<button class="btn-setup-next" onclick="openNamesScreen()">${L.next}</button>`;
     html += `<button class="btn-setup-cancel" onclick="backToDashboard()">${L.cancel}</button>`;
 
     document.getElementById('setupBody').innerHTML = html;
@@ -849,8 +1157,158 @@ function openSetup(gameId) {
 
 function backToDashboard() {
     document.getElementById('setupScreen').classList.remove('active');
+    document.getElementById('namesScreen').classList.remove('active');
     document.getElementById('dashboardScreen').classList.remove('hidden');
     currentSetupGame = null;
+}
+
+function backToSetup() {
+    document.getElementById('namesScreen').classList.remove('active');
+    document.getElementById('setupScreen').classList.add('active');
+}
+
+// ============================================
+// Names / Layout Screen
+// ============================================
+const PUCK_COLORS = ['#3182ce','#48bb78','#e53e3e','#ecc94b','#d53f8c','#00bcd4','#ff9800','#9c27b0','#4caf50','#ff5722'];
+
+const PLAYER_GROUPS = [
+    { name: '5a', players: ['Emma','Liam','Mia','Noah','Sophia','Elias','Lena','Finn','Hannah','Lukas'] },
+    { name: 'Football F', players: ['Max','Leonie','Jonas','Marie','Ben','Laura','Paul','Sarah','Tim','Amelie'] },
+    { name: 'Friends', players: ['Felix','Anna','Moritz','Clara','David','Lara','Jan','Nele','Erik','Emilia'] }
+];
+
+// ============================================
+// Per-game arena layouts from real _names.html
+// pucks: [{r,c}], specials: [{r,c,text}]
+// ============================================
+const arenaLayouts = {
+    hunt:       { pucks:[{r:0,c:1},{r:0,c:3},{r:1,c:0},{r:1,c:4},{r:3,c:0},{r:3,c:4},{r:4,c:1},{r:4,c:3}],
+                  specials:[{r:2,c:2,text:'🏃‍♂️🏃🏻'}], n:8 },
+    shuttle:    { pucks:[{r:0,c:0},{r:0,c:4},{r:1,c:0},{r:1,c:4},{r:2,c:0},{r:2,c:4},{r:3,c:0},{r:3,c:4}],
+                  specials:[{r:0,c:1,text:'🏃‍♂️'},{r:0,c:2,text:'↔️'},{r:1,c:1,text:'🏃‍♂️'},{r:1,c:2,text:'↔️'},{r:2,c:1,text:'🏃‍♂️'},{r:2,c:2,text:'↔️'},{r:3,c:1,text:'🏃‍♂️'},{r:3,c:2,text:'↔️'}], n:8 },
+    simon:     { pucks:[{r:1,c:2},{r:1,c:3},{r:2,c:2},{r:2,c:3},{r:3,c:2},{r:3,c:3}],
+                  specials:[{r:2,c:1,text:'🧎‍♂️'}], n:6 },
+    simonruns: { pucks:[{r:0,c:3},{r:0,c:4},{r:1,c:4},{r:3,c:4},{r:4,c:3},{r:4,c:4}],
+                  specials:[{r:2,c:0,text:'👁️'},{r:2,c:2,text:'🏃‍♂️'}], n:6 },
+    zombie:    { pucks:[{r:0,c:0},{r:0,c:4},{r:1,c:0},{r:1,c:4},{r:2,c:0},{r:2,c:4},{r:3,c:0},{r:3,c:4}],
+                  specials:[{r:0,c:1,text:'🧟'},{r:0,c:2,text:'🏃‍♂️'},{r:1,c:1,text:'🧟'},{r:1,c:2,text:'🏃‍♂️'},{r:2,c:1,text:'🧟'},{r:2,c:2,text:'🏃‍♂️'},{r:3,c:1,text:'🧟'},{r:3,c:2,text:'🏃‍♂️'}], n:8 },
+    whac:      { pucks:[{r:0,c:1},{r:0,c:3},{r:1,c:1},{r:1,c:3},{r:3,c:1},{r:3,c:3},{r:4,c:1},{r:4,c:3}],
+                  specials:[], n:8 },
+    bomb:      { pucks:[{r:0,c:0},{r:0,c:3},{r:1,c:0},{r:1,c:3},{r:2,c:0},{r:2,c:3},{r:3,c:0},{r:3,c:3}],
+                  specials:[{r:0,c:1,text:'🧎'},{r:1,c:1,text:'🧎'},{r:2,c:1,text:'🧎'},{r:3,c:1,text:'🧎'}], n:8 },
+    redgreen:  { pucks:[{r:0,c:4},{r:1,c:4},{r:2,c:4},{r:3,c:4},{r:4,c:4}],
+                  specials:[{r:0,c:0,text:'🏃‍♂️'},{r:1,c:0,text:'🏃‍♂️'},{r:2,c:0,text:'🏃‍♂️'},{r:3,c:0,text:'🏃‍♂️'},{r:4,c:0,text:'🏃‍♂️'}], n:5 },
+    react2p:   { pucks:[{r:0,c:2},{r:1,c:2},{r:2,c:2},{r:3,c:2},{r:4,c:2}],
+                  specials:[{r:2,c:0,text:'🧎'},{r:2,c:4,text:'🧎'}], n:5 },
+    target:    { pucks:[{r:0,c:2},{r:1,c:1},{r:1,c:2},{r:2,c:0},{r:2,c:2},{r:3,c:1},{r:3,c:2},{r:4,c:2}],
+                  specials:[{r:2,c:3,text:'🤾'}], n:8 },
+    memory:    { pucks:[{r:0,c:3},{r:1,c:3},{r:1,c:4},{r:2,c:3},{r:2,c:4},{r:3,c:3},{r:3,c:4},{r:4,c:4}],
+                  specials:[{r:2,c:0,text:'🏃‍♂️'}], n:8 },
+    domination:{ pucks:[{r:0,c:0},{r:0,c:1},{r:0,c:3},{r:2,c:0},{r:2,c:4},{r:4,c:1},{r:4,c:3},{r:4,c:4}],
+                  specials:[{r:2,c:2,text:'🏃‍♂️🏃🏻'}], n:8 },
+    ctl:       { pucks:[{r:0,c:0},{r:0,c:2},{r:0,c:4},{r:2,c:0},{r:2,c:4},{r:4,c:0},{r:4,c:2},{r:4,c:4}],
+                  specials:[{r:2,c:2,text:'🏃‍♂️'}], n:8 },
+    catreflex: { pucks:[{r:0,c:1},{r:0,c:2},{r:0,c:3},{r:2,c:0},{r:2,c:4},{r:4,c:1},{r:4,c:2},{r:4,c:3}],
+                  specials:[{r:2,c:2,text:'C'}], n:8 },
+    beep:      { pucks:[{r:0,c:0},{r:0,c:4},{r:1,c:0},{r:1,c:4},{r:2,c:0},{r:2,c:4},{r:3,c:0},{r:3,c:4}],
+                  specials:[{r:0,c:1,text:'🏃‍♂️'},{r:0,c:2,text:'20m'},{r:1,c:1,text:'🏃‍♂️'},{r:1,c:2,text:'20m'},{r:2,c:1,text:'🏃‍♂️'},{r:2,c:2,text:'20m'},{r:3,c:1,text:'🏃‍♂️'},{r:3,c:2,text:'20m'}], n:8 },
+    musical:   { pucks:[{r:0,c:2},{r:1,c:1},{r:1,c:3},{r:2,c:0},{r:2,c:4},{r:3,c:1},{r:3,c:3},{r:4,c:2}],
+                  specials:[], n:8 },
+    pacemaker: { pucks:[{r:0,c:1},{r:0,c:3},{r:1,c:4},{r:3,c:4},{r:4,c:3},{r:4,c:1},{r:3,c:0},{r:1,c:0}],
+                  specials:[], n:8 },
+    pitstop:   { pucks:[{r:0,c:1},{r:0,c:3},{r:1,c:1},{r:1,c:3},{r:2,c:1},{r:2,c:3},{r:3,c:1},{r:3,c:3}],
+                  specials:[{r:0,c:0,text:'🏎️'},{r:1,c:0,text:'🏎️'},{r:2,c:0,text:'🏎️'},{r:3,c:0,text:'🏎️'}], n:8 },
+    ttest:     { pucks:[{r:4,c:2},{r:0,c:2},{r:0,c:0},{r:0,c:4}],
+                  specials:[{r:2,c:2,text:'⬆️'},{r:0,c:1,text:'5m'},{r:0,c:3,text:'5m'},{r:2,c:1,text:'10m'},{r:4,c:1,text:'🏃‍♂️'}], n:4 },
+    ball:      { pucks:[{r:0,c:2},{r:2,c:0},{r:2,c:4},{r:4,c:0},{r:4,c:4}],
+                  specials:[{r:2,c:2,text:'🏀🏃'}], n:5 },
+    sorting:   { pucks:[{r:1,c:2},{r:2,c:2},{r:3,c:2}],
+                  specials:[{r:1,c:0,text:'👬'},{r:2,c:0,text:'👭'},{r:3,c:0,text:'👬'},{r:1,c:3,text:'➡️'},{r:2,c:3,text:'➡️'},{r:3,c:3,text:'➡️'}], n:3 },
+    tttt:      { pucks:[{r:2,c:0},{r:1,c:3},{r:1,c:4},{r:2,c:3},{r:2,c:4},{r:3,c:3},{r:3,c:4}],
+                  specials:[], n:7 },
+    // Games with no arena layout
+    counter:   null, timer: null, stopwatch: null, countdown: null, tabata: null, display: null
+};
+
+let currentGroup = 0;
+
+function openNamesScreen() {
+    const g = currentSetupGame;
+    if (!g) return;
+
+    const name = g.name[currentLang] || g.name['en'];
+    document.getElementById('namesTitle').textContent = g.icon + ' ' + name;
+
+    document.getElementById('setupScreen').classList.remove('active');
+    document.getElementById('namesScreen').classList.add('active');
+
+    currentGroup = 0;
+    renderNamesBody();
+}
+
+function renderNamesBody() {
+    const g = currentSetupGame;
+    const isDE = currentLang === 'de';
+    let html = '';
+
+    // --- Arena Layout (game-specific) ---
+    const layout = arenaLayouts[g.id];
+    if (layout) {
+        html += '<div class="arena-wrapper">';
+        html += `<div class="arena-header"><span>${isDE ? '📐 Aufbau' : '📐 Layout'} (${layout.n} Pucks)</span><span>5×5</span></div>`;
+        html += '<div class="arena-grid-wrap"><div class="arena-grid">';
+        for (let r = 0; r < 5; r++) {
+            for (let c = 0; c < 5; c++) {
+                const pIdx = layout.pucks.findIndex(p => p.r === r && p.c === c);
+                const special = layout.specials.find(s => s.r === r && s.c === c);
+                if (pIdx >= 0) {
+                    const color = PUCK_COLORS[pIdx % PUCK_COLORS.length];
+                    html += `<div class="arena-cell arena-puck" style="background:${color}">${pIdx+1}</div>`;
+                } else if (special) {
+                    html += `<div class="arena-cell arena-runner">${special.text}</div>`;
+                } else {
+                    html += '<div class="arena-cell"></div>';
+                }
+            }
+        }
+        html += '</div></div>';
+        html += `<div style="text-align:center; font-size:0.5rem; color:var(--ip-muted); padding:4px 10px 10px; line-height:1.3;">${isDE ? 'Layout passt sich an Puck-Anzahl und Parameter an. Hier nur Demo.' : 'Layout adapts to puck count and parameters. Demo view only.'}</div>`;
+        html += '</div>';
+    }
+
+    // --- Group Picker ---
+    html += '<div class="group-picker">';
+    html += `<div class="group-picker-title">${isDE ? '👥 Spieler laden' : '👥 Load Players'}</div>`;
+    html += '<div class="group-tabs">';
+    PLAYER_GROUPS.forEach((grp, i) => {
+        html += `<div class="group-tab ${i === currentGroup ? 'active' : ''}" onclick="switchGroup(${i})">${grp.name}</div>`;
+    });
+    html += '</div></div>';
+
+    // --- Player List ---
+    html += '<div class="player-list">';
+    const group = PLAYER_GROUPS[currentGroup];
+    group.players.forEach((pName, i) => {
+        const color = PUCK_COLORS[i % PUCK_COLORS.length];
+        html += `<div class="player-row">
+            <div class="player-color" style="background:${color}"></div>
+            <input class="player-name-input" type="text" value="${pName}">
+            <span class="player-stats-icon">📊</span>
+        </div>`;
+    });
+    html += '</div>';
+
+    // --- Buttons ---
+    html += `<button class="btn-setup-next" onclick="showGameStart()">${isDE ? 'ZUM SPIEL 🏁' : 'TO GAME 🏁'}</button>`;
+    html += `<button class="btn-setup-cancel" onclick="backToSetup()">${isDE ? '← Zurück' : '← Back'}</button>`;
+
+    document.getElementById('namesBody').innerHTML = html;
+}
+
+function switchGroup(idx) {
+    currentGroup = idx;
+    renderNamesBody();
 }
 
 function showGameStart() {
@@ -906,8 +1364,14 @@ document.getElementById('langSelect').addEventListener('change', (e) => {
         if (fl[key]) btn.textContent = fl[key];
     });
     renderCarousel();
-    // If on setup screen, re-render
-    if (currentSetupGame) openSetup(currentSetupGame.id);
+    // If on setup or names screen, re-render
+    if (currentSetupGame) {
+        if (document.getElementById('namesScreen').classList.contains('active')) {
+            renderNamesBody();
+        } else if (document.getElementById('setupScreen').classList.contains('active')) {
+            openSetup(currentSetupGame.id);
+        }
+    }
 });
 
 // ============================================

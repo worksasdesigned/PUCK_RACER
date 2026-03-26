@@ -1,72 +1,298 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-    <!-- Metadaten und Titel der Seite -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PUCK RACER - Das DIY Reaktionslicht-System</title>
-    <!-- Verknüpfung zur zentralen CSS-Datei -->
+    <title>PUCK RACER - Das DIY Reaktionslicht-System für Vereine & Schulen</title>
+    <meta name="description" content="PUCK RACER – Das DIY Reaktionslicht-System mit 27+ Spielen für Vereine, Schulen und Zuhause. Open-Source-Hardware, unter 20€ pro Puck, keine App nötig.">
+    <meta name="keywords" content="Reaktionslicht, Reaktionstraining, DIY, ESP32, Puck, LED Training, Sportspiel, Verein, Schule, Open Source Hardware">
+    <link rel="canonical" href="https://www.puckracer.net/index.html">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="PUCK RACER - Das DIY Reaktionslicht-System">
+    <meta property="og:description" content="Professionelles Reaktionstraining mit 27+ Spielen. Open-Source-Hardware unter 20€ pro Puck. Keine App, kein Abo.">
+    <meta property="og:image" content="https://www.puckracer.net/pictures/front1_tech.png">
+    <meta property="og:url" content="https://www.puckracer.net/">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="PUCK RACER - Das DIY Reaktionslicht-System">
+    <meta name="twitter:description" content="Professionelles Reaktionstraining mit 27+ Spielen. Open-Source-Hardware unter 20€ pro Puck.">
+    <meta name="twitter:image" content="https://www.puckracer.net/pictures/front1_tech.png">
     <link rel="stylesheet" href="style.css">
-    <!-- Eigener Style-Block für Anpassungen auf dieser Seite, um style.css nicht zu überladen -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "PUCK RACER",
+        "url": "https://www.puckracer.net/",
+        "description": "Das DIY Reaktionslicht-System mit 27+ Spielen für Vereine, Schulen und Zuhause.",
+        "inLanguage": "de"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "PUCK RACER",
+        "description": "DIY Reaktionslicht-System mit ESP32-C3, WS2812B LEDs und 27+ Spielen für professionelles Reaktionstraining.",
+        "image": "https://www.puckracer.net/pictures/front1_tech.png",
+        "brand": { "@type": "Brand", "name": "PUCK RACER" },
+        "category": "Sportgeräte",
+        "offers": {
+            "@type": "Offer",
+            "priceCurrency": "EUR",
+            "price": "20",
+            "description": "Materialkosten pro Puck (DIY)",
+            "availability": "https://schema.org/PreOrder"
+        }
+    }
+    </script>
     <style>
-        /* Spezifische Styles für die neue Index-Seite */
-        .hero-section {
-            padding: 2rem 0;
+        /* === HERO === */
+        .hero {
+            position: relative;
+            padding: 60px 0 40px;
+            text-align: center;
         }
-        .hero-section .subtitle {
-            font-size: 1.3rem;
-            max-width: 650px;
-            margin-left: auto;
-            margin-right: auto;
+        .hero h1 {
+            font-size: 2.8rem;
+            line-height: 1.15;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 30%, #8aece5 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
-        .cta-buttons {
+        .hero .lead {
+            font-size: 1.2rem;
+            color: #ccc;
+            max-width: 600px;
+            margin: 0 auto 30px;
+            line-height: 1.7;
+            text-align: center;
+        }
+        .hero-cta {
             display: flex;
             justify-content: center;
             gap: 15px;
-            margin: 30px 0;
             flex-wrap: wrap;
+            margin-bottom: 40px;
         }
-        .cta-button {
-            padding: 12px 25px;
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.95rem;
             text-decoration: none;
-            color: #fff;
-            border-radius: 8px;
-            font-weight: bold;
             text-transform: uppercase;
+            letter-spacing: 1px;
             transition: all 0.3s ease;
-            font-size: 0.9rem;
         }
-        .cta-primary {
-            background-color: #8aece5;
+        .btn-primary {
+            background: #8aece5;
             color: #1a1a1a;
-            box-shadow: 0 0 15px rgba(138, 236, 229, 0.5);
+            box-shadow: 0 0 20px rgba(138,236,229,0.4);
         }
-        .cta-primary:hover {
+        .btn-primary:hover {
             transform: translateY(-3px);
-            box-shadow: 0 0 25px rgba(138, 236, 229, 0.8);
+            box-shadow: 0 4px 30px rgba(138,236,229,0.7);
         }
-        .cta-secondary {
-            background-color: transparent;
-            border: 2px solid #8aece5;
+        .btn-outline {
+            border: 2px solid rgba(138,236,229,0.6);
+            color: #fff;
+            background: transparent;
         }
-        .cta-secondary:hover {
-            background-color: #8aece5;
+        .btn-outline:hover {
+            background: #8aece5;
             color: #1a1a1a;
+            border-color: #8aece5;
         }
-        .section-divider {
-            margin: 60px 0;
+
+        /* === HERO IMAGE === */
+        .hero-visual {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .hero-visual img {
+            width: 280px;
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(138,236,229,0.35), 0 20px 60px rgba(0,0,0,0.4);
+            animation: float 4s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+
+        /* === STATS BAR === */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            width: 100%;
+            padding: 30px 0;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            margin: 30px 0;
+        }
+        .stat {
             text-align: center;
         }
-         .section-divider h2 {
+        .stat-number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            color: #8aece5;
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #999;
+            margin-top: 6px;
+        }
+
+        /* === SECTION HEADINGS === */
+        .section-heading {
+            width: 100%;
+            text-align: center;
+            margin: 40px 0 25px;
+        }
+        .section-heading h2 {
             font-size: 2rem;
             text-transform: uppercase;
-            color: #fff;
-            margin-bottom: 20px;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+        .section-heading p {
+            text-align: center;
+            color: #999;
+            font-size: 0.95rem;
+        }
+
+        /* === GAME PREVIEW STRIP === */
+        .game-strip {
+            width: calc(100% + 80px);
+            margin: 0 -40px 40px;
+            overflow-x: auto;
+            padding: 10px 40px 20px;
+            display: flex;
+            gap: 15px;
+            scrollbar-width: thin;
+            scrollbar-color: #8aece5 transparent;
+        }
+        .game-strip::-webkit-scrollbar { height: 6px; }
+        .game-strip::-webkit-scrollbar-track { background: transparent; }
+        .game-strip::-webkit-scrollbar-thumb { background: #8aece5; border-radius: 3px; }
+        .game-thumb {
+            flex: 0 0 120px;
+            text-decoration: none;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+        .game-thumb:hover { transform: translateY(-5px); }
+        .game-thumb img {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 15px;
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .game-thumb:hover img {
+            border-color: #8aece5;
+            box-shadow: 0 0 15px rgba(138,236,229,0.4);
+        }
+        .game-thumb span {
+            display: block;
+            color: #ccc;
+            font-size: 0.7rem;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* === USP CARDS === */
+        .usp-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+        .usp-card {
+            background: rgba(43,43,54,0.6);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 15px;
+            padding: 30px 25px;
+            text-align: left;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+        .usp-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(138,236,229,0.3);
+        }
+        .usp-icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+        .usp-card h3 {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            color: #8aece5;
+            margin-bottom: 12px;
+            letter-spacing: 1px;
+        }
+        .usp-card p {
+            font-size: 0.9rem;
+            color: #bbb;
+            line-height: 1.65;
+            text-align: left;
+        }
+
+        /* === BOTTOM CTA === */
+        .bottom-cta {
+            width: 100%;
+            text-align: center;
+            padding: 40px 20px;
+            margin: 20px 0 0;
+            background: rgba(138,236,229,0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(138,236,229,0.15);
+        }
+        .bottom-cta h2 {
+            font-size: 1.8rem;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .bottom-cta p {
+            text-align: center;
+            color: #aaa;
+            margin-bottom: 25px;
+            font-size: 0.95rem;
+        }
+        .bottom-cta .hero-cta {
+            margin-bottom: 0;
+        }
+
+        /* === RESPONSIVE === */
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .hero .lead { font-size: 1rem; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); gap: 20px; }
+            .stat-number { font-size: 1.8rem; }
+            .game-strip { margin: 0 -20px 30px; padding: 10px 20px 20px; }
+            .bottom-cta { padding: 30px 15px; }
+            .bottom-cta h2 { font-size: 1.4rem; }
+            .hero-visual img { width: 220px; }
         }
     </style>
 </head>
 <body>
-    <!-- Hauptnavigation -->
     <header>
         <nav class="main-nav">
             <button class="nav-toggle" aria-label="Menü öffnen" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Menü</button>
@@ -84,76 +310,128 @@
         </nav>
     </header>
 
-    <!-- Regenbogen-Rahmen-Wrapper -->
+    <main>
     <div class="rainbow-border-wrapper">
         <div class="main-container">
-            
-            <!-- Logo-Kopfzeile -->
+
             <div class="header-bar">
                 <img src="pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
             </div>
-            
-            <!-- Hero-Sektion: Der erste Eindruck zählt -->
-            <div class="hero-section">
+
+            <!-- HERO -->
+            <div class="hero">
                 <h1>Das DIY Reaktionslicht-System für dein Training</h1>
-                <p class="subtitle">Professionelles Reaktionstraining für Vereine, Schulen und Zuhause. Preiswert, unendlich flexibel und ohne App-Zwang. Bau es selbst!</p>
-                
-                <!-- Call-to-Action Buttons -->
-                <div class="cta-buttons">
-                    <a href="spiele.html" class="cta-button cta-primary">Entdecke die Spiele</a>
-                    <a href="hardware.html" class="cta-button cta-secondary">Lerne, es zu bauen</a>
+                <p class="lead">Professionelles Reaktionstraining für Vereine, Schulen und Zuhause. Preiswert, unendlich flexibel und komplett ohne App.</p>
+                <div class="hero-cta">
+                    <a href="simulator.html" class="btn btn-primary">Live Demo</a>
+                    <a href="spiele.html" class="btn btn-outline">Alle Spiele</a>
+                    <a href="hardware.html" class="btn btn-outline">Selber bauen</a>
                 </div>
             </div>
 
-            <!-- Hero-Bild, das das Produkt zeigt -->
-            <div class="hero-image-container">
-                <img src="pictures/front1_tech.png" alt="PUCK RACER ESP32 Puck" class="puck-image">
+            <!-- HERO IMAGE -->
+            <div class="hero-visual">
+                <img src="pictures/front1_tech.png" alt="PUCK RACER Puck">
             </div>
 
-            <!-- Sektions-Trenner -->
-            <div class="section-divider">
-                <h2>Warum Puck Racer die bessere Wahl ist</h2>
+            <!-- STATS -->
+            <div class="stats-bar">
+                <div class="stat">
+                    <div class="stat-number">27+</div>
+                    <div class="stat-label">Spiele</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">&lt;20&euro;</div>
+                    <div class="stat-label">pro Puck</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">7</div>
+                    <div class="stat-label">Sprachen</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number">4h+</div>
+                    <div class="stat-label">Akkulaufzeit</div>
+                </div>
             </div>
 
-            <!-- Drei-Säulen-Raster für die Kernvorteile -->
-            <div class="features-grid">
-                <div class="feature-card">
+            <!-- GAME PREVIEW -->
+            <div class="section-heading">
+                <h2>Entdecke die Spiele</h2>
+                <p>Von Reaktionstests bis Teamtraining &ndash; scrolle durch die Auswahl.</p>
+            </div>
+
+            <div class="game-strip">
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_target.webp" alt="Target Touch"><span>Target Touch</span></a>
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_react2p.webp" alt="Reaction"><span>Reaction</span></a>
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_whac.webp" alt="Whac-a-Mole"><span>Whac-a-Mole</span></a>
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_simon.webp" alt="Simon Says"><span>Simon Says</span></a>
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_memory.webp" alt="Memory"><span>Memory</span></a>
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_hunt.webp" alt="Hunt"><span>Hunt</span></a>
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_shuttle.webp" alt="Shuttle Run"><span>Shuttle Run</span></a>
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_bomb.webp" alt="Bomb"><span>Bomb</span></a>
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_zombie.webp" alt="Zombie"><span>Zombie</span></a>
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_tabata.webp" alt="Tabata"><span>Tabata</span></a>
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_domination.webp" alt="Domination"><span>Domination</span></a>
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_sorting.webp" alt="Sorting"><span>Sorting</span></a>
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_redgreen.webp" alt="Red Green"><span>Red Green</span></a>
+                <a href="spiele.html" class="game-thumb"><img src="pictures/img_musical.webp" alt="Musical"><span>Musical</span></a>
+            </div>
+
+            <!-- USP SECTION -->
+            <div class="section-heading">
+                <h2>Warum Puck Racer?</h2>
+            </div>
+
+            <div class="usp-grid">
+                <div class="usp-card">
+                    <span class="usp-icon">&#9881;</span>
                     <h3>Preiswert & DIY</h3>
-                    <ul>
-                        <li>Hardware-Kosten unter 20€ pro Puck.</li>
-                        <li>Keine teuren kommerziellen Systeme nötig.</li>
-                        <li>Ein tolles Projekt, um Löten zu lernen.</li>
-                        <li>Vollständige Kontrolle über deine Hardware.</li>
-                    </ul>
+                    <p>Komplette Hardware unter 20&nbsp;&euro; pro Puck. Open-Source-Platine, zahlreiche 3D-druckbare Adapter und ein tolles Projekt zum Selberbauen.</p>
                 </div>
-                <div class="feature-card">
-                    <h3>Professionell & Umfassend</h3>
-                    <ul>
-                        <li>Über 25+ Spiele für Training & Spaß.</li>
-                        <li>Erstelle eigene Trainingspläne.</li>
-                        <li>Analysiere die Leistung mit detaillierten Statistiken.</li>
-                        <li>Entwickelt mit Sportlehrern und Trainern.</li>
-                    </ul>
+                <div class="usp-card">
+                    <span class="usp-icon">&#9889;</span>
+                    <h3>Professionelles Training</h3>
+                    <p>&Uuml;ber 27 Spiele, detaillierte Statistiken, Trainingspl&auml;ne und CSV-Export. Entwickelt mit Sportlehrern und Trainern.</p>
                 </div>
-                <div class="feature-card">
-                    <h3>Unabhängig & Privat</h3>
-                    <ul>
-                        <li>Kein Abo, keine versteckten Kosten.</li>
-                        <li>Keine App nötig – läuft im Webbrowser.</li>
-                        <li>Keine Cloud, keine Datensammlung.</li>
-                        <li>Open Source Hardware: Passe alles nach deinen Wünschen an.</li>
-                    </ul>
+                <div class="usp-card">
+                    <span class="usp-icon">&#128274;</span>
+                    <h3>Privat & Unabh&auml;ngig</h3>
+                    <p>Kein Abo, keine Cloud, keine App. L&auml;uft im Browser auf jedem Ger&auml;t. Deine Daten bleiben bei dir.</p>
+                </div>
+                <div class="usp-card">
+                    <span class="usp-icon">&#128225;</span>
+                    <h3>ESP-NOW Funktechnik</h3>
+                    <p>&Uuml;ber 50&nbsp;m Reichweite, automatische Kanalwahl und Reconnect. Keine Router n&ouml;tig &ndash; die Pucks kommunizieren direkt.</p>
+                </div>
+                <div class="usp-card">
+                    <span class="usp-icon">&#127760;</span>
+                    <h3>7 Sprachen</h3>
+                    <p>Das Interface ist in Deutsch, Englisch, Franz&ouml;sisch, Spanisch, Italienisch, Niederl&auml;ndisch und Polnisch verf&uuml;gbar.</p>
+                </div>
+                <div class="usp-card">
+                    <span class="usp-icon">&#128267;</span>
+                    <h3>4+ Stunden Akku</h3>
+                    <p>Wiederaufladbarer 18650-Akku mit intelligenter Schutzschaltung. OTA-Updates f&uuml;r Coordinator und Pucks &uuml;ber die Weboberfl&auml;che.</p>
                 </div>
             </div>
 
-            <!-- Footer -->
+            <!-- BOTTOM CTA -->
+            <div class="bottom-cta">
+                <h2>Bereit loszulegen?</h2>
+                <p>Teste die interaktive Demo oder erfahre, wie du dein eigenes System baust.</p>
+                <div class="hero-cta">
+                    <a href="simulator.html" class="btn btn-primary">Live Demo starten</a>
+                    <a href="hardware.html" class="btn btn-outline">Hardware-Guide</a>
+                    <a href="downloads.html" class="btn btn-outline">Downloads</a>
+                </div>
+            </div>
+
             <footer>
                 <a href="Impressum.html">Impressum</a>
             </footer>
 
         </div>
     </div>
-    
-    <!-- onclick handler is already on the button -->
+    </main>
 </body>
 </html>
