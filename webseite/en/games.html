@@ -1,111 +1,75 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alle 27+ Spiele - PUCK RACER | Reaktion, Sport, Kognition & mehr</title>
-    <meta name="description" content="Übersicht aller PUCK RACER Spiele: Target Touch, Whac-a-Mole, Memory, Simon Says, Shuttle Run, Tabata, Hunt und viele mehr für Training und Spaß.">
-    <link rel="canonical" href="https://www.puckracer.net/spiele.html">
+    <title>All 27+ Games - PUCK RACER | Reaction, Sports, Cognition & More</title>
+    <meta name="description" content="Overview of all PUCK RACER games: Target Touch, Whac-a-Mole, Memory, Simon Says, Shuttle Run, Tabata, Hunt and many more for training and fun.">
+    <link rel="canonical" href="https://www.puckracer.net/en/games.html">
     <link rel="alternate" hreflang="de" href="https://www.puckracer.net/spiele.html">
     <link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/games.html">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Alle 27+ Spiele - PUCK RACER">
-    <meta property="og:description" content="Target Touch, Whac-a-Mole, Memory, Simon Says, Shuttle Run und mehr. Für Reaktion, Sport und Kognition.">
+    <meta property="og:title" content="All 27+ Games - PUCK RACER">
+    <meta property="og:description" content="Target Touch, Whac-a-Mole, Memory, Simon Says, Shuttle Run and more. For reaction, sports and cognition.">
     <meta property="og:image" content="https://www.puckracer.net/pictures/img_target.webp">
-    <meta property="og:url" content="https://www.puckracer.net/spiele.html">
+    <meta property="og:url" content="https://www.puckracer.net/en/games.html">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Alle 27+ Spiele - PUCK RACER">
-    <meta name="twitter:description" content="Target Touch, Whac-a-Mole, Memory, Simon Says, Shuttle Run und viele mehr.">
-        <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="manifest" href="site.webmanifest">
-    <link rel="stylesheet" href="style.css">
+    <meta name="twitter:title" content="All 27+ Games - PUCK RACER">
+    <meta name="twitter:description" content="Target Touch, Whac-a-Mole, Memory, Simon Says, Shuttle Run and many more.">
+        <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+    <link rel="manifest" href="../site.webmanifest">
+    <link rel="stylesheet" href="../style.css">
     <style>
-        /* ==========================================================================
-           Anpassungen für das Spiele-Akkordeon (Bugfix)
-           ========================================================================== */
-        
         .game-card-header {
             width: 100%;
-            margin-bottom: 0; 
-            padding-right: 15px; 
-            align-items: center; 
+            margin-bottom: 0;
+            padding-right: 15px;
+            align-items: center;
         }
-
-        .game-card-header h3 {
-            margin-bottom: 0; 
-        }
-
+        .game-card-header h3 { margin-bottom: 0; }
         .game-card summary {
             outline: none;
-            padding: 15px 20px; 
+            padding: 15px 20px;
         }
-        
-        .game-card summary::after {
-            margin-left: 10px;
-        }
-
+        .game-card summary::after { margin-left: 10px; }
         .game-card-body {
             margin-top: 15px;
             padding-top: 15px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1); 
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
-        /* ==========================================================================
-           Lightbox (Bildvergrößerung) Styling
-           ========================================================================== */
-           
-        /* Zeigt an, dass das Bild klickbar ist und zoomt leicht beim Hover */
         .game-card-img {
             cursor: zoom-in;
-            transition: transform 0.3s ease;
+            transition: transform 0.2s ease;
         }
+        .game-card-img:hover { transform: scale(1.03); }
 
-        .game-card-img:hover {
-            transform: scale(1.05);
-        }
-
-        /* Der dunkle Hintergrund, der sich über die gesamte Seite legt */
         .modal {
-            display: none; /* Standardmäßig unsichtbar */
-            position: fixed; /* Bleibt auch beim Scrollen an Ort und Stelle */
-            z-index: 1000; /* Liegt über allen anderen Elementen */
-            padding-top: 50px; /* Abstand nach oben */
-            left: 0;
-            top: 0;
-            width: 100%; /* Volle Breite */
-            height: 100%; /* Volle Höhe */
-            overflow: auto; /* Scrollen erlauben, falls das Bild auf kleinen Displays zu groß ist */
-            background-color: rgba(0,0,0,0.85); /* Dunkelgrau, leicht transparent */
-            backdrop-filter: blur(5px); /* Verschwommener Hintergrund-Effekt */
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            padding-top: 60px;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.9);
         }
-
-        /* Das eigentliche, vergrößerte Bild */
         .modal-content {
             margin: auto;
             display: block;
-            max-width: 90%; /* Maximal 90% der Bildschirmbreite */
-            max-height: 90vh; /* Maximal 90% der Bildschirmhöhe (Viewport Height) */
-            width: auto;
-            height: auto;
-            border-radius: 15px;
-            box-shadow: 0 0 30px rgba(138, 236, 229, 0.4); /* Leuchteffekt passend zum Theme */
-        }
-
-        /* Animation für das Einblenden des Bildes */
-        .modal-content {
+            max-width: 90%;
+            max-height: 85vh;
+            border-radius: 10px;
             animation-name: zoom;
-            animation-duration: 0.4s;
+            animation-duration: 0.3s;
         }
-
         @keyframes zoom {
-            from {transform: scale(0.1)} 
+            from {transform: scale(0.1)}
             to {transform: scale(1)}
         }
-
-        /* Der 'X' Button zum Schließen */
         .close-modal {
             position: absolute;
             top: 15px;
@@ -113,14 +77,6 @@
             color: #f1f1f1;
             font-size: 40px;
             font-weight: bold;
-            transition: 0.3s;
-            z-index: 1001; /* Muss über dem Bild liegen */
-        }
-
-        .close-modal:hover,
-        .close-modal:focus {
-            color: #8aece5; /* Leuchtet auf beim Hover */
-            text-decoration: none;
             cursor: pointer;
         }
     </style>
@@ -128,18 +84,18 @@
 <body>
     <header>
         <nav class="main-nav">
-            <button class="nav-toggle" aria-label="Menü öffnen" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Menü</button>
+            <button class="nav-toggle" aria-label="Open menu" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Menu</button>
             <ul>
                 <li><a href="index.html">Home</a></li>
                 <li><a href="features.html">Features</a></li>
                 <li><a href="downloads.html">Downloads</a></li>
                 <li><a href="hardware.html">Hardware</a></li>
-                <li><a href="spiele.html">Spiele</a></li>
+                <li><a href="games.html" class="active">Games</a></li>
                 <li><a href="map.html">PUCK RACER Map</a></li>
                 <li><a href="demo.html">Demo</a></li>
-                <li><a href="infos.html">Infos</a></li>
+                <li><a href="about.html">About</a></li>
                 <li><a href="faq.html">FAQ</a></li>
-                <li><a href="en/games.html" title="English">&#127468;&#127463; EN</a></li>
+                <li><a href="../spiele.html" title="Deutsch">&#127465;&#127466; DE</a></li>
             </ul>
         </nav>
     </header>
@@ -148,10 +104,10 @@
     <div class="rainbow-border-wrapper">
         <div class="main-container">
             <div class="header-bar">
-                <img src="pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
+                <img src="../pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
             </div>
-            <h1>Die Spiele</h1>
-            <p class="subtitle">27 Spiele und Werkzeuge für dein ultimatives Training.</p>
+            <h1>The Games</h1>
+            <p class="subtitle">27 games and tools for your ultimate training.</p>
 
             <div class="game-category">
                 <h2>⚡🏃‍♂️ Agility & Reaction</h2>
@@ -159,29 +115,29 @@
                 <details class="game-card" open>
                     <summary>
                         <div class="game-card-header">
-                            <h3>🎯 Target Touch — Das Allround-Talent</h3>
+                            <h3>🎯 Target Touch — The All-Rounder</h3>
                             <div class="game-focus-icons">⚡ 🏃‍♂️ 🛠️</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_target.webp" alt="Target Touch" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_target.webp" alt="Target Touch" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–5 groups</span>
                                 <span>Pucks: 2–10/group</span>
                             </div>
-                            <p>Target Touch ist der vielseitigste Spielmodus im PUCK RACER System — und deckt allein schon einen Großteil dessen ab, was kommerzielle LED-Reaktionslicht-Systeme auf dem Markt bieten. Egal ob <b>Fußball-Agility</b>, <b>Tennis-Beinarbeit</b>, <b>Hindernisparcours</b>, <b>Sit-ups</b>, <b>Planks</b> oder <b>Koordinationsübungen</b>: Mit Target Touch baust du ganze Trainingseinheiten auf einem einzigen Spielmodus auf.</p>
-                            <p>Das Prinzip: Pucks leuchten auf, du drückst sie — der nächste leuchtet. Klingt simpel, aber die Konfigurationsmöglichkeiten machen es endlos flexibel:</p>
+                            <p>Target Touch is the most versatile game mode in the PUCK RACER system — and by itself covers most of what commercial LED reaction light systems on the market offer. Whether it's <b>football agility</b>, <b>tennis footwork</b>, <b>obstacle courses</b>, <b>sit-ups</b>, <b>planks</b> or <b>coordination drills</b>: with Target Touch you can build entire training sessions on a single game mode.</p>
+                            <p>The principle: pucks light up, you press them — the next one lights up. Sounds simple, but the configuration options make it endlessly flexible:</p>
                             <ul style="color:#ddd; margin:10px 0; padding-left:20px; line-height:1.8;">
-                                <li><b>Sequenz- oder Zufallsmodus</b> — feste Reihenfolge oder unberechenbar</li>
-                                <li><b>Definierbare Anzeigepausen</b> — von sofort bis mehrere Sekunden Verzögerung</li>
-                                <li><b>Mehrere Farben</b> — unterschiedliche Aufgaben pro Farbe möglich</li>
-                                <li><b>Mehrere parallele Arenen</b> — bis zu 5 Gruppen gleichzeitig trainieren</li>
-                                <li><b>Zeit- oder Rundenmodus</b> — "Überlebe 60 Sekunden" oder "Schaffe 30 Wiederholungen"</li>
-                                <li><b>Gruppenstart</b> — synchroner Start per Puck-Druck</li>
+                                <li><b>Sequence or random mode</b> — fixed order or unpredictable</li>
+                                <li><b>Configurable display delays</b> — from instant to several seconds</li>
+                                <li><b>Multiple colors</b> — different tasks per color possible</li>
+                                <li><b>Multiple parallel arenas</b> — up to 5 groups training simultaneously</li>
+                                <li><b>Time or round mode</b> — "Survive 60 seconds" or "Complete 30 reps"</li>
+                                <li><b>Group start</b> — synchronized start via puck press</li>
                             </ul>
-                            <p>Im Netz findest du hunderte Videos, die zeigen, wie man mit genau diesem Spielprinzip komplette Trainingseinheiten für Leistungssport, Schulsport oder Rehabilitation aufbauen kann. Target Touch ist dein Schweizer Taschenmesser für intelligentes Training.</p>
-                            <p><b>Highlight:</b> Montiere die Pucks an der Wand für Sit-ups, lege sie auf den Boden für Planks, verteile sie im Raum für Sprints — ein Spielmodus, unendliche Möglichkeiten.</p>
+                            <p>Online you'll find hundreds of videos showing how to build complete training sessions for competitive sports, PE classes or rehabilitation using exactly this game principle. Target Touch is your Swiss army knife for smart training.</p>
+                            <p><b>Highlight:</b> Mount the pucks on the wall for sit-ups, place them on the floor for planks, spread them across the room for sprints — one game mode, infinite possibilities.</p>
                         </div>
                     </div>
                 </details>
@@ -189,57 +145,56 @@
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
-                            <h3>🎯 Hunt! (Farbenjagd)</h3>
+                            <h3>🎯 Hunt! (Color Chase)</h3>
                             <div class="game-focus-icons">⚡ 🏃‍♂️ 🧠</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_hunt.webp" alt="Hunt!" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_hunt.webp" alt="Hunt!" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–10</span>
                                 <span>Pucks: 3–20</span>
                             </div>
-                            <p>Jage im Kreis deine eigene Farbe! Kognition, periphere Sicht und schnelle Richtungswechsel unter Zeitdruck. Die Pucks werden im Kreis um die Spieler aufgebaut. Jeder Spieler bekommt eine Farbe. Startet das Spiel, leuchtet für jeden Spieler irgendwo ein Puck auf. Drückt er ihn, leuchtet woanders ein neuer auf.<br><b>Highlight:</b> Dynamische Warteschlangen, einstellbares Zeitlimit und eine 1-Sekunden-Warnung bevor ein Puck erlischt.</p>
+                            <p>Chase your own color around the circle! Cognition, peripheral vision and quick direction changes under time pressure. Pucks are set up in a circle around the players. Each player gets a color. When the game starts, a puck lights up somewhere for each player. Press it, and a new one lights up elsewhere.<br><b>Highlight:</b> Dynamic queues, adjustable time limit and a 1-second warning before a puck goes dark.</p>
                         </div>
                     </div>
                 </details>
-                
+
                 <details class="game-card">
                      <summary>
                          <div class="game-card-header">
-                            <h3>⚡ React 2-Spieler ⚡</h3>
+                            <h3>⚡ React 2-Player ⚡</h3>
                             <div class="game-focus-icons">⚡ 🧠</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_react2p.webp" alt="React 2-Spieler" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_react2p.webp" alt="React 2-Player" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 2–10 (pairs)</span>
                                 <span>Pucks: 3–10/group</span>
                             </div>
-                            <p>Das ultimative Duell! Zwei Spieler stehen sich gegenüber, zwischen Ihnen eine Reihe Pucks. Wer den Puck in seiner Farbe zuerst drückt, bekommt den Punkt. Ziel: Reaktion und kognitive Fähigkeiten verbessern.<br><b>Highlight:</b> Konfigurierbare Farben und falsche Reize zur Verwirrung.</p>
+                            <p>The ultimate duel! Two players face each other with a row of pucks between them. Whoever presses the puck in their color first scores the point. Goal: improve reaction and cognitive skills.<br><b>Highlight:</b> Configurable colors and decoy stimuli for confusion.</p>
                         </div>
                     </div>
                 </details>
 
-                
                 <details class="game-card">
                      <summary>
                          <div class="game-card-header">
-                            <h3>🏃‍♂️ Agilitäts T-Test</h3>
+                            <h3>🏃‍♂️ Agility T-Test</h3>
                             <div class="game-focus-icons">🏃‍♂️</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                         <img src="pictures/img_ttest.webp" alt="Agilitäts T-Test" class="game-card-img" onerror="this.style.display='none'">
+                         <img src="../pictures/img_ttest.webp" alt="Agility T-Test" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–2 groups</span>
                                 <span>Pucks: 4/group</span>
                             </div>
-                            <p>Ein weltweiter Standardtest zur Messung der Agilität. Trainiert Sprints und schnelle, multidirektionale Richtungswechsel unter Zeitdruck.<br><b>Highlight:</b> Standard-T-Test-Layout mit optionalem "Puck Press"-Modus, der die Spieler zwingt, in die Hocke zu gehen.</p>
+                            <p>A worldwide standard test for measuring agility. Trains sprints and fast, multi-directional changes of direction under time pressure.<br><b>Highlight:</b> Standard T-test layout with optional "Puck Press" mode that forces players to crouch down.</p>
                         </div>
                     </div>
                 </details>
@@ -247,18 +202,18 @@
                 <details class="game-card">
                      <summary>
                          <div class="game-card-header">
-                            <h3>🐱 Katzenreflexe</h3>
+                            <h3>🐱 Cat Reflexes</h3>
                             <div class="game-focus-icons">⚡</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_cat.webp" alt="Katzenreflexe" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_cat.webp" alt="Cat Reflexes" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–11</span>
                                 <span>Pucks: 1/player + 1 center</span>
                             </div>
-                            <p>Ein zentraler Anzeigepuck gibt vor, wann reagiert werden soll. Wer drückt seinen Puck am schnellsten? Aber Achtung vor dem Chaos-Modus und Fehlstarts!<br><b>Highlight:</b> "Highlander"-Modus (nur der Schnellste punktet) und "Farbchaos" (nur bei Grün drücken) für fortgeschrittenes Fehlstart-Training.</p>
+                            <p>A central display puck signals when to react. Who presses their puck the fastest? But beware of chaos mode and false starts!<br><b>Highlight:</b> "Highlander" mode (only the fastest scores) and "Color Chaos" (only press on green) for advanced false-start training.</p>
                         </div>
                     </div>
                 </details>
@@ -266,18 +221,18 @@
                 <details class="game-card">
                      <summary>
                          <div class="game-card-header">
-                            <h3>⚡🎯 Catch the light Pro</h3>
+                            <h3>⚡🎯 Catch the Light Pro</h3>
                             <div class="game-focus-icons">⚡ 🧠</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_ctl.webp" alt="Catch the Light Pro" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_ctl.webp" alt="Catch the Light Pro" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1</span>
                                 <span>Pucks: 3–20</span>
                             </div>
-                            <p>Reaktion und Peripheres Sehen wie in der Formel 1. Ein Stresstest für die Auge-Hand-Koordination. Die Pucks leuchten zufällig, kurz und überlappend auf. Triff sie, bevor sie erlöschen!<br><b>Highlight:</b> Adaptive Geschwindigkeit, falsche Farben und eine detaillierte Reaktionszeitanalyse für jeden einzelnen Puck.</p>
+                            <p>Reaction and peripheral vision like in Formula 1. A stress test for hand-eye coordination. Pucks light up randomly, briefly and overlapping. Hit them before they go dark!<br><b>Highlight:</b> Adaptive speed, decoy colors and a detailed reaction time analysis for each individual puck.</p>
                         </div>
                     </div>
                 </details>
@@ -285,22 +240,22 @@
 
             <div class="game-category">
                 <h2>🫀 Endurance & Pacing</h2>
-                
+
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
-                            <h3>⏱️ Der Pacemaker</h3>
+                            <h3>⏱️ The Pacemaker</h3>
                             <div class="game-focus-icons">🫀 🧠</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_pacemaker.webp" alt="Der Pacemaker" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_pacemaker.webp" alt="The Pacemaker" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: Groups</span>
                                 <span>Pucks: 4–20</span>
                             </div>
-                            <p>Trainiert das perfekte Pacing! Die Pucks geben als virtueller "Hase" exakt die Geschwindigkeit vor, die gelaufen werden soll. Nicht drücken, nur mitlaufen!<br><b>Highlight:</b> Exakte Geschwindigkeit (min/km), Kreis- oder Shuttle-Modus, Live-Distanzanzeige.</p>
+                            <p>Trains perfect pacing! The pucks act as a virtual "rabbit" dictating exactly the speed you should run. Don't press, just keep up!<br><b>Highlight:</b> Exact speed (min/km), circle or shuttle mode, live distance display.</p>
                         </div>
                     </div>
                 </details>
@@ -313,13 +268,13 @@
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_beep.webp" alt="Luc Léger (Beep Test)" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_beep.webp" alt="Luc Léger (Beep Test)" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–10</span>
                                 <span>Pucks: 2/player</span>
                             </div>
-                            <p>Der klassische 20m-Ausdauertest. Renne im Rhythmus der Signale. Das Tempo steigert sich minütlich. Bist du zu früh oder zu spät, gibt es eine Gelbe Karte. Bei der zweiten fliegst du raus!<br><b>Highlight:</b> Offizielle VO₂max-Tabellen, Fehlstart-Erkennung.</p>
+                            <p>The classic 20m endurance test. Run to the rhythm of the signals. The pace increases every minute. Too early or too late? Yellow card. Second offense and you're out!<br><b>Highlight:</b> Official VO₂max tables, false start detection.</p>
                         </div>
                     </div>
                 </details>
@@ -327,22 +282,22 @@
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
-                            <h3>🏃‍♂️ Pendellauf</h3>
+                            <h3>🏃‍♂️ Shuttle Run</h3>
                             <div class="game-focus-icons">🏃‍♂️ 🫀</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_shuttle.webp" alt="Pendellauf" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_shuttle.webp" alt="Shuttle Run" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–5</span>
                                 <span>Pucks: 2/player</span>
                             </div>
-                            <p>Klassischer Ausdauer-Test. Laufe zwischen Start und Ziel hin und her. Start: Pucks gedrückt halten bis zum GO Signal!<br><b>Highlight:</b> Sieger-Erkennung und Fehlstart-Erkennung aktiv.</p>
+                            <p>Classic endurance test. Run back and forth between start and finish. Start: hold pucks until the GO signal!<br><b>Highlight:</b> Winner detection and false start detection active.</p>
                         </div>
                     </div>
                 </details>
-                
+
                  <details class="game-card">
                     <summary>
                         <div class="game-card-header">
@@ -351,17 +306,17 @@
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_zombie.webp" alt="Zombie Escape" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_zombie.webp" alt="Zombie Escape" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–10 groups</span>
                                 <span>Pucks: 2/group</span>
                             </div>
-                            <p>Wiederholende Sprints mit ständig verkürzter Zeit. Wer es nicht schafft, wird vom Zombie gebissen und ist raus!<br><b>Highlight:</b> Automatische Zeitreduktion, Sudden-Death-Modus.</p>
+                            <p>Repeated sprints with constantly shrinking time. If you don't make it, the zombie bites you and you're out!<br><b>Highlight:</b> Automatic time reduction, sudden death mode.</p>
                         </div>
                     </div>
                 </details>
-                
+
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
@@ -370,13 +325,13 @@
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_pitstop.webp" alt="Pit Stop" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_pitstop.webp" alt="Pit Stop" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–10 groups</span>
                                 <span>Pucks: 1-2/group</span>
                             </div>
-                            <p>Eine Pause einlegen. Dieses Spiel simuliert Boxenstopps in einem Rennen, bei denen die Spieler definierte Pausen einlegen müssen.<br><b>Highlight:</b> Pitlane-Modus für strukturierte Pausen.</p>
+                            <p>Take a break. This game simulates pit stops in a race where players must take defined rest periods.<br><b>Highlight:</b> Pit lane mode for structured breaks.</p>
                         </div>
                     </div>
                 </details>
@@ -384,7 +339,7 @@
 
             <div class="game-category">
                 <h2>🧠🤪 Cognition & Fun</h2>
-                
+
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
@@ -393,13 +348,13 @@
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_simon.webp" alt="Simon Says" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_simon.webp" alt="Simon Says" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–3 groups</span>
                                 <span>Pucks: 2–10/group</span>
                             </div>
-                            <p>Merk dir das Farbmuster! Der Computer zeigt es, du machst es nach. Rot blinkt -> Drücke Rot. 2. Runde: Rot, Blau blinkt -> Drücke Rot, Blau...<br><b>Highlight:</b> Einstellbare Geschwindigkeit, Farb-Palette für Farbenblinde.</p>
+                            <p>Memorize the color pattern! The computer shows it, you repeat it. Red flashes -> press Red. Round 2: Red, Blue flash -> press Red, Blue...<br><b>Highlight:</b> Adjustable speed, colorblind-friendly palette.</p>
                         </div>
                     </div>
                 </details>
@@ -412,13 +367,13 @@
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_simonruns.webp" alt="Simon Runs" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_simonruns.webp" alt="Simon Runs" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–3 groups</span>
                                 <span>Pucks: 1 display + inputs</span>
                             </div>
-                            <p>Merk dir das Farbmuster! Renn zu den Pucks und drücke sie. Simon says, aber mit Schwitzen!<br><b>Highlight:</b> Zentraler Anzeigemodus und Disqualifikations-Management.</p>
+                            <p>Memorize the color pattern! Run to the pucks and press them. Simon Says, but with sweating!<br><b>Highlight:</b> Central display mode and disqualification management.</p>
                         </div>
                     </div>
                 </details>
@@ -431,36 +386,36 @@
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_bomb.webp" alt="Bomb Squad" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_bomb.webp" alt="Bomb Squad" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–10</span>
                                 <span>Pucks: 1/player</span>
                             </div>
-                            <p>Tick... Tack... Kannst du die Zeit einschätzen? Entschärfe die Bombe im richtigen Moment! Drücke genau nach Ablauf der Zeit. Grün = Entschärft, Rot = BOOM.<br><b>Highlight:</b> Einstellbare Toleranz, Gruppen-Synchronisationsmodus, Explosions-Feedback.</p>
+                            <p>Tick... Tock... Can you estimate the time? Defuse the bomb at the right moment! Press exactly when time runs out. Green = Defused, Red = BOOM.<br><b>Highlight:</b> Adjustable tolerance, group sync mode, explosion feedback.</p>
                         </div>
                     </div>
                 </details>
-                
+
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
-                            <h3>🚦 Ochs am Berg</h3>
+                            <h3>🚦 Red Light, Green Light</h3>
                             <div class="game-focus-icons">🤪 ⚡</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                         <img src="pictures/img_redgreen.webp" alt="Ochs am Berg" class="game-card-img" onerror="this.style.display='none'">
+                         <img src="../pictures/img_redgreen.webp" alt="Red Light, Green Light" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–10 groups</span>
                                 <span>Pucks: 1–20</span>
                             </div>
-                            <p>Der Klassiker! Die Pucks zeigen an: Laufen (Grün) oder Stehen (Rot). Wer bei Grün ankommt und drückt, kriegt einen Punkt. Wer bei Rot drückt, wird bestraft.<br><b>Highlight:</b> Gnadenfrist-Einstellung und manuelle Übersteuerung durch den Trainer.</p>
+                            <p>The classic! The pucks show: Run (Green) or Stop (Red). Whoever arrives on green and presses gets a point. Whoever presses on red gets penalized.<br><b>Highlight:</b> Grace period setting and manual override by the coach.</p>
                         </div>
                     </div>
                 </details>
-                
+
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
@@ -469,17 +424,17 @@
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_memory.webp" alt="Memory" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_memory.webp" alt="Memory" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1+</span>
                                 <span>Pucks: 4–20 (pairs)</span>
                             </div>
-                            <p>Gehirnjogging! Trainiert das räumliche Arbeitsgedächtnis unter körperlicher Belastung. Finde und drücke die passenden Farbpärchen! Verteile die Pucks z.B. hinter einem Hindernisparcour<br><b>Highlight:</b> "Blind Search"-Modus, automatischer Neustart und Live-Fehlerverfolgung.</p>
+                            <p>Brain training! Trains spatial working memory under physical strain. Find and press the matching color pairs! Place the pucks e.g. behind an obstacle course.<br><b>Highlight:</b> "Blind Search" mode, automatic restart and live error tracking.</p>
                         </div>
                     </div>
                 </details>
-                
+
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
@@ -488,17 +443,17 @@
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_domination.webp" alt="Domination" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_domination.webp" alt="Domination" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 2 teams/arena</span>
                                 <span>Pucks: 2+/arena</span>
                             </div>
-                            <p>Intensives Ausdauerspiel. Zwei Teams kämpfen um die Vorherrschaft auf dem Spielfeld. Erobert Pucks durch Klicken und klaut sie dem Gegner!<br><b>Highlight:</b> Deathmatch Mode. Unterstützung für zwei Arenen.</p>
+                            <p>Intense endurance game. Two teams fight for dominance on the field. Capture pucks by clicking and steal them from your opponent!<br><b>Highlight:</b> Deathmatch mode. Support for two arenas.</p>
                         </div>
                     </div>
                 </details>
-                
+
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
@@ -507,116 +462,116 @@
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_tttt.webp" alt="Tactical TicTacToe" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_tttt.webp" alt="Tactical TicTacToe" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–3 groups</span>
                                 <span>Pucks: 4 / 6 / 7 / 10</span>
                             </div>
-                            <p>Präzision trifft Taktik! Klassisches TicTacToe, aber die Felder müssen mit Bällen abgeworfen werden. Wer zuerst eine 3er-Reihe hat, gewinnt!<br><b>Highlight:</b> Hard-Modus, das Gitter passt sich automatisch an die Puck-Anzahl an.</p>
+                            <p>Precision meets tactics! Classic TicTacToe, but the fields must be hit by throwing balls. First to get three in a row wins!<br><b>Highlight:</b> Hard mode, the grid automatically adapts to the puck count.</p>
                         </div>
                     </div>
                 </details>
-                
+
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
-                            <h3>🪑 Reise nach Jerusalem</h3>
+                            <h3>🪑 Musical Chairs</h3>
                             <div class="game-focus-icons">🤪 🏃‍♂️</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_musical.webp" alt="Reise nach Jerusalem" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_musical.webp" alt="Musical Chairs" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 2–13</span>
                                 <span>Pucks: Player count −1</span>
                             </div>
-                            <p>Action, Spaß und Reaktionsschnelligkeit! Der Party-Klassiker für die Sporthalle. Wenn die Musik stoppt, sprinte zu einem freien Puck!. Kann zum beispiel mit Ball prellen kombiniert werden.<br><b>Highlight:</b> Eigene MP3s hochladen, dynamische Runden-Eliminierung.</p>
+                            <p>Action, fun and quick reactions! The party classic for the gym. When the music stops, sprint to a free puck! Can be combined with ball dribbling, for example.<br><b>Highlight:</b> Upload your own MP3s, dynamic round elimination.</p>
                         </div>
                     </div>
                 </details>
             </div>
-            
+
             <div class="game-category">
                 <h2>🛠️ Measurement Tools & Utilities</h2>
 
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
-                            <h3>🎩 Der Sprechende Hut</h3>
+                            <h3>🎩 The Sorting Hat</h3>
                             <div class="game-focus-icons">🛠️ 🤪</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_sorting.webp" alt="Der sprechende Hut (Gruppeneinteilung)" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_sorting.webp" alt="The Sorting Hat (Group Assignment)" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 2–100</span>
                                 <span>Pucks: 1–3</span>
                             </div>
-                            <p>"Nicht Slytherin..." – Dieses Tool teilt eine große Menge Spieler absolut fair und zufällig in gleich große Gruppen ein.<br><b>Highlight:</b> Garantierte ausbalancierte Zuweisung, Live-Neuausgleich bei Abbruch.</p>
+                            <p>"Not Slytherin..." — This tool divides a large number of players into equally sized groups, completely fair and random.<br><b>Highlight:</b> Guaranteed balanced assignment, live rebalancing on dropout.</p>
                         </div>
                     </div>
                 </details>
-                
+
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
-                            <h3>⏱️ Stoppuhr</h3>
+                            <h3>⏱️ Stopwatch</h3>
                             <div class="game-focus-icons">🛠️</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_stopwatch.webp" alt="Stoppuhr" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_stopwatch.webp" alt="Stopwatch" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–10</span>
                                 <span></span>
                             </div>
-                            <p>Eine einfache Stoppuhr. Jeder Puck agiert als eigene Stoppuhr. Der Trainer kann alle gleichzeitig starten.<br><b>Highlight:</b> Rundenzeiten, zentraler oder individueller Start, "Hold-to-Start" mit Countdown.</p>
+                            <p>A simple stopwatch. Each puck acts as its own stopwatch. The coach can start all of them simultaneously.<br><b>Highlight:</b> Lap times, central or individual start, "Hold-to-Start" with countdown.</p>
                         </div>
                     </div>
                 </details>
-                
+
                  <details class="game-card">
                     <summary>
                         <div class="game-card-header">
-                            <h3>⏳ Einfacher Timer</h3>
+                            <h3>⏳ Simple Timer</h3>
                             <div class="game-focus-icons">🛠️</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_timer.webp" alt="Einfacher Timer" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_timer.webp" alt="Simple Timer" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–10</span>
                                 <span></span>
                             </div>
-                            <p>Ein praktisches Werkzeug für den Unterricht. Jeder Puck dient als persönliche Countdown-Eieruhr für einen Schüler. Übe in der Grundschule 2-3-4 Minuten ruhig zu arbeiten.<br><b>Highlight:</b> Visueller Countdown-Fülleffekt, Zeit pro Schüler anpassen (+/-).</p>
+                            <p>A practical tool for the classroom. Each puck serves as a personal countdown egg timer for a student. Practice working quietly for 2-3-4 minutes in elementary school.<br><b>Highlight:</b> Visual countdown fill effect, adjust time per student (+/-).</p>
                         </div>
                     </div>
                 </details>
-                
+
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
-                            <h3>🔢 Einfacher Zähler</h3>
+                            <h3>🔢 Simple Counter</h3>
                             <div class="game-focus-icons">🛠️</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_counter.webp" alt="Einfacher Zähler" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_counter.webp" alt="Simple Counter" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–10</span>
                                 <span></span>
                             </div>
-                            <p>Zählt einfach, wie oft ein Spieler seinen Puck drückt. Ideal für Übungen auf Zeit (z.B. Wer schafft die meisten Wiederholungen in 3 Minuten?).<br><b>Highlight:</b> Tap-to-count, Zeitlimit.</p>
+                            <p>Simply counts how often a player presses their puck. Ideal for timed exercises (e.g. Who can do the most reps in 3 minutes?).<br><b>Highlight:</b> Tap-to-count, time limit.</p>
                         </div>
                     </div>
                 </details>
-                
+
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
@@ -625,32 +580,32 @@
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_countdown.webp" alt="Einfacher Countdown" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_countdown.webp" alt="Simple Countdown" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: 1–10</span>
                                 <span></span>
                             </div>
-                            <p>Starte mit einer Zahl und zähle runter auf Null. Wer schafft zuerst 30 Liegestütze (jedes Mal drücken)?<br><b>Highlight:</b> Visualisierung über LED-Ring, Option: Spiel stoppt beim ersten Gewinner.</p>
+                            <p>Start with a number and count down to zero. Who can do 30 push-ups first (press each time)?<br><b>Highlight:</b> LED ring visualization, option: game stops at first winner.</p>
                         </div>
                     </div>
                 </details>
-                
+
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
-                            <h3>🥵 Zirkeltraining</h3>
+                            <h3>🥵 Circuit Training</h3>
                             <div class="game-focus-icons">🛠️ 🫀</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_tabata.webp" alt="TABATA (Zirkeltraining) Timer" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_tabata.webp" alt="TABATA (Circuit Training) Timer" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                             <div class="game-meta">
                                 <span>Players: Unlimited</span>
                                 <span></span>
                             </div>
-                            <p>Ein visuelles und akustisches Steuerungssystem für das Gruppentraining (z.B. Zirkeltraining). Nimmt dem Trainer die Stoppuhr ab und gibt ihm die zeit die Übungen zu verbessern.<br><b>Highlight:</b> Synchronisierte Fortschrittsbalken, Arbeits-/Ruhephasen, konfigurierbarer Ton.</p>
+                            <p>A visual and acoustic control system for group training (e.g. circuit training). Takes the stopwatch away from the coach and gives them time to improve the exercises.<br><b>Highlight:</b> Synchronized progress bars, work/rest phases, configurable sound.</p>
                         </div>
                     </div>
                 </details>
@@ -658,70 +613,71 @@
                 <details class="game-card">
                     <summary>
                         <div class="game-card-header">
-                            <h3>▶️ Display Modus</h3>
+                            <h3>▶️ Display Mode</h3>
                             <div class="game-focus-icons">🛠️</div>
                         </div>
                     </summary>
                     <div class="game-card-body">
-                        <img src="pictures/img_display.webp" alt="Display Mode" class="game-card-img" onerror="this.style.display='none'">
+                        <img src="../pictures/img_display.webp" alt="Display Mode" class="game-card-img" onerror="this.style.display='none'">
                         <div class="game-card-details">
                              <div class="game-meta">
                                 <span>Players: —</span>
                                 <span></span>
                             </div>
-                            <p>Ein Werkzeug für Technik-Fans. Steuert alle Pucks manuell an, zeigt Effekte, Verbindungsqualität, Akkustand, Software-Version und mehr an.<br><b>Highlight:</b> Manuelle/synchronisierte/zufällige Lichtsteuerung für Events.</p>
-                        </div>
-                    </div>
-                </details>
-            </div>
-            
-            <div class="game-category">
-                <h2>👥 Player & Training Manager</h2>
-                
-                <details class="game-card">
-                    <summary>
-                        <div class="game-card-header">
-                            <h3>👥 Spieler Verwaltung</h3>
-                            <div class="game-focus-icons"></div>
-                        </div>
-                    </summary>
-                    <div class="game-card-body">
-                        <img src="pictures/img_players.webp" alt="Spieler Verwaltung" class="game-card-img" onerror="this.style.display='none'">
-                        <div class="game-card-details">
-                            <p>Zentrale Spieler- und Gruppenverwaltung. Erstelle Gruppen (z.B. Klassen, Teams) und pflege Spielerlisten. Diese Listen stehen in allen Spielen zur Verfügung, um Namen schnell zuzuordnen.<br><b>Highlight:</b> Massenimport aus CSV, TXT oder Zwischenablage.</p>
-                        </div>
-                    </div>
-                </details>
-                
-                <details class="game-card">
-                    <summary>
-                        <div class="game-card-header">
-                            <h3>📋 Trainingsplaner</h3>
-                            <div class="game-focus-icons"></div>
-                        </div>
-                    </summary>
-                    <div class="game-card-body">
-                        <img src="pictures/img_training.webp" alt="Training Manager" class="game-card-img" onerror="this.style.display='none'">
-                        <div class="game-card-details">
-                            <p>Plane und bereite komplette Trainingseinheiten im Voraus vor. Verkette mehrere Spiele, speichere individuelle Einstellungen pro Spiel und führe die Einheit Schritt für Schritt aus, ohne Gefummel während des Unterrichts.<br><b>Highlight:</b> Backup/Import von Trainings als JSON-Dateien zum Teilen mit Kollegen.</p>
+                            <p>A tool for tech fans. Manually control all pucks, display effects, connection quality, battery level, software version and more.<br><b>Highlight:</b> Manual/synchronized/random light control for events.</p>
                         </div>
                     </div>
                 </details>
             </div>
 
-        </div> 
-    </div> 
+            <div class="game-category">
+                <h2>👥 Player & Training Manager</h2>
+
+                <details class="game-card">
+                    <summary>
+                        <div class="game-card-header">
+                            <h3>👥 Player Management</h3>
+                            <div class="game-focus-icons"></div>
+                        </div>
+                    </summary>
+                    <div class="game-card-body">
+                        <img src="../pictures/img_players.webp" alt="Player Management" class="game-card-img" onerror="this.style.display='none'">
+                        <div class="game-card-details">
+                            <p>Central player and group management. Create groups (e.g. classes, teams) and manage player lists. These lists are available in all games for quick name assignment.<br><b>Highlight:</b> Bulk import from CSV, TXT or clipboard.</p>
+                        </div>
+                    </div>
+                </details>
+
+                <details class="game-card">
+                    <summary>
+                        <div class="game-card-header">
+                            <h3>📋 Training Planner</h3>
+                            <div class="game-focus-icons"></div>
+                        </div>
+                    </summary>
+                    <div class="game-card-body">
+                        <img src="../pictures/img_training.webp" alt="Training Manager" class="game-card-img" onerror="this.style.display='none'">
+                        <div class="game-card-details">
+                            <p>Plan and prepare complete training sessions in advance. Chain multiple games, save individual settings per game and run the session step by step — no fiddling during class.<br><b>Highlight:</b> Backup/import of training plans as JSON files for sharing with colleagues.</p>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
+            <footer>
+                <a href="../Impressum.html">Legal Notice</a> · <a href="../datenschutz.html">Privacy Policy</a>
+            </footer>
+
+        </div>
+    </div>
 
     <div id="imageModal" class="modal">
         <span class="close-modal">&times;</span>
-        <img class="modal-content" id="expandedImg" alt="Vollbild">
+        <img class="modal-content" id="expandedImg" alt="Full size">
     </div>
 
     <script>
-        // --- 1. Akkordeon-Steuerung ---
-        // Sorgt dafür, dass sich offene Karten schließen, wenn eine neue angeklickt wird.
         const allGameCards = document.querySelectorAll(".game-card");
-        
         allGameCards.forEach((card) => {
             card.addEventListener("click", (event) => {
                 if (event.target.closest("summary")) {
@@ -734,26 +690,22 @@
             });
         });
 
-        // --- 2. Lightbox / Bildvergrößerung ---
         const modal = document.getElementById("imageModal");
         const modalImg = document.getElementById("expandedImg");
         const closeBtn = document.getElementsByClassName("close-modal")[0];
         const images = document.querySelectorAll(".game-card-img");
 
-        // Weist jedem Bild auf der Seite das "On-Click" Ereignis zu
         images.forEach(img => {
             img.onclick = function() {
-                modal.style.display = "block";    // Mache das Modal sichtbar
-                modalImg.src = this.src;          // Übernehme die Bildquelle des geklickten Bildes
+                modal.style.display = "block";
+                modalImg.src = this.src;
             }
         });
 
-        // Schließt das Modal, wenn man auf das "X" klickt
         closeBtn.onclick = function() {
             modal.style.display = "none";
         }
 
-        // Schließt das Modal, wenn man irgendwo auf den dunklen Hintergrund klickt
         window.onclick = function(event) {
             if (event.target === modal) {
                 modal.style.display = "none";

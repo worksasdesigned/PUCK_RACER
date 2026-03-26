@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Impressum - PUCK RACER</title>
-    
+
     <style>
-        /* Basis-Styling, das optisch zur Hauptseite passt */
         * {
             margin: 0;
             padding: 0;
@@ -21,15 +20,16 @@
             padding: 40px 20px;
             display: flex;
             justify-content: center;
-            
-            /* === MARKIEREN VERBIETEN (TEXT-SELECTION BLOCKER) === */
-            /* Diese Befehle verhindern, dass der Nutzer Text mit der Maus markieren kann */
-            -webkit-user-select: none; /* Für Safari */
-            -ms-user-select: none;     /* Für ältere Microsoft Browser */
-            user-select: none;         /* Standard-Syntax für moderne Browser */
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
 
-        /* Container für den Text, um ihn mittig und lesbar zu halten */
+        .bot-blocker-text {
+            unicode-bidi: bidi-override;
+            direction: rtl;
+        }
+
         .content-container {
             background: #222;
             padding: 40px;
@@ -37,11 +37,11 @@
             max-width: 800px;
             width: 100%;
             box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            border: 1px solid rgba(255, 255, 255, 0.1); 
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         h1 {
-            color: #8aece5; 
+            color: #8aece5;
             margin-bottom: 30px;
             text-transform: uppercase;
         }
@@ -67,7 +67,6 @@
             text-decoration: underline;
         }
 
-        /* Zurück-Button Styling */
         .back-link {
             display: inline-block;
             margin-top: 40px;
@@ -81,12 +80,6 @@
             background: rgba(255, 255, 255, 0.2);
             text-decoration: none;
         }
-
-        /* Anti-Spam CSS Trick (Rückwärts schreiben) */
-        .bot-blocker-text {
-            unicode-bidi: bidi-override; 
-            direction: rtl; 
-        }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -98,28 +91,19 @@
         <p>
             <span class="bot-blocker-text">sieW mihcA</span><br>
             <span class="bot-blocker-text">22 rtsremöR</span><br>
-            <span class="bot-blocker-text">legeiR 95397</span>
+            <span class="bot-blocker-text">legeiR 15397</span>
         </p>
 
         <h2>Kontakt</h2>
         <p>
-            Telefon: <span class="bot-blocker-text">313827976510</span><br>
-            E-Mail: 
-            
+            Telefon: <span class="bot-blocker-text">31827976510</span><br>
+            E-Mail:
             <script>
-                // JavaScript Trick für die E-Mail
-                var mailName = "post"; 
-                var mailDomain = "herr-der-mails.de"; 
-                
-                document.write(
-                    '<a href="mai' + 'lto:' + mailName + '@' + mailDomain + '">' + 
-                    mailName + '@' + mailDomain + 
-                    '</a>'
-                );
+                var mailName = "post";
+                var mailDomain = "herr-der-mails.de";
+                document.write('<a href="mai' + 'lto:' + mailName + '@' + mailDomain + '">' + mailName + '@' + mailDomain + '</a>');
             </script>
-            <noscript>
-                Bitte aktiviere JavaScript, um die E-Mail-Adresse zu sehen.
-            </noscript>
+            <noscript>post [at] herr-der-mails [dot] de</noscript>
         </p>
 
         <h2>Haftung für Inhalte</h2>

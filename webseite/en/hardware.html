@@ -1,27 +1,27 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hardware & Bauanleitung - PUCK RACER | Open-Source PCB & BoM</title>
-    <meta name="description" content="PUCK RACER Hardware: ESP32-C3 Platine, WS2812B LED-Ring, 18650-Akku. Open-Source PCB-Design, 3D-Druck-Adapter und Bill of Materials.">
-    <link rel="canonical" href="https://www.puckracer.net/hardware.html">
+    <title>Hardware & Build Guide - PUCK RACER | Open-Source PCB & BoM</title>
+    <meta name="description" content="PUCK RACER Hardware: ESP32-C3 board, WS2812B LED ring, 18650 battery. Open-source PCB design, 3D-print adapter and Bill of Materials.">
+    <link rel="canonical" href="https://www.puckracer.net/en/hardware.html">
     <link rel="alternate" hreflang="de" href="https://www.puckracer.net/hardware.html">
     <link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/hardware.html">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Hardware & Bauanleitung - PUCK RACER">
-    <meta property="og:description" content="Open-Source PCB-Design, ESP32-C3, WS2812B LEDs und 18650-Akku. Unter 20€ pro Puck.">
+    <meta property="og:title" content="Hardware & Build Guide - PUCK RACER">
+    <meta property="og:description" content="Open-source PCB design, ESP32-C3, WS2812B LEDs and 18650 battery. Under 20€ per puck.">
     <meta property="og:image" content="https://www.puckracer.net/pictures/pcb.png">
-    <meta property="og:url" content="https://www.puckracer.net/hardware.html">
+    <meta property="og:url" content="https://www.puckracer.net/en/hardware.html">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Hardware - PUCK RACER">
-    <meta name="twitter:description" content="Open-Source PCB, ESP32-C3, WS2812B LEDs. Unter 20€ pro Puck.">
-        <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="manifest" href="site.webmanifest">
-    <link rel="stylesheet" href="style.css">
+    <meta name="twitter:description" content="Open-source PCB, ESP32-C3, WS2812B LEDs. Under 20€ per puck.">
+        <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+    <link rel="manifest" href="../site.webmanifest">
+    <link rel="stylesheet" href="../style.css">
     <style>
         .pcb-image {
             width: 100%;
@@ -83,18 +83,18 @@
 <body>
     <header>
         <nav class="main-nav">
-            <button class="nav-toggle" aria-label="Menü öffnen" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Menü</button>
+            <button class="nav-toggle" aria-label="Open menu" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Menu</button>
             <ul>
                 <li><a href="index.html">Home</a></li>
                 <li><a href="features.html">Features</a></li>
                 <li><a href="downloads.html">Downloads</a></li>
                 <li><a href="hardware.html" class="active">Hardware</a></li>
-                <li><a href="spiele.html">Spiele</a></li>
+                <li><a href="games.html">Games</a></li>
                 <li><a href="map.html">PUCK RACER Map</a></li>
                 <li><a href="demo.html">Demo</a></li>
-                <li><a href="infos.html">Infos</a></li>
+                <li><a href="about.html">About</a></li>
                 <li><a href="faq.html">FAQ</a></li>
-                <li><a href="en/hardware.html" title="English">&#127468;&#127463; EN</a></li>
+                <li><a href="../hardware.html" title="Deutsch">&#127465;&#127466; DE</a></li>
             </ul>
         </nav>
     </header>
@@ -103,16 +103,16 @@
     <div class="rainbow-border-wrapper">
         <div class="main-container">
             <div class="header-bar">
-                <img src="pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
+                <img src="../pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
             </div>
 
             <h1>Hardware</h1>
-            <p>PUCK RACER ist ein reines Open-Source-Hardware-Projekt. Jeder Puck basiert auf einem ESP32-C3 Mikrocontroller, einem WS2812B LED-Ring und einem wiederaufladbaren 18650-Akku. Die Platine wurde speziell für dieses Projekt entwickelt.</p>
+            <p>PUCK RACER is a fully open-source hardware project. Each puck is built around an ESP32-C3 microcontroller, a WS2812B LED ring and a rechargeable 18650 battery. The PCB was designed specifically for this project.</p>
 
-            <img src="pictures/pcb.png" alt="PUCK RACER PCB" class="pcb-image">
+            <img src="../pictures/pcb.png" alt="PUCK RACER PCB" class="pcb-image">
 
             <div class="status-banner">
-                Die Prototypen-Platinen sind aktuell in Produktion. Die vollständige Hardwareliste (BoM) mit Bezugsquellen wird im Mai 2026 veröffentlicht.
+                The prototype PCBs are currently in production. The complete hardware list (BoM) with sources will be published in May 2026.
             </div>
 
             <h2 style="font-size:2rem; text-transform:uppercase; color:#8aece5; margin:30px 0 10px; border-bottom:2px solid #8aece5; padding-bottom:10px; text-align:left; width:100%;">Bill of Materials (BoM)</h2>
@@ -128,13 +128,13 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td class="bom-placeholder" colspan="4">Coming soon — Mai 2026</td>
+                        <td class="bom-placeholder" colspan="4">Coming soon — May 2026</td>
                     </tr>
                 </tbody>
             </table>
 
             <footer>
-                <a href="Impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a>
+                <a href="../Impressum.html">Legal Notice</a> · <a href="../datenschutz.html">Privacy Policy</a>
             </footer>
         </div>
     </div>
