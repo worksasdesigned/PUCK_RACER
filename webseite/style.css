@@ -1,0 +1,461 @@
+/* === GRUNDLEGENDE EINSTELLUNGEN === */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: #4A4A4A;  /* Fallback */
+            background: linear-gradient(to right, #232526, #414345); /* Layered grey gradient */
+            color: #ffffff;
+            display: flex;
+            flex-direction: column; /* Changed to column for menu */
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* === NEUE NAVIGATION === */
+        header {
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 20px;
+        }
+
+        .main-nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .main-nav li {
+            margin: 5px 15px;
+        }
+
+        .main-nav a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+
+        .main-nav a:hover, .main-nav a.active {
+            color: #8aece5;
+            text-shadow: 0 0 5px #8aece5;
+        }
+
+
+        /* === ANIMATION FÜR DEN REGENBOGEN-EFFEKT === */
+        @keyframes rainbow-glow {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* === DER GROSSE REGENBOGEN-RAHMEN (AUSSEN) === */
+        .rainbow-border-wrapper {
+            position: relative;
+            padding: 3px; /* Dünnerer Rand */
+            border-radius: 20px;
+            background: linear-gradient(
+                45deg, 
+                #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3
+            );
+            background-size: 400% 400%;
+            animation: rainbow-glow 8s ease infinite;
+            max-width: 1000px;
+            width: 100%;
+            z-index: 1; /* Ensure it's on top of the glow */
+        }
+
+        .rainbow-border-wrapper::after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: inherit;
+            background-size: inherit;
+            animation: inherit;
+            border-radius: inherit;
+            filter: blur(20px);
+            opacity: 0.7;
+            z-index: -1;
+        }
+
+        /* === DER HAUPTINHALT (INNEN) - GLASSMORPHISM === */
+        .main-container {
+            background: linear-gradient(145deg, rgb(70, 70, 70), rgb(40, 40, 40));
+            border-radius: 17px; /* Passt sich dem äußeren Rahmen an */
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            overflow: hidden; /* Important for the header bar */
+        }
+
+        .main-container p {
+            text-align: left;
+            max-width: 800px; /* Begrenzt die Zeilenlänge für bessere Lesbarkeit */
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            margin-bottom: 1rem;
+        }
+
+        /* === KOPFZEILE & LOGO === */
+        .header-bar {
+            background: rgba(20, 20, 20, 0.7);
+            width: calc(100% + 80px); /* Counteract parent padding */
+            margin: -40px -40px 30px -40px;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo {
+            width: 150px;
+            margin-bottom: 0; /* Remove old margin */
+        }
+
+        h1 {
+            font-size: 3rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #ddd; /* Etwas heller */
+            margin-bottom: 40px;
+        }
+
+        /* === ZENTRALES BILD (PUCK) === */
+        .hero-image-container {
+            margin-bottom: 40px;
+        }
+
+        .puck-image {
+            width: 250px;
+            border-radius: 20px;
+            /* Neuer Leuchteffekt */
+            box-shadow: 0 0 15px rgba(138, 236, 229, 0.4), 0 0 30px rgba(138, 236, 229, 0.3);
+        }
+
+        /* === RASTER FÜR DIE INFO-KARTEN === */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        /* === KARTEN-STYLING - Kein extra rainbow wrapper mehr, Effekt direkt auf Karte */
+        .feature-card {
+            background: rgba(43, 43, 54, 0.7); /* Gleicher Stil wie main-container */
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: left;
+            position: relative;
+            width: 100%;
+            flex-grow: 1;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .feature-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: #8aece5;
+            text-transform: uppercase;
+        }
+
+        .feature-card ul {
+            list-style-type: none;
+        }
+
+        .feature-card li {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: #ddd;
+            position: relative;
+            padding-left: 15px;
+        }
+
+        .feature-card li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #8aece5;
+        }
+
+        /* === ICONS AUF DEN KARTEN === */
+        .card-icon {
+            width: 50px; /* Etwas kleiner */
+            position: absolute;
+            opacity: 0.7; /* Etwas dezenter */
+            transition: opacity 0.3s ease;
+        }
+
+        .feature-card:hover .card-icon {
+            opacity: 1;
+        }
+
+        .icon-wecker { bottom: 15px; right: 15px; }
+        .icon-server { bottom: 15px; right: 15px; }
+        .icon-werkzeug { bottom: 15px; right: 15px; }
+
+        /* === DER UNTERE BANNER (NEU GESTYLT) === */
+        .cta-banner {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 15px 30px;
+            border-radius: 50px; /* Pille-Form */
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            font-size: 1rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+
+        /* === FUSZEILE (NAVIGATION) === */
+        footer {
+            display: flex;
+            justify-content: center;
+        }
+
+        footer a {
+            color: #aaa;
+            text-decoration: none;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: #fff;
+        }
+        
+        /* === SPIELE SEITE === */
+        .game-category {
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .game-category h2 {
+            font-size: 2rem;
+            color: #8aece5;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #8aece5;
+            padding-bottom: 10px;
+            text-align: left;
+        }
+
+        .game-card {
+            background: rgba(43, 43, 54, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            text-align: left;
+        }
+        
+        .game-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .game-card h3 {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+        
+        .game-focus-icons {
+            font-size: 1.5rem;
+        }
+
+        .game-card-body {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .game-card-img {
+            width: 150px;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .game-card-details {
+            flex-grow: 1;
+        }
+
+        .game-meta {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+
+        .game-meta span {
+            font-weight: bold;
+        }
+        
+        .game-card-details p {
+            font-size: 0.95rem;
+            line-height: 1.6;
+            color: #ddd;
+        }
+
+        .game-card-details b {
+            color: #8aece5;
+        }
+
+        /* === VIDEO CONTAINER === */
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 aspect ratio */
+            height: 0;
+            overflow: hidden;
+            max-width: 100%;
+            background: #000;
+            margin: 20px auto;
+            border-radius: 15px;
+            width: 90%;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+
+        /* === HAMBURGER BUTTON (standardmäßig versteckt) === */
+        .nav-toggle {
+            display: none;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            font-size: 1.5rem;
+            padding: 8px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0 0 10px 0; /* Changed */
+        }
+
+        /* === RESPONSIVES DESIGN FÜR HANDYS === */
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            h1 { font-size: 2.2rem; }
+            .main-container { padding: 20px; }
+            .cta-banner { font-size: 0.8rem; text-align: center; padding: 12px 20px; }
+
+            .nav-toggle { display: block; }
+            .main-nav ul {
+                flex-direction: column;
+                align-items: center;
+                max-height: 0;
+                overflow: hidden;
+                padding: 0;
+                margin: 0;
+                border: none;
+                transition: max-height 0.3s ease;
+                background: rgba(0, 0, 0, 0.5); /* Added */
+                border-radius: 10px; /* Added */
+            }
+            .main-nav.open ul {
+                max-height: max-content; /* Changed */
+                padding: 10px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+            }
+            .main-nav li { margin: 8px 0; }
+
+            .game-card-body { flex-direction: column; }
+            .game-card-img { width: 100%; height: auto; margin-bottom: 15px;}
+        }
+
+
+/* === FAQ STYLING === */
+.faq-list {
+    width: 100%;
+    max-width: 800px; /* Or another appropriate width */
+    margin-top: 20px;
+}
+
+details {
+    background: rgba(43, 43, 54, 0.7);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+}
+
+summary {
+    padding: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    outline: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.1rem;
+}
+
+summary::-webkit-details-marker {
+    display: none; 
+}
+
+summary::after {
+    content: '+';
+    font-size: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+details[open] summary::after {
+    transform: rotate(45deg);
+}
+
+.faq-answer {
+    padding: 0 20px 20px 20px;
+    line-height: 1.6;
+    color: #ddd;
+}
+

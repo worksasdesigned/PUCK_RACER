@@ -206,9 +206,9 @@ const TRANSLATIONS = {
         "g_27": "Red Light Green Light",
 
         // --- HELP TEXTS ---
-        "desc_stopwatch": 'A simple stopwatch. Every puck acts as its own stopwatch. The trainer can start all pucks via "Central Start". Features a "Hold Button + Countdown" mode with false start detection.<br><b>Lap Mode:</b> Click records a lap. Double-click or 0.5s hold stops the time.',
+        "desc_stopwatch": 'A simple stopwatch. Every puck acts as its own stopwatch. Lap mode, Central Start with countdown and false start detection.',
         "setup_stopwatch": 'Select player count and mode.',
-        "ex_stopwatch": 'Set to 3 players, no further settings. Each puck is a stopwatch. 1st press = Start, 2nd = Stop.',
+        "ex_stopwatch": 'Every player has their own stopwatch. 1st press = Start, 2nd = Stop. In Lap Mode: click records a lap, double-click stops the time. Central Start lets the trainer start all pucks simultaneously with a hold-and-countdown sequence.',
         "img_stopwatch": 'img_stopwatch.webp',
         "desc_timer": 'A practical tool for teaching. Each puck serves as a personal countdown timer for a student.',
         "setup_timer": 'Set base time. Pucks light up fully and the circle depletes like an hourglass. When a student is done, they press their puck. You see immediately who finished. Add/subtract time via app.',
@@ -1291,9 +1291,9 @@ const TRANSLATIONS = {
         "g_27": "Ochs am Berg",
 
         // --- HELP TEXTS ---
-        "desc_stopwatch": 'Eine einfache Stoppuhr. Jeder Puck agiert als eigene Stoppuhr. Der Trainer kann mit "Central Start" alle gleichzeitig starten, für Wettrennen gibt es einen "Hold Button + Countdown" Mode mit Frühstart Erkennung.<br><b>Rundenmodus:</b> Der Puck registriert beim Drücken eine Runde. Doppelklick oder 0.5 Sekunden halten stoppt die Stoppuhr.',
+        "desc_stopwatch": 'Eine einfache Stoppuhr. Jeder Puck ist eine eigene Stoppuhr. Rundenmodus, zentraler Start mit Countdown und Frühstarterkennung.',
         "setup_stopwatch": 'Anzahl Spieler und Spielmodus wählen.',
-        "ex_stopwatch": 'Stelle 3 Spieler ein und keine weiteren Settings. Jeder Puck ist jetzt eine einfache Stoppuhr. Erstes Drücken = Start, zweites Drücken = Stop.',
+        "ex_stopwatch": 'Jeder Spieler hat seine eigene Stoppuhr. 1x Drücken = Start, 2x = Stop. Im Rundenmodus: Klick = neue Runde, Doppelklick = Stop. Zentraler Start: Trainer startet alle Pucks gleichzeitig mit Countdown und Frühstarterkennung.',
         "img_stopwatch": 'img_stopwatch.webp',
         "desc_timer": 'Ein praktisches Werkzeug für den Unterricht. Jeder Puck dient als persönliche Countdown-Eieruhr für einen Schüler.',
         "setup_timer": 'Stelle die Basiszeit ein. Die Pucks leuchten voll auf und der Kreis leert sich wie eine Sanduhr. Ist ein Schüler fertig, drückt er seinen Puck. Du siehst sofort auf dem Bildschirm, wer fertig ist. Du kannst einzelnen Schülern jederzeit per Knopfdruck Zeit abziehen oder hinzufügen.',

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <!-- Metadaten und Titel der Seite -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUCK RACER - Das DIY Reaktionslicht-System</title>
+    <!-- Verknüpfung zur zentralen CSS-Datei -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Eigener Style-Block für Anpassungen auf dieser Seite, um style.css nicht zu überladen -->
+    <style>
+        /* Spezifische Styles für die neue Index-Seite */
+        .hero-section {
+            padding: 2rem 0;
+        }
+        .hero-section .subtitle {
+            font-size: 1.3rem;
+            max-width: 650px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .cta-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .cta-button {
+            padding: 12px 25px;
+            text-decoration: none;
+            color: #fff;
+            border-radius: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        .cta-primary {
+            background-color: #8aece5;
+            color: #1a1a1a;
+            box-shadow: 0 0 15px rgba(138, 236, 229, 0.5);
+        }
+        .cta-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 25px rgba(138, 236, 229, 0.8);
+        }
+        .cta-secondary {
+            background-color: transparent;
+            border: 2px solid #8aece5;
+        }
+        .cta-secondary:hover {
+            background-color: #8aece5;
+            color: #1a1a1a;
+        }
+        .section-divider {
+            margin: 60px 0;
+            text-align: center;
+        }
+         .section-divider h2 {
+            font-size: 2rem;
+            text-transform: uppercase;
+            color: #fff;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hauptnavigation -->
+    <header>
+        <nav class="main-nav">
+            <button class="nav-toggle" aria-label="Menü öffnen" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Menü</button>
+            <ul>
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="features.html">Features</a></li>
+                <li><a href="downloads.html">Downloads</a></li>
+                <li><a href="hardware.html">Hardware</a></li>
+                <li><a href="spiele.html">Spiele</a></li>
+                <li><a href="map.html">PUCK RACER Map</a></li>
+                <li><a href="videos.html">Videos</a></li>
+                <li><a href="infos.html">Infos</a></li>
+                <li><a href="faq.html">FAQ</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Regenbogen-Rahmen-Wrapper -->
+    <div class="rainbow-border-wrapper">
+        <div class="main-container">
+            
+            <!-- Logo-Kopfzeile -->
+            <div class="header-bar">
+                <img src="pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
+            </div>
+            
+            <!-- Hero-Sektion: Der erste Eindruck zählt -->
+            <div class="hero-section">
+                <h1>Das DIY Reaktionslicht-System für dein Training</h1>
+                <p class="subtitle">Professionelles Reaktionstraining für Vereine, Schulen und Zuhause. Preiswert, unendlich flexibel und ohne App-Zwang. Bau es selbst!</p>
+                
+                <!-- Call-to-Action Buttons -->
+                <div class="cta-buttons">
+                    <a href="spiele.html" class="cta-button cta-primary">Entdecke die Spiele</a>
+                    <a href="hardware.html" class="cta-button cta-secondary">Lerne, es zu bauen</a>
+                </div>
+            </div>
+
+            <!-- Hero-Bild, das das Produkt zeigt -->
+            <div class="hero-image-container">
+                <img src="pictures/front1_tech.png" alt="PUCK RACER ESP32 Puck" class="puck-image">
+            </div>
+
+            <!-- Sektions-Trenner -->
+            <div class="section-divider">
+                <h2>Warum Puck Racer die bessere Wahl ist</h2>
+            </div>
+
+            <!-- Drei-Säulen-Raster für die Kernvorteile -->
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>Preiswert & DIY</h3>
+                    <ul>
+                        <li>Hardware-Kosten unter 20€ pro Puck.</li>
+                        <li>Keine teuren kommerziellen Systeme nötig.</li>
+                        <li>Ein tolles Projekt, um Löten zu lernen.</li>
+                        <li>Vollständige Kontrolle über deine Hardware.</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>Professionell & Umfassend</h3>
+                    <ul>
+                        <li>Über 25+ Spiele für Training & Spaß.</li>
+                        <li>Erstelle eigene Trainingspläne.</li>
+                        <li>Analysiere die Leistung mit detaillierten Statistiken.</li>
+                        <li>Entwickelt mit Sportlehrern und Trainern.</li>
+                    </ul>
+                </div>
+                <div class="feature-card">
+                    <h3>Unabhängig & Privat</h3>
+                    <ul>
+                        <li>Kein Abo, keine versteckten Kosten.</li>
+                        <li>Keine App nötig – läuft im Webbrowser.</li>
+                        <li>Keine Cloud, keine Datensammlung.</li>
+                        <li>Open Source Hardware: Passe alles nach deinen Wünschen an.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer>
+                <a href="Impressum.html">Impressum</a>
+            </footer>
+
+        </div>
+    </div>
+    
+    <!-- Script für mobile Navigation -->
+    <script>
+        document.querySelector('.nav-toggle').addEventListener('click', () => {
+            document.querySelector('.main-nav').classList.toggle('open');
+        });
+    </script>
+</body>
+</html>

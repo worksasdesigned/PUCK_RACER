@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <!-- Metadaten für die Webseite -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Features - PUCK RACER</title>
+    <!-- Verknüpfung zur zentralen CSS-Datei -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Hauptnavigation, identisch mit anderen Seiten für Konsistenz -->
+    <header>
+        <nav class="main-nav">
+            <button class="nav-toggle" aria-label="Menü öffnen" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Menü</button>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="features.html" class="active">Features</a></li>
+                <li><a href="downloads.html">Downloads</a></li>
+                <li><a href="hardware.html">Hardware</a></li>
+                <li><a href="spiele.html">Spiele</a></li>
+                <li><a href="map.html">PUCK RACER Map</a></li>
+                <li><a href="videos.html">Videos</a></li>
+                <li><a href="infos.html">Infos</a></li>
+                <li><a href="faq.html">FAQ</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Regenbogen-Rahmen-Wrapper für den visuellen Effekt -->
+    <div class="rainbow-border-wrapper">
+        <!-- Hauptcontainer für den Inhalt mit Glassmorphism-Effekt -->
+        <div class="main-container">
+            
+            <!-- Kopfzeile mit Logo -->
+            <div class="header-bar">
+                <img src="pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
+            </div>
+
+            <h1>Umfassende Features</h1>
+            <p class="subtitle">Mehr als nur ein Spiel – eine komplette Trainingsplattform.</p>
+
+            <!-- Kategorie: Spielfeatures -->
+            <div class="game-category">
+                <h2>Spiele & Trainingsmodi</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>Über 27 einzigartige Spiele</h3>
+                        <ul>
+                            <li><b>Vielfalt:</b> Deckt Reaktion, Kognition, Ausdauer, Schnelligkeit und Koordination ab.</li>
+                            <li><b>Klassiker:</b> Beinhaltet beliebte Modi wie Reaktionstests, Whac-a-Mole, Memory und Simon Says.</li>
+                            <li><b>Sport-spezifisch:</b> Bietet spezielle Trainingsformen wie Shuttle-Run oder Intervall-Timer (Tabata).</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Flexible Spielmodi</h3>
+                        <ul>
+                            <li><b>Einzelspieler:</b> Perfektioniere deine eigenen Fähigkeiten und jage den Highscore.</li>
+                            <li><b>Mehrspieler:</b> Trete direkt gegen Freunde oder Teamkollegen an.</li>
+                            <li><b>Team-Modus:</b> Spiele in farblich getrennten Teams gegeneinander.</li>
+                            <li><b>Parallele Arenen:</b> Mehrere Spielgruppen können gleichzeitig und unabhängig voneinander trainieren.</li>
+                        </ul>
+                    </div>
+                     <div class="feature-card">
+                        <h3>Anpassbare Regeln</h3>
+                        <ul>
+                            <li><b>Parameter:</b> Jedes Spiel lässt sich individuell konfigurieren (Dauer, Runden, Schwierigkeit etc.).</li>
+                            <li><b>Spieler-Auswahl:</b> Bestimme genau, welche Spieler an einer Runde teilnehmen.</li>
+                            <li><b>Puck-Auswahl:</b> Lege fest, welche Pucks für das aktuelle Spiel aktiv sein sollen.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kategorie: Analyse & Planung -->
+            <div class="game-category">
+                <h2>Analyse & Planung</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>Professionelle Analyse</h3>
+                        <ul>
+                            <li><b>Live-Statistiken:</b> Verfolge Rundenzeiten und Punktestände in Echtzeit während des Spiels.</li>
+                            <li><b>Spieler-Statistik:</b> Analysiere die Leistung einzelner Spieler über die Zeit.</li>
+                            <li><b>Spiel-Statistik:</b> Detaillierte Auswertung nach jedem abgeschlossenen Spiel.</li>
+                            <li><b>CSV-Export:</b> Exportiere alle relevanten Daten für die Weiterverarbeitung in Programmen wie Excel.</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Umfassende Planung</h3>
+                        <ul>
+                            <li><b>Spieler-Manager:</b> Lege Spielerprofile an und verwalte sie zentral.</li>
+                            <li><b>Trainingsplaner:</b> Erstelle und speichere komplexe Trainingsabläufe aus mehreren Spielen.</li>
+                            <li><b>Mehrsprachigkeit:</b> Das gesamte Interface ist in 7 Sprachen verfügbar und erweiterbar.</li>
+                            <li><b>Übersetzungs-Editor:</b> Passe Begriffe oder ganze Sprachen einfach selbst an.</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Backup & System</h3>
+                        <ul>
+                            <li><b>Lokales Backup:</b> Sichere alle Spieler, Pläne und Einstellungen in einer einzigen Datei.</li>
+                            <li><b>Wiederherstellung:</b> Spiele ein Backup einfach wieder ein, um den alten Stand zu laden.</li>
+                            <li><b>System-Informationen:</b> Behalte den Überblick über Speicherplatz, Laufzeit und Firmware-Version.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kategorie: Technik & Hardware -->
+            <div class="game-category">
+                <h2>Technik & Hardware</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>Autarke Puck-Hardware</h3>
+                        <ul>
+                            <li><b>Lange Laufzeit:</b> Über 4 Stunden Akkulaufzeit im Dauerbetrieb.</li>
+                            <li><b>Helle LEDs:</b> 35 einzeln steuerbare WS2812B LEDs pro Puck, auch bei Tageslicht gut sichtbar.</li>
+                            <li><b>Robust & Zuverlässig:</b> Stabiler Arcade-Button und Buzzer für akustisches Feedback.</li>
+                            <li><b>DIY-freundlich:</b> Open-Source-Hardware und kostenlose 3D-druckbare Adapter.</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Smarte Funktechnologie</h3>
+                        <ul>
+                            <li><b>ESP-NOW Protokoll:</b> Extrem schnelle und direkte Kommunikation ohne WLAN-Router.</li>
+                            <li><b>Hohe Reichweite:</b> Stabile Verbindung über 50 Meter.</li>
+                            <li><b>Auto-Reconnect:</b> Pucks verbinden sich nach einem Neustart oder Verbindungsabbruch automatisch wieder.</li>
+                            <li><b>Kanal-Scan:</b> Der Coordinator prüft bei Start den besten Funkkanal, um Störungen zu vermeiden.</li>
+                        </ul>
+                    </div>
+                    <div class="feature-card">
+                        <h3>Intelligentes System</h3>
+                        <ul>
+                            <li><b>App-frei:</b> Läuft auf jedem Gerät mit modernem Webbrowser (Handy, Tablet, Laptop).</li>
+                            <li><b>Offline-First:</b> Kein Internet, keine Cloud, keine Datensammelei. Deine Daten gehören dir.</li>
+                            <li><b>OTA-Updates:</b> Aktualisiere die Firmware von Coordinator und allen Pucks bequem über die Weboberfläche.</li>
+                             <li><b>Batterie-Schutz:</b> Intelligente Überwachung und Abschaltung zum Schutz der Akkus.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fußzeile mit Impressums-Link -->
+            <footer>
+                <a href="Impressum.html">Impressum</a>
+            </footer>
+
+        </div>
+    </div>
+
+    <!-- Script für die mobile Navigation -->
+    <script>
+        // Diese Funktion wird hier belassen, da sie nur für die Navigation zuständig ist und sehr klein ist.
+        // Bei größeren Scripten würde man sie in eine externe JS-Datei auslagern.
+        document.querySelector('.nav-toggle').addEventListener('click', () => {
+            document.querySelector('.main-nav').classList.toggle('open');
+        });
+    </script>
+
+</body>
+</html>
