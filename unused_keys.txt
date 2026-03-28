@@ -1,0 +1,164 @@
+Unused translation keys in lang.js
+==================================================
+Total keys: 998
+Unused keys: 53
+
+  settings_parameters_btn
+    EN: ⚙ Open Parameters
+
+  param_mute_sounds
+    EN: Deactivate All Sounds
+
+  param_shutdown_pct
+    EN: Shut Down Pucks at Battery %
+
+  param_batwarn_pct
+    EN: Show Battery Warning at %
+
+  ps_chart_hits10s
+    EN: Hits/10s
+
+  ps_ctl_stats
+    EN: Detail Stats
+
+  tmr_run_dimmer
+    EN: 💡 Dimmer:
+
+  tmr_run_fin
+    EN: Finished: 
+
+  tmr_btn_pause
+    EN: Pause
+
+  tmr_btn_resume
+    EN: Resume
+
+  r2_names_grp
+    EN: Group
+
+  tt_names_hint
+    EN: Setup Guide: Position pucks according to light ring
+
+  tt_names_pos1
+    EN: 1/4 Ring = Start (A)
+
+  tt_names_pos2
+    EN: 2/4 Ring = Center (B, 10m forward)
+
+  tt_names_pos3
+    EN: 3/4 Ring = Left (C, 5m from center)
+
+  tt_names_pos4
+    EN: 4/4 Ring = Right (D, 10m from left)
+
+  tt_spd_slow
+    EN: Slow (~2m/s)
+
+  tt_spd_med
+    EN: Medium (~3m/s)
+
+  tt_spd_fast
+    EN: Fast (~4m/s)
+
+  dom_err_more_pucks
+    EN: Please connect more Pucks!
+
+  whac_sel_title
+    EN: Select Hit-Colors
+
+  whac_run_target
+    EN: Target Colors: 
+
+  whac_run_single
+    EN: (Single Color Mode)
+
+  whac_run_hits
+    EN: Hits
+
+  whac_run_miss
+    EN: Missed
+
+  whac_run_h10
+    EN: Hits / 10s
+
+  whac_st_0
+    EN: SETUP
+
+  whac_st_1
+    EN: READY
+
+  whac_st_2
+    EN: COUNTDOWN...
+
+  whac_st_3
+    EN: MEMORIZE TARGETS
+
+  whac_st_4
+    EN: RUNNING 🔨
+
+  whac_st_6
+    EN: FINISHED
+
+  bomb_lbl_score
+    EN: Score:
+
+  pm_hint_range
+    EN: <b>📡 Range Warning:</b> ESP-NOW wireless range is approx. 30-50m.<br>Place the Coordinator in the center of the track for maximum coverage!
+
+  pm_setup_pace
+    EN: ⚡ Target Pace
+
+  pm_run_mode
+    EN: Mode
+
+  pm_loop
+    EN: ⟲ Loop
+
+  pm_extend_line
+    EN: build a long line
+
+  pm_unit_pace
+    EN:  min/km
+
+  pm_unit_speed
+    EN:  km/h
+
+  sim_run_len
+    EN: Len:
+
+  sim_opt_med
+    EN: Medium
+
+  z_lbl_auto
+    EN: Auto-Reduce Time
+
+  z_names_hint
+    EN: Start: Chase | Target: Breathe
+
+  h_err_more_pucks
+    EN: You requested more pucks than connected. Continue anyway?
+
+  bat_names_sub
+    EN: Mount the Targets!
+
+  bat_names_hint
+    EN: Stick the pucks to a wall in a spiderweb pattern.<br>Use the colors and ring levels to identify them.
+
+  err_pucks_min
+    EN: Not enough pucks connected! Continue anyway?
+
+  unit_min
+    EN:  min
+
+  unit_sec
+    EN: s
+
+  unit_m
+    EN: m 
+
+  unit_pucks
+    EN:  Pucks
+
+  lbl_grp_short
+    EN: Grp 
+
