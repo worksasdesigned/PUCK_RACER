@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Setup - Simon Runs</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css">
     <style>
         .info-box { 
             background:var(--card-hover); 
@@ -20,7 +20,13 @@
     </style>
 </head>
 <body>
-    <header><div class="logo" data-i18n="g_simonruns">Simon Runs 🏃‍♂️</div></header>
+    <header><div class="logo" data-i18n="g_simonruns">Simon Runs 🏃‍♂️</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div class="card">
             <h3 data-i18n="simr_setup_cfg">⚙️ Config</h3>
@@ -62,6 +68,8 @@
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
@@ -118,12 +126,12 @@
 			sessionStorage.setItem('sr_central', cent);
 			sessionStorage.setItem('sr_blind', blnd);
 			  
-			location.href = 'game_simonruns_names.html';
+			nav('game_simonruns_names.html');
 		}
         
         function doCancel() {
             fetch('/api/game/action?cmd=exit');
-            setTimeout(() => location.href = '/', 200);
+            setTimeout(() => nav('/'), 200);
         }
     </script>
     <script>

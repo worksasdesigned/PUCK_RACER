@@ -33,7 +33,12 @@
 <body>
     <header>
         <div class="logo" data-i18n="g_stopwatch">Stopwatch ⏱️</div>
-        <div class="status-bar"><div class="status-dot dot-green" id="conn"></div></div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+        <div id="conn" style="display:none;"></div>
     </header>
     <main>
         <div class="controls">
@@ -86,18 +91,36 @@
                     if (d.state == 0) {
                         btnStart.innerText = getTranslation('btn_start_all');
                         btnStart.style.background = "var(--primary)";
+                        btnStart.style.color = "white";
                         btnStart.setAttribute('onclick', "cmd('start_all')");
                     } else {
                         btnStart.innerText = getTranslation('btn_reset');
                         btnStart.style.background = "var(--success)";
+                        btnStart.style.color = "white";
                         btnStart.setAttribute('onclick', "cmd('reset')");
                     }
                 } else {
                     btnStart.setAttribute('onclick', "cmd('start_all')");
-                    if (d.state == 5) { btnStart.innerText = getTranslation('btn_reset'); btnStart.style.background = "var(--success)"; }
-                    else if (d.state == 3) { btnStart.innerText = getTranslation('btn_reset'); btnStart.style.background = "var(--danger)"; }
-                    else if (d.state == 0) { btnStart.innerText = getTranslation('btn_start_all'); btnStart.style.background = "var(--primary)"; }
-                    else { btnStart.innerText = getTranslation('btn_running'); btnStart.style.background = "var(--card-hover)"; }
+                    if (d.state == 5) { 
+                        btnStart.innerText = getTranslation('btn_reset'); 
+                        btnStart.style.background = "var(--success)"; 
+                        btnStart.style.color = "white";
+                    }
+                    else if (d.state == 3) { 
+                        btnStart.innerText = getTranslation('btn_reset'); 
+                        btnStart.style.background = "var(--danger)"; 
+                        btnStart.style.color = "white";
+                    }
+                    else if (d.state == 0) { 
+                        btnStart.innerText = getTranslation('btn_start_all'); 
+                        btnStart.style.background = "var(--primary)"; 
+                        btnStart.style.color = "white";
+                    }
+                    else { 
+                        btnStart.innerText = getTranslation('btn_running'); 
+                        btnStart.style.background = "var(--card-hover)"; 
+                        btnStart.style.color = "var(--text-muted)";
+                    }
                 }
                 
                 let container = document.getElementById('list');
@@ -163,8 +186,8 @@
         }
         
         function cmd(c) { fetch(`/api/game/action?cmd=${c}`); }
-        function back() { cmd('setup'); location.href='game_stopwatch_names.html'; }
-        function home() { fetch('/api/game/action?cmd=exit'); setTimeout(()=>{location.href='/'},100); }
+        function back() { cmd('setup'); nav('game_stopwatch_names.html'); }
+        function home() { fetch('/api/game/action?cmd=exit'); setTimeout(()=>{nav('/')},100); }
     </script>
 </body>
 </html>

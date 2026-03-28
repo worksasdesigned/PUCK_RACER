@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>T-Test Live</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css">
     <style>
         .top-info { background: var(--card-bg); border-radius: 8px; padding: 15px; text-align: center; margin-bottom: 20px; border: 1px solid var(--border-color);}
         .big-time { font-size: 4rem; font-family: monospace; color: var(--text-main); font-weight: bold; line-height:1;}
@@ -156,9 +156,11 @@
                     if (firstSt === 0 || firstSt === 5) { 
                         btn.innerText = (firstSt === 5) ? t('btn_reset', 'RESET') : t('btn_start_all', 'START ALL'); 
                         btn.style.background = "var(--primary)"; 
+                        btn.style.color = "white";
                     } else { 
                         btn.innerText = t('btn_running', 'RUNNING');
                         btn.style.background = "var(--card-hover)"; 
+                        btn.style.color = "var(--text-muted)";
                     }
                 }
 
@@ -290,8 +292,8 @@
             if (act.startsWith('grp_stop')) document.getElementById(`btn-stop-${act.split('_')[2]}`).style.opacity = "0.5";
             fetch(`/api/game/action?cmd=${act}`); 
         }
-        function goBack() { doAction('reset'); location.href = 'game_ttest_names.html'; }
-        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        function goBack() { doAction('reset'); nav('game_ttest_names.html'); }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
 </body>
 </html>

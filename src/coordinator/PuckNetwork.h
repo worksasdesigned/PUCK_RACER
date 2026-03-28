@@ -18,6 +18,7 @@ struct PuckInfo {
     int rssi;
     int battery;
     int version;
+    int16_t temp_c10;  // Temperatur in 0.1°C, -999 = kein Sensor
     unsigned long lastSeen;
     unsigned long lastClickTime; 
     uint8_t lastSeqNr; // Deduplication Merker
@@ -73,6 +74,10 @@ public:
     static String getOtaStatusJSON();
 
     static void setRssiMode(bool active);
+    static void setQuietMode(bool active);
+    static bool getQuietMode();
+    static void setBrightnessLimit(uint8_t percent);
+    static uint8_t getBrightnessLimit();
     static void clearList();
     
     static NetworkStats getStats();
@@ -101,6 +106,8 @@ private:
     static volatile int queueHead; 
     static volatile int queueTail; 
     static bool rssiModeActive;
+    static bool quietModeActive;
+    static uint8_t brightnessLimit;
     
     static NetworkStats stats;
 

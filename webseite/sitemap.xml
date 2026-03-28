@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+    <!-- German pages -->
+    <url>
+        <loc>https://www.puckracer.net/</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/index.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/features.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/features.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/features.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/spiele.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/spiele.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/games.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/demo.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/demo.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/demo.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/simulator.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/hardware.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/hardware.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/hardware.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/faq.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/faq.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/faq.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/infos.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/infos.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/about.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/downloads.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/downloads.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/downloads.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/map.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.4</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/map.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/map.html"/>
+    </url>
+
+    <!-- English pages -->
+    <url>
+        <loc>https://www.puckracer.net/en/index.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>1.0</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/index.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/en/features.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/features.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/features.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/en/games.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/spiele.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/games.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/en/demo.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/demo.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/demo.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/en/hardware.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.8</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/hardware.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/hardware.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/en/faq.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/faq.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/faq.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/en/about.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/infos.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/about.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/en/downloads.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/downloads.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/downloads.html"/>
+    </url>
+    <url>
+        <loc>https://www.puckracer.net/en/map.html</loc>
+        <lastmod>2026-03-26</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.4</priority>
+        <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/map.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/map.html"/>
+    </url>
+</urlset>

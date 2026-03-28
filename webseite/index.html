@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PUCK RACER - Das DIY Reaktionslicht-System f&uuml;r Vereine & Schulen</title>
+    <meta name="description" content="PUCK RACER – Das DIY Reaktionslicht-System mit 27+ Spielen f&uuml;r Vereine, Schulen und Zuhause. Open-Source-Hardware, unter 20&euro; pro Puck, keine App n&ouml;tig.">
+    <meta name="keywords" content="Reaktionslicht, Reaktionstraining, DIY, ESP32, Puck, LED Training, Sportspiel, Verein, Schule, Open Source Hardware">
+    <link rel="canonical" href="https://www.puckracer.net/index.html">
+    <link rel="alternate" hreflang="de" href="https://www.puckracer.net/index.html">
+    <link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/index.html">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="PUCK RACER - Das DIY Reaktionslicht-System">
+    <meta property="og:description" content="Professionelles Reaktionstraining mit 27+ Spielen. Open-Source-Hardware unter 20&euro; pro Puck. Keine App, kein Abo.">
+    <meta property="og:image" content="https://www.puckracer.net/pictures/front1_tech.png">
+    <meta property="og:url" content="https://www.puckracer.net/">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="PUCK RACER - Das DIY Reaktionslicht-System">
+    <meta name="twitter:description" content="Professionelles Reaktionstraining mit 27+ Spielen. Open-Source-Hardware unter 20&euro; pro Puck.">
+    <meta name="twitter:image" content="https://www.puckracer.net/pictures/front1_tech.png">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="stylesheet" href="style.css">
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "PUCK RACER",
+        "url": "https://www.puckracer.net/",
+        "description": "Das DIY Reaktionslicht-System mit 27+ Spielen f&uuml;r Vereine, Schulen und Zuhause.",
+        "inLanguage": "de"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "PUCK RACER",
+        "description": "DIY Reaktionslicht-System mit ESP32-C3, WS2812B LEDs und 27+ Spielen f&uuml;r professionelles Reaktionstraining.",
+        "image": "https://www.puckracer.net/pictures/front1_tech.png",
+        "brand": { "@type": "Brand", "name": "PUCK RACER" },
+        "category": "Sportger&auml;te",
+        "offers": {
+            "@type": "Offer",
+            "priceCurrency": "EUR",
+            "price": "20",
+            "description": "Materialkosten pro Puck (DIY)",
+            "availability": "https://schema.org/PreOrder"
+        }
+    }
+    </script>
+    <script>
+    if (!navigator.language.startsWith('de') && !document.referrer.includes('puckracer.net')) {
+        window.location.replace('en/index.html');
+    }
+    </script>
+</head>
+<body>
+    <header>
+        <nav class="main-nav">
+            <button class="nav-toggle" aria-label="Men&uuml; &ouml;ffnen" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Men&uuml;</button>
+            <ul>
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="features.html">Features</a></li>
+                <li><a href="downloads.html">Downloads</a></li>
+                <li><a href="hardware.html">Hardware</a></li>
+                <li><a href="spiele.html">Spiele</a></li>
+                <li><a href="map.html">PUCK RACER Map</a></li>
+                <li><a href="demo.html">Demo</a></li>
+                <li><a href="infos.html">Infos</a></li>
+                <li><a href="faq.html">FAQ</a></li>
+                <li><a href="en/index.html" title="English">&#127468;&#127463; EN</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+    <div class="rainbow-border-wrapper">
+        <div class="main-container">
+
+            <div class="header-bar">
+                <img src="pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
+            </div>
+
+            <div style="background:rgba(236,201,75,0.1); border:1px solid rgba(236,201,75,0.3); border-radius:10px; padding:12px 20px; margin-bottom:25px; text-align:center; color:#ecc94b; font-size:0.9rem; width:100%;">
+                Dieses Projekt befindet sich aktuell in der <strong>Closed Beta</strong>. Hardware und Software sind noch nicht &ouml;ffentlich verf&uuml;gbar.
+            </div>
+
+            <!-- HERO -->
+            <h1>Das DIY Reaktionslicht-System f&uuml;r dein Training</h1>
+            <p class="subtitle">Professionelles Reaktionstraining f&uuml;r Vereine, Schulen und Zuhause. Preiswert, unendlich flexibel und komplett ohne App.</p>
+
+            <div class="hero-image-container">
+                <img src="pictures/front1_tech.png" alt="PUCK RACER Puck" class="puck-image">
+            </div>
+
+            <div style="display:flex; justify-content:center; gap:15px; flex-wrap:wrap; margin-bottom:40px;">
+                <a href="simulator.html" style="display:inline-block; padding:12px 28px; border-radius:10px; font-weight:700; font-size:0.9rem; text-decoration:none; text-transform:uppercase; letter-spacing:1px; background:#8aece5; color:#1a1a1a;">Live Demo</a>
+                <a href="spiele.html" style="display:inline-block; padding:12px 28px; border-radius:10px; font-weight:700; font-size:0.9rem; text-decoration:none; text-transform:uppercase; letter-spacing:1px; border:2px solid rgba(138,236,229,0.6); color:#fff;">Alle Spiele</a>
+                <a href="hardware.html" style="display:inline-block; padding:12px 28px; border-radius:10px; font-weight:700; font-size:0.9rem; text-decoration:none; text-transform:uppercase; letter-spacing:1px; border:2px solid rgba(138,236,229,0.6); color:#fff;">Selber bauen</a>
+            </div>
+
+            <!-- GAME PREVIEW -->
+            <h2 style="text-align:center; margin-bottom:10px;">Entdecke die Spiele</h2>
+            <p style="text-align:center; color:#999; margin-bottom:20px;">Von Reaktionstests bis Teamtraining &ndash; tippe auf ein Spiel f&uuml;r mehr Details.</p>
+
+            <div class="features-grid" style="grid-template-columns: repeat(auto-fill, 90px); justify-content:center; gap:15px; margin-bottom:40px;">
+                <a href="spiele.html#target" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_target.webp" alt="Target Touch" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Target Touch</span>
+                </a>
+                <a href="spiele.html#react" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_react2p.webp" alt="Reaction" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Reaction</span>
+                </a>
+                <a href="spiele.html#target" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_whac.webp" alt="Whac-a-Mole" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Whac-a-Mole</span>
+                </a>
+                <a href="spiele.html#simon" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_simon.webp" alt="Simon Says" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Simon Says</span>
+                </a>
+                <a href="spiele.html#memory" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_memory.webp" alt="Memory" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Memory</span>
+                </a>
+                <a href="spiele.html#hunt" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_hunt.webp" alt="Hunt" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Hunt</span>
+                </a>
+                <a href="spiele.html#shuttle" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_shuttle.webp" alt="Shuttle Run" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Shuttle Run</span>
+                </a>
+                <a href="spiele.html#bomb" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_bomb.webp" alt="Bomb" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Bomb</span>
+                </a>
+                <a href="spiele.html#zombie" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_zombie.webp" alt="Zombie" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Zombie</span>
+                </a>
+                <a href="spiele.html#tabata" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_tabata.webp" alt="Tabata" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Tabata</span>
+                </a>
+                <a href="spiele.html#domination" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_domination.webp" alt="Domination" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Domination</span>
+                </a>
+                <a href="spiele.html#sorting" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_sorting.webp" alt="Sorting" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Sorting</span>
+                </a>
+                <a href="spiele.html#redgreen" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_redgreen.webp" alt="Red Green" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Red Green</span>
+                </a>
+                <a href="spiele.html#musical" style="text-decoration:none; text-align:center;">
+                    <img src="pictures/img_musical.webp" alt="Musical" style="width:90px; height:90px; object-fit:cover; border-radius:12px; border:2px solid rgba(255,255,255,0.1);">
+                    <span style="display:block; color:#ccc; font-size:0.6rem; margin-top:5px; text-transform:uppercase;">Musical</span>
+                </a>
+            </div>
+
+            <!-- USP SECTION -->
+            <h2 style="text-align:center; margin-bottom:20px;">Warum Puck Racer?</h2>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <h3>&#9881; Preiswert & DIY</h3>
+                    <p>Komplette Hardware unter 20&nbsp;&euro; pro Puck. Open-Source-Platine, zahlreiche 3D-druckbare Adapter und ein tolles Projekt zum Selberbauen.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>&#9889; Professionelles Training</h3>
+                    <p>&Uuml;ber 27 Spiele, detaillierte Statistiken, Trainingspl&auml;ne und CSV-Export. Entwickelt mit Sportlehrern und Trainern.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>&#128274; Privat & Unabh&auml;ngig</h3>
+                    <p>Kein Abo, keine Cloud, keine App. L&auml;uft im Browser auf jedem Ger&auml;t. Deine Daten bleiben bei dir.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>&#128225; ESP-NOW Funktechnik</h3>
+                    <p>&Uuml;ber 50&nbsp;m Reichweite, automatische Kanalwahl und Reconnect. Kein Internet n&ouml;tig &ndash; die Pucks kommunizieren direkt.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>&#127760; 7 Sprachen</h3>
+                    <p>Das Interface ist in Deutsch, Englisch, Franz&ouml;sisch, Spanisch, Italienisch, Chinesisch, ... verf&uuml;gbar.</p>
+                </div>
+                <div class="feature-card">
+                    <h3>&#128267; 4+ Stunden Akku</h3>
+                    <p>Wiederaufladbarer 18650-Akku mit intelligenter Schutzschaltung. OTA-Updates f&uuml;r Coordinator und Pucks &uuml;ber die Weboberfl&auml;che.</p>
+                </div>
+            </div>
+
+            <!-- BOTTOM CTA -->
+            <div style="width:100%; text-align:center; padding:30px 20px; background:rgba(138,236,229,0.05); border-radius:15px; border:1px solid rgba(138,236,229,0.15); margin-bottom:30px;">
+                <h2>Bereit loszulegen?</h2>
+                <p style="text-align:center; color:#aaa; margin-bottom:20px;">Teste die interaktive Demo oder erfahre, wie du dein eigenes System baust.</p>
+                <div style="display:flex; justify-content:center; gap:15px; flex-wrap:wrap;">
+                    <a href="simulator.html" style="display:inline-block; padding:12px 28px; border-radius:10px; font-weight:700; font-size:0.9rem; text-decoration:none; text-transform:uppercase; letter-spacing:1px; background:#8aece5; color:#1a1a1a;">Live Demo starten</a>
+                    <a href="hardware.html" style="display:inline-block; padding:12px 28px; border-radius:10px; font-weight:700; font-size:0.9rem; text-decoration:none; text-transform:uppercase; letter-spacing:1px; border:2px solid rgba(138,236,229,0.6); color:#fff;">Hardware-Guide</a>
+                    <a href="downloads.html" style="display:inline-block; padding:12px 28px; border-radius:10px; font-weight:700; font-size:0.9rem; text-decoration:none; text-transform:uppercase; letter-spacing:1px; border:2px solid rgba(138,236,229,0.6); color:#fff;">Downloads</a>
+                </div>
+            </div>
+
+            <footer>
+                <a href="Impressum.html">Impressum</a> &middot; <a href="datenschutz.html">Datenschutz</a>
+            </footer>
+
+        </div>
+    </div>
+    </main>
+</body>
+</html>

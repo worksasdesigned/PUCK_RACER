@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Catch the Light Pro Aufbau - PuckRacer</title>
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css">
     <style>
         .hidden { display: none; }
         #toggleIcon { transition: transform 0.3s; display: inline-block; }
@@ -19,6 +19,11 @@
 <body>
     <header>
         <div class="logo" data-i18n="ctl_names_title">Catch the Light Pro</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
     </header>
     <main>
         <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">Initialisierung...</div>
@@ -56,12 +61,14 @@
 
             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
                 <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">START 🏁</button>
-                <button onclick="location.href='game_ctl_setup.html'" class="btn-back" data-i18n="btn_back">⬅ ZURÜCK</button>
+                <button onclick="nav('game_ctl_setup.html')" class="btn-back" data-i18n="btn_back">⬅ ZURÜCK</button>
             </div>
         </div>
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script src="player_picker.js"></script>
     <script>
         const LAYOUTS = {
@@ -206,7 +213,7 @@
 
         function startGame() { 
             sessionStorage.setItem('p_name_0', document.getElementById('name_0').value);
-            setTimeout(() => { location.href = 'game_ctl_run.html'; }, 200);
+            setTimeout(() => { nav('game_ctl_run.html'); }, 200);
         }
     </script>
 </body>

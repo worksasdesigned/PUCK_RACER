@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PuckRacer">
+    <title>Parameters - Puck Racer</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="logo" style="font-size: 1rem;" data-i18n="param_title">Parameters</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main>
+        <button onclick="nav('/settings.html')" class="btn btn-back" data-i18n="btn_back">&#11013; BACK</button>
+
+        <div class="card" style="border-left: 5px solid var(--warning);">
+            <h3 data-i18n="param_quiet_mode">Quiet Mode</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted);" data-i18n="param_quiet_desc">Mutes all puck sounds. Countdowns are replaced with a short beep.</p>
+
+            <div class="toggle-row" onclick="this.querySelector('input').click()">
+                <span data-i18n="param_quiet_toggle">🔇 Quiet Mode</span>
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="chkQuiet" onchange="toggleQuietMode(this.checked)">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="param_notifications">Notifications</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted);" data-i18n="param_notifications_desc">Enable or disable system warning messages.</p>
+
+            <div class="toggle-row" onclick="this.querySelector('input').click()">
+                <span data-i18n="param_bat_low">Battery Low Warning</span>
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="chkBatLow" checked onchange="saveSysPref('bat_low', this.checked)">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row" onclick="this.querySelector('input').click()">
+                <span data-i18n="param_bat_crit">Battery Critical Warning</span>
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="chkBatCrit" checked onchange="saveSysPref('bat_crit', this.checked)">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row" onclick="this.querySelector('input').click()">
+                <span data-i18n="param_heap_warn">Low Heap Memory Warning</span>
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="chkHeapWarn" onchange="saveSysPref('heap_warn', this.checked)">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row" onclick="this.querySelector('input').click()">
+                <span data-i18n="param_fs_warn">Low Storage Warning (LittleFS)</span>
+                <label class="switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="chkFsWarn" onchange="saveSysPref('fs_warn', this.checked)">
+                    <span class="slider-bg"></span>
+                </label>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="param_led_brightness">LED Max Brightness</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted);" data-i18n="param_brightness_desc">Limits the maximum LED brightness of all pucks.</p>
+
+            <label style="display:block; margin-bottom:5px;">
+                <input type="range" id="sldBrightness" min="10" max="100" value="100"
+                       oninput="updBrightLabel(this.value)"
+                       onchange="fetch('/api/brightness_limit?val='+this.value)"
+                       style="width:100%; margin-top:5px;">
+                <div id="lblBright" style="text-align:center; font-size:0.9rem; color:var(--text-muted);">100%</div>
+                <div id="lblRuntime" style="text-align:center; font-size:0.8rem; color:var(--text-muted);"></div>
+            </label>
+        </div>
+
+        <div class="card">
+            <h3 data-i18n="param_bat_thresholds">Battery Thresholds</h3>
+            <p style="font-size:0.85rem; color:var(--text-muted);" data-i18n="param_bat_thresholds_desc">Set voltage levels for battery warning and critical shutdown notifications.</p>
+
+            <label style="display:block; margin-bottom:15px;">
+                <span data-i18n="param_batwarn_mv">⚠️ Battery Warning (mV)</span>
+                <input type="range" id="sldBatWarn" min="3600" max="3800" step="50" value="3600"
+                       oninput="document.getElementById('lblBatWarn').textContent=this.value+'mV ('+mvToPct(this.value)+'%)'"
+                       onchange="saveSysPref('bat_warn_mv', parseInt(this.value))"
+                       style="width:100%; margin-top:5px;">
+                <div id="lblBatWarn" style="text-align:center; font-size:0.9rem; color:var(--text-muted);">3600mV (33%)</div>
+            </label>
+
+            <label style="display:block; margin-bottom:15px;">
+                <span data-i18n="param_batcrit_mv">🔴 Battery Critical (mV)</span>
+                <input type="range" id="sldBatCrit" min="3450" max="3600" step="50" value="3500"
+                       oninput="document.getElementById('lblBatCrit').textContent=this.value+'mV ('+mvToPct(this.value)+'%)'"
+                       onchange="saveSysPref('bat_crit_mv', parseInt(this.value))"
+                       style="width:100%; margin-top:5px;">
+                <div id="lblBatCrit" style="text-align:center; font-size:0.9rem; color:var(--text-muted);">3400mV (11%)</div>
+            </label>
+        </div>
+
+        <div class="card" style="opacity: 0.5; border: 1px dashed var(--border-color);">
+            <h3 data-i18n="param_future">Future Settings</h3>
+            <p style="font-size:0.85rem; color:var(--warning); margin-bottom:15px;" data-i18n="param_future_hint">These settings are not yet functional and are shown as a preview.</p>
+
+            <label style="display:block; margin-bottom:15px;">
+                <span data-i18n="param_time_reminder">Show Time Reminder Every</span>
+                <input type="range" id="sldReminder" min="10" max="60" step="5" value="30" disabled
+                       style="width:100%; margin-top:5px;">
+                <div style="text-align:center; font-size:0.9rem; color:var(--text-muted);">30 min</div>
+            </label>
+        </div>
+    </main>
+
+    <footer>by WorksAsDesigned</footer>
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>
+        startStatusLoop();
+        // --- Preferences in localStorage ---
+        function mvToPct(mv) {
+            return Math.max(0, Math.min(100, Math.round(((mv / 1000 - 3.3) / (4.2 - 3.3)) * 100)));
+        }
+        function loadSysPrefs() {
+            var prefs = JSON.parse(localStorage.getItem('sys_prefs') || '{}');
+            document.getElementById('chkBatLow').checked  = prefs.bat_low  !== false;
+            document.getElementById('chkBatCrit').checked  = prefs.bat_crit !== false;
+            document.getElementById('chkHeapWarn').checked  = prefs.heap_warn === true;
+            document.getElementById('chkFsWarn').checked    = prefs.fs_warn  === true;
+            // Battery threshold sliders
+            var warnMv = prefs.bat_warn_mv || 3600;
+            var critMv = prefs.bat_crit_mv || 3400;
+            document.getElementById('sldBatWarn').value = warnMv;
+            document.getElementById('lblBatWarn').textContent = warnMv + 'mV (' + mvToPct(warnMv) + '%)';
+            document.getElementById('sldBatCrit').value = critMv;
+            document.getElementById('lblBatCrit').textContent = critMv + 'mV (' + mvToPct(critMv) + '%)';
+        }
+        function saveSysPref(key, val) {
+            var prefs = JSON.parse(localStorage.getItem('sys_prefs') || '{}');
+            prefs[key] = val;
+            localStorage.setItem('sys_prefs', JSON.stringify(prefs));
+        }
+        loadSysPrefs();
+        // Quiet Mode State vom Coordinator laden
+        fetch('/api/quiet_mode').then(r => r.text()).then(v => {
+            document.getElementById('chkQuiet').checked = v.trim() === '1';
+        }).catch(() => {});
+        // Brightness Limit vom Coordinator laden
+        fetch('/api/brightness_limit').then(r => r.text()).then(v => {
+            var val = parseInt(v.trim()) || 100;
+            document.getElementById('sldBrightness').value = val;
+            updBrightLabel(val);
+        }).catch(() => {});
+
+        function updBrightLabel(pct) {
+            document.getElementById('lblBright').textContent = pct + '%';
+            var led = 350 * pct / 100;
+            var h = 2000 / (150 + led);
+            var hrs = Math.floor(h);
+            var min = Math.floor((h - hrs) * 60);
+            var rt = document.getElementById('lblRuntime');
+            var time = hrs + 'h ' + min + 'm';
+            if (pct < 20) time += ' (' + (typeof getTranslation === 'function' ? getTranslation('param_optimistic') : 'might be optimistic :-)') + ')';
+            var t = (typeof getTranslation === 'function' ? getTranslation('param_est_runtime') : 'Est. runtime: ~{t}').replace('{t}', time);
+            rt.textContent = t;
+        }
+        updBrightLabel(document.getElementById('sldBrightness').value);
+    </script>
+</body>
+</html>

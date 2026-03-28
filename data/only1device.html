@@ -36,6 +36,7 @@
         .start-btn { background: #0088ff; color: #fff; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1rem; font-weight: bold; width: 100%; max-width: 250px; }
         .score-display { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; color: #fff; }
     </style>
+    <script src="script.js"></script>
 </head>
 <body>
     <div class="header-bar">
@@ -137,7 +138,7 @@
                 .then(r => r.text())
                 .then(name => {
                     if (!name || name.trim() === '') {
-                        location.href = '/'; // Session free — claim it
+                        nav('/'); // Session free — claim it
                     } else {
                         document.getElementById('activeDevice').innerText = name;
                     }

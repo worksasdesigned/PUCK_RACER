@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Demo & Videos - PUCK RACER | Try the Live Demo in Your Browser</title>
+    <meta name="description" content="Try PUCK RACER for free: Interactive live demo in the browser, gameplay videos and insights into the DIY reaction light system.">
+    <link rel="canonical" href="https://www.puckracer.net/en/demo.html">
+    <link rel="alternate" hreflang="de" href="https://www.puckracer.net/demo.html">
+    <link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/demo.html">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Demo & Videos - PUCK RACER">
+    <meta property="og:description" content="Try PUCK RACER for free in your browser. Live demo, gameplay videos and simulator.">
+    <meta property="og:image" content="https://www.puckracer.net/pictures/front1_tech.png">
+    <meta property="og:url" content="https://www.puckracer.net/en/demo.html">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Demo & Videos - PUCK RACER">
+    <meta name="twitter:description" content="Try PUCK RACER for free in your browser. Live demo, gameplay videos and simulator.">
+        <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+    <link rel="manifest" href="../site.webmanifest">
+    <link rel="stylesheet" href="../style.css">
+    <style>
+        .demo-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 25px;
+            width: 100%;
+            max-width: 800px;
+            margin: 30px 0;
+        }
+        .demo-card {
+            background: rgba(43, 43, 54, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px 30px;
+            text-align: center;
+            text-decoration: none;
+            color: #fff;
+            transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+            cursor: pointer;
+            display: block;
+        }
+        .demo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(138, 236, 229, 0.3);
+            border-color: #8aece5;
+        }
+        .demo-card-icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+        }
+        .demo-card-title {
+            font-size: 1.6rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+            color: #8aece5;
+        }
+        .demo-card-desc {
+            font-size: 0.95rem;
+            color: #ccc;
+            line-height: 1.6;
+        }
+        .demo-card.disabled {
+            opacity: 0.5;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="main-nav">
+            <button class="nav-toggle" aria-label="Open menu" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Menu</button>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="features.html">Features</a></li>
+                <li><a href="downloads.html">Downloads</a></li>
+                <li><a href="hardware.html">Hardware</a></li>
+                <li><a href="games.html">Games</a></li>
+                <li><a href="map.html">PUCK RACER Map</a></li>
+                <li><a href="demo.html" class="active">Demo</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="faq.html">FAQ</a></li>
+                <li><a href="../demo.html" title="Deutsch">&#127465;&#127466; DE</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+    <div class="rainbow-border-wrapper">
+        <div class="main-container">
+            <div class="header-bar">
+                <img src="../pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
+            </div>
+
+            <h1>Demo & Media</h1>
+            <p class="subtitle">Experience PUCK RACER interactively, try the simulator or watch videos.</p>
+
+            <div class="demo-grid">
+                <a href="../simulator.html" class="demo-card">
+                    <div class="demo-card-icon">📱</div>
+                    <div class="demo-card-title">Demo</div>
+                    <div class="demo-card-desc">Experience the PUCK RACER user interface interactively in an iPhone simulation. Swipe through all games and explore the settings.</div>
+                </a>
+
+                <a href="#" class="demo-card disabled">
+                    <div class="demo-card-icon">🕹️</div>
+                    <div class="demo-card-title">Simulator</div>
+                    <div class="demo-card-desc">Play games directly in the browser. (Coming soon)</div>
+                </a>
+
+                <a href="#videos" class="demo-card" onclick="event.preventDefault(); document.getElementById('videos').scrollIntoView({behavior:'smooth'});">
+                    <div class="demo-card-icon">🎬</div>
+                    <div class="demo-card-title">Videos & Images</div>
+                    <div class="demo-card-desc">Proof of concept videos, gameplay recordings and impressions from sports training.</div>
+                </a>
+            </div>
+
+            <div id="videos" style="width:100%; max-width:800px;">
+                <h2 style="font-size:2rem; text-transform:uppercase; color:#8aece5; margin-bottom:20px; border-bottom:2px solid #8aece5; padding-bottom:10px; text-align:left;">Videos</h2>
+
+                <h3 style="color:#fff; margin-bottom:10px;">Proof of Concept</h3>
+                <p>Please note that this first video shows a very early development stage of both hardware and software. It serves purely as a "Proof of Concept".</p>
+                <p>In this phase, our main focus was on testing and validating the technical framework. This includes fundamental aspects such as reaction speed, the wireless range between the pucks and the coordinator, and battery life.</p>
+
+                <div class="video-container">
+                    <iframe src="https://www.youtube-nocookie.com/embed/xWh60fHQae0" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+
+                <h3 style="color:#fff; margin:30px 0 10px;">Video 2</h3>
+                <div class="video-container">
+                    <iframe src="https://www.youtube-nocookie.com/embed/GHWRwSe3ClU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                </div>
+            </div>
+
+            <footer>
+                <a href="../Impressum.html">Legal Notice</a> · <a href="../datenschutz.html">Privacy Policy</a>
+            </footer>
+        </div>
+    </div>
+    </main>
+</body>
+</html>

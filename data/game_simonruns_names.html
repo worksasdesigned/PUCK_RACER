@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Names - Simon Runs</title>
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css">
     <style>
         .player-row { background:var(--card-bg); padding:15px; margin-bottom:10px; border-radius:8px; border-left:5px solid var(--border-color); }
         .color-dot { display:inline-block; width:15px; height:15px; border-radius:50%; margin-right:5px; vertical-align:middle; border:1px solid #fff; transition: all 0.3s;}
@@ -18,7 +18,13 @@
     </style>
 </head>
 <body>
-    <header><div class="logo" data-i18n="simr_names_title">Setup Teams</div></header>
+    <header><div class="logo" data-i18n="simr_names_title">Setup Teams</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">Initializing...</div>
         
@@ -46,13 +52,15 @@
             <div id="playerList"></div>
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="location.href='game_simonruns_setup.html'" class="btn-warn" style="font-size:1.2rem;" data-i18n="btn_back">⬅ BACK</button>
+                <button onclick="nav('game_simonruns_setup.html')" class="btn-warn" style="font-size:1.2rem;" data-i18n="btn_back">⬅ BACK</button>
                 <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">START GAME 🏁</button>
             </div>
         </div>
     </main>
 
 <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
 <script src="player_picker.js"></script>
 <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
@@ -254,7 +262,7 @@
 
         function saveName(id, val) { sessionStorage.setItem(`p_name_${id}`, val); }
 
-        function startGame() { location.href = 'game_simonruns_run.html'; }
+        function startGame() { nav('game_simonruns_run.html'); }
     </script>
 </body>
 </html>

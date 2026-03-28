@@ -7,10 +7,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Setup - Agility T-Test</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header><div class="logo" data-i18n="g_ttest">Agility T-Test 🏃‍♂️</div></header>
+    <header><div class="logo" data-i18n="g_ttest">Agility T-Test 🏃‍♂️</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div class="card">
             <h3 data-i18n="tt_setup_time">⏱️ Game Time</h3>
@@ -69,6 +75,8 @@
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
         let connectedPucks = 0;
@@ -128,11 +136,11 @@
             sessionStorage.setItem('tt_sound', document.getElementById('chkSound').checked ? 1 : 0);
             sessionStorage.setItem('tt_speed', document.getElementById('spdSlider').value);
             
-            location.href = 'game_ttest_names.html';
+            nav('game_ttest_names.html');
         }
 
         function cancelSetup() {
-            fetch('/api/game/action?cmd=exit').then(() => location.href = '/').catch(() => location.href = '/');
+            fetch('/api/game/action?cmd=exit').then(() => nav('/')).catch(() => nav('/'));
         }
     </script>
     <script>

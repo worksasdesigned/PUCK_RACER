@@ -198,8 +198,27 @@ After the real first beta is released il will provide the bin files in case of u
     - Cat Reflex Highlander Mode adjusted  
 
 **V2.93.0**   
-    - Bidirectional heartbeat puck firmware 81
-  
+    - Bidirectional heartbeat puck firmware 81  
+
+**V2.94.2**   
+    - UI 2.0 new design    
+
+**V2.96.1**   
+    - Battery Management and auto Power Saving Mode   
+    - Toast Message "low Battery level", "shutdown Puck due to critical battery level"   
+    - Puck shutdown (deepsleep) at low Battery level (safety)   
+    - Puck blocks reboot under 3,6V Battery level (safety)  
+    - Max LED Power Consumption reduced to 1.2A (should only effect white @35LEDs) (safety)   
+    - Hardware Watchdog implemented (Puck restarts after 3s off non-reactivity)   
+
+**V2.97.1**   
+    - Anti-cache links added (Core version behind urls)   
+    - _setup.html remembers settings, when navigation back from _run to _names  to _setup.html    
+
+**V2.98.0**   
+    - Gerber and PCB files addes   
+    - temperature control, warning and local alarm added     
+
 --- 
 
 

@@ -1,0 +1,375 @@
+(footprint "TP4056 Module"
+	(version 20241229)
+	(generator "pcbnew")
+	(generator_version "9.0")
+	(layer "F.Cu")
+	(property "Reference" "REF**"
+		(at 15.24 -12.7 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "dd2f6b13-9e35-4a67-90ac-cf0d1ea34e5a")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Value" "TP4056-Module"
+		(at 15.24 -10.16 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "3559e287-424e-4397-b080-77c7ba6f395b")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "0a545aab-57d1-469c-aff8-bb54f23e15e5")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" ""
+		(at 0 0 0)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "1241002a-4fcd-460e-b3fd-0792710a25f9")
+		(effects
+			(font
+				(size 1.27 1.27)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd)
+	(fp_line
+		(start 0 -17.2)
+		(end 0 0)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "57b46e54-0fd7-428f-89e9-2384adc40b64")
+	)
+	(fp_line
+		(start 0 -17.2)
+		(end 28 -17.2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "ef7ac9b1-db97-468d-83bd-7a544b867249")
+	)
+	(fp_line
+		(start 0 0)
+		(end 28 0)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "f7e200ad-0805-42f5-9f32-792f4044fcf7")
+	)
+	(fp_line
+		(start 28 -17.2)
+		(end 28 0)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "d250ce07-2cae-4efd-a4fd-02b1bd04a321")
+	)
+	(fp_line
+		(start 0 -17.2)
+		(end 28 -17.2)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "c5a1761e-3391-4e74-90c9-947fd66e1fc6")
+	)
+	(fp_line
+		(start 0 0)
+		(end 0 -17.2)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "7e969d15-6cc0-4258-8b27-586608a21adb")
+	)
+	(fp_line
+		(start 28 -17.2)
+		(end 28 0)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "851ab59d-1fd7-45c7-a775-29797327cafc")
+	)
+	(fp_line
+		(start 28 0)
+		(end 0 0)
+		(stroke
+			(width 0.05)
+			(type solid)
+		)
+		(layer "F.CrtYd")
+		(uuid "edc9ab4f-487a-48dc-95f2-4d87f0e9cf9e")
+	)
+	(fp_line
+		(start -1 -12.2)
+		(end -1 -5.1)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "d0dfd7c1-401d-4f64-8463-f4c0813ac28f")
+	)
+	(fp_line
+		(start -1 -5.1)
+		(end 0 -5.1)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "bbb15673-6d42-42b8-9d51-7515b3ad9ee9")
+	)
+	(fp_line
+		(start 0 -12.2)
+		(end -1 -12.2)
+		(stroke
+			(width 0.1)
+			(type solid)
+		)
+		(layer "F.Fab")
+		(uuid "a3668681-09b1-48f0-a7b1-f6b24183a469")
+	)
+	(fp_text user "B-"
+		(at 23 -4 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "749dfe75-c0d6-4872-9330-29c5bbcb8ff8")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(fp_text user "IN-"
+		(at 5.5 -1.5 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "b635b16e-60bb-4b3e-9fc3-47d34eef8381")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(fp_text user "OUT-"
+		(at 22 -1.5 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "da469d11-a8a4-414b-9449-d151eeaf4853")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(fp_text user "IN+"
+		(at 5.5 -15.5 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "dabe541b-b164-4180-97a4-5ca761b86800")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(fp_text user "OUT+"
+		(at 22 -15.5 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "dd00c2e1-6027-4717-b312-4fab3ee52002")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(fp_text user "B+"
+		(at 23 -13 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "fd470e95-4861-44fe-b1e4-6d8a7c66e144")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(fp_text user "${REFERENCE}"
+		(at 15.24 -7.62 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "e6521bef-4109-48f7-8b88-4121b0468927")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" thru_hole circle
+		(at 2.5 -15.6)
+		(size 2 2)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "e83e0227-ac0f-4180-82bd-68d3a7b56476")
+	)
+	(pad "2" thru_hole circle
+		(at 2.5 -1.6)
+		(size 2 2)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "9a9f2d82-f64d-4264-8bec-c182528fc4de")
+	)
+	(pad "3" thru_hole circle
+		(at 25.5 -15.6)
+		(size 2 2)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "1b54105e-6590-4d26-a763-ecfcf81eedc4")
+	)
+	(pad "4" thru_hole circle
+		(at 25.5 -1.6)
+		(size 2 2)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "519f6e60-eb9c-479d-80df-fda781585c2a")
+	)
+	(pad "5" thru_hole circle
+		(at 25.5 -13.06)
+		(size 2 2)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "120a7b0f-ddfd-4447-85c1-35665465acdb")
+	)
+	(pad "6" thru_hole circle
+		(at 25.5 -4.14)
+		(size 2 2)
+		(drill 1)
+		(layers "*.Cu" "*.Mask")
+		(remove_unused_layers no)
+		(uuid "23bb2798-d93a-4696-a962-c305c4298a0c")
+	)
+	(embedded_fonts no)
+	(model "${KIPRJMOD}/Libraries/TP4056 Module/PinHeader_1x01_P2.54mm_Vertical.step"
+		(offset
+			(xyz 2.6 1.7 2.5)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 180 -0 -0)
+		)
+	)
+	(model "${KIPRJMOD}/Libraries/TP4056 Module/PinHeader_1x01_P2.54mm_Vertical.step"
+		(offset
+			(xyz 2.6 15.7 2.5)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 180 -0 -0)
+		)
+	)
+	(model "${KIPRJMOD}/Libraries/TP4056 Module/PinHeader_1x01_P2.54mm_Vertical.step"
+		(offset
+			(xyz 25.6 1.7 2.5)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -180 -0 -0)
+		)
+	)
+	(model "${KIPRJMOD}/Libraries/TP4056 Module/PinHeader_1x01_P2.54mm_Vertical.step"
+		(offset
+			(xyz 25.6 4.2 2.5)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 180 -0 -0)
+		)
+	)
+	(model "${KIPRJMOD}/Libraries/TP4056 Module/PinHeader_1x01_P2.54mm_Vertical.step"
+		(offset
+			(xyz 25.6 13.2 2.5)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz 180 -0 -0)
+		)
+	)
+	(model "${KIPRJMOD}/Libraries/TP4056 Module/PinHeader_1x01_P2.54mm_Vertical.step"
+		(offset
+			(xyz 25.6 15.7 2.5)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -180 -0 -0)
+		)
+	)
+	(model "${KIPRJMOD}/Libraries/TP4056 Module/HW-373.stp"
+		(offset
+			(xyz 15 6.5 4)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -90 -0 180)
+		)
+	)
+)

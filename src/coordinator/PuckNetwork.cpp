@@ -8,8 +8,15 @@ PuckInfo PuckNetwork::pucks[MAX_PEERS];
 volatile QueueItem PuckNetwork::eventQueue[QUEUE_SIZE];
 volatile int PuckNetwork::queueHead = 0;
 volatile int PuckNetwork::queueTail = 0;
-bool PuckNetwork::rssiModeActive = false; 
-static uint8_t globalCmdSeq = 0; 
+bool PuckNetwork::rssiModeActive = false;
+bool PuckNetwork::quietModeActive = false;
+uint8_t PuckNetwork::brightnessLimit = 100;
+static uint8_t globalCmdSeq = 0;
+
+// Quiet Mode: verzögerter Countdown-Beep
+static unsigned long quietBeepTime = 0;
+static bool quietBeepBroadcast = false;
+static uint8_t quietBeepMac[6] = {};
 
 NetworkStats PuckNetwork::stats = {0, 0, 0, 0, 0, 0};
 
@@ -126,9 +133,15 @@ void PuckNetwork::update() {
             }
         }
 
-        if (item.evt.type == EVT_HELLO) { 
+        if (item.evt.type == EVT_HELLO) {
             CommandPacket ack; ack.cmd = CMD_PAIR_ACK;
             sendToPuck(item.mac, ack);
+
+            if (brightnessLimit < 100) {
+                CommandPacket brt; memset(&brt, 0, sizeof(brt));
+                brt.cmd = CMD_SET_BRIGHTNESS; brt.extra = brightnessLimit;
+                sendToPuck(item.mac, brt);
+            }
 
             bool restored = false;
             for (int i = 0; i < MAX_PEERS; i++) {
@@ -217,6 +230,20 @@ void PuckNetwork::update() {
                 esp_now_send(pucks[i].mac, (uint8_t*)&cp, sizeof(cp));
             }
         }
+    }
+
+    // Quiet Mode: verzögerter Countdown-Beep
+    if (quietBeepTime != 0 && millis() >= quietBeepTime) {
+        quietBeepTime = 0;
+        CommandPacket beep;
+        memset(&beep, 0, sizeof(beep));
+        beep.cmd = CMD_SOUND;
+        beep.duration = 80;
+        // Quiet Mode temporär deaktivieren, damit der Beep durchkommt
+        quietModeActive = false;
+        if (quietBeepBroadcast) broadcast(beep);
+        else sendToPuck(quietBeepMac, beep);
+        quietModeActive = true;
     }
 
     if (otaStatus.state != OTA_IDLE) {
@@ -373,7 +400,8 @@ void PuckNetwork::OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingDat
                 memcpy(pucks[i].mac, mac_addr, 6);
                 pucks[i].active = true;
                 
-                pucks[i].lastSeqNr = tempEvt.seqNr - 1; 
+                pucks[i].lastSeqNr = tempEvt.seqNr - 1;
+                pucks[i].temp_c10 = -999;
                 pucks[i].totalClicks = StatsManager::getPuckClicks(mac_addr);
                 pucks[i].totalMinutes = StatsManager::getPuckTime(mac_addr);
                 pucks[i].lastMinuteTick = millis();
@@ -409,13 +437,56 @@ void PuckNetwork::OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingDat
         pucks[puckIdx].rssi = current_rssi;
         pucks[puckIdx].battery = tempEvt.battery_mv;
         pucks[puckIdx].version = tempEvt.version;
+        pucks[puckIdx].temp_c10 = tempEvt.temp_c10;
         pucks[puckIdx].lastSeen = millis();
         
         queueHead = nextHead;
     }
 }
 
+void PuckNetwork::setQuietMode(bool active) { quietModeActive = active; }
+bool PuckNetwork::getQuietMode() { return quietModeActive; }
+
+void PuckNetwork::setBrightnessLimit(uint8_t percent) {
+    brightnessLimit = constrain(percent, 10, 100);
+    CommandPacket cmd; memset(&cmd, 0, sizeof(cmd));
+    cmd.cmd = CMD_SET_BRIGHTNESS; cmd.extra = brightnessLimit;
+    broadcast(cmd);
+    // Gecachten Effekt erneut senden, damit Helligkeit sofort sichtbar wird
+    for (int i = 0; i < MAX_PEERS; i++) {
+        if (pucks[i].active && pucks[i].hasLastEffect) {
+            sendToPuck(pucks[i].mac, pucks[i].lastEffect);
+        }
+    }
+}
+uint8_t PuckNetwork::getBrightnessLimit() { return brightnessLimit; }
+
+// Quiet Mode: Sounds filtern. Countdowns → verzögerter Beep am Ende, Rest → stumm.
+// SEQ_SKI:  3x (100ms+900ms) = 3000ms bis GO-Ton
+// SEQ_RACE: 2x (400ms+400ms) = 1600ms bis GO-Ton
+static bool filterSoundForQuietMode(CommandPacket &cmd, bool isBroadcast = false, const uint8_t* mac = nullptr) {
+    if (!PuckNetwork::getQuietMode()) return true;
+    if (cmd.cmd == CMD_SOUND) return false;
+    if (cmd.cmd == CMD_SEQUENCE) {
+        if (cmd.extra == SEQ_SKI) {
+            quietBeepTime = millis() + 3000;
+            quietBeepBroadcast = isBroadcast;
+            if (mac) memcpy(quietBeepMac, mac, 6);
+            return false;
+        }
+        if (cmd.extra == SEQ_RACE) {
+            quietBeepTime = millis() + 1600;
+            quietBeepBroadcast = isBroadcast;
+            if (mac) memcpy(quietBeepMac, mac, 6);
+            return false;
+        }
+        return false;
+    }
+    return true;
+}
+
 void PuckNetwork::sendToPuck(const uint8_t* mac, CommandPacket cmd) {
+    if (!filterSoundForQuietMode(cmd, false, mac)) return;
     globalCmdSeq++;
     cmd.seqNr = globalCmdSeq;
 
@@ -453,6 +524,7 @@ void PuckNetwork::sendToPuck(const uint8_t* mac, CommandPacket cmd) {
 }
 
 void PuckNetwork::broadcast(CommandPacket cmd) {
+    if (!filterSoundForQuietMode(cmd, true, nullptr)) return;
     globalCmdSeq++;
     cmd.seqNr = globalCmdSeq;
 

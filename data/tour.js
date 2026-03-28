@@ -80,9 +80,7 @@ const tourSteps = [
     { page: 'index', target: '#statusBarGroup', textKey: 'step_status', arrow: 'right' },
     { page: 'index', target: '#filterBar', textKey: 'step_filter' },
 
-    { page: 'index', target: '.tile[data-id="shuttle"] .help-btn', textKey: 'step_shuttle_help', requireClick: true, placement: 'top' },
-    { page: 'index', target: '#helpModal .close-modal', textKey: 'step_shuttle_modal', requireInteraction: 'modal_close', placement: 'bottom' },
-    { page: 'index', target: '.tile[data-id="shuttle"]', textKey: 'step_shuttle', requireClick: true },
+    { page: 'index', target: '.game-card[data-id="shuttle"]', textKey: 'step_shuttle', requireClick: true },
 
     { page: 'shuttle_setup', target: 'main .card:nth-of-type(1)', textKey: 'step_setup_card', allowInteraction: true },
     { page: 'shuttle_setup', target: 'main .card:nth-of-type(2)', textKey: 'step_setup_rounds', placement: 'top', allowInteraction: true },
@@ -588,7 +586,11 @@ function showTourStep() {
 
     document.getElementById('tourOverlay').style.display = 'block';
     targetEl.classList.add('tour-highlight');
-    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (targetEl.closest('.carousel')) {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    } else {
+        targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 
     let bubble = document.getElementById('tourBubble');
     document.getElementById('tourText').innerHTML = getTourText(step.textKey);
@@ -616,7 +618,7 @@ function showTourStep() {
 
         const clickHandler = function (e) {
             // Verhindert, dass das Tutorial fälschlicherweise weitergeht, wenn man auf den Stern oder das Fragezeichen klickt
-            if (step.target === '.tile[data-id="shuttle"]') {
+            if (step.target === '.game-card[data-id="shuttle"]') {
                 if (e.target.closest('.help-btn') || e.target.closest('.fav-btn')) {
                     e.stopPropagation();
                     e.preventDefault();

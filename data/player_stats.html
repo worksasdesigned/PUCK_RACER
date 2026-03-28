@@ -10,6 +10,8 @@
     <link rel="stylesheet" href="style.css">
     <script src="chart.umd.js"></script>
     <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <style>
         .header-title { font-size: 1.2rem; font-weight: bold; color: var(--primary); margin-bottom: 20px; text-align: center; }
         
@@ -44,6 +46,11 @@
 <body>
     <header>
         <div class="logo" data-i18n="ps_title">Player Stats</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
     </header>
 
     <main>
@@ -55,7 +62,7 @@
             <span class="icon">🤷‍♂️</span><p data-i18n="ps_empty">Noch keine Statistiken für diesen Spieler vorhanden.</p>
         </div>
         <div id="statsContent" style="display:none;"></div>
-        <button onclick="location.href='player_manager.html'" class="btn-back" style="margin-top: 30px;" data-i18n="ps_back">⬅ Zurück zum Manager</button>
+        <button onclick="nav('player_manager.html')" class="btn-back" style="margin-top: 30px;" data-i18n="ps_back">⬅ Zurück zum Manager</button>
     </main>
 
     <script>

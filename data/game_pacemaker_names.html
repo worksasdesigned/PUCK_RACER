@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Track - Pacemaker</title>
-    <link rel="stylesheet" href="style.css?v=5">
+    <link rel="stylesheet" href="style.css">
     <style>
         .player-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; background:var(--card-bg); padding:10px; border-radius:8px; border-left: 5px solid #fff;}
         .color-box { width: 30px; height: 30px; border-radius: 50%; border: 2px solid #fff; flex-shrink: 0; transition: all 0.3s;}
@@ -25,7 +25,13 @@
     </style>
 </head>
 <body>
-    <header><div class="logo" data-i18n="pm_track_title">Build the Track</div></header>
+    <header><div class="logo" data-i18n="pm_track_title">Build the Track</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="pm_track_loading">Analyzing Pucks...</div>
         
@@ -54,12 +60,14 @@
 
             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
                 <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="pm_btn_run">TO RUN SCREEN 🏁</button>
-                <button onclick="location.href='game_pacemaker_setup.html'" class="btn-back" data-i18n="btn_back">⬅ BACK</button>
+                <button onclick="nav('game_pacemaker_setup.html')" class="btn-back" data-i18n="btn_back">⬅ BACK</button>
             </div>
         </div>
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script src="player_picker.js"></script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
@@ -287,7 +295,7 @@
 
         function startGame() {
             // Namen sind dank oninput bereits im sessionStorage.
-            setTimeout(() => { location.href = 'game_pacemaker_run.html'; }, 200);
+            setTimeout(() => { nav('game_pacemaker_run.html'); }, 200);
         }
     </script>
 </body>

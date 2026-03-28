@@ -155,9 +155,11 @@
             if (data.st === 0 || data.st === 4) { 
                 btnStart.innerText = getTranslation('btn_start'); 
                 btnStart.style.background = "var(--primary)"; 
+                btnStart.style.color = "white";
             } else { 
                 btnStart.innerText = getTranslation('btn_reset'); 
                 btnStart.style.background = "var(--card-hover)"; 
+                btnStart.style.color = "var(--text-muted)";
             }
 
             if (data.st === 5) {
@@ -173,8 +175,8 @@
         }
 
         function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
-        function goBack() { doAction('reset'); location.href = 'game_tabata_setup.html'; }
-        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        function goBack() { doAction('reset'); nav('game_tabata_setup.html'); }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
 </body>
 </html>

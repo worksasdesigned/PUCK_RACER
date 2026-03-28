@@ -107,9 +107,11 @@
                 if (data.st === 0 || data.st === 2) {
                     bStart.innerText = getTranslation('btn_start') || "START";
                     bStart.style.background = "var(--primary)";
+                    bStart.style.color = "white";
                 } else {
                     bStart.innerText = "RUNNING";
                     bStart.style.background = "var(--card-hover)";
+                    bStart.style.color = "var(--text-muted)";
                 }
 
                 // Update Scores & Aktiven Spieler
@@ -129,8 +131,8 @@
         }
 
         function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
-        function goBack() { doAction('reset'); location.href = 'game_tttt_names.html'; }
-        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        function goBack() { doAction('reset'); nav('game_tttt_names.html'); }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
 </body>
 </html>

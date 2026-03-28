@@ -7,10 +7,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Setup - Sorting Hat</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header><div class="logo" data-i18n="g_sorting">The Sorting Hat 🎩</div></header>
+    <header><div class="logo" data-i18n="g_sorting">The Sorting Hat 🎩</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div class="card">
             <h3 data-i18n="sort_setup_cfg">🔢 Configuration</h3>
@@ -41,6 +47,8 @@
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
@@ -72,9 +80,9 @@
 			sessionStorage.setItem('sort_grp', grp);
 			sessionStorage.setItem('sort_plr', plr);
 			sessionStorage.setItem('sort_puck', puck);
-			location.href = 'game_sorting_names.html';
+			nav('game_sorting_names.html');
 		}
-        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
     <script>
     window.TRAINING_FIELDS = [

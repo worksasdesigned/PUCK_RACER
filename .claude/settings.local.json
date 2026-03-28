@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(for f:*)",
+      "Bash(do grep:*)",
+      "Bash(echo \"$f\")",
+      "Bash(done)",
+      "Bash(grep -h \"cnt-green\" *.html)",
+      "Bash(do if:*)",
+      "Bash(then echo:*)",
+      "Bash(fi)",
+      "Bash(grep -rL \"cnt-green\" *.html)",
+      "Bash(while read:*)",
+      "Read(//tmp/**)",
+      "Bash(do echo:*)",
+      "Bash(sed -n '/<header>/,/<\\\\/header>/p' \"$f\")",
+      "Bash(grep -rL \"startStatusLoop\" *.html)",
+      "Bash(sed -n '/<header>/,/<\\\\/header>/p' game_ball_setup.html)",
+      "Bash(sed -n '/<header>/,/<\\\\/header>/p' game_bomb_names.html)",
+      "Bash(python find_unused_keys.py)",
+      "Bash(do sed:*)",
+      "Bash(grep -n '\"\"desc_timer\\\\|\"\"desc_players' lang.js)",
+      "Bash(grep -E \"\\\\.js$\")"
+    ]
+  }
+}

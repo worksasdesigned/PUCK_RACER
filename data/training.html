@@ -758,7 +758,7 @@
                 }
             }
 
-            location.href = gDef.url;
+            nav(gDef.url);
         }
 
         // ========================================================================
@@ -805,7 +805,7 @@
                 sessionStorage.setItem('training_play_mode', '1');
             }
 
-            location.href = gDef.url;
+            nav(gDef.url);
         }
 
         // ========================================================================
@@ -951,7 +951,7 @@
         function goHome() {
             sessionStorage.removeItem('training_config_id');
             sessionStorage.removeItem('training_config_idx');
-            location.href = '/';
+            nav('/');
         }
     </script>
 </body>

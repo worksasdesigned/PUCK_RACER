@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Bomb Squad Live</title>
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css">
     <style>
         .top-row { display: flex; justify-content: space-between; margin-bottom: 20px; align-items: center;}
         .round-box { font-size: 1.2rem; color: var(--text-muted); font-weight:bold;}
@@ -240,22 +240,26 @@
             if (data.round === 0 || data.state === 0) {
                 btn.innerText = getTranslation('btn_start') || "START";
                 btn.style.background = "var(--primary)";
+                btn.style.color = "white";
                 btn.setAttribute('onclick', "doAction('start')");
             } 
             else if (data.state === 4) {
                 if (data.round >= data.max) {
                      btn.innerText = getTranslation('btn_reset') || "RESET";
                      btn.style.background = "var(--success)";
+                     btn.style.color = "white";
                      btn.setAttribute('onclick', "doAction('reset')");
                 } else {
                      btn.innerText = getTranslation('bomb_btn_next') || "NEXT ROUND";
                      btn.style.background = "var(--primary)";
+                     btn.style.color = "white";
                      btn.setAttribute('onclick', "doAction('start')");
                 }
             } 
             else {
                 btn.innerText = getTranslation('btn_running') || "RUNNING";
                 btn.style.background = "var(--card-hover)";
+                btn.style.color = "var(--text-muted)";
                 btn.removeAttribute('onclick'); 
             }
 
@@ -349,11 +353,11 @@
         function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
         
         function goBack() {
-            fetch('/api/game/action?cmd=reset').then(() => location.href = 'game_bomb_names.html');
+            fetch('/api/game/action?cmd=reset').then(() => nav('game_bomb_names.html'));
         }
         
         function goHome() { 
-            fetch('/api/game/action?cmd=exit').then(() => location.href = '/');
+            fetch('/api/game/action?cmd=exit').then(() => nav('/'));
         }
     </script>
 </body>

@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Names - Simon</title>
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css">
     <style>
         .player-row { 
             display: flex; align-items: center; gap: 10px; 
@@ -27,7 +27,13 @@
     </style>
 </head>
 <body>
-    <header><div class="logo" data-i18n="sim_names_title">Simon Players</div></header>
+    <header><div class="logo" data-i18n="sim_names_title">Simon Players</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div id="loading" style="text-align:center; padding:20px; color:var(--text-muted);" data-i18n="loading_pucks">
             Loading Pucks...
@@ -56,13 +62,15 @@
             <div id="playerList" class="card"></div>
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <button onclick="location.href='game_simon_setup.html'" class="btn-warn" style="font-size:1.2rem;" data-i18n="btn_back">⬅ BACK</button>
+                <button onclick="nav('game_simon_setup.html')" class="btn-warn" style="font-size:1.2rem;" data-i18n="btn_back">⬅ BACK</button>
                 <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">TO GAME 🏁</button>
             </div>
         </div>
     </main>
 
 <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
 <script src="player_picker.js"></script>
 <script>
     if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
@@ -240,7 +248,7 @@
         await fetch(`/api/game/action?cmd=cfg_auto&val=${auto}`);
         await fetch(`/api/game/action?cmd=cfg_sound&val=${snd}`);
 
-        setTimeout(() => { location.href = 'game_simon_run.html'; }, 200);
+        setTimeout(() => { nav('game_simon_run.html'); }, 200);
     }
 </script>
 </body>

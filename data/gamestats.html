@@ -63,6 +63,11 @@
     </header>
 
     <main class="stats-page">
+        <div class="stat-card" style="text-align:center; border-color:#1a3a1a;">
+            <div class="total-lbl" style="margin-bottom:5px;">⏱ TOTAL PLAYTIME</div>
+            <div class="total-num" id="totalPlaytime">...</div>
+        </div>
+
         <div class="stat-card">
             <div class="stat-title">▸ GAMES RANKED BY POPULARITY</div>
             <div id="gameList"></div>
@@ -73,7 +78,7 @@
         </div>
 
         <div class="bottom-nav">
-            <button onclick="location.href='/admin.html'" class="btn-back" style="width:100%;">⬅ Back to Admin</button>
+            <button onclick="nav('/admin.html')" class="btn-back" style="width:100%;">⬅ Back to Admin</button>
         </div>
     </main>
 
@@ -98,6 +103,11 @@
             17:'🏃‍♂️🎯🏃‍♀️', 18:'🏃‍♂️⏱️🟢', 19:'🧠🏃', 20:'🔴⚔🔵',
             21:'⚡🎯👀', 22:'⏱️🥵', 23:'🏀🏃‍♂️', 24:'🔨🧠'
         };
+
+        fetch('/api/stats/playtime').then(r=>r.text()).then(m => {
+            var h = Math.floor(m / 60); var min = m % 60;
+            document.getElementById('totalPlaytime').innerText = h + 'h ' + min + 'm';
+        });
 
         fetch('/api/stats/games').then(r=>r.json()).then(data => {
             let entries = [];

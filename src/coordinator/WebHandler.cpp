@@ -7,7 +7,7 @@
 #include "StatsManager.h" 
 #include "WifiScanner.h"
 
-#define SYS_VER "v2.93.0" 
+#define SYS_VER "v2.98.0" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;
@@ -188,7 +188,8 @@ void WebHandler::begin() {
                 json += "\"lastSeen\":" + String(now - p[i].lastSeen) + ",";
                 json += "\"lastClick\":" + String(clickDiff) + ",";
                 json += "\"clicks\":" + String(p[i].totalClicks) + ",";
-                json += "\"time\":" + String(p[i].totalMinutes);
+                json += "\"time\":" + String(p[i].totalMinutes) + ",";
+                json += "\"temp\":" + String(p[i].temp_c10);
                 json += "}";
                 first = false;
             }
@@ -219,6 +220,7 @@ void WebHandler::begin() {
             g->processCommand(cmd, val);
             
             if (cmd == "exit") {
+                StatsManager::stopPlaytime();
                 StatsManager::saveAll();
             }
             
@@ -234,6 +236,11 @@ void WebHandler::begin() {
         }
         json += "}";
         req->send(200, "application/json", json);
+    });
+
+    server.on("/api/stats/playtime", HTTP_GET, [](AsyncWebServerRequest *req){
+        uint32_t m = StatsManager::getTotalPlaytimeMinutes();
+        req->send(200, "text/plain", String(m));
     });
 
 // =========================================================================
@@ -404,6 +411,20 @@ void WebHandler::begin() {
         req->send(200, "text/plain", val ? "RSSI ON" : "RSSI OFF");
     });
     
+    server.on("/api/quiet_mode", HTTP_GET, [](AsyncWebServerRequest *req){
+        if (req->hasParam("val")) {
+            PuckNetwork::setQuietMode(req->getParam("val")->value().toInt() == 1);
+        }
+        req->send(200, "text/plain", PuckNetwork::getQuietMode() ? "1" : "0");
+    });
+
+    server.on("/api/brightness_limit", HTTP_GET, [](AsyncWebServerRequest *req){
+        if (req->hasParam("val")) {
+            PuckNetwork::setBrightnessLimit(req->getParam("val")->value().toInt());
+        }
+        req->send(200, "text/plain", String(PuckNetwork::getBrightnessLimit()));
+    });
+
     server.on("/api/puck_reset", HTTP_GET, [](AsyncWebServerRequest *request){
         PuckNetwork::clearList();
         request->send(200, "text/plain", "OK");
@@ -729,11 +750,9 @@ void WebHandler::begin() {
     });
 
     // Static files last — all /api/ routes are matched first
-    // server.serveStatic("/", LittleFS, "/");
-    // Static files last — all /api/ routes are matched first
     server.serveStatic("/", LittleFS, "/")
           .setDefaultFile("index.html")
-          .setCacheControl("no-store, no-cache, must-revalidate, max-age=0");
+          .setCacheControl("max-age=86400");
 
     server.begin();
 

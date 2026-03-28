@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Layout - Memory</title>
-    <link rel="stylesheet" href="style.css?v=4">
+    <link rel="stylesheet" href="style.css">
     <style>
         .hidden { display: none; }
         #toggleIcon { transition: transform 0.3s; display: inline-block; }
@@ -15,7 +15,13 @@
     </style>
 </head>
 <body>
-    <header><div class="logo" data-i18n="mem_names_title">Setup Layout</div></header>
+    <header><div class="logo" data-i18n="mem_names_title">Setup Layout</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div id="loading" style="text-align:center; color:var(--text-muted);" data-i18n="loading">Initializing...</div>
         
@@ -37,12 +43,14 @@
 
             <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 20px;">
                 <button onclick="startGame()" class="btn-primary" style="font-size:1.5rem;" data-i18n="btn_start_game">TO GAME 🏁</button>
-                <button onclick="location.href='game_memory_setup.html'" class="btn-back" data-i18n="btn_back">⬅ BACK</button>
+                <button onclick="nav('game_memory_setup.html')" class="btn-back" data-i18n="btn_back">⬅ BACK</button>
             </div>
         </div>
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
         const MEM_LAYOUTS = {
@@ -136,7 +144,7 @@
         }
 
         function startGame() {
-            setTimeout(() => { location.href = 'game_memory_run.html'; }, 200);
+            setTimeout(() => { nav('game_memory_run.html'); }, 200);
         }
     </script>
 </body>

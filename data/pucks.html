@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PuckRacer">
+    <title>Connected Pucks</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        td { font-variant-numeric: tabular-nums; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo" style="font-size: 1rem;" data-i18n="set_pucks">Connected Pucks</div>
+        <div class="status-bar">
+            <div class="status-dot dot-green" id="cnt-green">0</div>
+            <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+            <div class="status-dot dot-red" id="cnt-red">0</div>
+        </div>
+    </header>
+
+    <main>
+        <button onclick="nav('/settings.html')" class="btn btn-back" data-i18n="btn_back">&#11013; BACK</button>
+
+        <div class="card">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 data-i18n="set_pucks">Connected Pucks</h3>
+                <button onclick="flushPucks()" class="btn-warn" style="padding:5px 10px; font-size:0.8rem;" data-i18n="pucks_flush">♻️ Flush Dead Pucks</button>
+            </div>
+
+            <table style="width:100%; table-layout: fixed; font-size: 0.9rem;">
+                <thead>
+                    <tr>
+                        <th style="width: 15%" data-i18n="pucks_id">ID</th>
+                        <th style="width: 10%" data-i18n="pucks_ver">Ver</th>
+                        <th style="width: 25%" data-i18n="pucks_signal">Signal</th>
+                        <th style="width: 15%" data-i18n="pucks_batt">Batt</th>
+                        <th style="width: 15%" data-i18n="pucks_clicks">Clicks</th>
+                        <th style="width: 20%" data-i18n="pucks_uptime">Uptime</th>
+                    </tr>
+                </thead>
+                <tbody id="puckTableContent">
+                </tbody>
+            </table>
+            <div id="loadingMsg" style="text-align:center; padding:10px; color:#aaa;" data-i18n="pucks_searching">Searching Pucks...</div>
+        </div>
+    </main>
+
+    <footer>by WorksAsDesigned</footer>
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        fetch('/api/rssi_mode?val=1');
+        window.onbeforeunload = function() { fetch('/api/rssi_mode?val=0'); };
+
+        const COLORS = ['#0000FF', '#00FF00', '#FF0000', '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080', '#40E0D0', '#FFC0CB', '#FFFFFF', '#00FF00'];
+
+        function updatePuckTable() {
+            fetch('/api/status').then(r => r.json()).then(data => {
+                const tbody = document.getElementById('puckTableContent');
+                const loading = document.getElementById('loadingMsg');
+
+                if(data.length > 0) loading.style.display = 'none';
+                else loading.style.display = 'block';
+
+                data.forEach((p) => {
+                    let row = document.getElementById(`row-${p.id}`);
+                    const color = COLORS[p.id % COLORS.length];
+                    const signalWidth = Math.min(100, Math.max(0, (p.rssi + 95) * 2.5));
+
+                    let rssiColor = '#ff0000';
+                    if(p.rssi >= -65) rssiColor = '#00ff00';
+                    else if(p.rssi >= -80) rssiColor = '#ffff00';
+
+                    const isClick = (p.lastClick < 2000);
+                    const rowBg = isClick ? "#333" : "";
+
+                    let t = p.time || 0;
+                    let timeStr = `${Math.floor(t/60)}h ${t%60}m`;
+
+                    if (!row) {
+                        row = document.createElement('tr');
+                        row.id = `row-${p.id}`;
+                        row.innerHTML = `
+                            <td><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${color};margin-right:2px;"></span> #${p.id}</td>
+                            <td id="ver-${p.id}"></td>
+                            <td>
+                                <div style="width:30px; height:4px; background:#444; display:inline-block; vertical-align:middle; margin-right:5px;">
+                                    <div id="bar-${p.id}" style="height:100%; width:0%"></div>
+                                </div>
+                                <small id="rssi-${p.id}"></small>
+                            </td>
+                            <td id="bat-${p.id}" style="line-height:1.2;"></td>
+                            <td id="clk-${p.id}"></td>
+                            <td id="tim-${p.id}" style="color:#aaa;"></td>
+                        `;
+                        tbody.appendChild(row);
+                    }
+
+                    const bar = document.getElementById(`bar-${p.id}`);
+                    const rssiTxt = document.getElementById(`rssi-${p.id}`);
+
+                    bar.style.width = `${signalWidth}%`;
+                    bar.style.backgroundColor = (signalWidth > 50 ? '#0f0' : '#f00');
+
+                    rssiTxt.innerText = `${p.rssi}`;
+                    rssiTxt.style.color = rssiColor;
+
+                    let batV = (p.bat / 1000);
+                    let batPct = Math.max(0, Math.min(100, Math.round(((batV - 3.3) / (4.2 - 3.3)) * 100)));
+                    document.getElementById(`bat-${p.id}`).innerHTML = `${batV.toFixed(2)}V <br><small style="color:#aaa">${batPct}%</small>`;
+
+                    document.getElementById(`ver-${p.id}`).innerText = `v${p.ver}`;
+
+                    document.getElementById(`clk-${p.id}`).innerText = p.clicks || 0;
+                    document.getElementById(`tim-${p.id}`).innerText = timeStr;
+
+                    if(row.style.background !== rowBg) row.style.background = rowBg;
+                });
+            });
+        }
+
+        function flushPucks() {
+            if(!confirm(getTranslation("pucks_flush_confirm"))) return;
+            document.getElementById('puckTableContent').innerHTML = '';
+            document.getElementById('loadingMsg').style.display = 'block';
+            fetch('/api/puck_reset');
+        }
+
+        setInterval(updatePuckTable, 1000);
+    </script>
+</body>
+</html>

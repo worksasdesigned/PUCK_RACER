@@ -7,10 +7,16 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Setup - Simple Counter</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header><div class="logo" data-i18n="g_counter">Simple Counter</div></header>
+    <header><div class="logo" data-i18n="g_counter">Simple Counter</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div class="card">
             <h3 data-i18n="cd_setup_players">👥 Players</h3>
@@ -48,6 +54,8 @@
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
         
@@ -102,13 +110,13 @@
             sessionStorage.setItem('cnt_players', p);
             sessionStorage.setItem('cnt_time', seconds);
             sessionStorage.setItem('cnt_warn', document.getElementById('chkWarn').checked ? 1 : 0);
-            location.href = 'game_counter_names.html';
+            nav('game_counter_names.html');
         }
 
         function cancelSetup() {
             fetch('/api/game/action?cmd=exit')
-                .then(() => location.href = '/')
-                .catch(() => location.href = '/');
+                .then(() => nav('/'))
+                .catch(() => nav('/'));
         }
     </script>
     <script>

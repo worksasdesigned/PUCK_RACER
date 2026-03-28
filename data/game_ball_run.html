@@ -105,9 +105,11 @@
             if (data.st === 0 || data.st === 3) { 
                 btn.innerText = (data.st === 3) ? getTranslation('btn_reset') : getTranslation('btn_start_all'); 
                 btn.style.background = "var(--primary)"; 
+                btn.style.color = "white";
             } else { 
                 btn.innerText = getTranslation('btn_running'); 
                 btn.style.background = "var(--card-hover)"; 
+                btn.style.color = "var(--text-muted)";
             }
 
             renderGroups(data);
@@ -149,8 +151,8 @@
         }
 
         function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
-        function goBack() { doAction('reset'); location.href = 'game_ball_setup.html'; }
-        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        function goBack() { doAction('reset'); nav('game_ball_setup.html'); }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
 </body>
 </html>

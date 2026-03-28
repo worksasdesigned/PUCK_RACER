@@ -7,16 +7,22 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="PuckRacer">
     <title>Setup - Musical Chairs</title>
-    <link rel="stylesheet" href="style.css?v=2">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <header><div class="logo" data-i18n="g_musical">Reise nach Jerusalem 🪑🎵</div></header>
+    <header><div class="logo" data-i18n="g_musical">Reise nach Jerusalem 🪑🎵</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
     <main>
         <div class="card">
             <h3 data-i18n="mus_setup_mp3">🎵 Background Music (MP3)</h3>
             <div id="mp3Status" style="font-weight:bold; color:var(--primary); margin-bottom:15px;">Scanning...</div>
             
-            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Max. 3MB. Uploading a new file will delete the old one!</p>
+            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:10px;">Max. 4MB. Uploading a new file will delete the old one!</p>
             <input type="file" id="mp3Upload" accept=".mp3" style="display:none;" onchange="uploadMp3()">
             <button onclick="document.getElementById('mp3Upload').click()" class="btn-warn" style="font-size:1rem; padding:10px;">Upload new MP3</button>
             <div id="upProgress" style="display:none; color:var(--warning); margin-top:10px; font-weight:bold;">Uploading... Please wait.</div>
@@ -59,6 +65,8 @@
     </main>
 
     <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
     <script>
         if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
 
@@ -95,8 +103,8 @@
             if(fileInput.files.length === 0) return;
             let file = fileInput.files[0];
             
-            if(file.size > 3 * 1024 * 1024) {
-                alert("File too large! Maximum is 3MB.");
+            if(file.size > 4 * 1024 * 1024) {
+                alert("File too large! Maximum is 4MB.");
                 return;
             }
             if(!confirm("Uploading will delete your current MP3. Proceed?")) return;
@@ -121,10 +129,10 @@
             sessionStorage.setItem('mus_base', document.getElementById('baseSlider').value);
             sessionStorage.setItem('mus_var', document.getElementById('varSlider').value);
             sessionStorage.setItem('mus_pause', document.getElementById('pauseSlider').value);
-            location.href = 'game_musical_names.html';
+            nav('game_musical_names.html');
         }
 
-        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        function cancelSetup() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
 	<script>
     window.TRAINING_FIELDS = [

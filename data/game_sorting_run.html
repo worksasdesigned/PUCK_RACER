@@ -91,9 +91,21 @@
             let groups = data.groups; 
             
             let btn = document.getElementById('btnStart');
-            if(data.state == 0) { btn.innerText = txtStart; btn.style.background = "var(--primary)"; }
-            else if(data.state == 1 || data.state == 2) { btn.innerText = txtRun; btn.style.background = "var(--card-hover)"; }
-            else if(data.state == 3) { btn.innerText = txtRestart; btn.style.background = "var(--success)"; }
+            if(data.state == 0) { 
+                btn.innerText = txtStart; 
+                btn.style.background = "var(--primary)"; 
+                btn.style.color = "white";
+            }
+            else if(data.state == 1 || data.state == 2) { 
+                btn.innerText = txtRun; 
+                btn.style.background = "var(--card-hover)"; 
+                btn.style.color = "var(--text-muted)";
+            }
+            else if(data.state == 3) { 
+                btn.innerText = txtRestart; 
+                btn.style.background = "var(--success)"; 
+                btn.style.color = "white";
+            }
             
             document.getElementById('mainCnt').innerText = done;
             document.getElementById('subCnt').innerText = (total - done) <= 0 ? txtDone : `${total - done} ${txtLeft}`;
@@ -181,8 +193,8 @@
         }
 
         function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }
-        function goBack() { fetch('/api/game/action?cmd=exit'); location.href = 'game_sorting_setup.html'; }
-        function goHome() { fetch('/api/game/action?cmd=exit').then(() => location.href = '/'); }
+        function goBack() { fetch('/api/game/action?cmd=exit'); nav('game_sorting_setup.html'); }
+        function goHome() { fetch('/api/game/action?cmd=exit').then(() => nav('/')); }
     </script>
 </body>
 </html>
