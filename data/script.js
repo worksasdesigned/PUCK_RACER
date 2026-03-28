@@ -81,6 +81,7 @@ function updateStatus() {
                 updateSettingsTable(data);
             }
             checkBatteryLevels(data);
+            checkTemperature(data);
         })
         .catch(err => console.error("API Error:", err));
 }
@@ -228,6 +229,94 @@ function _showSysToast(id, msg, color) {
     t.innerHTML = '<span>' + msg + '</span><button onclick="this.parentElement.remove()" style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;margin-left:12px;padding:0 4px;">&#10005;</button>';
     c.appendChild(t);
 }
+
+// === TEMPERATURE OVERHEAT WARNING ===
+const _tempAlertActive = new Set();
+var _tempAudioCtx = null;
+
+function checkTemperature(pucks) {
+    pucks.forEach(function(p, i) {
+        if (!p.active) return;
+        var num = i + 1;
+        // temp ist in 0.1°C Einheiten, -999 = kein Sensor
+        if (p.temp === -999 || p.temp === undefined) {
+            // Sensor nicht vorhanden oder alte Firmware → Warnung entfernen falls vorhanden
+            _removeTempToast(i);
+            return;
+        }
+        // Schwelle: 600 = 60.0°C (in 0.1°C Einheiten)
+        if (p.temp >= 600) {
+            if (!_tempAlertActive.has(i)) {
+                _tempAlertActive.add(i);
+                _showTempWarning(i, num, (p.temp / 10).toFixed(1));
+                _playTempAlarm();
+            }
+        } else if (p.temp < 550) {
+            // Hysterese: erst unter 55°C entwarnen
+            _removeTempToast(i);
+        }
+    });
+}
+
+function _showTempWarning(puckIdx, puckNum, tempC) {
+    var id = 'temp-warn-' + puckIdx;
+    if (document.getElementById(id)) return;
+
+    var c = document.getElementById('toast-container');
+    if (!c) {
+        c = document.createElement('div');
+        c.id = 'toast-container';
+        c.style.cssText = 'position:fixed;top:60px;right:15px;z-index:100000;display:flex;flex-direction:column;gap:8px;max-width:340px;';
+        document.body.appendChild(c);
+    }
+
+    var t = document.createElement('div');
+    t.id = id;
+    t.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-radius:8px;color:#fff;font-size:0.9rem;font-weight:bold;box-shadow:0 4px 12px rgba(0,0,0,0.4);background:#cc0000;animation:toastIn 0.3s ease, tempBlink 0.8s ease-in-out infinite;';
+    var msg = (typeof getTranslation === 'function' ? getTranslation('temp_overheat') : 'PUCK #{n} hat Temperatur Probleme ({t}\u00b0C)').replace('{n}', puckNum).replace('{t}', tempC);
+    t.innerHTML = '<span>' + msg + '</span><button onclick="_dismissTempToast(' + puckIdx + ')" style="background:none;border:none;color:#fff;font-size:1.2rem;cursor:pointer;margin-left:12px;padding:0 4px;">&#10005;</button>';
+    c.appendChild(t);
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+}
+
+function _removeTempToast(puckIdx) {
+    _tempAlertActive.delete(puckIdx);
+    var el = document.getElementById('temp-warn-' + puckIdx);
+    if (el) el.remove();
+}
+
+function _dismissTempToast(puckIdx) {
+    _removeTempToast(puckIdx);
+}
+
+function _playTempAlarm() {
+    try {
+        if (!_tempAudioCtx) _tempAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        var ctx = _tempAudioCtx;
+        var now = ctx.currentTime;
+        // 3x kurzer Warnton: 200ms an, 100ms aus
+        for (var i = 0; i < 3; i++) {
+            var osc = ctx.createOscillator();
+            var gain = ctx.createGain();
+            osc.type = 'square';
+            osc.frequency.value = 1000;
+            gain.gain.value = 0.3;
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now + i * 0.3);
+            osc.stop(now + i * 0.3 + 0.2);
+        }
+    } catch(e) {
+        // Web Audio API nicht verfügbar oder blockiert
+    }
+}
+
+// CSS für blinkende Temperatur-Warnung einfügen
+(function() {
+    var s = document.createElement('style');
+    s.textContent = '@keyframes tempBlink { 0%,100% { opacity:1; } 50% { opacity:0.4; } }';
+    document.head.appendChild(s);
+})();
 
 // === QUIET MODE INDICATOR ===
 // Zeigt 🔇 oben links auf jeder Seite wenn Quiet Mode aktiv ist.

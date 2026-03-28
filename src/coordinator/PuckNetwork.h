@@ -18,6 +18,7 @@ struct PuckInfo {
     int rssi;
     int battery;
     int version;
+    int16_t temp_c10;  // Temperatur in 0.1°C, -999 = kein Sensor
     unsigned long lastSeen;
     unsigned long lastClickTime; 
     uint8_t lastSeqNr; // Deduplication Merker

@@ -7,7 +7,7 @@
 #include "StatsManager.h" 
 #include "WifiScanner.h"
 
-#define SYS_VER "v2.97.8" 
+#define SYS_VER "v2.98.0" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;
@@ -188,7 +188,8 @@ void WebHandler::begin() {
                 json += "\"lastSeen\":" + String(now - p[i].lastSeen) + ",";
                 json += "\"lastClick\":" + String(clickDiff) + ",";
                 json += "\"clicks\":" + String(p[i].totalClicks) + ",";
-                json += "\"time\":" + String(p[i].totalMinutes);
+                json += "\"time\":" + String(p[i].totalMinutes) + ",";
+                json += "\"temp\":" + String(p[i].temp_c10);
                 json += "}";
                 first = false;
             }

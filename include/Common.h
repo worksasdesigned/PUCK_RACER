@@ -86,10 +86,11 @@ typedef struct __attribute__((packed)) {
 
 // Event vom Puck an den Coordinator
 typedef struct __attribute__((packed)) {
-    uint8_t type;             
-    uint16_t battery_mv;      
+    uint8_t type;
+    uint16_t battery_mv;
     uint8_t version;
     uint8_t seqNr;  // NEU: Sequenz-Nummer gegen Doppler bei 3x Senden
+    int16_t temp_c10;  // Temperatur in 0.1°C Einheiten (z.B. 253 = 25.3°C), -999 = kein Sensor
 } EventPacket;
 
 // OTA Update Credentials

@@ -400,7 +400,8 @@ void PuckNetwork::OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingDat
                 memcpy(pucks[i].mac, mac_addr, 6);
                 pucks[i].active = true;
                 
-                pucks[i].lastSeqNr = tempEvt.seqNr - 1; 
+                pucks[i].lastSeqNr = tempEvt.seqNr - 1;
+                pucks[i].temp_c10 = -999;
                 pucks[i].totalClicks = StatsManager::getPuckClicks(mac_addr);
                 pucks[i].totalMinutes = StatsManager::getPuckTime(mac_addr);
                 pucks[i].lastMinuteTick = millis();
@@ -436,6 +437,7 @@ void PuckNetwork::OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingDat
         pucks[puckIdx].rssi = current_rssi;
         pucks[puckIdx].battery = tempEvt.battery_mv;
         pucks[puckIdx].version = tempEvt.version;
+        pucks[puckIdx].temp_c10 = tempEvt.temp_c10;
         pucks[puckIdx].lastSeen = millis();
         
         queueHead = nextHead;

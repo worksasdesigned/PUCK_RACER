@@ -24,15 +24,30 @@
 #include <HTTPClient.h>
 #include <HTTPUpdate.h>
 #include <esp_task_wdt.h>
+#include <math.h>
 #include "Common.h"
 
 // --- HARDWARE ---
 #define PIN_BAT     0  // ADC Pin für den Batterie-Spannungsteiler
+// GPIO1 ist der letzte freie ADC1-Pin für weitere analoge Sensoren
+#define PIN_NTC     3  // NTC Temperatursensor (10kOhm Beta3950, 10kOhm Festwiderstand)
 #define PIN_LED     4
-#define PIN_BTN     3 
 #define PIN_BUZZER  5
+#define PIN_BTN     6  // Arcade Button (INPUT_PULLUP)
 #define NUM_LEDS    35
-#define FW_VERSION  84
+#define FW_VERSION  85
+
+// --- TEMPERATUR OVERHEAT ---
+// Schwellwert in °C – ab diesem Wert wird Overheat-Schutz ausgelöst.
+// Zum Feintuning diesen Wert anpassen:
+#define TEMP_OVERHEAT_C         60
+// NTC Parameter: 10kOhm bei 25°C, Beta 3950, Festwiderstand 10kOhm
+#define NTC_R_FIXED             10000.0
+#define NTC_R_NOMINAL           10000.0
+#define NTC_BETA                3950.0
+#define NTC_T_NOMINAL           298.15   // 25°C in Kelvin
+#define TEMP_CHECK_INTERVAL_MS  2000
+#define OVERHEAT_BEEP_DURATION_MS 30000  // 30 Sekunden aggressives Beepen
 
 // --- BATTERIE ---
 #define BAT_CALIBRATION       1.0    // Platzhalter: Feinabstimmung nach Messung (z.B. 1.02)
@@ -86,6 +101,14 @@ unsigned long lastBatteryCheck = 0;
 uint16_t batHistory[BAT_AVG_SAMPLES] = {0};
 uint8_t  batHistoryIdx = 0;
 uint8_t  batHistoryCount = 0;
+
+// --- TEMPERATUR ---
+int16_t currentTemp_c10 = -999;  // Aktuelle Temperatur in 0.1°C, -999 = kein Sensor
+unsigned long lastTempCheck = 0;
+bool overheatMode = false;
+unsigned long overheatStartTime = 0;
+unsigned long overheatLastToggle = 0;
+bool overheatBuzzerOn = false;
 
 // STABILITÄTS-FIX: Timeout-Schwelle in ms, ab der der Puck die Verbindung
 // als verloren betrachtet. Der Coordinator sendet alle 10s einen CMD_KEEPALIVE,
@@ -183,6 +206,22 @@ uint16_t readBatteryMV() {
     return (uint16_t)(adc_mv * 2 * BAT_CALIBRATION);
 }
 
+// NTC Temperatur lesen: Spannungsteiler Vcc -> R_fixed -> ADC -> NTC -> GND
+// Rückgabe in 0.1°C Einheiten (z.B. 253 = 25.3°C), -999 bei Fehler
+int16_t readTemperature() {
+    uint32_t adc_mv = analogReadMilliVolts(PIN_NTC);
+    if (adc_mv < 10 || adc_mv > 3290) return -999;  // Sensor nicht angeschlossen oder Kurzschluss
+
+    double r_ntc = NTC_R_FIXED * (double)adc_mv / (3300.0 - (double)adc_mv);
+    // Steinhart-Hart vereinfacht (Beta-Gleichung):
+    // 1/T = 1/T0 + (1/B) * ln(R/R0)
+    double steinhart = log(r_ntc / NTC_R_NOMINAL) / NTC_BETA;
+    steinhart += 1.0 / NTC_T_NOMINAL;
+    double tempK = 1.0 / steinhart;
+    double tempC = tempK - 273.15;
+    return (int16_t)(tempC * 10.0);
+}
+
 void setup() {
     // Buzzer sofort aus (falls Watchdog-Reset während aktivem Ton)
     pinMode(PIN_BUZZER, OUTPUT);
@@ -191,9 +230,10 @@ void setup() {
 
     Serial.begin(115200);
 
-    // Initialisiere ADC Pin (nicht zwingend nötig für analogRead, aber sauberer)
+    // Initialisiere ADC Pins (nicht zwingend nötig für analogRead, aber sauberer)
     pinMode(PIN_BAT, INPUT);
-    
+    pinMode(PIN_NTC, INPUT);
+
     pinMode(PIN_BTN, INPUT_PULLUP);
     pinMode(PIN_BUZZER, OUTPUT);
     digitalWrite(PIN_BUZZER, LOW);
@@ -326,6 +366,47 @@ void loop() {
                 batterySaveMode = true;
                 Serial.printf("WARNING: Battery avg %u mV → batterySaveMode (50%% brightness)\n", batAvg);
                 FastLED.setBrightness(min(anim.brightness, (uint8_t)BAT_SAVE_BRIGHTNESS));
+            }
+        }
+    }
+
+    // --- TEMPERATUR CHECK & OVERHEAT SCHUTZ ---
+    if (now - lastTempCheck >= TEMP_CHECK_INTERVAL_MS) {
+        lastTempCheck = now;
+        currentTemp_c10 = readTemperature();
+
+        if (!overheatMode && currentTemp_c10 != -999 && currentTemp_c10 >= TEMP_OVERHEAT_C * 10) {
+            overheatMode = true;
+            overheatStartTime = now;
+            overheatLastToggle = now;
+            overheatBuzzerOn = false;
+            // LED Ring aus
+            setEffect(EFF_OFF, 0, 0, 0, 0, 0, 0);
+            Serial.printf("OVERHEAT: %d.%d°C >= %d°C → Overheat-Schutz aktiv!\n",
+                          currentTemp_c10 / 10, abs(currentTemp_c10 % 10), TEMP_OVERHEAT_C);
+        }
+    }
+
+    // Overheat Beep-Sequenz: aggressives AN/AUS für 30 Sekunden
+    if (overheatMode) {
+        if (now - overheatStartTime < OVERHEAT_BEEP_DURATION_MS) {
+            // 250ms AN, 250ms AUS → aggressives Beepen
+            if (now - overheatLastToggle >= 250) {
+                overheatLastToggle = now;
+                overheatBuzzerOn = !overheatBuzzerOn;
+                if (overheatBuzzerOn) tone(PIN_BUZZER, 2000);
+                else noTone(PIN_BUZZER);
+            }
+            // LED Ring bleibt aus, alle anderen Effekte blockieren
+            if (anim.id != EFF_OFF) setEffect(EFF_OFF, 0, 0, 0, 0, 0, 0);
+        } else {
+            // 30 Sekunden vorbei → Buzzer aus, Overheat bleibt aber aktiv
+            noTone(PIN_BUZZER);
+            overheatBuzzerOn = false;
+            // Prüfe ob Temperatur wieder unter Schwelle (mit 5°C Hysterese)
+            if (currentTemp_c10 != -999 && currentTemp_c10 < (TEMP_OVERHEAT_C - 5) * 10) {
+                overheatMode = false;
+                Serial.println("OVERHEAT: Temperatur normalisiert – Schutz deaktiviert.");
             }
         }
     }
@@ -585,8 +666,9 @@ void OnDataRecv(const uint8_t * mac_addr, const uint8_t *data, int len) {
 void sendEvent(uint8_t type) {
     EventPacket pkg;
     pkg.type = type;
-    pkg.version = FW_VERSION; 
-    
+    pkg.version = FW_VERSION;
+    pkg.temp_c10 = currentTemp_c10;
+
     // Geglätteten Mittelwert senden (falls Ringpuffer voll), sonst Einzelmessung
     if (batHistoryCount >= BAT_AVG_SAMPLES) {
         uint32_t sum = 0;
@@ -595,7 +677,7 @@ void sendEvent(uint8_t type) {
     } else {
         pkg.battery_mv = readBatteryMV();
     }
-    
+
     globalSeqCounter++;
     pkg.seqNr = globalSeqCounter;
 
@@ -634,6 +716,8 @@ void handleButton() {
 }
 
 void setEffect(uint8_t id, uint8_t r, uint8_t g, uint8_t b, int speed, uint8_t bright, uint8_t extra) {
+    // Overheat Guard: nur EFF_OFF erlaubt während Überhitzung
+    if (overheatMode && id != EFF_OFF) return;
     // Low Battery Guard: nur EFF_OFF und EFF_STATUS erlaubt
     if (lowBatteryMode && id != EFF_OFF && id != EFF_STATUS) return;
 
