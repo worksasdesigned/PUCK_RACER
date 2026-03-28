@@ -214,6 +214,11 @@ After the real first beta is released il will provide the bin files in case of u
 **V2.97.1**   
     - Anti-cache links added (Core version behind urls)   
     - _setup.html remembers settings, when navigation back from _run to _names  to _setup.html    
+
+**V2.98.0**   
+    - Gerber and PCB files addes
+    - temperature control, warning and local alarm added     
+
 --- 
 
 
