@@ -1,0 +1,25 @@
+# Game_SimpleCounter — Tap Race to High Score (ID 2)
+# Files: src/coordinator/Game_SimpleCounter.h, Game_SimpleCounter.cpp
+# HTML: data/game_counter_setup.html, game_counter_names.html, game_counter_run.html
+
+## GAMEPLAY
+Counting game: players tap to increment score. Highest score wins.
+Optional time limit, warning beeps at 5s.
+
+## CONFIG
+- activePucks (1-12), timeLimitSeconds, warnEnd
+
+## STATES
+STATE_SETUP → STATE_PREPARE (2.5s) → STATE_RUNNING → STATE_FINISHED
+
+## KEY MECHANICS
+- 330ms debounce per click
+- White flash on each click, restore to chase effect after 150ms
+- Highest scorer(s) get RAINBOW (ties handled)
+- 10s winner animation then lights reset
+
+## COMMANDS
+setup, reset, config_players, config_time, config_warn, start, stop, exit
+
+## STATUS JSON
+{state, elapsed, players: [{id, score}]}

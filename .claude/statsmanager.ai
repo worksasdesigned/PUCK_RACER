@@ -1,0 +1,30 @@
+# StatsManager — Statistics & Playtime Tracking
+# Files: src/coordinator/StatsManager.h, StatsManager.cpp
+
+## PURPOSE
+Persists game start counts, puck usage stats, and total playtime to NVS + LittleFS.
+
+## GAME STARTS
+- gameStarts[30] array, indices 1-29 used
+- Stored in NVS Preferences namespace "pr_stats", keys "g1" to "g29"
+- addGameStart(id), getGameStarts(id)
+
+## PUCK STATS
+- Per-puck clicks and minutes stored in NVS
+- Key format: last 6 hex chars of MAC + "_c" (clicks) or "_t" (time)
+- getPuckClicks(mac), getPuckTime(mac)
+- PuckNetwork tracks totalClicks/totalMinutes in PuckInfo struct
+
+## PLAYTIME TRACKING (License System)
+- Dual storage: NVS ("pr_hw" namespace, keys "_ct"/"_cv") + LittleFS ("/._sys.dat")
+- Integrity: XOR checksum with PT_MAGIC (0xA7C3E1B9)
+- On boot: loads from both, takes HIGHER value (tamper protection)
+- startPlaytime(): records session start
+- stopPlaytime(): adds elapsed minutes, saves to both stores
+- getTotalPlaytimeMinutes(): includes running session
+- Crash protection: saveAll() persists running session periodically
+
+## saveAll()
+- Called periodically from PuckNetwork (every 10 minutes)
+- Saves game starts + puck stats to NVS
+- Saves playtime to both NVS and LittleFS

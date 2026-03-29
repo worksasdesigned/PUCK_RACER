@@ -1,0 +1,31 @@
+# Game_Hunt — Speed Hunt (ID 17)
+# Files: src/coordinator/Game_Hunt.h, Game_Hunt.cpp
+# HTML: data/game_hunt_setup.html, game_hunt_names.html, game_hunt_run.html
+
+## GAMEPLAY
+Fast-paced: each player gets assigned a random puck to tap. Score points for correct hits.
+Wrong puck = error. Timeout varies by difficulty. Queue system for puck assignment.
+
+## CONFIG
+- numPlayers (1-10), numPucks (3-MAX_PEERS), gameDuration (ms)
+- radius (2-10): affects timeout multiplier
+- difficulty (1-5): 1=no timeout, 2=5s, 3=4s, 4=2s, 5=1s
+- soundOn
+
+## STATES
+HUNT_SETUP → HUNT_COUNTDOWN (3s) → HUNT_RUNNING → HUNT_FINISHED → HUNT_WINNER (10s) → HUNT_IDLE
+
+## KEY MECHANICS
+- Timeout: baseTime * (1.0 + (radius-2)/8.0) multiplier
+- Puck states: P_NEUTRAL → P_ACTIVE (assigned) → back or P_PENALTY (1s) → P_NEUTRAL
+- Wrong puck tap: P_ERROR (red flash 500ms)
+- Queue: players without active puck wait, random assignment (avoids lastPuckIdx)
+- Warning: 1s before timeout, puck switches to EFF_COUNTDOWN
+- 1s penalty delay after timeout before reassignment
+- Winner animation: pucks colored by winner, DOUBLE_CHASE
+
+## COMMANDS
+cfg_players, cfg_pucks, cfg_time, cfg_radius, cfg_diff, cfg_sound, start, stop, show_colors, reset, exit
+
+## STATUS JSON
+{st, t (remaining), lim, pl: [{id, sc}]}

@@ -1,0 +1,54 @@
+# PuckNetwork — ESP-NOW Communication Layer
+# Files: src/coordinator/PuckNetwork.h, PuckNetwork.cpp
+
+## PURPOSE
+Manages all ESP-NOW communication with pucks: pairing, commands, events, OTA updates.
+
+## INITIALIZATION (begin())
+1. Load SSID/password from NVS Preferences
+2. WiFi mode WIFI_AP_STA, disable power-save (esp_wifi_set_ps(WIFI_PS_NONE))
+3. SoftAP on WIFI_CHANNEL (1), max MAX_PEERS (20) connections
+4. esp_now_init(), register OnDataRecv + OnDataSent callbacks
+5. Add broadcast peer on WIFI_IF_STA
+6. Send 3x CMD_PING broadcast for re-pairing existing pucks
+
+## PUCK REGISTRATION (in update())
+- OnDataRecv ISR enqueues events into circular eventQueue[100]
+- update() dequeues and processes:
+  - Unknown MAC → find empty slot in pucks[MAX_PEERS], esp_now_add_peer()
+  - EVT_HELLO → send CMD_PAIR_ACK
+  - Restore cached last effect on reconnect
+  - Apply brightness limit on reconnect
+- Deduplication via seqNr (EventPacket.seqNr vs puck.lastSeqNr)
+
+## COMMAND SENDING
+- sendToPuck(mac, cmd): Unicast, 3 retries with 5-8ms delays, waits 15ms for ACK
+- broadcast(cmd): 3x with 10ms delays
+- Both assign globalCmdSeq sequence number
+- CMD_EFFECT cached in puck.lastEffect for reconnect restore
+- Quiet mode filter: blocks CMD_SOUND/CMD_SEQUENCE, delays replacement beep
+
+## KEEPALIVE
+- Every 10s: broadcast CMD_KEEPALIVE
+- Pucks timeout after 15s without keepalive → auto-disconnect
+
+## OTA UPDATE
+- triggerUpdateBroadcast(): Legacy, 5x broadcast UpdateCredentialsPacket
+- triggerUpdateSequential(): New preferred method
+  - State machine: OTA_TRIGGERING → OTA_DONE
+  - 25s timeout per puck, sequential unicast
+  - getOtaStatusJSON() for progress polling
+
+## MODES
+- RSSI Mode: Every 2s maps RSSI (-95 to -55) → EFF_PROGRESS with color
+- Quiet Mode: filterSoundForQuietMode() blocks sounds, delays ski/race beeps
+- Brightness Limit: CMD_SET_BRIGHTNESS broadcast, 10-100% range
+
+## STATISTICS (NetworkStats)
+totalPacketsRx, duplicates, validEvents, queueOverflows, successfulTx, failedTx
+Auto-save via StatsManager::saveAll() every 10 minutes.
+
+## KEY STRUCTURES
+- PuckInfo: mac, active, rssi, battery, version, temp_c10, lastSeen, lastClickTime, totalClicks, totalMinutes, lastEffect cache
+- QueueItem: mac[6] + EventPacket + valid flag
+- OtaStatus: state, currentPuckIdx, pucksTriggered, totalPucks, triggerTime

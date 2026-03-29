@@ -1,0 +1,31 @@
+# Game_ShuttleRun — Shuttle Run (ID 1)
+# Files: src/coordinator/Game_ShuttleRun.h, Game_ShuttleRun.cpp
+# HTML: data/game_shuttle_setup.html, game_shuttle_names.html, game_shuttle_run.html
+
+## GAMEPLAY
+Fitness test: 1-6 players alternate between 2 pucks per player for N rounds.
+2 pucks per player: start puck + target puck. Race to complete all laps fastest.
+
+## CONFIG
+- playerCount (1-6), maxRounds (default 5)
+- centralStart: synchronized countdown for all
+- holdToStart: all players must hold pucks simultaneously before countdown
+- lapMode: false=single finish click, true=multiple laps (double-click to finish)
+
+## STATES
+SR_SETUP → SR_WAIT_HANDS → SR_COUNTDOWN (3s, SKI) → SR_RUNNING → SR_FINISHED
+Optional: SR_FALSE_START (release during countdown → 2s penalty → restart)
+
+## MECHANICS
+- 2 pucks per player, activeTargetIdx toggles between 0/1 on each hit
+- 200ms debounce per hit
+- False start detection: release during countdown
+- Lap mode: double-click within 1s = finish, single click = lap
+- Action queue for non-blocking light/sound scheduling
+- Flash reset: 150ms visual feedback then restore
+
+## COMMANDS
+setup, config_players, config_rounds, cfg_central, cfg_hold, cfg_lap, start_all, stop_all, stop_one, reset, exit
+
+## STATUS JSON
+{state, time, players: [{round, max, holding, finished, time}], fs (false start player), winnerTime}

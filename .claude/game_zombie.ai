@@ -1,0 +1,34 @@
+# Game_Zombie — Zombie Escape Time Trial (ID 11)
+# Files: src/coordinator/Game_Zombie.h, Game_Zombie.cpp
+# HTML: data/game_zombie_setup.html, game_zombie_names.html, game_zombie_run.html
+
+## GAMEPLAY
+Time trial: groups race start→target puck faster than shrinking target time.
+Shuttle mode: back-and-forth. Auto-reduce target on success. Sudden death option.
+1-10 groups with synchronized or independent start.
+
+## CONFIG
+- numGroups (1-10), startTargetTime (seconds), timeReduction (ms*100)
+- autoReduce (on success), suddenDeath (eliminate on fail)
+- groupStart (synchronized), shuttleMode
+
+## STATES per group
+Z_SETUP → Z_WAIT_HANDS → Z_COUNTDOWN (3s, SKI) → Z_RUNNING → Z_EVALUATE (3s) → back or Z_ELIMINATED
+Optional: Z_FALSE_START
+
+## KEY MECHANICS
+- Target time decreases per success (autoReduce) or manually (man_reduce)
+- evaluateRun(): if runTime <= targetTime → winner (success sound, RAINBOW)
+- If runTime > targetTime → fail (EXPLOSION). SuddenDeath → Z_ELIMINATED
+- Timeout: auto-fail if runTime > targetTime + 3000ms
+- Shuttle: toggles expectStart between target and start puck
+- shuttleLaps counter tracks round-trips
+- globalBestTime / globalBestGroup across all groups
+- 10 group colors
+
+## COMMANDS
+cfg_groups, cfg_time, cfg_reduce, cfg_auto, cfg_sudden, cfg_sync, cfg_shuttle,
+start, stop, reset, man_reduce, man_elim (groupIdx), man_revive (groupIdx), exit
+
+## STATUS JSON
+{sync, auto, shuttle, bestT, bestG, groups: [{id, st, targ, rnd, hld, shl (laps), exp (expectStart), time}]}

@@ -1,0 +1,31 @@
+# Game_BombSquad — Bomb Timing Game (ID 8)
+# Files: src/coordinator/Game_BombSquad.h, Game_BombSquad.cpp
+# HTML: data/game_bomb_setup.html, game_bomb_names.html, game_bomb_run.html
+
+## GAMEPLAY
+Reaction timing: press button at exactly the target time (blind flight).
+Players shown target seconds, then must estimate when that time elapses.
+Ranked by accuracy. Multiple rounds.
+
+## CONFIG
+- activePucks (1-12), maxSeconds, maxRounds
+- difficulty: 0=750ms tolerance, 1=500ms, 2=250ms
+- groupMode: true=all same target, false=individual random targets (3-maxSeconds)
+
+## STATES
+BOMB_SETUP → BOMB_INFO (blink target count) → BOMB_COUNTDOWN (3.1s, SKI) → BOMB_RUNNING → BOMB_FINISHED
+
+## KEY MECHANICS
+- INFO phase: pucks blink rapidly showing target seconds
+- Running: blind flight, timeout = maxTargetTime*1000 + 5000ms
+- Press: delta = (pressTime - gameStartTime) - (targetTime * 1000)
+- Within tolerance: RAINBOW + DINGDONG, score++
+- Outside tolerance: FAIL (red) + EXPLOSION
+- Timeout: auto-EXPLODED with delta=99999
+- evaluateRound(): check all acted or timeout
+
+## COMMANDS
+setup, cfg_pucks, cfg_time, cfg_diff, cfg_rounds, cfg_group, start, stop, reset, exit
+
+## STATUS JSON
+{state, round, max, target, time, players: [{score, res (NONE/DEFUSED/EXPLODED), last (delta), avg, target}]}

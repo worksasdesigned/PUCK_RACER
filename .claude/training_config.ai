@@ -1,0 +1,25 @@
+# training_config.js — Training Session Form Helper
+# File: data/training_config.js
+
+## PURPOSE
+Manages form state when editing games within a training session. Saves/restores field values.
+
+## DETECTION
+- sessionStorage.training_config_id → config mode (editing training)
+- sessionStorage.training_play_mode → play mode (just restore values)
+- sessionStorage.training_config_idx → game index within training
+
+## FIELD DEFINITION
+Games define window.TRAINING_FIELDS array before this script loads:
+[{ key, el (element ID), type ('check'|'select'|default=range) }, { key, get: ()=>val, set: (v)=>{} }]
+
+## KEY FUNCTIONS
+- doRestore(): Read tc_<key> from sessionStorage, apply to DOM elements
+- collectSettings(): Gather current form values into { tc_<key>: value } object
+- setupUI(): Config mode — insert green banner + "Save Settings" button, modify nav
+- initConfig(): Setup UI + restore previous values
+- initPlay(): Restore values only, no UI changes
+
+## PERSISTENCE
+Values stored as sessionStorage.tc_<field.key>
+Return object: { tid, idx, settings: { tc_<key>: value } } → sessionStorage.training_config_return

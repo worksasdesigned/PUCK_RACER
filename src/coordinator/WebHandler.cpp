@@ -1,13 +1,18 @@
 #include "WebHandler.h"
 #include <LittleFS.h>
 #include <AsyncTCP.h>
+#include <ArduinoJson.h>
 #include <Update.h>
 #include "PuckNetwork.h"
 #include "GameManager.h"
 #include "StatsManager.h" 
 #include "WifiScanner.h"
+#include "ActivationManager.h"
 
-#define SYS_VER "v2.98.0" 
+// Globale Instanz aus main.cpp
+extern ActivationManager activationManager;
+
+#define SYS_VER "v2.99.0" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;
@@ -156,6 +161,69 @@ void WebHandler::begin() {
         req->send(200, "text/plain", SYS_VER);
     });
 
+    // --- NEU: LIZENZ & FREISCHALTUNG ---
+    server.on("/api/license", HTTP_GET, [](AsyncWebServerRequest *req){
+        JsonDocument doc;
+        String statusStr = "FREE";
+        switch (activationManager.getStatus()) {
+            case LicenseStatus::EXTENDED:
+                statusStr = "EXTENDED";
+                break;
+            case LicenseStatus::FULL:
+                statusStr = "FULL";
+                break;
+        }
+        doc["status"] = statusStr;
+        doc["device_code"] = activationManager.getDeviceCode();
+        
+        // Spielzeit in Stunden umrechnen (float, 1 Nachkommastelle)
+        float playtime_hours = (float)StatsManager::getTotalPlaytimeMinutes() / 60.0f;
+        doc["playtime_hours"] = serialized(String(playtime_hours, 1));
+
+        // Das Limit in Minuten zurückgeben, für genauere Tests
+        doc["playtime_limit_minutes"] = activationManager.getPlaytimeLimitMinutes();
+
+        String json_response;
+        serializeJson(doc, json_response);
+        req->send(200, "application/json", json_response);
+    });
+
+    server.on("/api/register", HTTP_POST, [](AsyncWebServerRequest *req){
+        if (req->hasParam("key", true)) {
+            String key = req->getParam("key", true)->value();
+            if (activationManager.attemptRegistration(key)) {
+                req->send(200, "text/plain", "OK");
+            } else {
+                req->send(400, "text/plain", "Invalid Key");
+            }
+        } else {
+            req->send(400, "text/plain", "Missing Key");
+        }
+    });
+
+    #if defined(PUCK_RACER_DEBUG)
+    // --- DEBUG ROUTEN ---
+    server.on("/api/license/debug", HTTP_POST, [](AsyncWebServerRequest *req){
+        if (req->hasParam("free_mins", true) && req->hasParam("extended_mins", true)) {
+            uint32_t free_m = req->getParam("free_mins", true)->value().toInt();
+            uint32_t ext_m = req->getParam("extended_mins", true)->value().toInt();
+            activationManager.setDebugTimeLimits(free_m, ext_m);
+            req->send(200, "text/plain", "Debug limits set");
+        } else {
+            req->send(400, "text/plain", "Missing debug params");
+        }
+    });
+
+    server.on("/api/license/apply_time_key", HTTP_GET, [](AsyncWebServerRequest *req){
+        if (activationManager.applyTimeExtensionKey()) {
+            req->send(200, "text/plain", "Time key applied and saved");
+        } else {
+            req->send(409, "text/plain", "Could not apply key (already full version?)");
+        }
+    });
+    #endif
+    // ------------------------------------
+
     server.on("/api/who_is_active", HTTP_GET, [](AsyncWebServerRequest *req){
         unsigned long now = millis();
         if (lastActivityTime > 0 && (now - lastActivityTime <= SESSION_TIMEOUT_MS)) {
@@ -230,9 +298,9 @@ void WebHandler::begin() {
 
     server.on("/api/stats/games", HTTP_GET, [](AsyncWebServerRequest *req){
         String json = "{";
-        for(int i=1; i<=27; i++) {
+        for(int i=1; i<=29; i++) {
             json += "\"" + String(i) + "\":" + String(StatsManager::getGameStarts(i));
-            if(i<27) json += ",";
+            if(i<29) json += ",";
         }
         json += "}";
         req->send(200, "application/json", json);
@@ -241,6 +309,26 @@ void WebHandler::begin() {
     server.on("/api/stats/playtime", HTTP_GET, [](AsyncWebServerRequest *req){
         uint32_t m = StatsManager::getTotalPlaytimeMinutes();
         req->send(200, "text/plain", String(m));
+    });
+
+    // --- CUSTOM GAME JSON (save / load) ---
+    server.on("/api/custom/save", HTTP_POST,
+        [](AsyncWebServerRequest *req){ req->send(200, "text/plain", "OK"); },
+        NULL,
+        [](AsyncWebServerRequest *req, uint8_t *data, size_t len, size_t index, size_t total){
+            static File _cgFile;
+            if (index == 0) _cgFile = LittleFS.open("/custom_game.json", "w");
+            if (_cgFile) _cgFile.write(data, len);
+            if (index + len == total && _cgFile) { _cgFile.close(); Serial.println("CG: JSON saved"); }
+        }
+    );
+
+    server.on("/api/custom/load", HTTP_GET, [](AsyncWebServerRequest *req){
+        File f = LittleFS.open("/custom_game.json", "r");
+        if (!f) { req->send(404, "text/plain", "No custom game"); return; }
+        String content = f.readString();
+        f.close();
+        req->send(200, "application/json", content);
     });
 
 // =========================================================================

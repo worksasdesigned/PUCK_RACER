@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Setup - Custom Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header><div class="logo" data-i18n="g_custom">Custom Game</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
+    <main>
+        <!-- Game JSON Source -->
+        <div class="card" id="cardSource">
+            <h3>🎨 Game Definition</h3>
+            <p id="loadedInfo" class="info-txt">Checking for saved game...</p>
+            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+                <button onclick="loadSaved()" class="btn-primary" style="font-size:0.9rem; flex:1;">Load Saved</button>
+                <label class="btn-primary" style="font-size:0.9rem; flex:1; text-align:center; cursor:pointer; padding:10px 20px;">
+                    Upload JSON
+                    <input type="file" accept=".json" onchange="uploadFile(this)" style="display:none;">
+                </label>
+            </div>
+            <div style="margin-top:12px; text-align:center;">
+                <a href="/game_custom_editor.html" style="color:var(--accent); font-size:0.85rem;">Open Game Editor →</a>
+            </div>
+        </div>
+
+        <!-- Puck Config -->
+        <div class="card" id="cardConfig" style="display:none;">
+            <h3>👥 Pucks</h3>
+            <div class="slider-header">
+                <span></span>
+                <span id="puckDisplay" class="slider-val">4</span>
+            </div>
+            <input type="range" id="puckSlider" min="1" max="12" value="4" oninput="updatePucks(this.value)">
+            <p id="puckInfo" class="info-txt">Loading...</p>
+        </div>
+
+        <div class="card" id="cardTime" style="display:none;">
+            <h3>⏱ Time Limit (optional)</h3>
+            <div class="slider-header">
+                <span></span>
+                <span id="timeDisplay" class="slider-val">∞</span>
+            </div>
+            <input type="range" id="timeSlider" min="0" max="60" value="0" oninput="updateTime(this.value)">
+            <p class="info-txt">Optional global time limit</p>
+        </div>
+
+        <button id="btnStart" onclick="startGame()" class="btn-primary" style="font-size:1.5rem; margin-top:20px; display:none;">START ▶</button>
+        <button onclick="cancelSetup()" class="btn-back" style="margin-top:20px;" data-i18n="btn_back">Back</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        let maxPucks = 0;
+        let seconds = 0;
+        let gameLoaded = false;
+
+        // Load game engine
+        fetch('/api/game/load?id=29');
+
+        // Check connected pucks
+        fetch('/api/status').then(r=>r.json()).then(data => {
+            maxPucks = data.filter(p=>p.active).length;
+            let sl = document.getElementById('puckSlider');
+            sl.max = Math.max(1, maxPucks);
+            if (parseInt(sl.value) > maxPucks) sl.value = maxPucks;
+            updatePucks(sl.value);
+        });
+
+        // Check for existing saved game
+        fetch('/api/custom/load').then(r => {
+            if (r.ok) return r.json();
+            throw 'none';
+        }).then(data => {
+            document.getElementById('loadedInfo').innerText =
+                'Saved game found: "' + (data.name || 'Custom Game') + '" (' + (data.states ? data.states.length : 0) + ' states)';
+        }).catch(() => {
+            document.getElementById('loadedInfo').innerText = 'No saved game. Upload a JSON or use the editor.';
+        });
+
+        function loadSaved() {
+            fetch('/api/game/action?cmd=load_json').then(() => {
+                return fetch('/api/game/status');
+            }).then(r=>r.json()).then(d => {
+                if (d.states > 0) {
+                    gameLoaded = true;
+                    showConfig(d.name, d.states);
+                } else {
+                    alert('No game found or JSON invalid.');
+                }
+            });
+        }
+
+        function uploadFile(input) {
+            if (!input.files.length) return;
+            let file = input.files[0];
+            file.text().then(text => {
+                // Validate JSON
+                try { JSON.parse(text); } catch(e) { alert('Invalid JSON!'); return; }
+
+                // Save to coordinator
+                return fetch('/api/custom/save', { method:'POST', body: text });
+            }).then(() => {
+                // Now load it into the game engine
+                return fetch('/api/game/action?cmd=load_json');
+            }).then(() => {
+                return fetch('/api/game/status');
+            }).then(r=>r.json()).then(d => {
+                if (d.states > 0) {
+                    gameLoaded = true;
+                    showConfig(d.name, d.states);
+                }
+            });
+        }
+
+        function showConfig(name, stateCount) {
+            document.getElementById('loadedInfo').innerHTML =
+                '<strong>' + name + '</strong> — ' + stateCount + ' states loaded ✓';
+            document.getElementById('cardConfig').style.display = '';
+            document.getElementById('cardTime').style.display = '';
+            document.getElementById('btnStart').style.display = '';
+        }
+
+        function updatePucks(val) {
+            val = parseInt(val);
+            document.getElementById('puckDisplay').innerText = val;
+            document.getElementById('puckInfo').innerText =
+                'Required: ' + val + ' | Connected: ' + maxPucks;
+            fetch('/api/game/action?cmd=config_pucks&val=' + val);
+        }
+
+        function updateTime(val) {
+            val = parseInt(val);
+            if (val === 0) { seconds = 0; }
+            else if (val <= 18) { seconds = val * 10; }
+            else { seconds = 180 + ((val - 18) * 30); }
+
+            if (seconds > 0) {
+                let m = Math.floor(seconds/60), s = seconds%60;
+                document.getElementById('timeDisplay').innerText = m + ':' + String(s).padStart(2,'0') + ' min';
+            } else {
+                document.getElementById('timeDisplay').innerText = '∞';
+            }
+            fetch('/api/game/action?cmd=config_time&val=' + seconds);
+        }
+
+        function startGame() {
+            if (!gameLoaded) { alert('Load a game first!'); return; }
+            let p = parseInt(document.getElementById('puckSlider').value);
+            if (p > maxPucks && !confirm('Not enough pucks connected. Continue?')) return;
+            fetch('/api/game/action?cmd=start').then(() => nav('game_custom_run.html'));
+        }
+
+        function cancelSetup() {
+            fetch('/api/game/action?cmd=exit').then(()=>nav('/')).catch(()=>nav('/'));
+        }
+    </script>
+</body>
+</html>

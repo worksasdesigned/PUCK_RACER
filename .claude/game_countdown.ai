@@ -1,0 +1,26 @@
+# Game_SimpleCountdown — Tap Race to Zero (ID 3)
+# Files: src/coordinator/Game_SimpleCountdown.h, Game_SimpleCountdown.cpp
+# HTML: data/game_countdown_setup.html, game_countdown_names.html, game_countdown_run.html
+
+## GAMEPLAY
+Competitive countdown: players click to decrement counter to zero. First to zero wins.
+Optional time limit, warning beeps at 5s, auto-stop on first win.
+
+## CONFIG
+- activePucks (1-12), startCount, timeLimitSeconds, warnEnd, stopOnWin
+
+## STATES
+CD_SETUP → CD_PREPARE (3.1s) → CD_RUNNING → CD_FINISHED
+
+## KEY MECHANICS
+- 300ms debounce per click
+- EFF_PROGRESS: fill = currentCount/startCount ratio
+- Winner: first to 0 gets RAINBOW, later finishers get DOUBLE_CHASE
+- 10s winner animation then lights reset to breathe
+- Flash: 150ms white flash on each click
+
+## COMMANDS
+setup, reset, config_players, config_count, config_time, config_warn, config_stopwin, start, stop, exit
+
+## STATUS JSON
+{state, elapsed, winnerTime, players: [{id, count, finishTime}]}

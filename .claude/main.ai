@@ -1,0 +1,25 @@
+# main.cpp — Coordinator Entry Point
+# Files: src/coordinator/main.cpp
+
+## PURPOSE
+Boot sequence and main loop for the ESP32-S3 coordinator.
+
+## BOOT ORDER
+1. Serial 115200, 2s delay for monitor
+2. LittleFS.begin(true) — format on first boot
+3. Storage check: warn if <300KB free
+4. activationManager.begin() — license validation
+5. PuckNetwork::begin() — WiFi AP + ESP-NOW
+6. WebHandler::begin() — web server + DNS
+7. GameManager::begin() — stats init
+
+## MAIN LOOP
+PuckNetwork::update() → WebHandler::update() → GameManager::update() → WifiScanner::loop()
+All called every iteration, no delays.
+
+## GLOBALS
+- ActivationManager activationManager — singleton, accessed by WebHandler
+- SYSTEM_VERSION "1.6-Debug" — shown in /api/version
+
+## DEPENDENCIES
+Common.h, WebHandler.h, GameManager.h, PuckNetwork.h, WifiScanner.h, ActivationManager.h

@@ -1,0 +1,35 @@
+# Game_Target — Target Touch (ID 15)
+# Files: src/coordinator/Game_Target.h, Game_Target.cpp
+# HTML: data/game_target_setup.html, game_target_names.html, game_target_run.html
+
+## GAMEPLAY
+Speed game: pucks light up, players touch targets. 1-5 groups, 2-10 pucks/group.
+Two modes: Time-based (fixed duration, highest score) or Round-based (first to N wins).
+Sequential or random target selection. Optional group start button.
+
+## CONFIG
+- numGroups (1-5), pucksPerGroup (2-10), delayMs (default 2s between targets)
+- gameMode: 0=Time, 1=Rounds
+- timeLimit (default 120s), targetRounds (default 30)
+- seqMode: 0=Random, 1=Sequence
+- groupStart: require hold on puck 0
+
+## STATES per group
+TG_SETUP → TG_WAIT_HANDS → TG_COUNTDOWN (3s, SKI) → TG_RUNNING → TG_FINISHED
+Optional: TG_FALSE_START (2s)
+
+## KEY MECHANICS
+- Random: avoids same puck twice (lastPuckIdx tracking)
+- Sequence: cycling through pucks in order
+- Active target: EFF_STATIC in group color with beep
+- evaluateWinners(): called when ALL groups finish
+  - Time mode: highest score wins
+  - Round mode: fastest to target wins (tiebreak on time)
+- Colors: Magenta, Cyan, Yellow, Lime, DeepPink
+
+## COMMANDS
+setup, cfg_groups, cfg_pucks, cfg_delay, cfg_mode, cfg_time, cfg_rounds, cfg_seq, cfg_grpstart,
+start, reset, stop, exit, grp_start_X, grp_stop_X
+
+## STATUS JSON
+{mode, lim, groups: [{id, st, sc, hld, fs, time}]}

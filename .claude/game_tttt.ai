@@ -1,0 +1,38 @@
+# Game_TTTT — Tactical Tic-Tac-Toe (ID 27)
+# Files: src/coordinator/Game_TTTT.h, Game_TTTT.cpp
+# HTML: data/game_tttt_setup.html, game_tttt_names.html, game_tttt_run.html
+
+## GAMEPLAY
+Physical tic-tac-toe with pucks. Puck 0 = selector (shows whose turn), pucks 1-N = grid.
+Normal mode: claim neutral/opponent pucks. Hard mode: toggle any puck.
+1-3 players. Win by 3 in a row.
+
+## CONFIG
+- numPlayers (1-3), numPucks (4/6/7/10 = different grid sizes)
+- hardMode, autoRestart
+
+## BOARD SIZES
+- 4 pucks: 1x3 row (1 win line)
+- 6 pucks: 5-on-die (2 diagonal lines)
+- 7 pucks: 2x3 grid (2 horizontal lines)
+- 10 pucks: 3x3 classic TicTacToe (8 win lines)
+
+## STATES
+TTTT_SETUP → TTTT_RUNNING → TTTT_FINISHED (auto-restart after 5s if enabled)
+
+## KEY MECHANICS
+- grid[9]: -1=neutral, 0-2=player owner
+- Selector puck (idx 0): click → nextPlayer()
+- Grid puck (idx 1+): mapped to grid[puckIdx-1]
+- Normal: claim neutral/opponent, ignore own
+- Hard: toggle between neutral/claimed
+- 500ms debounce per puck
+- checkWin(): varies by board size (1-8 possible win lines)
+- Winner: winning 3 pucks get RAINBOW, others dim in winner color
+- Player colors: Blue, Red, Green
+
+## COMMANDS
+setup, cfg_ply, cfg_pucks, cfg_hard, cfg_auto, show_layout, start, stop, reset, exit
+
+## STATUS JSON
+{st, t (elapsed), cp (current player), sc: [p0_count, p1_count, p2_count]}

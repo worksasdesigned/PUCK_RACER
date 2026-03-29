@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Game Editor</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .editor-grid { display:grid; grid-template-columns:180px 1fr; gap:12px; margin-bottom:16px; }
+        @media(max-width:600px) { .editor-grid { grid-template-columns:1fr; } }
+
+        /* State list sidebar */
+        .state-list { background:var(--card-bg,#1e1e2e); border-radius:10px; padding:10px;
+            border:1px solid rgba(255,255,255,0.1); max-height:70vh; overflow-y:auto; }
+        .state-item { padding:8px 10px; border-radius:6px; cursor:pointer; margin-bottom:4px;
+            font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;
+            border:2px solid transparent; transition:all 0.15s; }
+        .state-item:hover { background:rgba(255,255,255,0.05); }
+        .state-item.active { border-color:var(--accent,#8aece5); background:rgba(138,236,229,0.08); }
+        .state-item .del-btn { opacity:0.3; cursor:pointer; font-size:0.7rem; padding:2px 6px; }
+        .state-item .del-btn:hover { opacity:1; color:#e53e3e; }
+        .add-state-btn { width:100%; padding:8px; margin-top:6px; border-radius:6px; border:1px dashed rgba(255,255,255,0.2);
+            background:none; color:var(--accent,#8aece5); cursor:pointer; font-size:0.85rem; }
+        .add-state-btn:hover { border-color:var(--accent,#8aece5); }
+
+        /* State detail panel */
+        .state-detail { background:var(--card-bg,#1e1e2e); border-radius:10px; padding:16px;
+            border:1px solid rgba(255,255,255,0.1); }
+        .state-detail h3 { margin-bottom:10px; font-size:1rem; }
+        .state-name-input { width:100%; padding:8px; border-radius:6px; border:1px solid rgba(255,255,255,0.15);
+            background:rgba(0,0,0,0.3); color:#fff; font-size:0.9rem; margin-bottom:12px; }
+
+        /* Action row */
+        .action-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:6px 8px;
+            border-radius:6px; margin-bottom:6px; background:rgba(0,0,0,0.15); }
+        .action-row label { font-size:0.75rem; color:#888; min-width:36px; }
+        .action-row select, .action-row input { font-size:0.8rem; padding:4px 6px; border-radius:4px;
+            border:1px solid rgba(255,255,255,0.15); background:rgba(0,0,0,0.3); color:#fff; }
+        .action-row input[type="color"] { width:32px; height:26px; padding:0; border:none; cursor:pointer; }
+        .action-row input[type="number"] { width:60px; }
+
+        /* Transition row */
+        .trans-row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:6px 8px;
+            border-radius:6px; margin-bottom:6px; background:rgba(0,0,0,0.15); }
+        .trans-row select, .trans-row input { font-size:0.8rem; padding:4px 6px; border-radius:4px;
+            border:1px solid rgba(255,255,255,0.15); background:rgba(0,0,0,0.3); color:#fff; }
+        .trans-row input[type="number"] { width:60px; }
+        .rm-btn { background:none; border:none; color:#e53e3e; cursor:pointer; font-size:0.9rem; padding:2px 6px; opacity:0.5; }
+        .rm-btn:hover { opacity:1; }
+        .add-btn { padding:4px 12px; border-radius:5px; border:1px dashed rgba(255,255,255,0.2);
+            background:none; color:var(--accent,#8aece5); cursor:pointer; font-size:0.8rem; margin-top:4px; }
+
+        /* Puck preview */
+        .puck-preview { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin:16px 0; }
+        .puck-circle { width:48px; height:48px; border-radius:50%; border:2px solid rgba(255,255,255,0.2);
+            display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:700;
+            transition:all 0.3s; }
+
+        /* Toolbar */
+        .toolbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+        .toolbar button, .toolbar label { font-size:0.85rem; padding:8px 14px; border-radius:6px;
+            border:1px solid rgba(255,255,255,0.15); background:var(--card-bg,#1e1e2e); color:#fff;
+            cursor:pointer; transition:all 0.15s; }
+        .toolbar button:hover, .toolbar label:hover { border-color:var(--accent,#8aece5); }
+        .sec-title { font-size:0.8rem; color:#888; text-transform:uppercase; letter-spacing:1px;
+            margin:12px 0 6px 0; }
+
+        /* Help tooltip */
+        .help-tip { display:inline-block; width:16px; height:16px; line-height:16px; text-align:center;
+            border-radius:50%; background:rgba(255,255,255,0.1); color:#888; font-size:0.65rem;
+            cursor:help; margin-left:4px; vertical-align:middle; position:relative; font-style:normal; }
+        .help-tip:hover { background:var(--accent,#8aece5); color:#111; }
+        .help-tip .tip-text { display:none; position:absolute; left:50%; transform:translateX(-50%);
+            bottom:calc(100% + 6px); background:#222; color:#ccc; border:1px solid rgba(255,255,255,0.15);
+            border-radius:6px; padding:8px 10px; font-size:0.75rem; width:220px; line-height:1.4;
+            z-index:100; box-shadow:0 4px 12px rgba(0,0,0,0.4); font-weight:400; text-transform:none;
+            letter-spacing:0; white-space:normal; }
+        .help-tip:hover .tip-text { display:block; }
+
+        /* Help banner */
+        .help-banner { background:var(--card-bg,#1e1e2e); border:1px solid rgba(255,255,255,0.1);
+            border-radius:10px; padding:14px 16px; margin-bottom:12px; font-size:0.8rem;
+            color:#aaa; line-height:1.5; }
+        .help-banner summary { cursor:pointer; color:var(--accent,#8aece5); font-weight:600;
+            font-size:0.85rem; list-style:none; }
+        .help-banner summary::before { content:'? '; }
+        .help-banner summary::-webkit-details-marker { display:none; }
+        .help-banner h4 { color:#ddd; margin:10px 0 4px 0; font-size:0.8rem; }
+        .help-banner ul { margin:0 0 0 16px; padding:0; }
+        .help-banner li { margin-bottom:3px; }
+        .help-banner code { background:rgba(255,255,255,0.08); padding:1px 4px; border-radius:3px; font-size:0.75rem; }
+    </style>
+</head>
+<body>
+    <header><div class="logo">🎨 Game Editor</div></header>
+    <main>
+        <!-- Help Banner -->
+        <details class="help-banner">
+            <summary>How to use the Game Editor</summary>
+            <h4>Concept</h4>
+            <p>A custom game is a sequence of <strong>states</strong>. Each state defines what the pucks do (light up, play a sound) and what triggers the next state (a button press or a timeout).</p>
+            <h4>Quick Start</h4>
+            <ul>
+                <li>Click <strong>+ Add State</strong> to create your first state</li>
+                <li>Add <strong>Puck Actions</strong> to define which pucks light up with which effect and color</li>
+                <li>Add <strong>Transitions</strong> to define what happens next (button press or timeout)</li>
+                <li>Create more states and link them together via transitions</li>
+                <li>Click <strong>Save to Coordinator</strong>, then <strong>Play</strong> to test</li>
+            </ul>
+            <h4>Available Effects</h4>
+            <ul>
+                <li><strong>Static</strong> &mdash; solid color</li>
+                <li><strong>Breathe</strong> &mdash; pulsing glow (fast or slow)</li>
+                <li><strong>Single/Double Chase</strong> &mdash; spinning LED animation</li>
+                <li><strong>Countdown</strong> &mdash; visual countdown timer (set duration in ms)</li>
+                <li><strong>Status</strong> &mdash; small status indicator dot</li>
+            </ul>
+            <h4>Current Limitations</h4>
+            <ul>
+                <li>Max <strong>30 states</strong> per game, <strong>12 actions</strong> per state, <strong>4 transitions</strong> per state</li>
+                <li>No scoring, counters or variables &mdash; this is a pure state machine</li>
+                <li>No loops &mdash; to repeat, point the last transition back to an earlier state</li>
+                <li>Only one custom game can be saved on the coordinator at a time</li>
+                <li>Puck numbers are fixed slots (P1&ndash;P8), not dynamic</li>
+            </ul>
+        </details>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <button onclick="newGame()">New</button>
+            <label style="cursor:pointer;">
+                Import JSON
+                <input type="file" accept=".json" onchange="importJSON(this)" style="display:none;">
+            </label>
+            <button onclick="exportJSON()">Export JSON</button>
+            <button onclick="saveToDevice()" style="background:var(--accent,#8aece5); color:#111; font-weight:700;">Save to Coordinator</button>
+            <button onclick="nav('/game_custom_setup.html')" style="margin-left:auto;">→ Play</button>
+        </div>
+
+        <!-- Game Name -->
+        <div class="card" style="padding:10px 16px; margin-bottom:12px;">
+            <label style="font-size:0.8rem; color:#888;">Game Name</label>
+            <input type="text" id="gameName" value="My Custom Game" class="state-name-input" style="margin:4px 0 0 0;"
+                oninput="game.name=this.value">
+        </div>
+
+        <!-- Puck Preview -->
+        <div class="puck-preview" id="puckPreview"></div>
+
+        <!-- Editor Grid: State List + Detail -->
+        <div class="editor-grid">
+            <div class="state-list" id="stateList"></div>
+            <div class="state-detail" id="stateDetail">
+                <p style="color:#666; text-align:center; padding:40px 0;">Add a state to begin</p>
+            </div>
+        </div>
+
+        <button onclick="nav('/')" class="btn-back" style="margin-top:12px;">Back</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const EFFECTS = [
+            { id:'OFF',          label:'OFF' },
+            { id:'STATIC',       label:'Static' },
+            { id:'BREATHE_MOD2', label:'Breathe (fast)' },
+            { id:'BREATHE_MOD4', label:'Breathe (slow)' },
+            { id:'SINGLE_CHASE', label:'Single Chase' },
+            { id:'DOUBLE_CHASE', label:'Double Chase' },
+            { id:'COUNTDOWN',    label:'Countdown' },
+            { id:'STATUS',       label:'Status' }
+        ];
+        const SOUNDS = [
+            { id:'',    label:'None' },
+            { id:'BEEP', label:'Beep' },
+            { id:'SKI',  label:'Ski Melody' }
+        ];
+        const NUM_PUCKS = 8;
+
+        // --- Game data model ---
+        let game = { name:'My Custom Game', states:[] };
+        let selectedState = -1;
+
+        function newGame() {
+            if (game.states.length > 0 && !confirm('Clear current game?')) return;
+            game = { name:'My Custom Game', states:[] };
+            selectedState = -1;
+            document.getElementById('gameName').value = game.name;
+            render();
+        }
+
+        // --- State management ---
+        function addState() {
+            let idx = game.states.length;
+            game.states.push({
+                name: 'State ' + (idx + 1),
+                actions: [],
+                transitions: []
+            });
+            selectedState = idx;
+            render();
+        }
+
+        function removeState(idx) {
+            if (!confirm('Delete state "' + game.states[idx].name + '"?')) return;
+            game.states.splice(idx, 1);
+            // Fix goto references
+            game.states.forEach(s => {
+                s.transitions.forEach(t => {
+                    if (t.goto === idx) t.goto = -1;
+                    else if (t.goto > idx) t.goto--;
+                });
+            });
+            if (selectedState >= game.states.length) selectedState = game.states.length - 1;
+            render();
+        }
+
+        function selectState(idx) {
+            selectedState = idx;
+            render();
+        }
+
+        // --- Add / Remove actions & transitions ---
+        function addAction() {
+            if (selectedState < 0) return;
+            let s = game.states[selectedState];
+            if (s.actions.length >= 12) return;
+            s.actions.push({ puck:-1, effect:'STATIC', r:255, g:0, b:0, dur:0, sound:'', soundDur:100 });
+            render();
+        }
+
+        function removeAction(ai) {
+            game.states[selectedState].actions.splice(ai, 1);
+            render();
+        }
+
+        function addTransition() {
+            if (selectedState < 0) return;
+            let s = game.states[selectedState];
+            if (s.transitions.length >= 4) return;
+            s.transitions.push({ on:'PRESS', puck:-1, time:10, goto:selectedState + 1 < game.states.length ? selectedState + 1 : -1 });
+            render();
+        }
+
+        function removeTransition(ti) {
+            game.states[selectedState].transitions.splice(ti, 1);
+            render();
+        }
+
+        // --- Render everything ---
+        function render() {
+            renderStateList();
+            renderStateDetail();
+            renderPuckPreview();
+        }
+
+        function renderStateList() {
+            let html = '';
+            game.states.forEach((s, i) => {
+                html += '<div class="state-item' + (i === selectedState ? ' active' : '') +
+                    '" onclick="selectState(' + i + ')">' +
+                    '<span>' + (i+1) + '. ' + esc(s.name) + '</span>' +
+                    '<span class="del-btn" onclick="event.stopPropagation();removeState(' + i + ')">✕</span></div>';
+            });
+            html += '<button class="add-state-btn" onclick="addState()">+ Add State' + tip('A state is one step in your game sequence. The game starts at State 1 and follows the transitions you define.') + '</button>';
+            document.getElementById('stateList').innerHTML = html;
+        }
+
+        function renderStateDetail() {
+            let el = document.getElementById('stateDetail');
+            if (selectedState < 0 || selectedState >= game.states.length) {
+                el.innerHTML = '<p style="color:#666;text-align:center;padding:40px 0;">Select or add a state</p>';
+                return;
+            }
+            let s = game.states[selectedState];
+            let html = '<div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;">' +
+                '<input type="text" class="state-name-input" style="margin:0;flex:1;" value="' + esc(s.name) +
+                '" oninput="game.states[' + selectedState + '].name=this.value;renderStateList();" placeholder="State name">' +
+                tip('A state is one step in your game. Give it a descriptive name like &quot;Puck 1 Red&quot; or &quot;Wait for press&quot;.') + '</div>';
+
+            // --- ACTIONS ---
+            html += '<div class="sec-title">Puck Actions' + tip('Define what each puck does when this state is active. Choose a puck, an LED effect, a color, and optionally a sound.') + '</div>';
+            s.actions.forEach((a, ai) => {
+                html += '<div class="action-row">';
+                // Puck selector
+                html += '<label>Puck' + tip('Which puck to control. ALL sends the command to every connected puck.') + '</label><select onchange="updA(' + ai + ',\'puck\',parseInt(this.value))">';
+                html += '<option value="-1"' + (a.puck===-1?' selected':'') + '>ALL</option>';
+                for(let p=0; p<NUM_PUCKS; p++) {
+                    html += '<option value="'+p+'"'+(a.puck===p?' selected':'')+'>P'+(p+1)+'</option>';
+                }
+                html += '</select>';
+                // Effect
+                html += '<label>Effect' + tip('The LED animation. Static = solid color. Breathe = pulsing. Chase = spinning. Countdown = visual timer (set duration).') + '</label><select onchange="updA(' + ai + ',\'effect\',this.value)">';
+                EFFECTS.forEach(e => {
+                    html += '<option value="'+e.id+'"'+(a.effect===e.id?' selected':'')+'>'+e.label+'</option>';
+                });
+                html += '</select>';
+                // Color
+                html += '<input type="color" value="' + rgbToHex(a.r,a.g,a.b) +
+                    '" oninput="updColor(' + ai + ',this.value)">';
+                // Duration
+                html += '<label>ms' + tip('Duration in milliseconds. For most effects this controls the animation speed. For Countdown it sets the countdown length. 0 = default/infinite.') + '</label><input type="number" value="'+(a.dur||0)+'" min="0" step="100"' +
+                    ' onchange="updA(' + ai + ',\'dur\',parseInt(this.value)||0)">';
+                // Sound
+                html += '<label>Sound' + tip('Optional sound when entering this state. Beep plays a short tone (set duration). Ski Melody plays a pre-programmed jingle.') + '</label><select onchange="updA(' + ai + ',\'sound\',this.value)">';
+                SOUNDS.forEach(sn => {
+                    html += '<option value="'+sn.id+'"'+(a.sound===sn.id?' selected':'')+'>'+sn.label+'</option>';
+                });
+                html += '</select>';
+                // Sound dur (only for BEEP)
+                if (a.sound === 'BEEP') {
+                    html += '<input type="number" value="'+(a.soundDur||100)+'" min="50" step="50" style="width:55px;"' +
+                        ' onchange="updA(' + ai + ',\'soundDur\',parseInt(this.value)||100)" title="Beep duration (ms)">';
+                }
+                html += '<button class="rm-btn" onclick="removeAction(' + ai + ')">✕</button>';
+                html += '</div>';
+            });
+            if (s.actions.length < 12) {
+                html += '<button class="add-btn" onclick="addAction()">+ Add Action</button>';
+            }
+
+            // --- TRANSITIONS ---
+            html += '<div class="sec-title" style="margin-top:16px;">Transitions' + tip('Transitions define what triggers the next state. PRESS = a puck button is pressed. TIMEOUT = a fixed time passes. The arrow shows which state comes next. END finishes the game.') + '</div>';
+            s.transitions.forEach((t, ti) => {
+                html += '<div class="trans-row">';
+                // Trigger type
+                html += '<select onchange="updT(' + ti + ',\'on\',this.value);render()">';
+                html += '<option value="PRESS"'+(t.on==='PRESS'?' selected':'')+'>PRESS</option>';
+                html += '<option value="TIMEOUT"'+(t.on==='TIMEOUT'?' selected':'')+'>TIMEOUT</option>';
+                html += '</select>';
+
+                if (t.on === 'PRESS') {
+                    html += '<label>Puck</label><select onchange="updT(' + ti + ',\'puck\',parseInt(this.value))">';
+                    html += '<option value="-1"'+(t.puck===-1?' selected':'')+'>Any</option>';
+                    for(let p=0;p<NUM_PUCKS;p++) {
+                        html += '<option value="'+p+'"'+(t.puck===p?' selected':'')+'>P'+(p+1)+'</option>';
+                    }
+                    html += '</select>';
+                } else {
+                    html += '<label>Time</label><input type="number" value="'+((t.time||10)/10).toFixed(1)+
+                        '" min="0.1" step="0.1" style="width:70px;"' +
+                        ' onchange="updT(' + ti + ',\'time\',Math.round(parseFloat(this.value)*10)||1)"> <span style="font-size:0.75rem;color:#888;">sec</span>';
+                }
+
+                // Goto state
+                html += '<label>→</label><select onchange="updT(' + ti + ',\'goto\',parseInt(this.value))">';
+                html += '<option value="-1"'+(t.goto===-1?' selected':'')+'>END</option>';
+                game.states.forEach((gs, gi) => {
+                    html += '<option value="'+gi+'"'+(t.goto===gi?' selected':'')+'>'+(gi+1)+'. '+esc(gs.name)+'</option>';
+                });
+                html += '</select>';
+                html += '<button class="rm-btn" onclick="removeTransition(' + ti + ')">✕</button>';
+                html += '</div>';
+            });
+            if (s.transitions.length < 4) {
+                html += '<button class="add-btn" onclick="addTransition()">+ Add Transition</button>';
+            }
+
+            el.innerHTML = html;
+        }
+
+        function renderPuckPreview() {
+            let html = '';
+            for (let p = 0; p < NUM_PUCKS; p++) {
+                let color = '#333'; let border = 'rgba(255,255,255,0.15)';
+                if (selectedState >= 0) {
+                    let s = game.states[selectedState];
+                    let a = s.actions.find(a => a.puck === p || a.puck === -1);
+                    if (a && a.effect !== 'OFF') {
+                        color = 'rgb(' + a.r + ',' + a.g + ',' + a.b + ')';
+                        border = color;
+                    }
+                }
+                html += '<div class="puck-circle" style="background:'+color+';border-color:'+border+';">'+(p+1)+'</div>';
+            }
+            document.getElementById('puckPreview').innerHTML = html;
+        }
+
+        // --- Update helpers ---
+        function updA(ai, key, val) { game.states[selectedState].actions[ai][key] = val; renderPuckPreview(); }
+        function updT(ti, key, val) { game.states[selectedState].transitions[ti][key] = val; }
+        function updColor(ai, hex) {
+            let a = game.states[selectedState].actions[ai];
+            let r = parseInt(hex.substr(1,2),16), g = parseInt(hex.substr(3,2),16), b = parseInt(hex.substr(5,2),16);
+            a.r = r; a.g = g; a.b = b;
+            renderPuckPreview();
+        }
+
+        function rgbToHex(r,g,b) {
+            return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+        }
+        function esc(s) { let d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+        function tip(text) { return ' <i class="help-tip">?<span class="tip-text">'+text+'</span></i>'; }
+
+        // --- JSON Import / Export ---
+        function buildJSON() {
+            let out = { name: game.name, states: [] };
+            game.states.forEach(s => {
+                let st = { name: s.name, actions: [], transitions: [] };
+                s.actions.forEach(a => {
+                    let act = { puck: a.puck, effect: a.effect, r: a.r, g: a.g, b: a.b, dur: a.dur || 0 };
+                    if (a.sound) { act.sound = a.sound; if (a.sound === 'BEEP') act.soundDur = a.soundDur || 100; }
+                    st.actions.push(act);
+                });
+                s.transitions.forEach(t => {
+                    let tr = { on: t.on, goto: t.goto };
+                    if (t.on === 'PRESS') tr.puck = t.puck;
+                    if (t.on === 'TIMEOUT') tr.time = t.time;
+                    st.transitions.push(tr);
+                });
+                out.states.push(st);
+            });
+            return out;
+        }
+
+        function exportJSON() {
+            let json = JSON.stringify(buildJSON(), null, 2);
+            let blob = new Blob([json], {type:'application/json'});
+            let a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = (game.name || 'custom_game').replace(/[^a-zA-Z0-9_-]/g, '_') + '.json';
+            a.click();
+        }
+
+        function importJSON(input) {
+            if (!input.files.length) return;
+            input.files[0].text().then(text => {
+                try {
+                    let data = JSON.parse(text);
+                    game.name = data.name || 'Imported Game';
+                    game.states = [];
+                    (data.states || []).forEach(s => {
+                        let state = {
+                            name: s.name || '',
+                            actions: (s.actions || []).map(a => ({
+                                puck: a.puck !== undefined ? a.puck : -1,
+                                effect: a.effect || 'OFF',
+                                r: a.r || 0, g: a.g || 0, b: a.b || 0,
+                                dur: a.dur || 0,
+                                sound: a.sound || '',
+                                soundDur: a.soundDur || 100
+                            })),
+                            transitions: (s.transitions || []).map(t => ({
+                                on: t.on || 'TIMEOUT',
+                                puck: t.puck !== undefined ? t.puck : -1,
+                                time: t.time || 10,
+                                goto: t.goto !== undefined ? t.goto : -1
+                            }))
+                        };
+                        game.states.push(state);
+                    });
+                    document.getElementById('gameName').value = game.name;
+                    selectedState = game.states.length > 0 ? 0 : -1;
+                    render();
+                } catch(e) { alert('Invalid JSON: ' + e.message); }
+            });
+            input.value = '';
+        }
+
+        function saveToDevice() {
+            let json = JSON.stringify(buildJSON());
+            fetch('/api/custom/save', { method:'POST', body: json }).then(r => {
+                if (r.ok) alert('Saved to coordinator!');
+                else alert('Save failed!');
+            }).catch(() => alert('Connection error'));
+        }
+
+        // --- Init ---
+        // Try to load existing game from coordinator
+        fetch('/api/custom/load').then(r => {
+            if (!r.ok) throw 'none';
+            return r.json();
+        }).then(data => {
+            // Import it into the editor
+            game.name = data.name || 'Custom Game';
+            game.states = [];
+            (data.states || []).forEach(s => {
+                game.states.push({
+                    name: s.name || '',
+                    actions: (s.actions || []).map(a => ({
+                        puck: a.puck !== undefined ? a.puck : -1,
+                        effect: a.effect || 'OFF',
+                        r: a.r || 0, g: a.g || 0, b: a.b || 0,
+                        dur: a.dur || 0,
+                        sound: a.sound || '',
+                        soundDur: a.soundDur || 100
+                    })),
+                    transitions: (s.transitions || []).map(t => ({
+                        on: t.on || 'TIMEOUT',
+                        puck: t.puck !== undefined ? t.puck : -1,
+                        time: t.time || 10,
+                        goto: t.goto !== undefined ? t.goto : -1
+                    }))
+                });
+            });
+            document.getElementById('gameName').value = game.name;
+            selectedState = game.states.length > 0 ? 0 : -1;
+            render();
+        }).catch(() => {
+            render();
+        });
+    </script>
+</body>
+</html>

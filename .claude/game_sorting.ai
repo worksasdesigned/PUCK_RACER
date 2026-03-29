@@ -1,0 +1,28 @@
+# Game_SortingHat — Team Assignment (ID 7)
+# Files: src/coordinator/Game_SortingHat.h, Game_SortingHat.cpp
+# HTML: data/game_sorting_setup.html, game_sorting_names.html, game_sorting_run.html
+
+## GAMEPLAY
+Harry Potter-style sorting. Press puck → random group assignment.
+Pre-filled ticket bag ensures even distribution. 2-8 groups, 2-100 players.
+
+## CONFIG
+- numGroups (2-8), targetPlayers (2-100), activePucks (1-3 input pucks)
+
+## STATES
+SORT_SETUP → SORT_STARTING (non-blocking 4-beep sequence, ~2.4s) → SORT_RUNNING → SORT_FINISHED
+
+## KEY MECHANICS
+- ticketBag: vector of group assignments, drawn randomly
+- 1s lockout per puck after each assignment (prevents spam)
+- Delayed sound: queued 50ms after light (avoid ESP-NOW packet collision)
+- Non-blocking start sequence: 3 short beeps + 1 long, then rainbow
+- Last player: puck keeps group color as confirmation
+- Bag empty → SORT_FINISHED + fanfare + win effect
+- 8 group colors: Red, Blue, Green, Yellow, Magenta, Cyan, Orange, White
+
+## COMMANDS
+setup, cfg_groups, cfg_players, cfg_pucks, preview, start, stop, exit
+
+## STATUS JSON
+{state, total, done, groups: [count_per_group]}

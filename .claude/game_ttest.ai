@@ -1,0 +1,30 @@
+# Game_TTest — Agility T-Test (ID 14)
+# Files: src/coordinator/Game_TTest.h, Game_TTest.cpp
+# HTML: data/game_ttest_setup.html, game_ttest_names.html, game_ttest_run.html
+
+## GAMEPLAY
+Agility test: players navigate sequence Middle→Left→Right→Middle→Start.
+4 pucks per group. Manual press or auto-advance mode (configurable speed).
+Score: 0.20 per waypoint. 1-2 groups.
+
+## CONFIG
+- numGroups (1-2), timeLimit (default 180s), groupStart (synchronized)
+- puckPress: true=manual, false=auto-advance
+- soundEnabled, autoSpeed (0=Slow 2m/s, 1=Mid 3m/s, 2=Fast 4m/s)
+
+## STATES per group
+TT_SETUP → TT_WAIT_HANDS → TT_COUNTDOWN (3s, SKI) → TT_RUNNING → TT_FINISHED
+Optional: TT_FALSE_START (2s penalty)
+
+## KEY MECHANICS
+- SEQUENCE[5] = [1, 2, 3, 1, 0], DISTANCES[5] = [10, 5, 10, 5, 10] meters
+- Manual: click waypoint puck to advance, score += 0.20
+- Auto: timer = DISTANCES[idx] / SPEEDS[autoSpeed], auto-advance with beep
+- Group colors: Blue and Red
+- Fractional scoring enables 0.20, 0.40, etc.
+
+## COMMANDS
+setup, cfg_groups, cfg_time, cfg_grpstart, cfg_press, cfg_sound, cfg_speed, start, reset, stop, exit, grp_start_X, grp_stop_X
+
+## STATUS JSON
+{limit, groups: [{id, st, sc (score 2 decimals), hld, fs, time}]}

@@ -1,0 +1,31 @@
+# Game_BeepTest — Beep Test / Luc Leger (ID 12)
+# Files: src/coordinator/Game_BeepTest.h, Game_BeepTest.cpp
+# HTML: data/game_beep_setup.html, game_beep_names.html, game_beep_run.html
+
+## GAMEPLAY
+Progressive shuttle run fitness test. Players alternate between 2 pucks following accelerating beep schedule.
+21 levels with increasing laps and speed. 2 yellow cards = elimination. VO2max estimated.
+
+## CONFIG
+- numPlayers (1-10), 2 pucks per player (start + target)
+
+## STATES
+BEEP_SETUP → BEEP_WAIT_HANDS → BEEP_COUNTDOWN (3s, SKI) → BEEP_RUNNING → BEEP_FINISHED
+Optional: BEEP_FALSE_START (2s penalty)
+
+## KEY MECHANICS
+- Schedule pre-calculation: 200 lap timestamps based on progressive speeds
+- Speed: 8.5 + (level * 0.5) km/h, levels 1-21
+- lapsPerLevel[21]: 7 to 15 laps per level
+- Duration per lap: 72000ms / speed
+- Player visual states: 0=chase, 1=yellow warning, 2=hit window, 3=waiting
+- 2s timeout past beep → auto yellow card + advance
+- Press >1.5s before beep → yellow card
+- 2 yellow cards → elimination + explosion sound
+- VO2max = (speed * 6.55) - 35.8
+
+## COMMANDS
+setup, cfg_players, start, reset, stop, exit, elim_player, clear_card
+
+## STATUS JSON
+{st, tT (test time), spd, lvl, players: [{id, elim, hld, fs, yc (yellow cards), dist (lap*20), vo2}]}

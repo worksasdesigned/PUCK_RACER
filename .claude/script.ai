@@ -1,0 +1,44 @@
+# script.js — Core Frontend JavaScript
+# File: data/script.js
+
+## PURPOSE
+Shared JS loaded by all pages. Handles navigation, status polling, health monitoring, license checks.
+
+## NAVIGATION
+- nav(url): Navigate with auto-save of form state on setup pages
+- _saveFormState(): Save input/select values to sessionStorage (prefix: _fs_<gamename>_)
+- _restoreFormState(): Restore saved form values on page load
+- _isSetupPage(): Check if URL contains "_setup"
+
+## STATUS LOOP
+- startStatusLoop(): 1s interval polling /api/status
+- updateStatus(): Fetch puck array, update UI
+- updateHeader(pucks): Signal strength indicators (green/yellow/red bars)
+- updateSettingsTable(pucks): HTML table of connected pucks (battery, RSSI, version, temp)
+
+## CACHE BUSTING
+- _fwVer: Fetched from /api/version, appended as ?v= to all link hrefs
+
+## HEALTH MONITORING
+- checkBatteryLevels(pucks): Toast warnings for low battery (critical/warn thresholds)
+- checkTemperature(pucks): Alert at 60°C (600 in 0.1°C units), hysteresis at 55°C
+- _playTempAlarm(): 3 beeps at 1000Hz via Web Audio API
+- RAM watchdog: 10s interval, toast if heap < 20KB
+- LittleFS check: Warning if free space < 15% (runs once on index/musical_setup)
+
+## QUIET MODE
+- toggleQuietMode(on): /api/quiet_mode?val=0|1
+- _showQuietBadge(): Shows 🔇 indicator when active
+
+## HAPTIC FEEDBACK
+- haptic(ms): navigator.vibrate(), default 20ms
+- Auto-triggered on button clicks
+
+## LICENSE CHECK
+- checkLicenseAndNavigate(url): Fetches /api/license
+  - If status !== 'FULL' AND playtime_hours*60 >= playtime_limit_minutes
+  - Shows confirm dialog, redirects to /register.html if confirmed
+
+## SYSTEM PREFERENCES
+- _getSysPrefs(): Load from localStorage.sys_prefs (JSON object)
+- Used for battery thresholds, heap warnings, etc.

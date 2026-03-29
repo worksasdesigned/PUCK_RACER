@@ -1,0 +1,35 @@
+# Game_Musical — Musical Chairs (ID 26)
+# Files: src/coordinator/Game_Musical.h, Game_Musical.cpp
+# HTML: data/game_musical_setup.html, game_musical_names.html, game_musical_run.html
+
+## GAMEPLAY
+Musical Chairs (Reise nach Jerusalem). N-1 pucks for N players.
+Music plays → pucks show rainbow. Music stops → purple double-chase → press fast!
+One player eliminated per round. Last standing wins.
+
+## CONFIG
+- initialPlayers, baseTimeSec, pauseTimeSec
+- varType: random variance 0=2s, 1=5s, 2=10s
+
+## STATES
+MUS_SETUP → MUS_WAITING → MUS_PLAYING (timed) → MUS_OPEN (press now!) → MUS_PAUSED_INTERIM → loop → MUS_FINISHED
+
+## PUCK STATES
+0=active, 1=pressed (this round), 2=eliminated, 3=manually disabled
+
+## KEY MECHANICS
+- Active pucks = initialPlayers - 1 (one always unavailable)
+- Round duration: baseTimeSec*1000 + random(0, varMs)
+- MUS_OPEN: purple double-chase signal, all press
+- endRound(): if 1 puck left → winner (fanfare), else → PAUSED_INTERIM
+- PAUSED_INTERIM: after pauseTimeSec → eliminateRandomPuck() → startRound()
+- Elimination: random selection from active+pressed candidates
+- Already-pressed puck: red fail + 300ms error sound
+- Manual controls: force_open, toggle_pause, toggle_puck
+
+## COMMANDS
+setup, cfg_ply, cfg_base, cfg_var, cfg_pause, start, stop, reset, exit,
+force_open, toggle_pause, toggle_puck
+
+## STATUS JSON
+{st, act (active count), t (time remaining), pucks: [{id, s (state)}]}

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Puck Racer Registrierung</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        main {
+            padding-top: 40px;
+        }
+        .card h2 {
+            color: var(--primary);
+            margin-top: 0;
+        }
+        #device-code {
+            font-family: monospace;
+            font-size: 1.5rem;
+            letter-spacing: 3px;
+            padding: 15px;
+            background-color: var(--bg-color);
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            text-align: center;
+            color: var(--text-muted);
+            user-select: all;
+        }
+        #status-message {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            display: none;
+            font-weight: bold;
+        }
+        #status-message.success {
+            background-color: rgba(72, 187, 120, 0.2);
+            color: var(--success);
+        }
+        #status-message.error {
+            background-color: rgba(229, 62, 62, 0.2);
+            color: var(--danger);
+        }
+        .license-info {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-blobs"></div>
+
+    <header>
+        <div class="top-tools">
+            <a href="/settings.html" class="btn-menu" style="font-size: 1rem; text-decoration: none; line-height: 1.5;">←</a>
+        </div>
+        <div class="logo">
+            <span>Registrierung</span>
+        </div>
+        <div class="status-bar" style="visibility: hidden;">
+            <div class="status-dot">0</div>
+        </div>
+    </header>
+
+    <main>
+        <div class="card">
+            <h2>Vollversion freischalten</h2>
+            <p class="license-info">
+                Um die Vollversion von PuckRacer freizuschalten, besuche die offizielle Webseite und erwerbe eine Lizenz.
+                Du erhältst einen 9-stelligen Schlüssel, den du hier eingeben kannst.
+            </p>
+
+            <label for="device-code">Dein Gerätecode</label>
+            <div id="device-code">Lade...</div>
+
+            <br>
+
+            <label for="license-key">9-stelliger Freischalt-Schlüssel</label>
+            <input type="text" id="license-key" inputmode="numeric" pattern="[0-9]*" maxlength="9" placeholder="123456789">
+            
+            <button id="register-button" class="btn-primary">Jetzt freischalten</button>
+
+            <div id="status-message"></div>
+
+            <div style="margin-top: 20px; text-align: center; font-size: 0.8rem; color: var(--text-muted);">
+                Aktueller Status: <b id="current-status">Lade...</b> <br>
+                Genutzte Spielzeit: <b id="playtime">Lade...</b>
+            </div>
+        </div>
+
+        <!-- DEBUG SECTION -->
+        <div class="card" id="debug-section" style="display: none; border-color: var(--danger); margin-top: 20px;">
+            <h2 style="color: var(--danger);">Debug & Test-Optionen</h2>
+            <p class="license-info">
+                Mit diesen Optionen kannst du die Zeitlimits für die Lizenzsperre zu Testzwecken manipulieren.
+            </p>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div>
+                    <label for="debug-free-mins">Test-Limit (Minuten)</label>
+                    <input type="number" id="debug-free-mins" value="1200">
+                </div>
+                <div>
+                    <label for="debug-extended-mins">Erweitertes Limit (Minuten)</label>
+                    <input type="number" id="debug-extended-mins" value="4800">
+                </div>
+            </div>
+            <button id="debug-set-times" class="btn-warn">Debug-Zeiten setzen</button>
+            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+            <button id="debug-apply-time-key" class="btn-primary" style="background: var(--success);">Simuliere "+60h" Key</button>
+        </div>
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const deviceCodeEl = document.getElementById('device-code');
+            const currentStatusEl = document.getElementById('current-status');
+            const playtimeEl = document.getElementById('playtime');
+            const licenseKeyInput = document.getElementById('license-key');
+            const registerButton = document.getElementById('register-button');
+            const statusMessageEl = document.getElementById('status-message');
+
+            function updateLicenseInfo() {
+                fetch('/api/license')
+                    .then(response => response.json())
+                    .then(data => {
+                        deviceCodeEl.textContent = data.device_code || 'N/A';
+                        
+                        let playtimeLimitMins = data.playtime_limit_minutes;
+                        let statusText = 'Unbekannt';
+
+                        if (data.status === 'FULL') {
+                            statusText = 'Vollversion (unbegrenzt)';
+                            playtimeEl.textContent = `${(data.playtime_hours * 60).toFixed(0)} Minuten gespielt`;
+                        } else {
+                            if (data.status === 'EXTENDED') {
+                                statusText = `Erweiterte Testversion`;
+                            } else {
+                                statusText = `Testversion`;
+                            }
+                            playtimeEl.textContent = `${(data.playtime_hours * 60).toFixed(0)} / ${playtimeLimitMins} Minuten`;
+                        }
+                        currentStatusEl.textContent = statusText;
+
+                        if (data.status === 'FULL') {
+                            licenseKeyInput.disabled = true;
+                            registerButton.disabled = true;
+                            registerButton.textContent = 'Vollversion bereits aktiv';
+                        }
+                    })
+                    .catch(error => {
+                        deviceCodeEl.textContent = 'Fehler';
+                        currentStatusEl.textContent = 'Fehler';
+                        playtimeEl.textContent = 'Fehler';
+                        console.error('Error fetching license info:', error);
+                    });
+            }
+
+            updateLicenseInfo();
+
+            // Event-Listener für den Registrier-Button
+            registerButton.addEventListener('click', () => {
+                const key = licenseKeyInput.value;
+                if (!key || key.length !== 9 || !/^\d+$/.test(key)) {
+                    showMessage('Bitte gib einen gültigen 9-stelligen Schlüssel ein.', 'error');
+                    return;
+                }
+
+                registerButton.disabled = true;
+                registerButton.textContent = 'Prüfe...';
+                statusMessageEl.style.display = 'none';
+
+                fetch('/api/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `key=${encodeURIComponent(key)}`
+                })
+                .then(response => {
+                    if (response.ok) {
+                        showMessage('Schlüssel gültig! Das Gerät ist jetzt freigeschaltet. Die Seite wird neu geladen.', 'success');
+                        setTimeout(() => location.reload(), 2500);
+                    } else {
+                        showMessage('Der eingegebene Schlüssel ist ungültig. Bitte überprüfe deine Eingabe.', 'error');
+                        registerButton.disabled = false;
+                        registerButton.textContent = 'Jetzt freischalten';
+                    }
+                })
+                .catch(error => {
+                    showMessage('Ein Netzwerkfehler ist aufgetreten. Versuche es später erneut.', 'error');
+                    registerButton.disabled = false;
+                    registerButton.textContent = 'Jetzt freischalten';
+                    console.error('Error during registration:', error);
+                });
+            });
+
+            function showMessage(message, type, duration = 0) {
+                statusMessageEl.textContent = message;
+                statusMessageEl.className = 'status-message ' + type;
+                statusMessageEl.style.display = 'block';
+                if(duration > 0) {
+                    setTimeout(() => { statusMessageEl.style.display = 'none'; }, duration);
+                }
+            }
+
+            // --- DEBUG LOGIC ---
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('debug') === '1') {
+                const debugSection = document.getElementById('debug-section');
+                debugSection.style.display = 'block';
+
+                document.getElementById('debug-set-times').addEventListener('click', () => {
+                    const free_mins = document.getElementById('debug-free-mins').value;
+                    const extended_mins = document.getElementById('debug-extended-mins').value;
+                    
+                    fetch('/api/license/debug', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: `free_mins=${free_mins}&extended_mins=${extended_mins}`
+                    }).then(res => {
+                        if(res.ok) {
+                            showMessage('Debug-Zeiten wurden gesetzt. Seite neu laden, um die Änderungen zu sehen.', 'success', 4000);
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            showMessage('Fehler beim Setzen der Debug-Zeiten.', 'error');
+                        }
+                    });
+                });
+
+                document.getElementById('debug-apply-time-key').addEventListener('click', () => {
+                    fetch('/api/license/apply_time_key')
+                        .then(res => {
+                            if(res.ok) {
+                                showMessage('Zeit-Schlüssel wurde simuliert und angewendet. Seite wird neu geladen.', 'success', 4000);
+                                setTimeout(() => location.reload(), 1500);
+                            } else {
+                                showMessage('Konnte Schlüssel nicht anwenden (Vollversion schon aktiv?).', 'error');
+                            }
+                        });
+                });
+            }
+        });
+    </script>

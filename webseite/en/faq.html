@@ -168,6 +168,17 @@
                     <div class="faq-answer"><p>No. If everything works and you are happy: never touch a running system. Still, it is worth checking the website from time to time to see if we have added new games for your training.</p></div>
                 </details>
 
+                <h2 style="margin-top: 2em;" id="beta">Beta & Contact</h2>
+                <details id="beta-details">
+                    <summary>I want to be part of the beta test!</summary>
+                    <div class="faq-answer">
+                        <p>We would love to have you on board! Just reach out to us directly via Telegram &ndash; scan the QR code or tap the image. We will get back to you as soon as possible.</p>
+                        <p style="text-align:center; margin-top:15px;">
+                            <a href="https://t.me/GSADV" target="_blank" rel="noopener"><img src="../pictures/telegram.png" alt="Telegram QR Code" style="max-width:180px; border-radius:10px; border:1px solid rgba(255,255,255,0.15);"></a>
+                        </p>
+                    </div>
+                </details>
+
             </div>
             <footer>
                 <a href="../Impressum.html">Legal Notice</a> · <a href="../datenschutz.html">Privacy Policy</a>
@@ -175,5 +186,11 @@
         </div>
     </div>
     </main>
+<script>
+if (location.hash === '#beta') {
+    var d = document.getElementById('beta-details');
+    if (d) { d.open = true; d.scrollIntoView({behavior:'smooth'}); }
+}
+</script>
 </body>
 </html>

@@ -1,0 +1,24 @@
+# WifiScanner — WiFi Channel Analyzer
+# Files: src/coordinator/Wifiscanner.h, Wifiscanner.cpp
+
+## PURPOSE
+Non-blocking WiFi channel scanner using promiscuous mode. Measures packet count and airtime.
+
+## API
+- startScan(channel, durationSec): Channel 1-13, duration 1-60s. Switches WiFi channel, enables promiscuous callback.
+- loop(): Check completion, calculate results. Call from main loop.
+- isScanning(): true during active scan
+- hasResult(): true when result ready (one-shot, cleared on getResult)
+- getResult(): returns ScanResult, clears ready flag
+- restoreChannel(channel): abort scan and restore original WiFi channel
+
+## SCAN RESULT
+- channel: scanned channel
+- packets: total packets detected
+- busy_ms: estimated airtime = (packets * 200µs) + (totalBytes / 2)
+- total_ms: scan duration
+
+## INTERNALS
+- promiscCallback (IRAM): increments volatile packetCount + totalBytes per packet
+- Airtime model: 200µs overhead/packet + 0.5µs/byte (averaged across 802.11 rates)
+- busy_ms clamped to not exceed total_ms

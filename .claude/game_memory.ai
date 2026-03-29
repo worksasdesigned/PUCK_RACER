@@ -1,0 +1,32 @@
+# Game_Memory — Matching Pairs (ID 19)
+# Files: src/coordinator/Game_Memory.h, Game_Memory.cpp
+# HTML: data/game_memory_setup.html, game_memory_names.html, game_memory_run.html
+
+## GAMEPLAY
+Classic memory/concentration. Pucks have hidden colors in pairs. Reveal two per turn.
+Match → stay revealed. Mismatch → hide again. Find all pairs to win.
+
+## CONFIG
+- numPucks (4-MAX_PEERS, must be even)
+- memorizeTime: 0=2s, 1=5s, 2=10s
+- autoRestart, searchMode (rainbow instead of initial reveal)
+
+## STATES
+MEM_SETUP → MEM_MEMORIZE (show colors) or MEM_SEARCH_INIT (3s rainbow) → MEM_RUNNING → MEM_EVALUATE (1.5s) → loop → MEM_FINISHED (4s rainbow) → MEM_IDLE
+
+## KEY MECHANICS
+- Fisher-Yates shuffle for color randomization
+- 10-color PALETTE, each used exactly twice
+- First click: reveal puck color
+- Second click: check match
+  - Match: pairsFound++, both stay off (solved), DINGDONG
+  - Mismatch: errors++, red fail, ERROR sequence, hide both
+- Reveal command: trainer can expose all unsolved for 2s
+- MEM_REVEAL state: 2s showing unsolved colors
+- Odd puck count auto-decreased by 1
+
+## COMMANDS
+setup, cfg_pucks, cfg_speed, cfg_auto, cfg_search, start, stop, reset, reveal, exit
+
+## STATUS JSON
+{st, pf (pairs found), err (errors), tot (total pairs)}

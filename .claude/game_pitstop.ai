@@ -1,0 +1,36 @@
+# Game_Pitstop — Pit Stop Simulator (ID 28)
+# Files: src/coordinator/Game_Pitstop.h, Game_Pitstop.cpp
+# HTML: data/game_pitstop_setup.html, game_pitstop_names.html, game_pitstop_run.html
+
+## GAMEPLAY
+Pit stop racing simulator. Players trigger entry/exit pit sequences with countdowns.
+Standard mode: 1 puck/player. Pit-lane mode: separate entry + exit pucks.
+Optional status puck shows pit availability.
+
+## CONFIG
+- numPlayers (1-10), pitstopMs (pit duration * 0.5)
+- pitlaneMode: false=1 puck, true=entry+exit pucks
+- showCountdown, alwaysYellow (idle color), statusPuckEnabled, statusPuckIdx
+- pitlaneExitMs (exit duration * 0.5), exitButtonMode (require press to complete exit)
+
+## STATES
+PS_SETUP → PS_RUNNING → PS_PAUSED → PS_FINISHED
+
+## KEY MECHANICS
+- Entry: click puck → countdown timer (pitstopMs + penaltyMs)
+- Completion: DINGDONG sound + green DOUBLE_CHASE
+- Pit-lane exit: auto-start when clear, or wait if blocked (exitPending)
+- exitPending: background timer runs, subtracts elapsed when blocker finishes
+- Idle pucks blink: 333ms on / 666ms off, color = yellow or player color
+- Status puck: green=available, yellow=all busy, red=paused
+- Pause: freeze all timers, offset on resume
+- Penalty: add seconds to running timer, update countdown speed
+- Countdown visual: speed = duration / 35
+
+## COMMANDS
+cfg_players, cfg_time, cfg_pitlane, cfg_countdown, cfg_alwyellow, cfg_statuspuck_en, cfg_statuspuck,
+cfg_exittime, cfg_exitbtn, cfg_entry (slotIdx*100+puckIdx), cfg_exit, start, pause, stop,
+penalty (slotIdx*100+seconds), clr_pen, toggle_active, show_track, reset, exit
+
+## STATUS JSON
+{st, total, pit, slots: [{entr, edone, exit, xdone, erem, xrem, sc, act, ewfb, pend, pen}]}

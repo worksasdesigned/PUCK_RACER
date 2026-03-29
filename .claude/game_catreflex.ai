@@ -1,0 +1,31 @@
+# Game_CatReflex — Cat Reflex (ID 25)
+# Files: src/coordinator/Game_CatReflex.h, Game_CatReflex.cpp
+# HTML: data/game_cat_setup.html, game_cat_names.html, game_cat_run.html
+
+## GAMEPLAY
+Multi-player reflex game. Puck 0 = display, pucks 1-12 = players.
+Green signal → press fast! Pressing early = penalty (-1 point).
+Highlander mode: only fastest gets point. Normal mode: tolerance window.
+Optional color chaos (random non-green flashes during wait).
+
+## CONFIG
+- playerCount (1-12), highlanderMode, gameDurationSec (default 60)
+- difficultyMs: reaction time tolerance (normal mode)
+- colorChaos: random distractors during wait phase
+
+## STATES
+CR_SETUP → CR_START_COUNTDOWN (3.1s, SKI) → CR_WAIT_GREEN (1-3s random) → CR_GREEN_ACTIVE → CR_ROUND_RESULT (3s) → loop → CR_FINISHED
+
+## KEY MECHANICS
+- gameStartTime set AFTER countdown (countdown doesn't count toward duration)
+- Color chaos: every 300ms, display puck flashes random non-green color
+- Green active: round ends when ALL press OR 2.5s timeout
+- Early press (during WAIT_GREEN): -1 point penalty + red fail effect
+- Highlander: fastest only gets point; Normal: within difficultyMs + fastest gets bonus
+- 150ms grace period (not applicable here, that's RedGreen)
+
+## COMMANDS
+setup, config_players, config_highlander, config_time, config_diff, config_chaos, start, stop, reset, exit
+
+## STATUS JSON
+{state, highlander, difficulty, timeLeft, players: [{points, reactTime, early, pressed, winner}]}

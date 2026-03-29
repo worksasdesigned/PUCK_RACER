@@ -1,0 +1,30 @@
+# Game_Tabata — HIIT Interval Timer (ID 22)
+# Files: src/coordinator/Game_Tabata.h, Game_Tabata.cpp
+# HTML: data/game_tabata_setup.html, game_tabata_run.html
+
+## GAMEPLAY
+HIIT timer alternating work/rest phases. Configurable durations, rounds or time limit.
+Three sound modes: countdown beeps, single beep, silent.
+
+## CONFIG
+- activePucksCount, workTimeMs, restTimeMs
+- soundMode: 0=countdown (3-2-1), 1=single beep, 2=silent
+- limitMode: 0=rounds, 1=time limit
+- limitValue → targetRounds or targetTimeMs
+
+## STATES
+TABATA_SETUP → TABATA_COUNTDOWN (3.1s, SKI) → TABATA_WORK ↔ TABATA_REST → TABATA_FINISHED
+Optional: TABATA_PAUSED (freezes all timers)
+
+## KEY MECHANICS
+- EFF_PROGRESS during WORK: fill = timeLeft/workTimeMs, updates every 200ms
+- Phase transitions: WORK→REST (increment round), REST→WORK
+- Pause: stores pauseDuration, offsets all timestamps on resume
+- 3-2-1 countdown beeps via warningStep counter (avoids repeats)
+- No button interaction (pucks are passive indicators)
+
+## COMMANDS
+setup, cfg_pucks, cfg_work, cfg_rest, cfg_sound, cfg_lmode, cfg_lval, start, pause, stop, reset, exit
+
+## STATUS JSON
+{state, gT (global time), pT (phase time left), round, limitMode, targetRounds, targetTime, workTime, restTime}

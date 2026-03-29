@@ -1,0 +1,27 @@
+# Game_Stopwatch — Multi-Player Stopwatch (ID 10)
+# Files: src/coordinator/Game_Stopwatch.h, Game_Stopwatch.cpp
+# HTML: data/game_stopwatch_setup.html, game_stopwatch_names.html, game_stopwatch_run.html
+
+## GAMEPLAY
+Competitive stopwatch. Players press pucks to start/stop timing. Central start option with synchronized countdown. Lap mode for multiple splits. Hold-to-start readiness check.
+
+## CONFIG
+- numPlayers, centralStart, holdToStart, lapMode
+
+## STATES
+SW_SETUP → SW_WAIT_HANDS → SW_COUNTDOWN (3s, SKI) → SW_RUNNING → SW_FINISHED
+Optional: SW_FALSE_START
+
+## KEY MECHANICS
+- Central start: all start simultaneously after countdown
+- Non-central: individual start/stop per player
+- Lap mode: click = record lap, double-click within 1s = finish
+- Action queue: non-blocking scheduled light/sound effects
+- Flash reset: 150ms visual feedback
+- 10 distinct player colors
+
+## COMMANDS
+setup, cfg_num, cfg_central, cfg_hold, cfg_lap, start_all, stop_all, stop_one, reset, exit
+
+## STATUS JSON
+{state, central, lap, players: [{id, state, holding, falseStart, time, laps: [...]}]}

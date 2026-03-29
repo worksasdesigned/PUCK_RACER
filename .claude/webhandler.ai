@@ -1,0 +1,84 @@
+# WebHandler — Web Server & API
+# Files: src/coordinator/WebHandler.h, WebHandler.cpp
+
+## PURPOSE
+AsyncWebServer on port 80 serving LittleFS files and REST API. Captive portal via DNS.
+
+## IP-LOCK ("Türsteher")
+- isClientAllowed(req): Only one client at a time, 45s SESSION_TIMEOUT_MS
+- activeClientIP, lastActivityTime, activeClientName tracked
+- Blocked clients → redirect to /only1device.html
+
+## API ENDPOINTS
+
+### System
+- GET /api/version → firmware version string
+- GET /api/status → JSON array of all pucks [{active, id, mac, bat, rssi, ver, lastSeen, lastClick, clicks, time, temp}]
+- GET /api/who_is_active → active client name
+- GET /api/sysinfo → uptime, chip, heap, storage, WiFi info
+- GET /api/heap → free/min heap
+- GET /api/netstats → network packet statistics
+- GET /api/netstats/reset → reset counters
+- GET /api/fs_list → all LittleFS files
+
+### License
+- GET /api/license → {status, deviceCode, playtime_hours, playtime_limit_minutes}
+- POST /api/register → body: key=XXXXXXXXX
+- POST /api/license/debug → set debug time limits (PUCK_RACER_DEBUG only)
+- GET /api/license/apply_time_key → auto-apply time extension (debug)
+
+### Game Control
+- GET /api/game/status → current game getStatusJSON()
+- GET /api/game/load?id=N → GameManager::startGame(N)
+- GET /api/game/action?cmd=X&val=Y → processCommand(X, Y) on current game
+
+### Statistics
+- GET /api/stats/games → {g1: count, g2: count, ..., g29: count}
+- GET /api/stats/playtime → total minutes
+- GET /api/stats/check?pids=1,2,3 → check if player CSV files exist
+- POST /api/stats/player_save → append to /s_<pid>.csv (fields: pid, game, score, ts, ex1-ex5, extra)
+- GET /api/stats/player_del?pid=N → delete player stats file
+- GET /api/highscore/get?game=N → highscores JSON
+- POST /api/highscore/save → save highscores JSON
+
+### Puck Management
+- GET /api/effects → current LED effects on all pucks
+- GET /api/trigger_ota → force pucks into OTA mode
+- GET /api/ota_status → OTA progress JSON
+- GET /api/puck_reset → clear puck list
+- GET /api/rssi_mode?val=0|1 → toggle RSSI visualization
+- GET /api/quiet_mode?val=0|1 → mute puck sounds
+- GET /api/brightness_limit?val=10-100 → max LED brightness %
+
+### WiFi
+- POST /api/wifi_config → save SSID/password, restart
+- GET /api/wifi_info → current SSID + security
+- GET /api/scanner/start?ch=N&dur=S → start WiFi scan
+- GET /api/scanner/status → scan progress/results
+- GET /api/scanner/restore → restore original channel
+
+### Files
+- POST /api/players → save players.json
+- GET /api/players → load players.json
+- POST /api/trainings → save trainings.json
+- GET /api/trainings → load trainings.json
+- POST /api/custom/save → save /custom_game.json (body handler for large POST)
+- GET /api/custom/load → load /custom_game.json
+
+### Audio
+- GET /api/music_info → path to first .mp3 file
+- POST /api/upload_mp3 → upload/replace MP3
+
+### Upload & OTA
+- POST /upload_file → upload to LittleFS (multipart)
+- POST /upload_puck → upload puck firmware binary
+- POST /update_system → OTA coordinator firmware
+
+## FILE SERVING
+- GET / → /index.html (or fallback welcome if LittleFS empty)
+- Static files from LittleFS root, cache max-age=86400
+- Default file: index.html
+
+## CAPTIVE PORTAL
+- DNSServer port 53 redirects all hostnames → 192.168.42.1
+- Enables http://puck.racer access

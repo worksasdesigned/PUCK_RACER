@@ -13,8 +13,11 @@
 #include "GameManager.h"
 #include "PuckNetwork.h" 
 #include "WifiScanner.h"
+#include "ActivationManager.h"
 
 #define SYSTEM_VERSION "1.6-Debug"
+
+ActivationManager activationManager;
 
 void setup() {
     Serial.begin(115200);
@@ -39,13 +42,16 @@ void setup() {
     }
     // ----------------------
 
-    // 2. Netzwerk Start
+    // 2. Activation Manager Start
+    activationManager.begin();
+
+    // 3. Netzwerk Start
     PuckNetwork::begin(); 
 
-    // 3. Webserver Start
+    // 4. Webserver Start
     WebHandler::begin();
 
-    // 4. Game Engine Start
+    // 5. Game Engine Start
     GameManager::begin();
 
     Serial.println("System Bereit. IP: 192.168.42.1");

@@ -83,6 +83,7 @@
                     <a onclick="startTutorial(); toggleMenu();" style="color: var(--primary); font-weight: bold;" data-i18n="menu_tutorial">🎓 Tutorial starten</a>
                     <a style="color: var(--text-muted); cursor: default;" data-i18n="menu_manual">📖 Handbuch (In Kürze)</a>
                     <a href="/impressum.html" data-i18n="menu_impressum">📜 Impressum</a>
+                    <a href="/register.html" id="menu-register-link" style="display: none; background: rgba(49, 130, 206, 0.1); font-weight: bold; color: var(--primary);" data-i18n="menu_register">🚀 Vollversion freischalten</a>
                 </div>
             </div>
         </div>
@@ -188,6 +189,7 @@
             { id: 'musical', numId: 0, icon: '🎵🪑🏃', url: '/game_musical_setup.html', tags: ['reaction'], key: 'g_musical' },
             { id: 'tttt', numId: 0, icon: '❌⭕', url: '/game_tttt_setup.html', tags: ['brain'], key: 'g_tttt' },
             { id: 'pitstop', numId: 28, icon: '🏎️⏱️', url: '/game_pitstop_setup.html', tags: ['sport', 'tool'], key: 'g_pitstop' },
+            { id: 'custom', numId: 29, icon: '🎨🎮', url: '/game_custom_setup.html', tags: ['tool'], key: 'g_custom' },
             { id: 'display', numId: 5, icon: '▶️✨', url: '/game_display_setup.html', tags: ['tool'], key: 'g_display' },
             { id: 'players', numId: 0, icon: '👥', url: '/player_manager.html', tags: ['tool'], key: 'g_players' },
             { id: 'training', numId: 0, icon: '📋', url: '/training.html', tags: ['tool'], key: 'g_training' },
@@ -490,6 +492,16 @@
         }).catch(e => { renderCarousel(); });
 
         setTimeout(initLangSelect, 100); 
+
+        // --- LIZENZ-LINK IM MENÜ ANZEIGEN ---
+        fetch('/api/license')
+            .then(r => r.json())
+            .then(license => {
+                if (license.status !== 'FULL') {
+                    document.getElementById('menu-register-link').style.display = 'block';
+                }
+            })
+            .catch(e => console.error('Could not fetch license status', e));
     </script>
 </body>
 </html>

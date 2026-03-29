@@ -1,0 +1,29 @@
+# Game_React2P — 2-Player Reaction Battle (ID 13)
+# Files: src/coordinator/Game_React2P.h, Game_React2P.cpp
+# HTML: data/game_react2p_setup.html, game_react2p_names.html, game_react2p_run.html
+
+## GAMEPLAY
+Two players per group compete: press your puck first when target color appears.
+1-5 groups possible. Optional fake distractor colors. Tracks reaction times and averages.
+
+## CONFIG
+- numGroups (1-5), pucksPerGroup (3-10), timeLimit (default 90s)
+- colorsPerPlayer (1-3): colors shown pre-game
+- useFakeColors: enable distractors (Yellow/Orange/White/Gold)
+
+## STATES per group
+R2_SETUP → R2_PRE_SHOW → R2_COUNTDOWN (3s) → R2_WAITING (1.5-4s random) → R2_RUNNING → R2_SHOW_WIN (1.5s) → loop back → R2_FINISHED
+
+## KEY MECHANICS
+- P1 colors: Red/Magenta/DeepPink, P2 colors: Blue/Cyan/Lime
+- Each round: random wait, then show player colors on pucks
+- First correct press wins round, scores point
+- Frozen timer on stop (stoppedTime preserved)
+- Per-group independent control (grp_start, grp_stop)
+- Average reaction time: totalReactionTime / score
+
+## COMMANDS
+setup, cfg_groups, cfg_pucks, cfg_time, cfg_colors, cfg_fake, start, reset, stop, exit, grp_start, grp_stop
+
+## STATUS JSON
+{time, limit, groups: [{id, st, gT, p1s, p2s, p1a (avg RT), p2a, p1c (colors), p2c}]}

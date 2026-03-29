@@ -1,0 +1,31 @@
+# Game_Domination — Territory Control (ID 20)
+# Files: src/coordinator/Game_Domination.h, Game_Domination.cpp
+# HTML: data/game_domination_setup.html, game_domination_names.html, game_domination_run.html
+
+## GAMEPLAY
+2-team territorial control. Click neutral pucks to claim. Double-click for team 2.
+Standard mode: most pucks at end wins. Deathmatch mode: HP-based elimination.
+1-2 groups with synchronized or independent start.
+
+## CONFIG
+- numGroups (1-2), durationMs (default 180s), blockTimeMs (default 2s lock after capture)
+- groupStart (synchronized), deathmatch, hpPerTeam (default 600)
+
+## STATES per group
+DOM_SETUP → DOM_WAIT_HANDS → DOM_COUNTDOWN (3s, SKI) → DOM_RUNNING → DOM_FINISHED
+Optional: DOM_FALSE_START
+
+## KEY MECHANICS
+- Puck owners: 0=neutral, 1=team1, 2=team2
+- Single click neutral → Team 1; Double-click within 450ms → Team 2
+- Click opponent's puck (after lock expires) → swap ownership
+- Click locked puck → error (white flash + error sound)
+- Block timer: EFF_COUNTDOWN visual, speed = blockTimeMs/35
+- Deathmatch: every 1s, teams lose HP = enemy-owned pucks (2x if all owned)
+- lastOwnerBeforeLock prevents re-capture exploits
+
+## COMMANDS
+cfg_groups, cfg_time, cfg_block, cfg_sync, cfg_mode, cfg_hp, start, stop, reset, exit, neut (neutralize puck)
+
+## STATUS JSON
+{st, dm, t (remaining), grps: [{id, t1s, t2s, h1, h2, fs, hp1, hp2, d1, d2, pucks: [{gIdx, o (owner), l (locked)}]}]}

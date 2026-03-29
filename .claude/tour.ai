@@ -1,0 +1,28 @@
+# tour.js — Interactive Tutorial Engine (v6)
+# File: data/tour.js
+
+## PURPOSE
+Step-by-step tutorial guiding new users through the PuckRacer interface. Bilingual (en/de).
+
+## STRUCTURE
+- tourTexts: Bilingual content object (en/de) with step_* keys
+- tourSteps[]: Array of step definitions with page, target, textKey, placement, etc.
+- Persisted in sessionStorage: pr_tour_step, pr_tour_lang
+
+## TUTORIAL FLOW
+1. Welcome screen with 3D CSS puck animation
+2. Language selection (step_lang)
+3. Status bar explanation
+4. Filter bar explanation
+5-11. Shuttle Run game walkthrough (setup → names → run → home)
+
+## KEY FUNCTIONS
+- injectTourHTML(): Create overlay + bubble + welcome screen DOM
+- showWelcomeScreen(): 3D puck animation with RGB glow
+- showTourStep(): Highlight target element, show tutorial bubble
+- tourNextStep(): Advance to next step
+- endTutorial(): Exit and cleanup
+- handleLangStep(): Allow language selection during tutorial
+
+## STEP FORMAT
+{ page, type, target (CSS selector), textKey, requireClick, requireInteraction, allowInteraction, placement, arrow }

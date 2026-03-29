@@ -168,6 +168,17 @@
                     <div class="faq-answer"><p>Nein. Wenn alles läuft und du zufrieden bist: Never touch a running system. Es lohnt sich trotzdem, ab und zu auf der Webseite nachzusehen, ob wir neue Spiele für das Training hinzugefügt haben.</p></div>
                 </details>
 
+                <h2 style="margin-top: 2em;" id="beta">Beta & Kontakt</h2>
+                <details id="beta-details">
+                    <summary>Ich will beim Beta-Test mitmachen!</summary>
+                    <div class="faq-answer">
+                        <p>Wir freuen uns über jeden, der PUCK RACER testen möchte! Schreib uns einfach direkt per Telegram &ndash; scanne den QR-Code oder tippe auf das Bild. Wir melden uns so schnell wie möglich.</p>
+                        <p style="text-align:center; margin-top:15px;">
+                            <a href="https://t.me/GSADV" target="_blank" rel="noopener"><img src="pictures/telegram.png" alt="Telegram QR Code" style="max-width:180px; border-radius:10px; border:1px solid rgba(255,255,255,0.15);"></a>
+                        </p>
+                    </div>
+                </details>
+
             </div>
             <footer>
                 <a href="Impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a>
@@ -175,6 +186,12 @@
         </div>
     </div>
     </main>
+<script>
+if (location.hash === '#beta') {
+    var d = document.getElementById('beta-details');
+    if (d) { d.open = true; d.scrollIntoView({behavior:'smooth'}); }
+}
+</script>
 </body>
 </html>
     

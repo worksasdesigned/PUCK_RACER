@@ -1,0 +1,26 @@
+# Game_DisplayMode — DJ/Demo Mode (ID 5)
+# Files: src/coordinator/Game_DisplayMode.h, Game_DisplayMode.cpp
+# HTML: data/game_display_setup.html, game_display_run.html
+
+## GAMEPLAY
+Demo/DJ mode for showing off LED effects. Three modes:
+- MANUAL: Direct control from web UI
+- RANDOM: Each puck auto-changes independently (3-8s intervals)
+- SYNC: All pucks change together (4s cycles)
+
+## CONFIG
+- durationMin: auto-stop for non-manual modes
+- Per-puck: mute flag (disable click sound)
+
+## MODES
+- DISP_MANUAL: Controlled via "play" command
+- DISP_RANDOM: Random effects [RAINBOW, BREATHE_MOD4, SINGLE_CHASE, DOUBLE_CHASE, SPARKLE, SPLIT_ROT]
+- DISP_SYNC: All pucks same effect [RAINBOW, POLICE, FLASH, DOUBLE_CHASE, LOADING]
+
+## COMMANDS
+setup, cfg_time, stop, exit, mode_man, mode_rand, mode_sync,
+mute_[idx], snd_[idx] (150ms sound),
+play,[target],[effectId],[r],[g],[b],[spd],[bri] (comma-separated direct control)
+
+## STATUS JSON
+{mode, pucks: [{id, muted, effectId, color (hex)}]}

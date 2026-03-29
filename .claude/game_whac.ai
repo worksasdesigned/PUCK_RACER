@@ -1,0 +1,40 @@
+# Game_Whac — Whac-A-Mole (ID 24)
+# Files: src/coordinator/Game_Whac.h, Game_Whac.cpp
+# HTML: data/game_whac_setup.html, game_whac_names.html, game_whac_run.html
+
+## GAMEPLAY
+Whac-a-mole with 5 difficulty levels. 1-3 groups, 3-10 pucks/group.
+Hit target colors, avoid non-targets. Tracks hits/misses.
+
+## 5 DIFFICULTY LEVELS
+1. Simple static targets (no timeout)
+2. 5s timeout, EFF_COUNTDOWN
+3. 2s timeout, EFF_COUNTDOWN
+4. 6s with 1.5s shifting/rotating targets
+5. Memory: show targets 1s, hide 1.5s, recall and hit (2 errors = round fail)
+
+## CONFIG
+- numGroups (1-3), pucksPerGroup (3-10), durationMs (default 60s)
+- difficulty (1-5), numColors (1-10), soundOn, showHitColors
+- targetColorMask: bitmask for which colors are targets
+
+## GLOBAL STATES
+WHAC_SETUP → WHAC_LAYOUT → WHAC_START_SKI (3.1s) → WHAC_START_TARGETS (4s, optional) → WHAC_RUNNING → WHAC_FINISHED_RAINBOW (4s) → WHAC_FINISHED_WHITE
+
+## GROUP STATES (during RUNNING)
+GRP_WAIT_NEXT_ROUND → GRP_ACTIVE (levels 1-4) or GRP_MEM_SHOW → GRP_MEM_WAIT → GRP_MEM_ACTIVE (level 5)
+After round: GRP_SHOW_ERRORS (1.5s) or GRP_MEM_SUCCESS (0.75s)
+
+## KEY MECHANICS
+- Level 4: handleLevel4Shift() rotates puck colors/targets left every 1.5s
+- Level 5: show→hide→recall pattern, 2 errors aborts round
+- Non-blocking revertTime system for visual feedback
+- 10 game colors: Red, Blue, Green, Yellow, Magenta, Cyan, Orange, DeepPink, Purple, SpringGreen
+- Arena colors: Purple, Cyan, Orange (per group)
+- h10 metric: hits per 10 seconds for normalized scoring
+
+## COMMANDS
+setup, show_layout, cfg_grp, cfg_ppg, cfg_time, cfg_diff, cfg_col, cfg_snd, cfg_shw, cfg_tgt (bitmask), start, stop, reset, exit
+
+## STATUS JSON
+{st, gT (remaining), grps: [{id, act, st, sc (hits), m (misses), h10}]}

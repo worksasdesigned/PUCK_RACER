@@ -1,0 +1,34 @@
+# Game_SimonSays — Simon Says Memory (ID 4)
+# Files: src/coordinator/Game_SimonSays.h, Game_SimonSays.cpp
+# HTML: data/game_simon_setup.html, game_simon_names.html, game_simon_run.html
+
+## GAMEPLAY
+Classic memory pattern game. Computer shows color sequence, player repeats it.
+Sequence grows by 1 each round. 1-3 groups with 3-4 pucks each.
+Target: remember N-length sequence to win.
+
+## CONFIG
+- activeGroups (1-3), pucksPerGroup (default 4), targetSeqLength (default 15)
+- speedSetting: 0=Slow(1200ms), 1=Med(800ms), 2=Fast(500ms)
+- colorBlind, autoRestart, soundOn
+
+## STATES per group
+SIM_SETUP → SIM_READY → SIM_COUNTDOWN (3s) → SIM_SHOW → SIM_INPUT → SIM_FEEDBACK (1.5s) → loop
+Terminal: SIM_FINISHED (rainbow) or SIM_FAIL (red, 5s)
+
+## KEY MECHANICS
+- Sequence stored as puck indices (0 to numPucks-1)
+- SHOW: alternates color (full brightness, speed-dependent) and dim (25%)
+- INPUT: 200ms debounce, correct → advance, wrong → SIM_FAIL
+- Complete sequence → FEEDBACK → add new color → SHOW again
+- Reach targetSeqLength → SIM_FINISHED (rainbow on all pucks 2x)
+- Stars counter tracks completed sequences
+- 10 normal colors + 10 colorblind colors
+- Team colors: Red, Blue, Yellow (group identifiers)
+
+## COMMANDS
+setup, cfg_groups, cfg_pucks_0/1/2, cfg_len, cfg_speed, cfg_blind, cfg_auto, cfg_sound,
+start_all, start_X, stop_all, stop_X, exit
+
+## STATUS JSON
+{groups: [{state, len, step, stars, seq: ["#RRGGBB", ...]}]}

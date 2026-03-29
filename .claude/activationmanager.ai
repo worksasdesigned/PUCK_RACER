@@ -1,0 +1,45 @@
+# ActivationManager — License/Copy Protection System
+# Files: src/coordinator/ActivationManager.h, ActivationManager.cpp
+# Related: data/register.html, data/script.js (checkLicenseAndNavigate), keygen.py
+
+## PURPOSE
+Challenge-response license system. Device code derived from MAC, keys validated via CRC32.
+
+## LICENSE TIERS
+- FREE: 20h playtime (1200 minutes)
+- EXTENDED: 80h playtime (4800 minutes) — TIME- key
+- FULL: unlimited — FULL- key
+
+## DEVICE CODE
+- Derived from last 3 bytes of WiFi MAC address
+- Encoded with DEVICE_CODE_ALPHABET (22 chars, no I/O/L/Z)
+- Format: "XX XX XX" (6 chars + 2 spaces)
+- Cached after first generation
+
+## KEY GENERATION (generateKey)
+- Input: prefix ("FULL-" or "TIME-") + cleanDeviceCode + salt
+- Hash: ~esp_rom_crc32_le(~0U, data, len) — standard CRC32, matches Python zlib.crc32()
+- Result: hash % 1000000000, formatted as 9-digit string with leading zeros
+
+## VALIDATION
+- On boot: loadLicense() reads /license.json from LittleFS
+- validateLicense() generates expected keys, compares with stored keys
+- FULL checked first, then EXTENDED, else FREE
+
+## REGISTRATION
+- attemptRegistration(key): 9-char key, checks against FULL then TIME expected keys
+- On match: saves to /license.json, updates status
+
+## DEBUG MODE (PUCK_RACER_DEBUG)
+- setDebugTimeLimits(free_mins, extended_mins): override limits for testing
+- applyTimeExtensionKey(): auto-apply TIME key without user input
+- API: POST /api/license/debug, GET /api/license/apply_time_key
+
+## FRONTEND CHECK (data/script.js)
+- checkLicenseAndNavigate(url): fetches /api/license
+- If status !== 'FULL' AND playtime_hours*60 >= playtime_limit_minutes → block + redirect to register.html
+- Currently only used in React2P (test case), needs expansion to all games
+
+## KEYGEN (keygen.py)
+- Python script generating keys from device code
+- Uses zlib.crc32() — matches ESP32 implementation

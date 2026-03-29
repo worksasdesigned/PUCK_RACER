@@ -221,7 +221,8 @@
                 sessionStorage.setItem(`r2_p1name_${i}`, document.getElementById(`p1name_${i}`).value);
                 sessionStorage.setItem(`r2_p2name_${i}`, document.getElementById(`p2name_${i}`).value);
             }
-            setTimeout(() => { nav('game_react2p_run.html'); }, 200);
+            // NEU: Lizenzprüfung vor dem Start
+            setTimeout(() => { checkLicenseAndNavigate('game_react2p_run.html'); }, 200);
         }
     </script>
 </body>

@@ -1,0 +1,149 @@
+# PuckRacer Coordinator — Architecture Index
+# Last updated: 2026-03-29
+
+## SYSTEM OVERVIEW
+ESP32-S3 coordinator that manages wireless LED pucks via ESP-NOW for sports/training games.
+- IP: 192.168.42.1 | SSID: PuckRace_Trainer (no password)
+- Captive Portal: any DNS → 192.168.42.1
+- Single-user lock ("Türsteher"): 45s timeout, one active client at a time
+- Platform: PlatformIO, Arduino framework, ESP-IDF 5.x
+- Filesystem: LittleFS (serves HTML/JS/CSS to browser)
+- No PSRAM usage (clone compatibility issues)
+- Version: defined as SYSTEM_VERSION in main.cpp
+
+## BOOT SEQUENCE (main.cpp)
+1. LittleFS.begin() — mount filesystem
+2. activationManager.begin() — load/validate license
+3. PuckNetwork::begin() — WiFi AP + ESP-NOW init
+4. WebHandler::begin() — AsyncWebServer + DNS
+5. GameManager::begin() — StatsManager init
+
+## MAIN LOOP (main.cpp)
+PuckNetwork::update() → WebHandler::update() → GameManager::update() → WifiScanner::loop()
+
+## FILE MAP
+
+### Core System (src/coordinator/)
+| File | Purpose | .ai summary |
+|------|---------|-------------|
+| main.cpp | Boot + loop | main.ai |
+| Common.h (include/) | Enums: EffectID, CommandType, SoundSeqID, EventType; Packet structs | (in index.ai) |
+| GameManager.h/cpp | Game registry (switch-case ID 1-29), startGame(), handlePuckEvent() | gamemanager.ai |
+| PuckNetwork.h/cpp | ESP-NOW, puck pairing, command sending, keepalive, OTA, stats | pucknetwork.ai |
+| WebHandler.h/cpp | AsyncWebServer, ALL API endpoints, IP-lock, captive portal | webhandler.ai |
+| StatsManager.h/cpp | Game start counts (NVS), puck clicks/time, playtime tracking | statsmanager.ai |
+| ActivationManager.h/cpp | License system (FREE/EXTENDED/FULL), CRC32 keys, debug mode | activationmanager.ai |
+| Wifiscanner.h/cpp | WiFi channel analyzer, promiscuous mode packet counting | wifiscanner.ai |
+| Game.h | Abstract base class: setup(), loop(), handleEvent(), processCommand(), getStatusJSON() | (in index.ai) |
+
+### Games (src/coordinator/Game_*.h/cpp → see individual .ai files)
+| ID | Class | File prefix | Category | .ai file |
+|----|-------|------------|----------|----------|
+| 1 | Game_ShuttleRun | Game_ShuttleRun | fitness | game_shuttle.ai |
+| 2 | Game_SimpleCounter | Game_SimpleCounter | tool | game_counter.ai |
+| 3 | Game_SimpleCountdown | Game_SimpleCountdown | tool | game_countdown.ai |
+| 4 | Game_SimonSays | Game_SimonSays | memory | game_simon.ai |
+| 5 | Game_DisplayMode | Game_DisplayMode | tool | game_display.ai |
+| 6 | Game_SimonRuns | Game_SimonRuns | memory | game_simonruns.ai |
+| 7 | Game_SortingHat | Game_SortingHat | tool | game_sorting.ai |
+| 8 | Game_BombSquad | Game_BombSquad | strategy | game_bomb.ai |
+| 9 | Game_RedGreen | Game_RedGreen | reflex | game_redgreen.ai |
+| 10 | Game_Stopwatch | Game_Stopwatch | tool | game_stopwatch.ai |
+| 11 | Game_Zombie | Game_Zombie | strategy | game_zombie.ai |
+| 12 | Game_BeepTest | Game_BeepTest | fitness | game_beep.ai |
+| 13 | Game_React2P | Game_React2P | reflex | game_react2p.ai |
+| 14 | Game_TTest | Game_TTest | reflex | game_ttest.ai |
+| 15 | Game_Target | Game_Target | reflex | game_target.ai |
+| 16 | Game_Timer | Game_Timer | tool | game_timer.ai |
+| 17 | Game_Hunt | Game_Hunt | strategy | game_hunt.ai |
+| 18 | Game_Pacemaker | Game_Pacemaker | fitness | game_pacemaker.ai |
+| 19 | Game_Memory | Game_Memory | memory | game_memory.ai |
+| 20 | Game_Domination | Game_Domination | strategy | game_domination.ai |
+| 21 | Game_CTL | Game_CTL | reflex | game_ctl.ai |
+| 22 | Game_Tabata | Game_Tabata | tool | game_tabata.ai |
+| 23 | Game_Ball | Game_Ball | strategy | game_ball.ai |
+| 24 | Game_Whac | Game_Whac | reflex | game_whac.ai |
+| 25 | Game_CatReflex | Game_CatReflex | reflex | game_catreflex.ai |
+| 26 | Game_Musical | Game_Musical | strategy | game_musical.ai |
+| 27 | Game_TTTT | Game_TTTT | strategy | game_tttt.ai |
+| 28 | Game_Pitstop | Game_Pitstop | strategy | game_pitstop.ai |
+| 29 | Game_Custom | Game_Custom | tool | game_custom.ai |
+
+### Web Frontend (data/)
+| File | Purpose | .ai summary |
+|------|---------|-------------|
+| script.js | Core JS: nav(), status loop, battery/temp monitoring, license check, haptic | script.ai |
+| lang.js | i18n: TRANSLATIONS object with en/de, data-i18n attribute system | lang.ai |
+| player_picker.js | Modal player selector, group/player management, /api/players | player_picker.ai |
+| tour.js | Interactive tutorial engine, 3D puck animation, step-by-step guide | tour.ai |
+| training_config.js | Training session form state, save/restore via sessionStorage | training_config.ai |
+| chart.umd.js | Chart.js library (bundled, not custom) | — |
+| index.html | Dashboard with game tiles, filter bar, dark mode | — |
+
+### Per-Game HTML Pattern (data/)
+Most games follow: game_X_setup.html → game_X_names.html (optional) → game_X_run.html
+- setup: Configure parameters, select players, load game via /api/game/load?id=N
+- names: Assign player names to puck positions (optional page)
+- run: Live dashboard polling /api/game/status, send commands via /api/game/action
+
+### Utility Pages (data/)
+| File | Purpose |
+|------|---------|
+| admin.html | File manager, drag-drop upload, firmware update |
+| settings.html | System settings, puck list, brightness, quiet mode |
+| pucks.html | Detailed puck status with battery, RSSI, temperature |
+| puckfleet.html | Puck fleet management overview |
+| netstats.html | Network statistics dashboard |
+| sysinfo.html | System diagnostics (heap, uptime, chip info) |
+| gamestats.html | Game start statistics with charts |
+| parameters.html | Advanced system parameters |
+| wifi.html | WiFi SSID/password configuration |
+| scanner.html | WiFi channel scanner UI |
+| firmware_update.html | OTA firmware update UI |
+| register.html | License registration page |
+| impressum.html | Legal info, open-source credits |
+| player_manager.html | Player/group CRUD management |
+| player_stats.html | Individual player statistics |
+| training.html | Training session planner |
+| lang_editor.html | Translation string editor |
+| only1device.html | "Another device is connected" error page |
+
+## COMMON PATTERNS
+
+### Game Base Class (Game.h)
+All games inherit from Game and implement:
+- setup() — called once when game starts
+- loop() — called every main loop iteration
+- handleEvent(puckIndex, EventPacket) — on puck button press
+- processCommand(cmd, value) — web API commands
+- getStatusJSON() — returns JSON string for frontend polling
+- getName() — returns game name string
+
+### Typical Game State Machine
+SETUP → WAIT_HANDS (optional hold-to-start) → COUNTDOWN (3s, SKI sound) → RUNNING → FINISHED
+
+### Communication Protocol
+- Coordinator → Puck: CommandPacket (cmd, effectID, r,g,b, duration, extra, seqNr)
+- Puck → Coordinator: EventPacket (type, battery_mv, version, seqNr, temp_c10)
+- Deduplication via seqNr on both directions
+- Pucks send 3x, coordinator sends 3x (reliability on lossy ESP-NOW)
+
+### Effect IDs (Common.h EffectID enum)
+0=OFF, 1=STATIC, 2=BLINK, 3=BREATHE, 4=BREATHE_MOD2, 5=BREATHE_MOD4,
+6=SINGLE_CHASE, 7=DOUBLE_CHASE, 8=SPLIT_ROT, 9=RAINBOW, 10=COUNTDOWN,
+11=LOADING, 12=WIN, 13=FAIL, 14=FLASH, 15=SPARKLE, 16=POLICE,
+17=STATUS, 18=PROGRESS, 19=BLINK_COUNT, 20=FLASH_BEEP
+
+### Sound Sequence IDs (Common.h SoundSeqID enum)
+0=OFF, 1=FANFARE, 2=ERROR, 3=EXPLOSION, 4=HERO, 5=MARIO, 6=TETRIS,
+7=RACE, 8=SKI, 9=DINGDONG
+
+### Event Types (Common.h EventType enum)
+0=HELLO, 1=HEARTBEAT, 10=BTN_CLICK, 11=BTN_HOLD, 12=BTN_DOUBLE, 20=BTN_RELEASE
+
+### License System (ActivationManager)
+- FREE: 20h playtime limit
+- EXTENDED: 80h (key: TIME-<devicecode><salt> → CRC32 → 9 digits)
+- FULL: unlimited (key: FULL-<devicecode><salt> → CRC32 → 9 digits)
+- Debug mode: /register.html?debug=1 allows minute-level time limits
+- CRC32: ~esp_rom_crc32_le(~0U, data, len) matches Python zlib.crc32()

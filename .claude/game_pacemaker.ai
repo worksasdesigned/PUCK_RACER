@@ -1,0 +1,34 @@
+# Game_Pacemaker — Virtual Pacer (ID 18)
+# Files: src/coordinator/Game_Pacemaker.h, Game_Pacemaker.cpp
+# HTML: data/game_pacemaker_setup.html, game_pacemaker_names.html, game_pacemaker_run.html
+
+## GAMEPLAY
+Virtual pacer game. Light moves along pucks at configurable pace. 1-2 groups follow the pacer.
+Shuttle mode (back-and-forth) or linear mode. Two input modes: pace (min/km) or lap time.
+
+## CONFIG
+- inputMode: 0=pace (sec/km), 1=lap time
+- paceSecondsPerKm (default 300 = 5:00/km)
+- distanceBetweenPucks (meters, default 10)
+- lapTimeMs (default 60s)
+- durationMs (default 60s)
+- shuttleMode, holdToStart, numGroups (1-2)
+
+## STATES
+PM_SETUP → PM_WAIT_HANDS → PM_COUNTDOWN (3s, SKI) → PM_RUNNING → PM_FINISHED
+Optional: PM_FALSE_START (2s penalty)
+
+## KEY MECHANICS
+- msPerPuck calculated from pace/distance or lapTime/steps
+- Shuttle: steps = (puckCount-1)*2, Linear: steps = puckCount
+- Segment tracking: segment = elapsed / msPerPuck
+- Halfway point detection: dims next-next puck, prevents audio stacking
+- COUNTDOWN effect on current puck, speed = windowDuration / 35
+- Two groups run independently with different colors (Green/Magenta)
+
+## COMMANDS
+setup, show_track, cfg_pace, cfg_dist, cfg_dur, cfg_shut, cfg_hold, cfg_inpt, cfg_lapt, cfg_grp,
+change_pace, change_lap, start, stop, reset, exit
+
+## STATUS JSON
+{st, t (time remaining), lim, pace, dist, shut, hld, pucks, inpt, lapt, grp, run: [{h (holding)}], fs}

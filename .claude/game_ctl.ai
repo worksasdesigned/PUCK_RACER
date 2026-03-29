@@ -1,0 +1,33 @@
+# Game_CTL — Catch the Light Pro (ID 21)
+# Files: src/coordinator/Game_CTL.h, Game_CTL.cpp
+# HTML: data/game_ctl_setup.html, game_ctl_names.html, game_ctl_run.html
+
+## GAMEPLAY
+Tap pucks showing target color. Wrong color or timeout = miss. Game accelerates over time.
+Optional fake/decoy colors. Tracks per-puck hits, misses, reaction times.
+
+## CONFIG
+- activePucksCount (3-MAX_PEERS)
+- difficulty: 1=easy (2.5s/1.5s spawn/800ms min), 2=medium (1.2s/1s/500ms), 3=hard (800ms/700ms/300ms)
+- holdToStart, speedupMode (2% faster per spawn), targetColorIdx (0-7)
+- soundOn, fakeColors (30% chance decoy spawn), durationMs
+
+## STATES
+CTL_SETUP → CTL_WAIT_HANDS → CTL_SHOW_COLORS (2s) → CTL_COUNTDOWN (3.1s, SKI) → CTL_RUNNING → CTL_FINISHED
+Optional: CTL_FALSE_START (2s)
+
+## KEY MECHANICS
+- Spawn: random inactive puck, 30% fake color chance
+- Speedup: spawnInterval *= 0.98 each spawn until minSpawnInterval
+- Hit target: hits++, reaction time tracked
+- Hit fake: misses++, red flash + error
+- Expired: misses++ (auto-off on timeout)
+- Per-puck stats: hits, misses, avg reaction time
+- 8 game colors, target shown pre-game
+
+## COMMANDS
+cfg_pucks, cfg_diff, cfg_time, cfg_hold, cfg_speedup, cfg_color, cfg_sound, cfg_fake,
+start, stop, show_layout, reset, exit
+
+## STATUS JSON
+{st, t (remaining), hits, miss, avg (global avg RT), pucks: [{id, h, m, a (avg RT)}]}

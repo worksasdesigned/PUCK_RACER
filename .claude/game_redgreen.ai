@@ -1,0 +1,34 @@
+# Game_RedGreen — Traffic Light Reflex (ID 9)
+# Files: src/coordinator/Game_RedGreen.h, Game_RedGreen.cpp
+# HTML: data/game_redgreen_setup.html, game_redgreen_names.html, game_redgreen_run.html
+
+## GAMEPLAY
+Red Light / Green Light. Groups race against cycling traffic light (RED/GREEN/YELLOW).
+Press during GREEN/YELLOW = point. Press during RED = error. Time limit.
+
+## CONFIG
+- numGroups (1-10)
+- speedSetting: 0=Slow(4-7s green), 1=Med(3-5s), 2=Fast(2-4s)
+- timeLimit (seconds)
+
+## STATES
+RG_SETUP → RG_PREPARE (3.1s countdown) → RG_RUNNING → RG_FINISHED
+
+## LIGHT STATES per group
+TL_RED, TL_GREEN, TL_YELLOW — random durations, cycle: RED→GREEN→YELLOW→RED
+
+## KEY MECHANICS
+- 333ms debounce per puck
+- Correct press (GREEN/YELLOW): score++, white flash 120ms, 50ms sound
+- Wrong press (RED): red fail effect, error sequence, 1s flash
+- Grace period: 150ms after light change to RED still counts as point
+- Non-blocking flash reset timing
+- Queued sound feedback with state-based duration (400ms RED, 100ms GREEN, 50ms other)
+- 10 group colors
+
+## COMMANDS
+setup, cfg_groups, cfg_speed, cfg_time, start, stop, exit,
+man_g_all, man_r_all, man_g_X, man_r_X (manual light override)
+
+## STATUS JSON
+{state, time (elapsed), limit, groups: [{id, score, light (TL enum)}]}

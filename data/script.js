@@ -354,3 +354,31 @@ document.addEventListener('click', function(e) {
         haptic(15);
     }
 });
+
+// === NEU: LIZENZPRÜFUNG VOR SPIELSTART ===
+function checkLicenseAndNavigate(url) {
+    fetch('/api/license')
+        .then(response => response.json())
+        .then(license => {
+            // Prüfen, ob die Testphase abgelaufen ist
+            if (license.status !== 'FULL' && (license.playtime_hours * 60) >= license.playtime_limit_minutes) {
+                // Die vom User gewünschte Warnmeldung
+                const message = "Die Testphase ist abgelaufen. Offensichtlich macht das Spiel ja Spaß! Möchtest du einmalig die Vollversion kaufen und weiterspielen?";
+                
+                if (confirm(message)) {
+                    // Nutzer zur Registrierungsseite weiterleiten
+                    nav('/register.html');
+                }
+                // Wenn der Nutzer "Abbrechen" drückt, passiert nichts.
+
+            } else {
+                // Lizenz ist gültig oder Zeitlimit nicht erreicht -> zum Spiel weiterleiten
+                nav(url);
+            }
+        })
+        .catch(error => {
+            console.error('Fehler bei der Lizenzprüfung:', error);
+            // Im Fehlerfall den Nutzer sicherheitshalber trotzdem zum Spiel lassen
+            nav(url);
+        });
+}

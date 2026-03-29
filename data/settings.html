@@ -46,6 +46,13 @@
     <main class="dashboard-main">
         <div class="carousel" id="carousel">
 
+            <div class="game-card" id="unlock-card" onclick="nav('/register.html')" style="display: none; background: linear-gradient(135deg, var(--primary), #56a4d8); color: white;">
+                <div class="set-card-icon">🚀</div>
+                <div class="set-card-title" style="color: white;" data-i18n="set_unlock">Unlock Full Version</div>
+                <div class="set-card-desc" style="color: rgba(255,255,255,0.8);" data-i18n="set_unlock_desc">Remove all playtime restrictions and get access to all future features by purchasing a license.</div>
+                <button class="btn-play" style="background: rgba(255,255,255,0.9); color: var(--primary);" onclick="nav('/register.html')" data-i18n="btn_unlock_now">UNLOCK NOW</button>
+            </div>
+
             <div class="game-card" onclick="nav('/pucks.html')">
                 <div class="set-card-icon">📡</div>
                 <div class="set-card-title" data-i18n="set_pucks">Connected Pucks</div>
@@ -130,6 +137,19 @@
         });
 
         setTimeout(updateFocus, 100);
+
+        // --- LIZENZ-KARTE ANZEIGEN ---
+        fetch('/api/license')
+            .then(r => r.json())
+            .then(license => {
+                if (license.status !== 'FULL') {
+                    document.getElementById('unlock-card').style.display = 'flex';
+                    visibleCards = 7; // Die Gesamtanzahl der Karten für den Indikator anpassen
+                    updateFocus();
+                }
+            })
+            .catch(e => console.error('Could not fetch license status', e));
+
 
         // --- ADMIN GATE ---
         function askAdmin() {

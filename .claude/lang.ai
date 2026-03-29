@@ -1,0 +1,30 @@
+# lang.js — Internationalization System
+# File: data/lang.js
+
+## PURPOSE
+Translation system for all UI text. Two languages: English (en), German (de).
+
+## STRUCTURE
+const TRANSLATIONS = { en: { key: "text", ... }, de: { key: "text", ... } }
+~2200 translation keys total.
+
+## API
+- setLanguage(langCode): Set and persist to localStorage.puck_lang
+- getTranslation(key): Lookup in current language, fallback to English
+- applyTranslations(): Apply to all elements with data-i18n="key" attribute
+- currentLang: loaded from localStorage.puck_lang, default 'en'
+
+## KEY PREFIXES
+- g_*: Game titles (g_shuttle, g_simon, g_beep, etc.)
+- desc_*: Game descriptions
+- setup_*: Game setup instructions
+- ex_*: Game examples
+- img_*: Game image filenames
+- ps_*: Player statistics keys
+- tm_*: Training Manager keys
+- pp_*: Player Picker keys
+- pm_*: Player Manager keys
+
+## USAGE IN HTML
+<span data-i18n="key_name"></span>
+applyTranslations() called on page load replaces innerText.

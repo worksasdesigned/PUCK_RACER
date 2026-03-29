@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Custom Game</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .state-display {
+            text-align:center; padding:30px 20px;
+            background:var(--card-bg, #1e1e2e); border-radius:12px;
+            margin-bottom:20px; border:1px solid rgba(255,255,255,0.1);
+        }
+        .state-name { font-size:2rem; font-weight:700; color:var(--accent, #8aece5); margin-bottom:5px; }
+        .state-num { font-size:0.85rem; color:#888; }
+        .time-display { font-size:3rem; font-weight:700; text-align:center; margin:20px 0;
+            font-variant-numeric:tabular-nums; letter-spacing:2px; }
+        .phase-label { text-align:center; font-size:1.1rem; padding:8px 16px; border-radius:8px;
+            display:inline-block; margin:10px auto; font-weight:600; }
+        .phase-setup { background:rgba(100,100,255,0.15); color:#8888ff; }
+        .phase-running { background:rgba(0,200,100,0.15); color:#00c864; }
+        .phase-finished { background:rgba(255,200,0,0.15); color:#ffc800; }
+        .btn-row { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:20px; }
+        .btn-row button { flex:1; min-width:100px; }
+    </style>
+</head>
+<body>
+    <header><div class="logo" id="gameName">Custom Game</div>
+    <div class="status-bar">
+        <div class="status-dot dot-green" id="cnt-green">0</div>
+        <div class="status-dot dot-yellow" id="cnt-yellow">0</div>
+        <div class="status-dot dot-red" id="cnt-red">0</div>
+    </div>
+    </header>
+    <main>
+        <div style="text-align:center;">
+            <span class="phase-label phase-setup" id="phaseLabel">SETUP</span>
+        </div>
+
+        <div class="time-display" id="timeDisplay">0:00</div>
+
+        <div class="state-display">
+            <div class="state-name" id="stateName">—</div>
+            <div class="state-num" id="stateNum">State — / —</div>
+        </div>
+
+        <div class="btn-row">
+            <button onclick="sendCmd('stop')" class="btn-primary" style="background:#e53e3e;">⏹ STOP</button>
+            <button onclick="sendCmd('reset')" class="btn-primary" style="background:#dd6b20;">↺ RESET</button>
+            <button onclick="sendCmd('start')" class="btn-primary" style="background:#38a169;">▶ START</button>
+        </div>
+
+        <button onclick="exitGame()" class="btn-back" style="margin-top:30px;" data-i18n="btn_back">Back</button>
+    </main>
+
+    <script src="lang.js"></script>
+    <script src="script.js"></script>
+    <script>startStatusLoop();</script>
+    <script>
+        if(localStorage.getItem('puck_theme') === 'light') document.body.classList.add('theme-light');
+
+        const PHASES = ['SETUP', 'RUNNING', 'FINISHED'];
+        const PHASE_CLASS = ['phase-setup', 'phase-running', 'phase-finished'];
+
+        function formatTime(ms) {
+            let s = Math.floor(ms / 1000);
+            let m = Math.floor(s / 60);
+            s = s % 60;
+            return m + ':' + String(s).padStart(2, '0');
+        }
+
+        function poll() {
+            fetch('/api/game/status').then(r=>r.json()).then(d => {
+                document.getElementById('gameName').innerText = d.name || 'Custom Game';
+                document.getElementById('timeDisplay').innerText = formatTime(d.time || 0);
+
+                let ph = d.phase || 0;
+                let label = document.getElementById('phaseLabel');
+                label.innerText = PHASES[ph] || 'SETUP';
+                label.className = 'phase-label ' + (PHASE_CLASS[ph] || 'phase-setup');
+
+                if (d.state >= 0) {
+                    document.getElementById('stateName').innerText = d.sName || ('State ' + (d.state + 1));
+                    document.getElementById('stateNum').innerText = 'State ' + (d.state + 1) + ' / ' + (d.states || '?');
+                } else {
+                    document.getElementById('stateName').innerText = '—';
+                    document.getElementById('stateNum').innerText = '';
+                }
+            }).catch(()=>{});
+        }
+
+        setInterval(poll, 400);
+        poll();
+
+        function sendCmd(cmd) { fetch('/api/game/action?cmd=' + cmd); }
+        function exitGame() { fetch('/api/game/action?cmd=exit').then(()=>nav('/')).catch(()=>nav('/')); }
+    </script>
+</body>
+</html>

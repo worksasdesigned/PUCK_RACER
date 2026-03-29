@@ -1,0 +1,33 @@
+# GameManager — Game Registry & Dispatcher
+# Files: src/coordinator/GameManager.h, GameManager.cpp
+
+## PURPOSE
+Registers all 29 games as global instances, dispatches startGame(id), routes puck events.
+
+## API
+- begin(): calls StatsManager::begin()
+- update(): calls currentGame->loop() if game active
+- startGame(gameID): switch-case 1-29, calls StatsManager::addGameStart() + startPlaytime(), then game->setup()
+- getCurrentGame(): returns Game* pointer for WebHandler
+- handlePuckEvent(mac, event): finds puckIndex by MAC, calls currentGame->handleEvent()
+
+## GAME ID REGISTRY
+1=ShuttleRun, 2=SimpleCounter, 3=SimpleCountdown, 4=SimonSays, 5=DisplayMode,
+6=SimonRuns, 7=SortingHat, 8=BombSquad, 9=RedGreen, 10=Stopwatch,
+11=Zombie, 12=BeepTest, 13=React2P, 14=TTest, 15=Target,
+16=Timer, 17=Hunt, 18=Pacemaker, 19=Memory, 20=Domination,
+21=CTL, 22=Tabata, 23=Ball, 24=Whac, 25=CatReflex,
+26=Musical, 27=TTTT, 28=Pitstop, 29=Custom
+
+## RAM WATCHDOG
+Tracks lowestHeapValue and lowestHeapGameId after each game switch.
+Exposed as extern globals for WebHandler /api/sysinfo.
+
+## ADDING A NEW GAME
+1. Create Game_NewGame.h/cpp inheriting Game
+2. #include in GameManager.cpp
+3. Add global instance: Game_NewGame gameNewGame; // ID N
+4. Add case N in switch
+5. Update StatsManager bounds (gameStarts array size, loop limits)
+6. Add tile in data/index.html
+7. Create setup/run HTML pages

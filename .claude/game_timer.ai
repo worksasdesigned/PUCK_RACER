@@ -1,0 +1,27 @@
+# Game_Timer — Countdown Timer per Player (ID 16)
+# Files: src/coordinator/Game_Timer.h, Game_Timer.cpp
+# HTML: data/game_timer_setup.html, game_timer_names.html, game_timer_run.html
+
+## GAMEPLAY
+Individual countdown timers for 1-10 players. EFF_PROGRESS shows remaining time as LED fill.
+Players can pause, add/subtract time. Click to finish early.
+
+## CONFIG
+- numPlayers (1-10), globalBaseTime (ms), globalBrightness (10-100%)
+
+## STATES per player
+TS_RUNNING, TS_PAUSED, TS_FINISHED_EARLY, TS_TIME_UP, TS_STOPPED
+
+## KEY MECHANICS
+- Delta time calculation: timeLeft -= elapsed each loop
+- Fill level: (timeLeft * 255) / initialTime → EFF_PROGRESS
+- Optimization: only send if fill changes AND 100ms throttle
+- Global brightness scaling applied in setPuck()
+- modifyTime(): adjust per-player, expand initialTime if needed
+
+## COMMANDS
+setup, cfg_players, cfg_time (seconds), set_bright (10-100), start, reset, stop, exit,
+p_add10/30/60, p_sub10/30/60, p_pause, p_res, p_stop (per player via value param)
+
+## STATUS JSON
+{active, maxTimeLeft, finishedCount, totalCount, players: [{id, state, timeLeft}]}

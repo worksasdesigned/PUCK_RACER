@@ -1,0 +1,30 @@
+# player_picker.js — Player Selection Modal
+# File: data/player_picker.js
+
+## PURPOSE
+IIFE-based modal for selecting players from groups before a game. Used by setup pages.
+
+## PUBLIC API
+- PlayerPicker.open(numSlots, callback): Open modal, numSlots = max players needed
+- PlayerPicker.close(): Close modal
+- PlayerPicker.selectGroup(groupId): Switch displayed group
+- PlayerPicker.togglePlayer(id, name, checked): Toggle player selection
+- PlayerPicker.toggleAll(): Select/deselect all in current group
+- PlayerPicker.apply(): Return selected [{id, name}, ...] via callback
+
+## DATA SOURCE
+Fetches /api/players → {groups: [{id, name, players: [{id, name}]}]}
+
+## UI FEATURES
+- Bottom sheet modal on mobile
+- Group dropdown with player count
+- Checkboxes per player
+- Counter: "n / numSlots" with color (gray=empty, yellow=partial, green=full, red=over)
+- Select All / Deselect All toggle
+
+## PERSISTENCE
+- Last group: sessionStorage.pp_lastGroup
+- Last selection per group: sessionStorage.pp_lastSelected_<groupId>
+
+## SANITIZATION
+sanitize(str, maxLen): removes {}, [], ", ', \, <, >, &, ` characters

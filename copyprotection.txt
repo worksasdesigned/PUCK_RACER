@@ -1,0 +1,80 @@
+# Zusammenfassung: PuckRacer Kopierschutz & Lizenzsystem
+Dieses Dokument beschreibt die implementierten Änderungen für den Kopierschutz, den aktuellen Stand und was noch zu tun ist.
+
+## Funktionsweise des Systems
+
+Das System basiert auf einem Challenge-Response-Verfahren, das an die einzigartige MAC-Adresse des Coordinators gebunden ist.
+
+1.  **Gerätecode:** Aus der MAC-Adresse des Coordinators wird ein 6-stelliger, lesbarer Gerätecode generiert (z.B. "QR MQ NR"). Dieser wird dem Benutzer auf der `register.html`-Seite angezeigt.
+2.  **Geheimer Salt:** Im C++ Code und im externen Schlüssel-Generator (PHP/Python) ist ein geheimer "Salt" (`PleaseDontStealMyPr0j3ct42`) hinterlegt.
+3.  **Schlüssel-Generierung:** Ein 9-stelliger Freischalt-Schlüssel wird aus der Kombination von Gerätecode, einem Präfix (`FULL-` oder `TIME-`) und dem geheimen Salt mittels eines CRC32-Hashes erzeugt. Ohne den Salt kann kein gültiger Schlüssel für ein bestimmtes Gerät generiert werden.
+4.  **Validierung:** Gibt der Benutzer einen Schlüssel ein, führt der ESP32 denselben Generierungsprozess durch und vergleicht das Ergebnis mit der Eingabe.
+5.  **Speicherung:** Um Manipulationen zu verhindern, wird nicht der Status (z.B. "FULL"), sondern der **gültige Schlüssel selbst** in der Datei `/license.json` auf dem LittleFS gespeichert. Bei jedem Start wird dieser Schlüssel erneut validiert.
+
+## Geänderte/Neue Dateien
+
+### C++ Backend (`src/coordinator/`)
+
+*   `ActivationManager.h` (NEU): Definiert die komplette Schnittstelle der `ActivationManager`-Klasse (alle öffentlichen und privaten Methoden und Variablen).
+*   `ActivationManager.cpp` (NEU): Implementiert die gesamte Logik.
+    *   Generiert den Gerätecode aus der MAC-Adresse.
+    *   Berechnet und validiert die 9-stelligen Schlüssel.
+    *   Liest und schreibt die `/license.json`.
+    *   Verwaltet den internen Lizenzstatus (FREE, EXTENDED, FULL).
+*   `main.cpp` (GEÄNDERT):
+    *   Inkludiert `ActivationManager.h`.
+    *   Erstellt eine globale Instanz des `ActivationManager`.
+    *   Ruft `activationManager.begin()` in `setup()` auf, um das System zu initialisieren.
+*   `WebHandler.cpp` (GEÄNDERT):
+    *   Inkludiert `ActivationManager.h` und greift auf die globale Instanz zu.
+    *   Fügt den API-Endpunkt `GET /api/license` hinzu, um Status, Gerätecode und Spielzeit-Infos an das Frontend zu liefern.
+    *   Fügt den API-Endpunkt `POST /api/register` hinzu, um Freischalt-Schlüssel vom Frontend entgegenzunehmen und zu verarbeiten.
+
+### Frontend (`data/`)
+
+*   `register.html` (NEU): Eine komplett neue Seite, auf der der Benutzer seinen Gerätecode sieht und einen Lizenzschlüssel eingeben kann. Enthält das nötige JavaScript zur Kommunikation mit der API.
+*   `settings.html` (GEÄNDERT):
+    *   Eine neue "Vollversion freischalten"-Karte wurde hinzugefügt, die nur angezeigt wird, wenn die Lizenz nicht `FULL` ist.
+    *   Ein JavaScript-Snippet wurde hinzugefügt, das den Lizenzstatus abfragt und die Karte entsprechend ein- oder ausblendet.
+*   `index.html` (GEÄNDERT):
+    *   Ein neuer Menüpunkt "Vollversion freischalten" wurde im "..."-Menü hinzugefügt.
+    *   Ein JavaScript-Snippet blendet diesen Menüpunkt ein, wenn die Lizenz nicht `FULL` ist.
+*   `script.js` (GEÄNDERT):
+    *   Die neue globale Funktion `checkLicenseAndNavigate(url)` wurde am Ende der Datei hinzugefügt. Sie prüft vor der Navigation, ob das Zeitlimit der Testversion überschritten wurde.
+*   `game_react2p_names.html` (GEÄNDERT):
+    *   Der `startGame()`-Button wurde exemplarisch so angepasst, dass er die neue `checkLicenseAndNavigate()`-Funktion verwendet.
+
+## Was noch fehlt / Offene Aufgaben
+
+1.  **Anpassung aller Spiele:** Aktuell ist die Lizenz-Prüfung nur im Spiel "React 2P" aktiv. Für alle anderen Spiele muss der Aufruf zum Spielstart (meist in den `..._names.html` oder `..._setup.html` Dateien) von `nav('...')` auf `checkLicenseAndNavigate('...')` geändert werden.
+2.  **Backend 30s-Sperre:** Die reine Backend-Blockade für 30 Sekunden bei abgelaufener Lizenz ist noch nicht implementiert. Die aktuelle Sperre erfolgt nur im Frontend via JavaScript. Für eine robustere Lösung müsste die Prüfung im `GameManager.cpp` vor dem eigentlichen Spielstart erfolgen.
+3.  **Übersetzungen:** Die neuen Texte auf den Oberflächen (z.B. in `register.html` oder der "Unlock"-Karte) müssen noch in die `lang.js` Datei aufgenommen werden, um sie mehrsprachig zu machen.
+
+---
+## Hinzugefügte Debug- & Test-Funktionen
+
+Um das Lizenzsystem testen zu können, wurden zusätzliche Werkzeuge implementiert.
+
+### Python Key Generator
+
+*   `keygen.py` (NEU): Ein Python-Skript im Hauptverzeichnis des Projekts. Es kann auf einem PC ausgeführt werden, um die Schlüssel-Generierung der Webseite zu simulieren. Es fragt nach einer MAC-Adresse und gibt den passenden Gerätecode sowie die Lizenzschlüssel für "Vollversion" und "Zeit-Erweiterung" aus.
+
+### C++ Debug-Logik (Kompiler-gesteuert)
+
+Alle C++ Debug-Funktionen sind in `#if defined(PUCK_RACER_DEBUG)` Blöcke eingeschlossen. Sie werden nur kompiliert, wenn in der `platformio.ini` unter `build_flags` das Flag `-D PUCK_RACER_DEBUG` gesetzt ist. Für Release-Versionen kann dieses Flag entfernt werden, um den Debug-Code komplett zu eliminieren.
+
+*   `platformio.ini` (GEÄNDERT): Das `-D PUCK_RACER_DEBUG` Flag wurde hinzugefügt.
+*   `ActivationManager.h/cpp` (GEÄNDERT):
+    *   Enthält nun Debug-Funktionen, um die Zeitlimits für den FREE und EXTENDED Modus dynamisch in Minuten zu setzen (`setDebugTimeLimits`).
+    *   Enthält eine Funktion, um das Anwenden eines Zeit-Schlüssels zu simulieren (`applyTimeExtensionKey`).
+    *   Die Funktion `getPlaytimeLimitHours` wurde zu `getPlaytimeLimitMinutes` geändert, um genauere Tests zu ermöglichen.
+*   `WebHandler.cpp` (GEÄNDERT):
+    *   `GET /api/license` gibt das Zeitlimit nun in Minuten statt Stunden zurück.
+    *   Fügt die Debug-Endpunkte `POST /api/license/debug` und `GET /api/license/apply_time_key` hinzu, um die neuen Funktionen aus `ActivationManager` über das Frontend steuern zu können.
+
+### Frontend Debug-Interface
+
+*   `register.html` (GEÄNDERT):
+    *   Enthält eine neue "Debug & Test-Optionen"-Karte, die standardmäßig versteckt ist.
+    *   Sie wird sichtbar, wenn die Seite mit dem URL-Parameter `?debug=1` aufgerufen wird (z.B. `http://192.168.42.1/register.html?debug=1`).
+    *   In dieser Karte kann man die Zeitlimits in Minuten definieren und die Anwendung eines Zeit-Schlüssels simulieren.

@@ -1,0 +1,31 @@
+# Game_Ball — Ball Prelling / Relay (ID 23)
+# Files: src/coordinator/Game_Ball.h, Game_Ball.cpp
+# HTML: data/game_ball_setup.html, game_ball_names.html, game_ball_run.html
+
+## GAMEPLAY
+Timed relay: rotating light designates which puck to press. Press correct puck to advance.
+1-6 groups with 3-5 pucks each. Sequential or random target selection.
+
+## CONFIG
+- pucksPerGroup (3-5), numGroups (1-6), durationMs
+- autoRestart, soundOn, isRandom (random vs sequential)
+
+## STATES
+BALL_SETUP → BALL_COUNTDOWN (3.1s) → BALL_RUNNING → BALL_FINISHED → BALL_WAIT_RESTART (optional)
+
+## KEY MECHANICS
+- Active puck: EFF_SINGLE_CHASE in group color
+- Correct press: score++, 80ms beep, advance to next
+- Random: avoids same puck twice
+- Sequential: cycling through pucks in order
+- Per-group independent state tracking
+- Auto-restart: WAIT_RESTART → press any → restart
+- Layout view: progress fill (25%, 50%, 75%, 100%)
+- 6 group colors: Red, Blue, Green, Yellow, Magenta, Cyan
+
+## COMMANDS
+setup, show_layout, cfg_ppg, cfg_grp, cfg_time, cfg_auto, cfg_snd, cfg_rnd,
+start, stop, g_start, g_stop, reset, exit
+
+## STATUS JSON
+{st, gT (global elapsed), lim, grps: [{id, act, st, sc, t}]}

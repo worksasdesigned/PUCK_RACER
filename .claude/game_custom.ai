@@ -1,0 +1,47 @@
+# Game_Custom — JSON State Machine Engine (ID 29)
+# Files: src/coordinator/Game_Custom.h, Game_Custom.cpp
+# HTML: data/game_custom_editor.html, game_custom_setup.html, game_custom_run.html
+
+## GAMEPLAY
+Generic state machine engine. Trainer creates custom games in WYSIWYG editor, exports as JSON.
+Interpreter runs states sequentially, reacting to button presses and timeouts.
+
+## ARCHITECTURE
+- Editor (game_custom_editor.html): Visual state/action/transition builder
+- JSON stored on coordinator as /custom_game.json
+- Interpreter: parses JSON into fixed-size structs, runs state machine
+
+## STRUCTS
+- CG_Action: puck(-1=all), effectID, r/g/b, duration, soundType(0=none,1=beep,2=ski), soundDur
+- CG_Transition: trigger(0=PRESS,1=TIMEOUT), puck(-1=any), timeDs(deciseconds), gotoState(-1=end)
+- CG_State: name[16], actions[12], transitions[4]
+- Limits: 30 states, 12 actions/state, 4 transitions/state (~5KB RAM, no PSRAM)
+
+## STATES
+CS_SETUP → CS_RUNNING → CS_FINISHED
+
+## KEY MECHANICS
+- loadJSON(): ArduinoJson v7 parse from /custom_game.json
+- effectFromString(): maps "STATIC","BREATHE_MOD2","SINGLE_CHASE" etc. to EffectID
+- enterState(idx): execute all actions, send effects+sounds to pucks
+- goto=-1: end game (fanfare + rainbow broadcast)
+- Timeout transitions: checked in loop() as (now - stateEnteredAt) >= timeDs*100
+- Press transitions: checked in handleEvent() for matching puck or any(-1)
+
+## JSON FORMAT
+{"name":"...", "states":[{"name":"...", "actions":[{puck,effect,r,g,b,dur,sound,soundDur}], "transitions":[{on:"PRESS"|"TIMEOUT", puck, time, goto}]}]}
+
+## COMMANDS
+load_json, config_pucks, config_time, start, stop, reset, exit
+
+## STATUS JSON
+{phase, currentState, stateCount, gameName, elapsed, currentStateName}
+
+## EDITOR (game_custom_editor.html)
+- Toolbar: New/Import/Export/Save to Coordinator/Play
+- State list sidebar, state detail panel
+- Per action: puck selector, effect dropdown, color picker, duration, sound
+- Per transition: PRESS/TIMEOUT, puck, time (0.1s steps), goto state
+- Help tooltips on all fields, collapsible help banner
+- Auto-loads existing game from /api/custom/load
+- Saves via POST /api/custom/save

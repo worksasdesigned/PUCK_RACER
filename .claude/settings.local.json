@@ -20,7 +20,11 @@
       "Bash(python find_unused_keys.py)",
       "Bash(do sed:*)",
       "Bash(grep -n '\"\"desc_timer\\\\|\"\"desc_players' lang.js)",
-      "Bash(grep -E \"\\\\.js$\")"
+      "Bash(grep -E \"\\\\.js$\")",
+      "Bash(find /z/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/src -type f \\\\\\(-name *.cpp -o -name *.h \\\\\\))",
+      "Bash(~/.platformio/penv/Scripts/pio.exe run:*)",
+      "Bash(ls -la \"z:/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/.claude/\"*.ai)",
+      "Bash(ls -la z:/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/.claude/*.ai)"
     ]
   }
 }

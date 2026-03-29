@@ -1,0 +1,32 @@
+# Game_SimonRuns — Simon Runs Competition (ID 6)
+# Files: src/coordinator/Game_SimonRuns.h, Game_SimonRuns.cpp
+# HTML: data/game_simonruns_setup.html, game_simonruns_names.html, game_simonruns_run.html
+
+## GAMEPLAY
+Competitive Simon Says with racing/timing. 1-3 groups compete in parallel.
+Optional central display puck shared across groups. Time accumulates across levels.
+Error locks group until replay.
+
+## CONFIG
+- numGroups (1-3), centralDisplay, targetLength (default 10)
+- colorBlind, soundOn
+
+## STATES per group
+SIMRUN_SETUP → SIMRUN_PREPARE (3s countdown) → SIMRUN_SHOW → SIMRUN_INPUT → SIMRUN_WAITING → loop
+Terminal: SIMRUN_FINISHED (rainbow) or SIMRUN_DISQUALIFIED
+
+## KEY MECHANICS
+- SHOW: display puck shows sequence (800ms on, 300ms off per color)
+- INPUT: correct → advance, complete → accumulate time, level up
+- Wrong input: lock group (inputLocked), red fail, 3x beeps
+- Locked: press display puck to replay sequence
+- Central display: shared puck coordinates multi-group play
+- accumulatedTime: total time across all levels (not reset per level)
+- 8 normal colors + 8 colorblind colors
+
+## COMMANDS
+setup, cfg_groups, cfg_len, cfg_central, cfg_blind, cfg_sound, preview,
+start_all, start_X, stop_all, exit, disq_X
+
+## STATUS JSON
+{groups: [{id, state, locked, lvl, target, time (accumulated), prog, seq: ["#RRGGBB",...]}]}
