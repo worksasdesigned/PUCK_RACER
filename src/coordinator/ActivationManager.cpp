@@ -13,6 +13,19 @@
 const char DEVICE_CODE_ALPHABET[] = "ABCDEFGHJKMNPQRSTUVWXY";
 const int ALPHABET_SIZE = sizeof(DEVICE_CODE_ALPHABET) - 1; // Größe ohne Null-Terminator
 
+// Eigene, robuste CRC32 Funktion (100% zlib kompatibel).
+// Verhindert mögliche Abweichungen durch verschiedene ESP-ROM Versionen (ESP32 vs S3).
+uint32_t calc_soft_crc32(const uint8_t *data, size_t length) {
+    uint32_t crc = 0xFFFFFFFF;
+    for (size_t i = 0; i < length; i++) {
+        crc ^= data[i];
+        for (size_t j = 0; j < 8; j++) {
+            crc = (crc & 1) ? ((crc >> 1) ^ 0xEDB88320) : (crc >> 1);
+        }
+    }
+    return ~crc;
+}
+
 // Konstruktor ist leer, die eigentliche Arbeit wird in begin() gemacht.
 ActivationManager::ActivationManager() {}
 
@@ -83,8 +96,32 @@ String ActivationManager::getDeviceCode() {
     }
 
     // MAC-Adresse des Geräts auslesen.
-    uint8_t mac[6];
-    esp_read_mac(mac, ESP_MAC_WIFI_STA);
+    uint8_t mac[6] = {0};
+    bool mac_ok = false;
+
+    // 1. Versuch: Unveränderliche eFuse Factory-MAC auslesen. Dies ist die bevorzugte Methode.
+    if (esp_efuse_mac_get_default(mac) == ESP_OK) {
+        // Prüfen, ob die MAC nicht nur aus Nullen besteht (passiert bei manchen Dev-Kits).
+        uint32_t sum = 0;
+        for(int i=0; i<6; i++) sum += mac[i];
+        if (sum > 0) {
+            mac_ok = true;
+            Serial.println(F("AM: Using eFuse MAC for Device Code."));
+        }
+    }
+
+    // 2. Versuch (Fallback): Wenn eFuse fehlschlägt, die Software-MAC des WiFi-Interfaces verwenden.
+    if (!mac_ok) {
+        if (esp_read_mac(mac, ESP_MAC_WIFI_STA) == ESP_OK) {
+            mac_ok = true;
+            Serial.println(F("AM: WARNING - eFuse MAC failed, using STA MAC as fallback."));
+        }
+    }
+
+    if (!mac_ok) {
+        Serial.println(F("FATAL: Could not read any valid MAC address! Device code will be incorrect."));
+        // mac bleibt {0,0,0,0,0,0}, was zu einem konstanten, aber ungültigen Gerätecode führt.
+    }
 
     // Wir verwenden die letzten 3 Bytes der MAC für den Code.
     char code[9]; // 6 Zeichen + 2 Leerzeichen + Null-Terminator
@@ -124,15 +161,15 @@ String ActivationManager::generateKey(const char* prefix) {
     String stringToHash = String(prefix) + cleanDeviceCode + String(_salt);
 
     // CRC32-Hash berechnen.
-    // Standard CRC32 (init=0xFFFFFFFF, final XOR) — identisch mit Python zlib.crc32()
-    uint32_t hashValue = ~esp_rom_crc32_le(~0U, (const uint8_t*)stringToHash.c_str(), stringToHash.length());
+    // Wir nutzen hier unsere eigene zlib-kompatible Funktion, um ROM-Bugs auf dem S3 zu vermeiden
+    uint32_t hashValue = calc_soft_crc32((const uint8_t*)stringToHash.c_str(), stringToHash.length());
 
     // Den Hash auf eine 9-stellige Zahl bringen.
-    long keyNum = hashValue % 1000000000;
+    uint32_t keyNum = hashValue % 1000000000;
     
     // Den Schlüssel als 9-stelligen String formatieren (mit führenden Nullen).
     char keyStr[10];
-    sprintf(keyStr, "%09ld", keyNum);
+    snprintf(keyStr, sizeof(keyStr), "%09lu", (unsigned long)keyNum);
 
     return String(keyStr);
 }
@@ -142,6 +179,9 @@ void ActivationManager::validateLicense() {
     // Generiere die für dieses Gerät erwarteten Schlüssel.
     String expectedFullKey = generateKey("FULL-");
     String expectedTimeKey = generateKey("TIME-");
+
+    Serial.printf("AM: Erwarteter FULL-Key: %s\n", expectedFullKey.c_str());
+    Serial.printf("AM: Erwarteter TIME-Key: %s\n", expectedTimeKey.c_str());
 
     // Prüfe, ob der gespeicherte Vollversionsschlüssel gültig ist.
     if (_fullVersionKey_from_file.length() > 0 && _fullVersionKey_from_file == expectedFullKey) {
@@ -161,7 +201,13 @@ void ActivationManager::validateLicense() {
 
 
 bool ActivationManager::attemptRegistration(String key) {
+    // Bereinige die Eingabe, um Fehler durch Copy-Paste (Leerzeichen, Umbrüche) zu vermeiden
+    key.trim();
+    key.replace(" ", "");
+    key.replace("-", "");
+
     if (key.length() != 9) {
+        Serial.printf("AM: Registrierung fehlgeschlagen. Eingabe hat ungueltige Laenge: %d\n", key.length());
         return false; // Ungültiges Format
     }
 

@@ -27,15 +27,19 @@
 #include <math.h>
 #include "Common.h"
 
+// Temporär zum Deaktivieren des NTC-Sensors für alte Pucks ohne Sensor.
+// Wenn diese Zeile einkommentiert ist, wird die Temperaturmessung übersprungen und immer -999 (Fehler) zurückgegeben.
+#define DISABLE_TEMP_SENSOR
+
 // --- HARDWARE ---
 #define PIN_BAT     0  // ADC Pin für den Batterie-Spannungsteiler
 // GPIO1 ist der letzte freie ADC1-Pin für weitere analoge Sensoren
-#define PIN_NTC     3  // NTC Temperatursensor (10kOhm Beta3950, 10kOhm Festwiderstand)
+#define PIN_NTC     6 //3  // NTC Temperatursensor (10kOhm Beta3950, 10kOhm Festwiderstand)
 #define PIN_LED     4
 #define PIN_BUZZER  5
-#define PIN_BTN     6  // Arcade Button (INPUT_PULLUP)
+#define PIN_BTN     3 //6  // Arcade Button (INPUT_PULLUP)
 #define NUM_LEDS    35
-#define FW_VERSION  85
+#define FW_VERSION  86
 
 // --- TEMPERATUR OVERHEAT ---
 // Schwellwert in °C – ab diesem Wert wird Overheat-Schutz ausgelöst.
@@ -203,12 +207,25 @@ void promiscuous_rx_cb(void *buf, wifi_promiscuous_pkt_type_t type) {
 
 uint16_t readBatteryMV() {
     uint32_t adc_mv = analogReadMilliVolts(PIN_BAT);
+    // Wenn die direkt am ADC gemessene Spannung unter 1.1V liegt, gehen wir davon aus,
+    // dass kein Spannungsteiler verbaut ist. Der Pin floatet dann meist auf einem
+    // niedrigen Level. In diesem Fall geben wir 0 zurück. Die bestehende Logik
+    // (if avgMv < 1000) wird dies als "kein Sensor" erkennen und die Batterie-
+    // überwachung für diesen Puck deaktivieren.
+    if (adc_mv < 1100) {
+        return 0;
+    }
     return (uint16_t)(adc_mv * 2 * BAT_CALIBRATION);
 }
 
 // NTC Temperatur lesen: Spannungsteiler Vcc -> R_fixed -> ADC -> NTC -> GND
 // Rückgabe in 0.1°C Einheiten (z.B. 253 = 25.3°C), -999 bei Fehler
 int16_t readTemperature() {
+    // Wenn für alte Pucks deaktiviert, immer -999 (kein Sensor) zurückgeben
+    #ifdef DISABLE_TEMP_SENSOR
+        return -999;
+    #endif
+
     uint32_t adc_mv = analogReadMilliVolts(PIN_NTC);
     if (adc_mv < 10 || adc_mv > 3290) return -999;  // Sensor nicht angeschlossen oder Kurzschluss
 
