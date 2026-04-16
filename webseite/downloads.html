@@ -4,36 +4,158 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Downloads - PUCK RACER | Firmware, 3D-Druck & Software</title>
-    <meta name="description" content="Downloads für PUCK RACER: Firmware, 3D-Druck-Dateien, STL-Adapter und Software für das DIY-Reaktionslicht-System.">
+    <meta name="description" content="Downloads f&uuml;r PUCK RACER: Firmware, 3D-Druck-Dateien, STL-Adapter und Software f&uuml;r das DIY-Reaktionslicht-System.">
     <link rel="canonical" href="https://www.puckracer.net/downloads.html">
     <link rel="alternate" hreflang="de" href="https://www.puckracer.net/downloads.html">
     <link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/downloads.html">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Downloads - PUCK RACER">
-    <meta property="og:description" content="Firmware, 3D-Druck-Dateien und Software für PUCK RACER.">
+    <meta property="og:description" content="Firmware, 3D-Druck-Dateien und Software f&uuml;r PUCK RACER.">
     <meta property="og:image" content="https://www.puckracer.net/pictures/front1_tech.png">
     <meta property="og:url" content="https://www.puckracer.net/downloads.html">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Downloads - PUCK RACER">
-    <meta name="twitter:description" content="Firmware, 3D-Druck-Dateien und Software für PUCK RACER.">
-        <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <meta name="twitter:description" content="Firmware, 3D-Druck-Dateien und Software f&uuml;r PUCK RACER.">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="manifest" href="site.webmanifest">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .section-heading {
+            font-size: 2rem;
+            text-transform: uppercase;
+            color: #8aece5;
+            margin: 40px 0 10px;
+            border-bottom: 2px solid #8aece5;
+            padding-bottom: 10px;
+            text-align: left;
+            width: 100%;
+        }
+        .section-heading:first-of-type {
+            margin-top: 20px;
+        }
+
+        .dl-card {
+            background: rgba(43, 43, 54, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            text-align: left;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .dl-card h3 {
+            color: #8aece5;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .dl-card p {
+            color: #ddd;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .coming-soon-tag {
+            display: inline-block;
+            background: rgba(236, 201, 75, 0.15);
+            border: 1px solid rgba(236, 201, 75, 0.35);
+            color: #ecc94b;
+            padding: 4px 14px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .dl-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #8aece5;
+            color: #1a1a1a;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+            margin-top: 10px;
+        }
+        .dl-btn:hover {
+            background: #6dd4cc;
+            transform: scale(1.03);
+        }
+        .dl-btn-disabled {
+            background: rgba(255, 255, 255, 0.1);
+            color: #718096;
+            cursor: default;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .dl-btn-disabled:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: none;
+        }
+
+        /* File Grid (same as hardware page) */
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            width: 100%;
+            margin: 15px 0;
+        }
+        .file-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: #ddd;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .file-link:hover {
+            background: rgba(138, 236, 229, 0.1);
+            border-color: #8aece5;
+            color: #fff;
+        }
+        .file-link .file-icon {
+            font-size: 1.4rem;
+        }
+        .file-link-primary {
+            background: rgba(138, 236, 229, 0.12);
+            border-color: rgba(138, 236, 229, 0.3);
+            color: #8aece5;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .file-grid { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
     <header>
         <nav class="main-nav">
-            <button class="nav-toggle" aria-label="Menü öffnen" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Menü</button>
+            <button class="nav-toggle" aria-label="Men&uuml; &ouml;ffnen" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Men&uuml;</button>
             <ul>
                 <li><a href="index.html">Home</a></li>
                 <li><a href="features.html">Features</a></li>
-                <li><a href="downloads.html">Downloads</a></li>
+                <li><a href="downloads.html" class="active">Downloads</a></li>
                 <li><a href="hardware.html">Hardware</a></li>
                 <li><a href="spiele.html">Spiele</a></li>
-                <li><a href="map.html">PUCK RACER Map</a></li>
                 <li><a href="demo.html">Demo</a></li>
                 <li><a href="infos.html">Infos</a></li>
                 <li><a href="faq.html">FAQ</a></li>
@@ -48,10 +170,66 @@
             <div class="header-bar">
                 <img src="pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
             </div>
+
             <h1>Downloads</h1>
-            <p>Hier findest du bald alle Downloads: Firmware, 3D-Druck-Dateien (STL) und Software für PUCK RACER.</p>
+            <p>Firmware, 3D-Druck-Dateien und Platinen-Designs f&uuml;r das PUCK RACER Projekt.</p>
+
+            <!-- ============================================================ -->
+            <!-- 1. WEBFLASHER / FIRMWARE                                     -->
+            <!-- ============================================================ -->
+            <h2 class="section-heading">Firmware &amp; Web Flasher</h2>
+
+            <div class="dl-card">
+                <span class="coming-soon-tag">Open Beta &mdash; Mai 2026</span>
+                <h3>PUCK RACER Firmware</h3>
+                <p>Die Open-Beta-Firmware f&uuml;r Coordinator (ESP32-S3) und Puck (ESP32-C3) wird im <b>Mai 2026</b> ver&ouml;ffentlicht. Mit dem Web Flasher kannst du die Firmware dann direkt im Browser auf deinen ESP32 flashen &mdash; kein PlatformIO n&ouml;tig.</p>
+                <a class="dl-btn dl-btn-disabled" style="pointer-events:none;">Web Flasher &mdash; bald verf&uuml;gbar</a>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- 2. 3D STL FILES                                              -->
+            <!-- ============================================================ -->
+            <h2 class="section-heading">3D-Druck &amp; STL-Dateien</h2>
+
+            <div class="dl-card">
+                <span class="coming-soon-tag">Ende April 2026</span>
+                <h3>Geh&auml;use &amp; Adapter (STL)</h3>
+                <p>Alle 3D-Druck-Dateien f&uuml;r das Puck-Geh&auml;use, den Coordinator-Halter und optionale Adapter werden auf <b>MakerWorld</b> ver&ouml;ffentlicht. Optimiert f&uuml;r PETG-Druck.</p>
+                <a class="dl-btn dl-btn-disabled" style="pointer-events:none;">MakerWorld &mdash; bald verf&uuml;gbar</a>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- 3. PCB / GERBER FILES                                        -->
+            <!-- ============================================================ -->
+            <h2 class="section-heading">PCB &amp; Gerber-Dateien</h2>
+
+            <div class="dl-card">
+                <h3>Platinen-Produktionsdateien</h3>
+                <p>Die PUCK RACER Platine (KiCad) als Gerber-Download. ZIP-Datei direkt bei JLCPCB oder PCBWay hochladen. Weitere Infos auf der <a href="hardware.html" style="color:#8aece5; font-weight:bold;">Hardware-Seite</a>.</p>
+                <div class="file-grid">
+                    <a class="file-link file-link-primary" href="gerber/PBC.zip" download>
+                        <span class="file-icon">&#128230;</span> PBC.zip (Komplett-Paket)
+                    </a>
+                    <a class="file-link" href="gerber/Gerber/Gerber.zip" download>
+                        <span class="file-icon">&#128196;</span> Gerber.zip
+                    </a>
+                    <a class="file-link" href="gerber/Schematic/Puck Racer.pdf" download>
+                        <span class="file-icon">&#128203;</span> Schaltplan (PDF)
+                    </a>
+                    <a class="file-link" href="gerber/BOM (JLCPCB)/BOM.xlsx" download>
+                        <span class="file-icon">&#128202;</span> BOM (JLCPCB)
+                    </a>
+                    <a class="file-link" href="gerber/Pick and Place/Puck Racer-all-pos.csv" download>
+                        <span class="file-icon">&#128205;</span> Pick &amp; Place (CSV)
+                    </a>
+                    <a class="file-link" href="gerber/STEP/Puck Racer.step" download>
+                        <span class="file-icon">&#128316;</span> 3D-Modell (STEP)
+                    </a>
+                </div>
+            </div>
+
             <footer>
-                <a href="Impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a>
+                <a href="Impressum.html">Impressum</a> &middot; <a href="datenschutz.html">Datenschutz</a>
             </footer>
         </div>
     </div>

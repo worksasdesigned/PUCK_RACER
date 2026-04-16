@@ -1,5 +1,5 @@
 # PuckRacer Coordinator — Architecture Index
-# Last updated: 2026-03-29
+# Last updated: 2026-04-01
 
 ## SYSTEM OVERVIEW
 ESP32-S3 coordinator that manages wireless LED pucks via ESP-NOW for sports/training games.
@@ -35,6 +35,11 @@ PuckNetwork::update() → WebHandler::update() → GameManager::update() → Wif
 | ActivationManager.h/cpp | License system (FREE/EXTENDED/FULL), CRC32 keys, debug mode | activationmanager.ai |
 | Wifiscanner.h/cpp | WiFi channel analyzer, promiscuous mode packet counting | wifiscanner.ai |
 | Game.h | Abstract base class: setup(), loop(), handleEvent(), processCommand(), getStatusJSON() | (in index.ai) |
+
+### Puck Firmware (src/puck/)
+| File | Purpose | .ai summary |
+|------|---------|-------------|
+| main.cpp | ESP32-C3 puck firmware: LEDs, button, sound, ESP-NOW, battery, temp | puck_firmware.ai |
 
 ### Games (src/coordinator/Game_*.h/cpp → see individual .ai files)
 | ID | Class | File prefix | Category | .ai file |

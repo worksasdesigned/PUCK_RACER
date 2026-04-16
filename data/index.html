@@ -49,6 +49,7 @@
             from { opacity:0; transform: translateY(8px); }
             to   { opacity:1; transform: translateY(0); }
         }
+        .tile-disabled { opacity: 0.45; pointer-events: none; filter: grayscale(60%); }
     </style>
     <script>
     (function() {
@@ -82,14 +83,14 @@
                     <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 0;">
                     <a onclick="startTutorial(); toggleMenu();" style="color: var(--primary); font-weight: bold;" data-i18n="menu_tutorial">🎓 Tutorial starten</a>
                     <a style="color: var(--text-muted); cursor: default;" data-i18n="menu_manual">📖 Handbuch (In Kürze)</a>
-                    <a href="/register.html" data-i18n="menu_license">🔐 License</a>
+                    <a id="menu-register-link" href="/register.html" style="display:none;" data-i18n="menu_license">🔐 License</a>
                     <a href="/impressum.html" data-i18n="menu_impressum">📜 Impressum</a>
                 </div>
             </div>
         </div>
 
         <div class="logo">
-            <span onclick="triggerPuckEasterEgg()" title="Puck Racer">Puck Racer</span>
+            <span onclick="showVersionInfo()" title="Puck Racer">Puck Racer</span>
         </div>
 
         <div class="status-bar" id="statusBarGroup">
@@ -189,7 +190,7 @@
             { id: 'musical', numId: 0, icon: '🎵🪑🏃', url: '/game_musical_setup.html', tags: ['reaction'], key: 'g_musical' },
             { id: 'tttt', numId: 0, icon: '❌⭕', url: '/game_tttt_setup.html', tags: ['brain'], key: 'g_tttt' },
             { id: 'pitstop', numId: 28, icon: '🏎️⏱️', url: '/game_pitstop_setup.html', tags: ['sport', 'tool'], key: 'g_pitstop' },
-            { id: 'custom', numId: 29, icon: '🎨🎮', url: '/game_custom_setup.html', tags: ['tool'], key: 'g_custom' },
+            { id: 'custom', numId: 29, icon: '🎨🎮', url: '/game_custom_setup.html', tags: ['tool'], key: 'g_custom', disabled: true },
             { id: 'display', numId: 5, icon: '▶️✨', url: '/game_display_setup.html', tags: ['tool'], key: 'g_display' },
             { id: 'players', numId: 0, icon: '👥', url: '/player_manager.html', tags: ['tool'], key: 'g_players' },
             { id: 'training', numId: 0, icon: '📋', url: '/training.html', tags: ['tool'], key: 'g_training' },
@@ -234,6 +235,7 @@
                 const isFav = favorites.includes(game.id);
                 
                 let specialClass = game.specialClass ? game.specialClass : '';
+                if (game.disabled) specialClass += ' tile-disabled';
                 const card = document.createElement('div');
                 // .tile Klasse bleibt für Kompatibilität mit tour.js und EasterEgg
                 card.className = `game-card tile ${specialClass}`;
@@ -250,6 +252,10 @@
 
                 let tagsText = game.tags.map(t => getTranslation('filter_' + t).replace('⭐ ', '')).join(' • ');
 
+                let playBtn = game.disabled
+                    ? `<button class="btn-play" disabled style="opacity:0.4;cursor:default;">COMING SOON</button>`
+                    : `<button class="btn-play" onclick="nav('${game.url}')" data-i18n="btn_start_game">ZUM SPIEL 🏁</button>`;
+
                 card.innerHTML = `
                     <div class="card-header">
                         <div class="card-icon">${game.icon}</div>
@@ -261,7 +267,7 @@
                     <div class="card-title">${localizedTitle}</div>
                     <div class="card-tags">${tagsText}</div>
                     <div class="card-desc">${localizedDesc}</div>
-                    <button class="btn-play" onclick="nav('${game.url}')" data-i18n="btn_start_game">ZUM SPIEL 🏁</button>
+                    ${playBtn}
                     ${statBadge}
                 `;
                 carousel.appendChild(card);
@@ -406,6 +412,25 @@
             setLanguage(newLang); 
             renderCarousel();
         }
+
+        // --- VERSION INFO ---
+        window.showVersionInfo = function() {
+            let existing = document.getElementById('versionToast');
+            if (existing) { existing.remove(); return; }
+            let toast = document.createElement('div');
+            toast.id = 'versionToast';
+            toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card-bg);backdrop-filter:blur(20px);border:1px solid var(--border-color);border-radius:16px;padding:30px 40px;z-index:10000;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:splashFadeIn 0.3s ease;';
+            toast.innerHTML = `
+                <div style="font-family:'puckracer',sans-serif;font-size:1.8rem;letter-spacing:3px;margin-bottom:12px;">PUCK RACER</div>
+                <div style="background:var(--warning);color:#000;display:inline-block;padding:4px 14px;border-radius:20px;font-weight:bold;font-size:0.85rem;letter-spacing:1px;margin-bottom:12px;">⚠ BETA</div>
+                <div style="font-size:1.1rem;font-weight:bold;color:var(--text-main);margin-bottom:6px;">Release Candidate 1</div>
+                <div style="font-size:0.95rem;color:var(--text-muted);">Firmware: ${currentCoreVersion}</div>
+                <div style="margin-top:16px;font-size:0.75rem;color:var(--text-muted);">Tap to close</div>
+            `;
+            toast.onclick = function() { toast.remove(); };
+            document.body.appendChild(toast);
+            setTimeout(() => { if (document.getElementById('versionToast')) toast.remove(); }, 8000);
+        };
 
         // --- EASTER EGGS ---
         window.triggerEasterEgg = function() {

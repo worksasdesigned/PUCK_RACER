@@ -186,18 +186,21 @@ void PuckNetwork::update() {
     // =========================================================================
     // BIDIREKTIONALER HEARTBEAT: Coordinator → Pucks (alle 10 Sekunden)
     // =========================================================================
-    // Ohne diesen Keepalive hat der Puck KEINE Möglichkeit zu erkennen, dass
-    // der Coordinator ihn nicht mehr sieht. Das führte dazu, dass Pucks
-    // minutenlang grün leuchteten (EFF_STATUS), obwohl sie längst getrennt waren.
-    // Der Puck wertet CMD_KEEPALIVE aus und setzt sich selbst auf "disconnected",
-    // wenn er länger als 15 Sekunden keinen Keepalive mehr empfängt.
+    // Keepalive wird als UNICAST nur an aktive Pucks gesendet.
+    // FIX: Broadcast-Keepalive führte dazu, dass auch entfernte Pucks den
+    // Keepalive empfingen → deren Disconnect-Erkennung (15s Timeout) griff nie
+    // → Pucks leuchteten ewig grün obwohl der Coordinator sie nicht mehr sah.
     static unsigned long lastKeepalive = 0;
     if (now_ms - lastKeepalive > 10000) {
         lastKeepalive = now_ms;
         CommandPacket ka;
         memset(&ka, 0, sizeof(ka));
         ka.cmd = CMD_KEEPALIVE;
-        broadcast(ka);
+        for (int i = 0; i < MAX_PEERS; i++) {
+            if (pucks[i].active) {
+                sendToPuck(pucks[i].mac, ka);
+            }
+        }
     }
 
     static unsigned long lastStatsPrint = 0;

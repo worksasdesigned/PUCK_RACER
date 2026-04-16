@@ -31,6 +31,7 @@ Manages all ESP-NOW communication with pucks: pairing, commands, events, OTA upd
 ## KEEPALIVE
 - Every 10s: broadcast CMD_KEEPALIVE
 - Pucks timeout after 15s without keepalive → auto-disconnect
+- Puck-side heartbeat TX is timing-offset from LED refresh (see puck_firmware.ai, LED TIMING)
 
 ## OTA UPDATE
 - triggerUpdateBroadcast(): Legacy, 5x broadcast UpdateCredentialsPacket

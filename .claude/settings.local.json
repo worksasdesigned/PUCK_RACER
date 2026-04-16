@@ -24,7 +24,29 @@
       "Bash(find /z/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/src -type f \\\\\\(-name *.cpp -o -name *.h \\\\\\))",
       "Bash(~/.platformio/penv/Scripts/pio.exe run:*)",
       "Bash(ls -la \"z:/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/.claude/\"*.ai)",
-      "Bash(ls -la z:/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/.claude/*.ai)"
+      "Bash(ls -la z:/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/.claude/*.ai)",
+      "Bash(pio run:*)",
+      "Bash(where platformio:*)",
+      "Bash(where pio:*)",
+      "Read(//z/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/$HOME/.platformio/penv/**)",
+      "Read(//c/Users/Achim/.platformio/penv/Scripts/**)",
+      "Bash(\"C:/Users/Achim/.platformio/penv/Scripts/pio\" run:*)",
+      "Bash(ls \"z:/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/webseite/gerber/BOM \\(JLCPCB\\)/\")",
+      "Bash(sed -i 's/If status.*block + redirect to register.html/If status != FULL AND playtime expired → 30s countdown overlay \\(showLicenseCountdown\\)/' .claude/activationmanager.ai)",
+      "Bash(sed -i 's/Currently only used in React2P \\(test case\\), needs expansion to all games/Overlay: countdown, register link, auto-navigates to game after 30s. Currently only used in React2P/' .claude/activationmanager.ai)",
+      "Bash(platformio run:*)",
+      "Bash(python -m platformio run -e coordinator)",
+      "Bash(cmd.exe /c \"pio run -e coordinator 2>&1\")",
+      "Bash(ls -la \"z:/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/data/puckracer_subset.\"*)",
+      "Bash(xxd puckracer_subset.woff2)",
+      "Bash(xxd puckracer_subset.ttf)",
+      "Bash(ls \"z:/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/data/puckracer_subset\"*)",
+      "Bash(xxd -l 16 \"z:/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/data/puckracer_subset.ttf\")",
+      "Bash(xxd -l 64 \"z:/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/data/puckracer_subset.ttf\")",
+      "Bash(xxd -l 200 \"z:/Projekte/ESP32 PuckRacer/Entwicklung/Coordinator/PuckRacer Coordinator/data/puckracer_subset.ttf\")",
+      "Bash(pip show *)",
+      "Bash(python -c \"from fontTools.ttLib import TTFont; print\\('fonttools available'\\)\")",
+      "Bash(pip install *)"
     ]
   }
 }

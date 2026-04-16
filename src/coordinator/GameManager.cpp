@@ -1,5 +1,8 @@
 #include "GameManager.h"
 #include "PuckNetwork.h"
+#include "ActivationManager.h"
+
+extern ActivationManager activationManager;
 
 #include "Game_SimpleCounter.h"
 #include "Game_SimpleCountdown.h"
@@ -70,6 +73,9 @@ int lowestHeapGameId = 0;
 int lowestHeapValue = 999999;
 int lastGameId = 0;
 
+// Nag-Delay Statics
+int GameManager::_pendingGameID = 0;
+unsigned long GameManager::_nagStartMs = 0;
 
 void GameManager::begin() {
     Serial.println("GM: Game Engine gestartet.");
@@ -77,11 +83,38 @@ void GameManager::begin() {
 }
 
 void GameManager::update() {
+    // Nag-Delay: Spiel verzögert starten
+    if (_pendingGameID > 0 && (millis() - _nagStartMs >= NAG_DELAY_MS)) {
+        int id = _pendingGameID;
+        _pendingGameID = 0;
+        _nagStartMs = 0;
+        Serial.printf("GM: Nag-Delay abgelaufen, starte Spiel ID %d\n", id);
+        _doStartGame(id);
+    }
+
     if (currentGame) currentGame->loop();
 }
 
 void GameManager::startGame(int gameID) {
     Serial.printf("GM: Starte Spiel ID %d\n", gameID);
+
+    // Lizenzprüfung: Testphase abgelaufen → 30s Verzögerung
+    if (activationManager.getStatus() != LicenseStatus::FULL) {
+        uint32_t playedMin = StatsManager::getTotalPlaytimeMinutes();
+        uint32_t limitMin  = activationManager.getPlaytimeLimitMinutes();
+        if (playedMin >= limitMin) {
+            Serial.printf("GM: Testphase abgelaufen (%u/%u min) – 30s Nag-Delay\n", playedMin, limitMin);
+            _pendingGameID = gameID;
+            _nagStartMs = millis();
+            currentGame = nullptr; // altes Spiel beenden
+            return;
+        }
+    }
+
+    _doStartGame(gameID);
+}
+
+void GameManager::_doStartGame(int gameID) {
     StatsManager::addGameStart(gameID);
     StatsManager::startPlaytime();
     currentGame = nullptr;
@@ -91,12 +124,12 @@ void GameManager::startGame(int gameID) {
         case 2: currentGame = &gameCounter; break;
         case 3: currentGame = &gameCountdown; break;
         case 4: currentGame = &gameSimon; break;
-        case 5: currentGame = &gameDisplay; break; 
+        case 5: currentGame = &gameDisplay; break;
         case 6: currentGame = &gameSimonRuns; break;
         case 7: currentGame = &gameSorting; break;
-        case 8: currentGame = &gameBomb; break; 
-        case 9: currentGame = &gameRedGreen; break; 
-        case 10: currentGame = &gameStopwatch; break; 
+        case 8: currentGame = &gameBomb; break;
+        case 9: currentGame = &gameRedGreen; break;
+        case 10: currentGame = &gameStopwatch; break;
         case 11: currentGame = &gameZombie; break;
         case 12: currentGame = &gameBeepTest; break;
         case 13: currentGame = &gameReact2P; break;
@@ -119,7 +152,7 @@ void GameManager::startGame(int gameID) {
 
         default: Serial.println("Unbekannte ID"); return;
     }
-    
+
     if (currentGame) {
         // RAM watchdog: check heap from PREVIOUS game
         int h = ESP.getMinFreeHeap();
@@ -130,8 +163,14 @@ void GameManager::startGame(int gameID) {
         lastGameId = gameID; // das letzte spiel wegschreiben
         Serial.print("Spiel geladen: "); Serial.println(currentGame->getName());
         currentGame->setup();
-        
     }
+}
+
+int GameManager::getNagDelayRemaining() {
+    if (_pendingGameID == 0) return 0;
+    unsigned long elapsed = millis() - _nagStartMs;
+    if (elapsed >= NAG_DELAY_MS) return 0;
+    return (int)((NAG_DELAY_MS - elapsed) / 1000);
 }
 
 Game* GameManager::getCurrentGame() { return currentGame; }

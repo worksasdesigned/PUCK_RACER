@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Flasher - PUCK RACER | Firmware direkt im Browser flashen</title>
+    <meta name="description" content="PUCK RACER Web Flasher: Flash die Coordinator- und Puck-Firmware direkt im Browser via USB. Kein PlatformIO nötig.">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+    <link rel="manifest" href="site.webmanifest">
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+    <style>
+        /* Flasher-spezifische Styles */
+        .flasher-section {
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .flasher-section h2 {
+            font-size: 2rem;
+            color: #8aece5;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #8aece5;
+            padding-bottom: 10px;
+            text-align: left;
+        }
+
+        .flasher-card {
+            background: rgba(43, 43, 54, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            text-align: left;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .flasher-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .flasher-card h3 {
+            font-size: 1.3rem;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .flasher-card .board-info {
+            display: inline-block;
+            background: rgba(138, 236, 229, 0.15);
+            border: 1px solid rgba(138, 236, 229, 0.3);
+            color: #8aece5;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .flasher-card p {
+            color: #ddd;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .flash-button-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        esp-web-install-button {
+            display: inline-block;
+        }
+
+        esp-web-install-button button {
+            background: #8aece5;
+            color: #1a1a1a;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        esp-web-install-button button:hover {
+            background: #6dd4cc;
+            transform: scale(1.03);
+        }
+
+        /* Versions-Tabelle */
+        .version-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+
+        .version-table th {
+            background: rgba(138, 236, 229, 0.15);
+            color: #8aece5;
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid rgba(138, 236, 229, 0.3);
+        }
+
+        .version-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            color: #ddd;
+            font-size: 0.9rem;
+        }
+
+        .version-table tr:hover td {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .version-tag {
+            display: inline-block;
+            background: rgba(138, 236, 229, 0.2);
+            color: #8aece5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        /* Anleitung */
+        .instructions {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .instructions h2 {
+            font-size: 2rem;
+            color: #8aece5;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #8aece5;
+            padding-bottom: 10px;
+            text-align: left;
+        }
+
+        .step-list {
+            list-style: none;
+            counter-reset: steps;
+            padding: 0;
+        }
+
+        .step-list li {
+            counter-increment: steps;
+            position: relative;
+            padding: 15px 15px 15px 55px;
+            margin-bottom: 12px;
+            background: rgba(43, 43, 54, 0.5);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #ddd;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .step-list li::before {
+            content: counter(steps);
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 28px;
+            height: 28px;
+            background: #8aece5;
+            color: #1a1a1a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .warning-box {
+            background: rgba(229, 62, 62, 0.15);
+            border: 1px solid rgba(229, 62, 62, 0.4);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-top: 15px;
+            color: #ff8a8a;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .warning-box strong {
+            color: #ff6b6b;
+        }
+
+        .github-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.95rem;
+            transition: background 0.3s ease, border-color 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .github-link:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: #8aece5;
+            color: #8aece5;
+        }
+
+        .github-link svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        /* Alt-Flash Details (esptool) */
+        .alt-flash-details {
+            background: rgba(43, 43, 54, 0.7);
+            border-radius: 10px;
+            margin-top: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            width: 100%;
+        }
+
+        .alt-flash-details summary {
+            padding: 16px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            outline: none;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 1rem;
+            color: #8aece5;
+        }
+
+        .alt-flash-details summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .alt-flash-details summary::after {
+            content: '+';
+            font-size: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .alt-flash-details[open] summary::after {
+            transform: rotate(45deg);
+        }
+
+        .alt-flash-details .faq-answer {
+            padding: 0 20px 20px 20px;
+            line-height: 1.6;
+            color: #ddd;
+        }
+
+        .alt-flash-details .faq-answer h4 {
+            color: #fff;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .alt-flash-details .faq-answer pre {
+            background: rgba(0, 0, 0, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 14px;
+            overflow-x: auto;
+            margin-bottom: 10px;
+        }
+
+        .alt-flash-details .faq-answer code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.88rem;
+            color: #8aece5;
+        }
+
+        .alt-flash-details .faq-answer ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .alt-flash-details .faq-answer li {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            color: #ddd;
+            position: relative;
+            padding-left: 15px;
+        }
+
+        .alt-flash-details .faq-answer li::before {
+            content: '\2022';
+            position: absolute;
+            left: 0;
+            color: #8aece5;
+        }
+
+        .gemini-help-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: #8ab4f8;
+            font-weight: bold;
+            font-size: 0.92rem;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid rgba(138, 180, 248, 0.3);
+            border-radius: 8px;
+            background: rgba(138, 180, 248, 0.08);
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .gemini-help-link::before {
+            content: '\2728';
+        }
+
+        .gemini-help-link:hover {
+            background: rgba(138, 180, 248, 0.18);
+            border-color: #8ab4f8;
+        }
+
+        .unsupported-msg {
+            display: none;
+            background: rgba(229, 62, 62, 0.15);
+            border: 1px solid rgba(229, 62, 62, 0.4);
+            border-radius: 10px;
+            padding: 15px 20px;
+            color: #ff8a8a;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            text-align: left;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <nav class="main-nav">
+            <button class="nav-toggle" aria-label="Menu" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Menu</button>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="features.html">Features</a></li>
+                <li><a href="downloads.html">Downloads</a></li>
+                <li><a href="hardware.html">Hardware</a></li>
+                <li><a href="spiele.html">Spiele</a></li>
+                <li><a href="demo.html">Demo</a></li>
+                <li><a href="infos.html">Infos</a></li>
+                <li><a href="faq.html">FAQ</a></li>
+                <li><a href="en/downloads.html" title="English">&#127468;&#127463; EN</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+    <div class="rainbow-border-wrapper">
+        <div class="main-container">
+            <div class="header-bar">
+                <img src="pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
+            </div>
+
+            <h1>Web Flasher</h1>
+            <p class="subtitle">Firmware direkt im Browser flashen &mdash; kein PlatformIO oder Kabel-Chaos nötig.</p>
+
+            <!-- Browser-Warnung -->
+            <div class="unsupported-msg" id="browserWarning">
+                <strong>Dein Browser wird nicht unterstützt.</strong> Der Web Flasher benötigt Web Serial API und funktioniert nur in <b>Google Chrome</b>, <b>Microsoft Edge</b> oder <b>Opera</b> (Desktop). Firefox und Safari werden leider nicht unterstützt.
+            </div>
+
+            <!-- Anleitung -->
+            <div class="instructions">
+                <h2>So funktioniert's</h2>
+                <ol class="step-list">
+                    <li><b>Board per USB verbinden.</b> Schließe den ESP32 (Coordinator oder Puck) per USB-Kabel an deinen Computer an.</li>
+                    <li><b>Browser: Chrome oder Edge verwenden.</b> Der Web Flasher nutzt die Web Serial API &mdash; diese funktioniert nur in Chromium-basierten Browsern (Chrome, Edge, Opera).</li>
+                    <li><b>Unten den passenden "Firmware Flashen"-Button klicken.</b> Wähle im Dialog den richtigen COM-Port deines ESP32 aus.</li>
+                    <li><b>Warten bis der Flash-Vorgang abgeschlossen ist.</b> Das Board startet danach automatisch neu. Nicht das USB-Kabel während des Flashens entfernen!</li>
+                </ol>
+                <div class="warning-box">
+                    <strong>Wichtig:</strong> Coordinator und Puck verwenden unterschiedliche ESP32-Chips. Flashe niemals eine Puck-Firmware auf den Coordinator oder umgekehrt &mdash; das Board startet sonst nicht!
+                </div>
+
+                <details class="alt-flash-details">
+                    <summary>Kein Chrome/Edge? &mdash; Firmware manuell mit esptool flashen</summary>
+                    <div class="faq-answer">
+                        <p>Wenn dein Browser kein Web Serial unterstützt (z.B. Safari, Firefox), kannst du die <code>.bin</code>-Datei mit dem offiziellen <b>esptool</b> von Espressif manuell flashen. Das funktioniert auf allen Betriebssystemen.</p>
+
+                        <h4>Voraussetzung</h4>
+                        <p>Python 3 muss installiert sein. Dann esptool installieren:</p>
+                        <pre><code>pip install esptool</code></pre>
+
+                        <h4>Coordinator flashen (ESP32-S3)</h4>
+                        <pre><code>esptool.py --chip esp32s3 --port PORT --baud 921600 write_flash 0x0 coordinator.bin</code></pre>
+
+                        <h4>Puck flashen (ESP32-C3)</h4>
+                        <pre><code>esptool.py --chip esp32c3 --port PORT --baud 921600 write_flash 0x0 puck.bin</code></pre>
+
+                        <h4>PORT ersetzen</h4>
+                        <ul>
+                            <li><b>Windows:</b> <code>COM3</code>, <code>COM4</code>, ... &mdash; im Geräte-Manager unter "Anschlüsse (COM &amp; LPT)" nachschauen</li>
+                            <li><b>macOS:</b> <code>/dev/cu.usbserial-*</code> oder <code>/dev/cu.usbmodem*</code> &mdash; mit <code>ls /dev/cu.*</code> im Terminal auflisten</li>
+                            <li><b>Linux:</b> <code>/dev/ttyUSB0</code> oder <code>/dev/ttyACM0</code> &mdash; mit <code>ls /dev/tty*</code> auflisten. Falls keine Berechtigung: <code>sudo usermod -aG dialout $USER</code> und neu einloggen</li>
+                        </ul>
+
+                        <p style="margin-top:12px; color:#aaa; font-size:0.85rem;"><b>Tipp:</b> Falls der ESP32 nicht erkannt wird, den BOOT-Button am Board gedrückt halten während du das USB-Kabel einsteckst &mdash; das erzwingt den Download-Modus.</p>
+
+                        <p style="margin-top:16px;">
+                            <a class="gemini-help-link" href="https://chatgpt.com/?q=Ich%20m%C3%B6chte%20eine%20.bin-Firmware-Datei%20auf%20einen%20ESP32%20flashen%20mit%20dem%20Espressif%20esptool.%20Frage%20mich%20zuerst%20ob%20ich%20Windows%2C%20macOS%20oder%20Linux%20verwende.%20Erkl%C3%A4re%20mir%20dann%20Schritt%20f%C3%BCr%20Schritt%3A%201.%20Wie%20ich%20Python%203%20und%20pip%20installiere%20falls%20noch%20nicht%20vorhanden%2C%202.%20Wie%20ich%20esptool%20mit%20pip%20installiere%2C%203.%20Wie%20ich%20den%20richtigen%20COM-Port%20bzw%20seriellen%20Port%20finde%2C%204.%20Wie%20ich%20den%20Flash-Befehl%20ausf%C3%BChre.%20Die%20zwei%20Boards%20sind%3A%20ESP32-S3%20(Coordinator%2C%20Befehl%3A%20esptool.py%20--chip%20esp32s3%20--port%20PORT%20--baud%20921600%20write_flash%200x0%20coordinator.bin)%20und%20ESP32-C3%20(Puck%2C%20Befehl%3A%20esptool.py%20--chip%20esp32c3%20--port%20PORT%20--baud%20921600%20write_flash%200x0%20puck.bin).%20Hilf%20mir%20interaktiv%20durch%20den%20Prozess." target="_blank" rel="noopener">
+                                Du brauchst mehr Hilfe? Klicke hier und ChatGPT hilft dir Schritt für Schritt.
+                            </a>
+                        </p>
+                    </div>
+                </details>
+            </div>
+
+            <!-- ==================== COORDINATOR ==================== -->
+            <div class="flasher-section">
+                <h2>Coordinator (ESP32-S3)</h2>
+
+                <div class="flasher-card">
+                    <h3>Coordinator Firmware</h3>
+                    <span class="board-info">Board: ESP32-S3-DevKitC-1 &middot; 16 MB Flash</span>
+                    <p>Die Coordinator-Firmware steuert das gesamte PUCK RACER System: Spielverwaltung, WebUI, ESP-NOW Netzwerk und OTA-Updates der Pucks.</p>
+
+                    <table class="version-table">
+                        <thead>
+                            <tr>
+                                <th>Version</th>
+                                <th>Datum</th>
+                                <th>Beschreibung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="version-tag">v2.99.1</span></td>
+                                <td>2026-04-01</td>
+                                <td>Webbased Shareware version check, JSON Game test</td>
+                            </tr>
+                            <tr>
+                                <td><span class="version-tag">v2.99.0</span></td>
+                                <td>2026-03-29</td>
+                                <td>Test activation, AI summary</td>
+                            </tr>
+                            <tr>
+                                <td><span class="version-tag">v2.98.0</span></td>
+                                <td>2026-03-25</td>
+                                <td>UI update, Temp-Control, neue Settings-Seite, Batterie-Warnung</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="flash-button-row">
+                        <esp-web-install-button manifest="bin/coordinator_manifest.json">
+                            <button slot="activate">Coordinator Firmware flashen</button>
+                            <span slot="unsupported">Dein Browser unterstützt kein Web Serial.</span>
+                            <span slot="not-allowed">Web Serial ist in diesem Kontext nicht erlaubt.</span>
+                        </esp-web-install-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== PUCK ==================== -->
+            <div class="flasher-section">
+                <h2>Puck (ESP32-C3)</h2>
+
+                <div class="flasher-card">
+                    <h3>Puck Firmware</h3>
+                    <span class="board-info">Board: ESP32-C3-DevKitM-1 &middot; RISC-V Single Core</span>
+                    <p>Die Puck-Firmware steuert LEDs (WS2812B), Buttons, Buzzer, Batterie- und Temperatur-Schutz. Kommunikation mit dem Coordinator via ESP-NOW.</p>
+
+                    <table class="version-table">
+                        <thead>
+                            <tr>
+                                <th>Version</th>
+                                <th>Datum</th>
+                                <th>Beschreibung</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="version-tag">FW 87</span></td>
+                                <td>2026-04-01</td>
+                                <td>LED Anti-Flicker (15 FPS Cap), Heartbeat Timing-Offset, yield() nach show()</td>
+                            </tr>
+                            <tr>
+                                <td><span class="version-tag">FW 86</span></td>
+                                <td>2026-03-25</td>
+                                <td>Bidirektionaler Heartbeat, Temperatur-Schutz, Batterie-Notaus</td>
+                            </tr>
+                            <tr>
+                                <td><span class="version-tag">FW 85</span></td>
+                                <td>2026-03-20</td>
+                                <td>OTA-Support, RSSI Sniffer, Sound-Engine</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="flash-button-row">
+                        <esp-web-install-button manifest="bin/puck_manifest.json">
+                            <button slot="activate">Puck Firmware flashen</button>
+                            <span slot="unsupported">Dein Browser unterstützt kein Web Serial.</span>
+                            <span slot="not-allowed">Web Serial ist in diesem Kontext nicht erlaubt.</span>
+                        </esp-web-install-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GitHub Link -->
+            <div style="width:100%; text-align:left; margin-bottom: 30px;">
+                <a class="github-link" href="https://github.com/worksasdesigned/PUCK_RACER_PUBLIC_BETA/blob/Master/README.md" target="_blank" rel="noopener">
+                    <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                    GitHub Repository &amp; README
+                </a>
+            </div>
+
+            <footer>
+                <a href="Impressum.html">Impressum</a> &middot; <a href="datenschutz.html">Datenschutz</a>
+            </footer>
+        </div>
+    </div>
+    </main>
+
+    <script>
+        // Browser-Check: Web Serial API verfügbar?
+        if (!("serial" in navigator)) {
+            document.getElementById('browserWarning').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

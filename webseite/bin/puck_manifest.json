@@ -1,0 +1,16 @@
+{
+  "name": "PUCK RACER Puck",
+  "version": "FW 87",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-C3",
+      "parts": [
+        {
+          "path": "puck.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}

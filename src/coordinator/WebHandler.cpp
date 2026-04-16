@@ -12,7 +12,7 @@
 // Globale Instanz aus main.cpp
 extern ActivationManager activationManager;
 
-#define SYS_VER "v2.99.0" 
+#define SYS_VER "v2.99.5" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;
@@ -281,19 +281,23 @@ void WebHandler::begin() {
     });
 
     server.on("/api/game/action", HTTP_GET, [](AsyncWebServerRequest *req){
+        String cmd = req->hasParam("cmd") ? req->getParam("cmd")->value() : "";
         Game* g = GameManager::getCurrentGame();
         if (g) {
-            String cmd = req->hasParam("cmd") ? req->getParam("cmd")->value() : "";
             int val = req->hasParam("val") ? req->getParam("val")->value().toInt() : 0;
             g->processCommand(cmd, val);
-            
+
             if (cmd == "exit") {
                 StatsManager::stopPlaytime();
                 StatsManager::saveAll();
             }
-            
+
             req->send(200, "text/plain", "OK");
-        } else req->send(400);
+        } else if (cmd == "exit") {
+            req->send(200, "text/plain", "OK");
+        } else {
+            req->send(400);
+        }
     });
 
     server.on("/api/stats/games", HTTP_GET, [](AsyncWebServerRequest *req){
@@ -835,6 +839,11 @@ void WebHandler::begin() {
         if (!index) Update.begin(UPDATE_SIZE_UNKNOWN, U_FLASH);
         if (!Update.hasError()) Update.write(data, len);
         if (final) Update.end(true);
+    });
+
+    // Font file with correct MIME type (Chrome rejects fonts with wrong Content-Type)
+    server.on("/puckracer_subset.ttf", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(LittleFS, "/puckracer_subset.ttf", "font/ttf");
     });
 
     // Static files last — all /api/ routes are matched first

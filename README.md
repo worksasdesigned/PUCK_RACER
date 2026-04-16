@@ -217,7 +217,12 @@ After the real first beta is released il will provide the bin files in case of u
 
 **V2.98.0**   
     - Gerber and PCB files addes   
-    - temperature control, warning and local alarm added     
+    - temperature control, warning and local alarm added   
+
+**V2.99.1**   
+    - Test version keygen working in react2p
+    - Test version of JSON GAME   
+
 
 --- 
 

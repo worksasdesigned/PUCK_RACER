@@ -11,6 +11,7 @@ Before modifying or discussing any game, system component, or frontend file:
 - Game discussion → `.claude/game_<name>.ai` (e.g. "Shuttle Run" → `.claude/game_shuttle.ai`)
 - WebHandler/API → `.claude/webhandler.ai`
 - PuckNetwork/ESP-NOW → `.claude/pucknetwork.ai`
+- Puck Firmware (ESP32-C3) → `.claude/puck_firmware.ai`
 - Game registration/new game → `.claude/gamemanager.ai`
 - Statistics → `.claude/statsmanager.ai`
 - License/Activation → `.claude/activationmanager.ai`

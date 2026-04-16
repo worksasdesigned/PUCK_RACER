@@ -146,6 +146,8 @@ const TRANSLATIONS = {
         "g_musical": "Musical Chairs",
         "g_tttt": "Tactical TicTacToe",
         "g_pitstop": "Pitstop",
+        "g_custom": "Custom Game",
+        "desc_custom": "Create your own game! Combine different modes and settings to build custom exercises.",
 
         // --- PITSTOP ---
         "ps_setup_players":    "Players / Stations",
@@ -778,7 +780,6 @@ const TRANSLATIONS = {
         "pm_setup_dur": "⏱️ Workout Duration",
         "pm_lbl_time": "Total Time:",
         "pm_lbl_hold": "Hold Start Puck to begin",
-        "pm_btn_track": "BUILD TRACK ➡",
         "pm_track_title": "Build the Track",
         "pm_track_loading": "Analyzing Pucks...",
         "pm_track_err": "At least 4 Pucks required!",
@@ -1021,7 +1022,6 @@ const TRANSLATIONS = {
         "bat_lbl_fake": "Fake Colors (No-Go)",
         "bat_hint_fake": "Spawns wrong colors.",
         "bat_lbl_hold": "Hold Start Puck to begin",
-        "bat_btn_hint": "TO LAYOUT ➡",
         "ctl_names_title": "Catch the Light Pro",
         "bat_names_sub": "Mount the Targets!",
         "bat_names_hint": "Stick the pucks to a wall in a spiderweb pattern.<br>Use the colors and ring levels to identify them.",
@@ -1082,7 +1082,41 @@ const TRANSLATIONS = {
         "unit_sec": "s",
         "unit_m": "m ",
         "unit_pucks": " Pucks",
-        "lbl_grp_short": "Grp "
+        "lbl_grp_short": "Grp ",
+
+        // --- LICENSE OVERLAY ---
+        "lic_title": "Trial expired",
+        "lic_text": "You're obviously enjoying the game! Upgrade to the full version to skip this wait.",
+        "lic_countdown": "Game starts in {0} seconds...",
+        "lic_register": "Register now",
+
+        // --- SETTINGS UNLOCK CARD ---
+        "set_unlock": "Unlock Full Version",
+        "set_unlock_desc": "Remove all playtime restrictions and get access to all future features by purchasing a license.",
+        "btn_unlock_now": "UNLOCK NOW",
+
+        // --- REGISTER PAGE ---
+        "reg_title": "Registration",
+        "reg_heading": "Unlock Full Version",
+        "reg_info": "To unlock the full version of PuckRacer, visit the official website and purchase a license. You will receive a 9-digit key to enter here.",
+        "reg_device_code": "Your Device Code",
+        "reg_key_label": "9-digit Unlock Key",
+        "reg_key_placeholder": "123456789",
+        "reg_btn_unlock": "Unlock now",
+        "reg_btn_checking": "Checking...",
+        "reg_btn_already_active": "Full version already active",
+        "reg_status_label": "Current Status:",
+        "reg_playtime_label": "Playtime used:",
+        "reg_status_full": "Full Version (unlimited)",
+        "reg_status_extended": "Extended Trial",
+        "reg_status_free": "Trial Version",
+        "reg_playtime_fmt": "{0} / {1} minutes",
+        "reg_playtime_full_fmt": "{0} minutes played",
+        "reg_msg_invalid_key": "Please enter a valid 9-digit key.",
+        "reg_msg_success": "Key valid! The device is now unlocked. Page will reload.",
+        "reg_msg_wrong_key": "The entered key is invalid. Please check your input.",
+        "reg_msg_network_error": "A network error occurred. Please try again later.",
+        "reg_loading": "Loading..."
 
     },
     de: {
@@ -1231,6 +1265,8 @@ const TRANSLATIONS = {
         "g_musical": "Reise nach Jerusalem",
         "g_tttt": "Tactical TicTacToe",
         "g_pitstop": "Pitstop",
+        "g_custom": "Custom Game",
+        "desc_custom": "Eigene Spiele zusammenstellen! Kombiniere verschiedene Modi und Einstellungen zu individuellen Uebungen.",
 
         // --- PITSTOP ---
         "ps_setup_players":    "Spieler / Stationen",
@@ -1863,7 +1899,6 @@ const TRANSLATIONS = {
         "pm_setup_dur": "⏱️ Workout Dauer",
         "pm_lbl_time": "Gesamtzeit:",
         "pm_lbl_hold": "Start-Puck halten zum Starten",
-        "pm_btn_track": "STRECKE BAUEN ➡",
         "pm_track_title": "Streckenaufbau",
         "pm_track_loading": "Analysiere Pucks...",
         "pm_track_err": "Mindestens 4 Pucks benötigt!",
@@ -2106,7 +2141,6 @@ const TRANSLATIONS = {
         "bat_lbl_fake": "Fake-Farben (Achtung)",
         "bat_hint_fake": "Zeigt falsche Farben. Nicht drücken!",
         "bat_lbl_hold": "Start-Puck halten",
-        "bat_btn_hint": "AUFBAU HILFE ➡",
         "ctl_names_title": "Wand aufbauen",
         "bat_names_sub": "Befestige die Ziele!",
         "bat_names_hint": "Befestige die Pucks wie ein Spinnennetz an der Wand.<br>Nutze die Farben und Leuchtringe zur Zuordnung.",
@@ -2167,7 +2201,41 @@ const TRANSLATIONS = {
         "unit_sec": "s",
         "unit_m": "m ",
         "unit_pucks": " Pucks",
-        "lbl_grp_short": "Grp "
+        "lbl_grp_short": "Grp ",
+
+        // --- LICENSE OVERLAY ---
+        "lic_title": "Testphase abgelaufen",
+        "lic_text": "Das Spiel macht offensichtlich Spass! Mit der Vollversion entfaellt diese Wartezeit.",
+        "lic_countdown": "Das Spiel startet in {0} Sekunden...",
+        "lic_register": "Jetzt registrieren",
+
+        // --- SETTINGS UNLOCK CARD ---
+        "set_unlock": "Vollversion freischalten",
+        "set_unlock_desc": "Entferne alle Spielzeitbeschraenkungen und erhalte Zugang zu allen zukuenftigen Features durch den Kauf einer Lizenz.",
+        "btn_unlock_now": "JETZT FREISCHALTEN",
+
+        // --- REGISTER PAGE ---
+        "reg_title": "Registrierung",
+        "reg_heading": "Vollversion freischalten",
+        "reg_info": "Um die Vollversion von PuckRacer freizuschalten, besuche die offizielle Webseite und erwerbe eine Lizenz. Du erhaeltst einen 9-stelligen Schluessel, den du hier eingeben kannst.",
+        "reg_device_code": "Dein Geraetecode",
+        "reg_key_label": "9-stelliger Freischalt-Schluessel",
+        "reg_key_placeholder": "123456789",
+        "reg_btn_unlock": "Jetzt freischalten",
+        "reg_btn_checking": "Pruefe...",
+        "reg_btn_already_active": "Vollversion bereits aktiv",
+        "reg_status_label": "Aktueller Status:",
+        "reg_playtime_label": "Genutzte Spielzeit:",
+        "reg_status_full": "Vollversion (unbegrenzt)",
+        "reg_status_extended": "Erweiterte Testversion",
+        "reg_status_free": "Testversion",
+        "reg_playtime_fmt": "{0} / {1} Minuten",
+        "reg_playtime_full_fmt": "{0} Minuten gespielt",
+        "reg_msg_invalid_key": "Bitte gib einen gueltigen 9-stelligen Schluessel ein.",
+        "reg_msg_success": "Schluessel gueltig! Das Geraet ist jetzt freigeschaltet. Die Seite wird neu geladen.",
+        "reg_msg_wrong_key": "Der eingegebene Schluessel ist ungueltig. Bitte ueberpruefe deine Eingabe.",
+        "reg_msg_network_error": "Ein Netzwerkfehler ist aufgetreten. Versuche es spaeter erneut.",
+        "reg_loading": "Lade..."
 
     }
 };

@@ -10,19 +10,27 @@
     <link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/hardware.html">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Hardware & Bauanleitung - PUCK RACER">
-    <meta property="og:description" content="Open-Source PCB-Design, ESP32-C3, WS2812B LEDs und 18650-Akku. Unter 20€ pro Puck.">
+    <meta property="og:description" content="Open-Source PCB-Design, ESP32-C3, WS2812B LEDs und 18650-Akku. Unter 20&euro; pro Puck.">
     <meta property="og:image" content="https://www.puckracer.net/pictures/pcb.png">
     <meta property="og:url" content="https://www.puckracer.net/hardware.html">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Hardware - PUCK RACER">
-    <meta name="twitter:description" content="Open-Source PCB, ESP32-C3, WS2812B LEDs. Unter 20€ pro Puck.">
-        <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <meta name="twitter:description" content="Open-Source PCB, ESP32-C3, WS2812B LEDs. Unter 20&euro; pro Puck.">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
     <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
     <link rel="manifest" href="site.webmanifest">
     <link rel="stylesheet" href="style.css">
     <style>
+        .hero-image {
+            width: 100%;
+            max-width: 500px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 0 15px rgba(138, 236, 229, 0.3);
+            margin: 20px 0 30px;
+        }
         .pcb-image {
             width: 100%;
             max-width: 600px;
@@ -31,6 +39,19 @@
             box-shadow: 0 0 15px rgba(138, 236, 229, 0.3);
             margin: 20px 0;
         }
+
+        .section-heading {
+            font-size: 2rem;
+            text-transform: uppercase;
+            color: #8aece5;
+            margin: 40px 0 10px;
+            border-bottom: 2px solid #8aece5;
+            padding-bottom: 10px;
+            text-align: left;
+            width: 100%;
+        }
+
+        /* BoM Table */
         .bom-table {
             width: 100%;
             border-collapse: collapse;
@@ -57,40 +78,194 @@
             background: rgba(255, 255, 255, 0.03);
         }
         .bom-table td img {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             object-fit: cover;
             border-radius: 6px;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .bom-placeholder {
-            color: #718096;
-            font-style: italic;
+        .bom-table td a {
+            color: #8aece5;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.2s;
         }
-        .status-banner {
-            background: rgba(236, 201, 75, 0.1);
-            border: 1px solid rgba(236, 201, 75, 0.3);
-            border-radius: 10px;
-            padding: 15px 20px;
-            margin: 20px 0;
-            font-size: 0.95rem;
-            color: #ecc94b;
+        .bom-table td a:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+        .bom-section-header {
+            font-size: 1.3rem;
+            color: #fff;
+            text-transform: uppercase;
+            background: rgba(138, 236, 229, 0.08);
+            text-align: left;
+        }
+        .bom-section-header td {
+            padding: 14px 15px !important;
+            font-weight: bold;
+            letter-spacing: 1px;
+            border-bottom: 1px solid rgba(138, 236, 229, 0.3) !important;
+        }
+        .bom-qty {
             text-align: center;
+        }
+        .affiliate-note {
+            font-size: 0.8rem;
+            color: #888;
+            font-style: italic;
+            margin-top: 5px;
+            margin-bottom: 10px;
+            text-align: left;
+            width: 100%;
+        }
+
+        /* PCB Section */
+        .pcb-info-card {
+            background: rgba(43, 43, 54, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            text-align: left;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+        .pcb-info-card h3 {
+            color: #8aece5;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+        }
+        .pcb-info-card p {
+            color: #ddd;
+            font-size: 0.95rem;
             line-height: 1.6;
+        }
+        .pcb-info-card ol {
+            color: #ddd;
+            font-size: 0.95rem;
+            line-height: 1.8;
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+        .pcb-info-card ol li {
+            margin-bottom: 4px;
+        }
+        .pcb-info-card b, .pcb-info-card strong {
+            color: #fff;
+        }
+        .pcb-info-card code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.88rem;
+            color: #8aece5;
+        }
+
+        /* Download Links */
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            width: 100%;
+            margin: 15px 0;
+        }
+        .file-link {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 12px 16px;
+            color: #ddd;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .file-link:hover {
+            background: rgba(138, 236, 229, 0.1);
+            border-color: #8aece5;
+            color: #fff;
+        }
+        .file-link .file-icon {
+            font-size: 1.4rem;
+        }
+        .file-link-primary {
+            background: rgba(138, 236, 229, 0.12);
+            border-color: rgba(138, 236, 229, 0.3);
+            color: #8aece5;
+            font-weight: bold;
+        }
+
+        /* Videos Section */
+        .video-placeholder {
+            background: rgba(43, 43, 54, 0.7);
+            border: 2px dashed rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 60px 30px;
+            text-align: center;
+            color: #718096;
+            font-size: 1.1rem;
+            width: 100%;
+            margin: 20px 0;
+        }
+        .video-placeholder .video-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        /* Lightbox */
+        .lightbox-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            cursor: zoom-out;
+        }
+        .lightbox-overlay.active {
+            display: flex;
+        }
+        .lightbox-overlay img {
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: 10px;
+            box-shadow: 0 0 40px rgba(138, 236, 229, 0.3);
+            animation: lightbox-in 0.2s ease;
+        }
+        @keyframes lightbox-in {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .zoomable {
+            cursor: zoom-in;
+            transition: transform 0.2s ease;
+        }
+        .zoomable:hover {
+            transform: scale(1.05);
+        }
+
+        @media (max-width: 768px) {
+            .file-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     <header>
         <nav class="main-nav">
-            <button class="nav-toggle" aria-label="Menü öffnen" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Menü</button>
+            <button class="nav-toggle" aria-label="Men&uuml; &ouml;ffnen" onclick="document.querySelector('.main-nav').classList.toggle('open')">&#9776; Men&uuml;</button>
             <ul>
                 <li><a href="index.html">Home</a></li>
                 <li><a href="features.html">Features</a></li>
                 <li><a href="downloads.html">Downloads</a></li>
                 <li><a href="hardware.html" class="active">Hardware</a></li>
                 <li><a href="spiele.html">Spiele</a></li>
-                <li><a href="map.html">PUCK RACER Map</a></li>
                 <li><a href="demo.html">Demo</a></li>
                 <li><a href="infos.html">Infos</a></li>
                 <li><a href="faq.html">FAQ</a></li>
@@ -107,37 +282,210 @@
             </div>
 
             <h1>Hardware</h1>
-            <p>PUCK RACER ist ein reines Open-Source-Hardware-Projekt. Jeder Puck basiert auf einem ESP32-C3 Mikrocontroller, einem WS2812B LED-Ring und einem wiederaufladbaren 18650-Akku. Die Platine wurde speziell für dieses Projekt entwickelt.</p>
+            <p>PUCK RACER ist ein reines Open-Source-Hardware-Projekt. Jeder Puck basiert auf einem ESP32-C3 Mikrocontroller, einem WS2812B LED-Ring und einem wiederaufladbaren 18650-Akku. Die Platine wurde speziell f&uuml;r dieses Projekt entwickelt.</p>
 
-            <img src="pictures/pcb.png" alt="PUCK RACER PCB" class="pcb-image">
+            <img src="pictures/pcbsingle.png" alt="PUCK RACER Puck" class="hero-image zoomable">
 
-            <div class="status-banner">
-                Die Prototypen-Platinen sind aktuell in Produktion. Die vollständige Hardwareliste (BoM) mit Bezugsquellen wird im Mai 2026 veröffentlicht.
-            </div>
-
-            <h2 style="font-size:2rem; text-transform:uppercase; color:#8aece5; margin:30px 0 10px; border-bottom:2px solid #8aece5; padding-bottom:10px; text-align:left; width:100%;">Bill of Materials (BoM)</h2>
+            <!-- ============================================================ -->
+            <!-- TEIL 1: HARDWARE-LISTE (BoM)                                 -->
+            <!-- ============================================================ -->
+            <h2 class="section-heading">Bill of Materials (BoM)</h2>
+            <p>Alle Teile f&uuml;r 8 Pucks + 1 Coordinator. Mengenangaben sind Mindestbestellmengen &mdash; einzelne Teile haben Restbestand f&uuml;r Ersatz.</p>
 
             <table class="bom-table">
                 <thead>
                     <tr>
-                        <th>Part</th>
-                        <th>Picture</th>
-                        <th>Avg. Price</th>
+                        <th></th>
+                        <th>Bauteil</th>
+                        <th>Anzahl</th>
                         <th>Link</th>
                     </tr>
                 </thead>
                 <tbody>
+                    <!-- PUCK SECTION -->
+                    <tr class="bom-section-header"><td colspan="4">Puck (ESP32-C3) &mdash; pro Set 8 St&uuml;ck</td></tr>
                     <tr>
-                        <td class="bom-placeholder" colspan="4">Coming soon — Mai 2026</td>
+                        <td><img class="zoomable" src="pictures/affiliate/esp32c3.png" alt="ESP32-C3"></td>
+                        <td>ESP32-C3 SuperMini<br><span style="color:#ff8a8a; font-size:0.8rem; font-weight:bold;">Achtung: Pinout muss exakt stimmen, sonst passt die Platine nicht! Der verlinkte C3 ist kompatibel.</span></td>
+                        <td class="bom-qty">8</td>
+                        <td><a href="https://s.click.aliexpress.com/e/_c3MZgJdf" target="_blank" rel="noopener">AliExpress</a></td>
+                    </tr>
+                    <tr>
+                        <td><img class="zoomable" src="pictures/affiliate/35led.png" alt="35 LED Ring"></td>
+                        <td>WS2812B 35 LED Ring</td>
+                        <td class="bom-qty">8</td>
+                        <td><a href="https://s.click.aliexpress.com/e/_c4qKiSmd" target="_blank" rel="noopener">AliExpress</a></td>
+                    </tr>
+                    <tr>
+                        <td><img class="zoomable" src="pictures/affiliate/arcadebutton.png" alt="Arcade Button"></td>
+                        <td>Arcade Button (60 mm)</td>
+                        <td class="bom-qty">8</td>
+                        <td><a href="https://s.click.aliexpress.com/e/_c4omEAm5" target="_blank" rel="noopener">AliExpress</a></td>
+                    </tr>
+                    <tr>
+                        <td><img class="zoomable" src="pictures/affiliate/18650.png" alt="18650 Battery"></td>
+                        <td>18650 Li-Ion Akku<br><span style="color:#ff8a8a; font-size:0.8rem; font-weight:bold;">Beispiel-Akku &mdash; wir empfehlen ein Markenprodukt (z.B. Samsung, Sony/Murata, LG) zu verwenden. Nicht am Akku sparen! Billige Li-Ion-Zellen k&ouml;nnen brennen.</span></td>
+                        <td class="bom-qty">8</td>
+                        <td><a href="https://s.click.aliexpress.com/e/_c2zwtWKH" target="_blank" rel="noopener">AliExpress</a></td>
+                    </tr>
+                    <tr>
+                        <td><img class="zoomable" src="pictures/affiliate/ladeboard.png" alt="Ladeboard"></td>
+                        <td>TP4056 Ladeboard (USB-C)</td>
+                        <td class="bom-qty">10</td>
+                        <td><a href="https://s.click.aliexpress.com/e/_c36BcemH" target="_blank" rel="noopener">AliExpress</a></td>
+                    </tr>
+                    <tr>
+                        <td><img class="zoomable" src="pictures/affiliate/5V3AStepup.png" alt="5V Step-Up"></td>
+                        <td>5V 3A Step-Up Converter</td>
+                        <td class="bom-qty">8</td>
+                        <td><a href="https://s.click.aliexpress.com/e/_c4B1luZL" target="_blank" rel="noopener">AliExpress</a></td>
+                    </tr>
+                    <tr>
+                        <td><img class="zoomable" src="pictures/affiliate/buzzer.png" alt="Buzzer"></td>
+                        <td>Piezo Buzzer (passiv)</td>
+                        <td class="bom-qty">10</td>
+                        <td><a href="https://s.click.aliexpress.com/e/_c4F1Kqxn" target="_blank" rel="noopener">AliExpress</a></td>
+                    </tr>
+                    <tr>
+                        <td><img class="zoomable" src="pictures/affiliate/capacitor.png" alt="Capacitor"></td>
+                        <td>Elko Kondensator (1000&micro;F)</td>
+                        <td class="bom-qty">10</td>
+                        <td><a href="https://s.click.aliexpress.com/e/_c3R0SqLP" target="_blank" rel="noopener">AliExpress</a></td>
+                    </tr>
+                    <tr>
+                        <td><img class="zoomable" src="pictures/affiliate/switch.png" alt="Switch"></td>
+                        <td>Ein/Aus Schalter</td>
+                        <td class="bom-qty">10</td>
+                        <td><a href="https://s.click.aliexpress.com/e/_c3YaiOfB" target="_blank" rel="noopener">AliExpress</a></td>
+                    </tr>
+
+                    <!-- COORDINATOR SECTION -->
+                    <tr class="bom-section-header"><td colspan="4">Coordinator (ESP32-S3)</td></tr>
+                    <tr>
+                        <td><img class="zoomable" src="pictures/affiliate/esp32N16R8.png" alt="ESP32-S3"></td>
+                        <td>ESP32-S3 N16R8 DevKit</td>
+                        <td class="bom-qty">1</td>
+                        <td><a href="https://s.click.aliexpress.com/e/_c4elriO9" target="_blank" rel="noopener">AliExpress</a></td>
+                    </tr>
+
+                    <!-- OPTIONALES ZUBEHÖR -->
+                    <tr class="bom-section-header"><td colspan="4">Optionales Zubeh&ouml;r</td></tr>
+                    <tr>
+                        <td><img class="zoomable" src="pictures/affiliate/cable.png" alt="Stecker"></td>
+                        <td>JST-Stecker (Kabel)</td>
+                        <td class="bom-qty">25</td>
+                        <td><a href="https://s.click.aliexpress.com/e/_c3O29crr" target="_blank" rel="noopener">AliExpress</a></td>
+                    </tr>
+                    <tr>
+                        <td><img class="zoomable" src="pictures/affiliate/usbconnector.png" alt="USB Adapter"></td>
+                        <td>USB-C Adapter</td>
+                        <td class="bom-qty">10</td>
+                        <td><a href="https://s.click.aliexpress.com/e/_c3pyxKnR" target="_blank" rel="noopener">AliExpress</a></td>
+                    </tr>
+                    <tr>
+                        <td><img class="zoomable" src="pictures/affiliate/PETG.png" alt="PETG Filament"></td>
+                        <td>PETG Filament (3D-Druck Geh&auml;use)</td>
+                        <td class="bom-qty">2 kg</td>
+                        <td><a href="https://s.click.aliexpress.com/e/_c2yKczyd" target="_blank" rel="noopener">AliExpress</a></td>
                     </tr>
                 </tbody>
             </table>
+            <p class="affiliate-note">* Die Links sind Affiliate-Links. Beim Kauf &uuml;ber diese Links unterst&uuml;tzt du das PUCK RACER Projekt &mdash; ohne Mehrkosten f&uuml;r dich.</p>
+            <p style="color:#ddd; font-size:0.95rem; margin-top:15px; text-align:left; width:100%;">Gesamtkosten f&uuml;r ein Set mit 8 Pucks + 1 Coordinator liegen bei ca. <b style="color:#8aece5;">180&ndash;200&nbsp;&euro;</b> (ohne Platinen und 3D-Druck).</p>
+
+            <div style="background:rgba(229,62,62,0.1); border:1px solid rgba(229,62,62,0.35); border-radius:10px; padding:15px 20px; margin-top:15px; width:100%; text-align:left; line-height:1.6;">
+                <p style="color:#ff8a8a; font-size:0.92rem; margin:0;"><b style="color:#ff6b6b;">Sicherheitshinweis Akku:</b> Die Firmware hat eine Temperatur&uuml;berwachung (NTC-Sensor) und das TP4056 Ladeboard bietet einen Lade-/Tiefentladeschutz &mdash; trotzdem sind billige No-Name Li-Ion-Zellen ein echtes Brandrisiko. Verwende ausschlie&szlig;lich <b>Markenakkus</b> (Samsung, Sony/Murata, LG, Molicel) mit integriertem Schutz-PCB. Spare nicht beim Akku!</p>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- TEIL 2: PCB (Platine)                                        -->
+            <!-- ============================================================ -->
+            <h2 class="section-heading">PCB &mdash; Platine bestellen</h2>
+            <p>Die PUCK RACER Platine ist ein eigenes PCB-Design (KiCad). Du kannst die Gerber-Dateien direkt bei einem PCB-Hersteller hochladen und die Platinen fertigen lassen.</p>
+
+            <img src="pictures/pcb.png" alt="PUCK RACER PCB Design" class="pcb-image zoomable">
+
+            <p>Die Platine enth&auml;lt neben den Anschl&uuml;ssen f&uuml;r ESP32-C3, LED-Ring, Button und Buzzer auch einen <b style="color:#8aece5;">NTC-Temperatursensor</b> (10k&Omega;, Beta 3950) zur &Uuml;berhitzungserkennung sowie einen <b style="color:#8aece5;">Spannungsteiler f&uuml;r die Batteriemessung</b>, mit dem die Firmware den Akkustand in Echtzeit &uuml;berwacht und bei kritischem Ladestand automatisch abschaltet.</p>
+
+            <div style="background:rgba(138,236,229,0.08); border:1px solid rgba(138,236,229,0.25); border-radius:10px; padding:15px 20px; margin-top:15px; width:100%; text-align:left; line-height:1.6;">
+                <p style="color:#ddd; font-size:0.92rem; margin:0;"><b style="color:#8aece5;">Open-Source Hardware</b> &mdash; Die PCB-Designs stehen unter der <a href="https://ohwr.org/cern_ohl_p_v2.txt" target="_blank" rel="noopener" style="color:#8aece5; font-weight:bold;">CERN Open Hardware Licence v2 &ndash; Permissive (CERN-OHL-P-2.0)</a>. Du darfst die Platine frei verwenden, anpassen, vervielf&auml;ltigen und auch kommerziell einsetzen. Es handelt sich um ein Entwickler-Board &mdash; <b style="color:#ff8a8a;">jegliche Gew&auml;hrleistung und Haftung sind ausgeschlossen</b>. Nutzung auf eigene Verantwortung.</p>
+            </div>
+
+            <!-- Gerber Downloads -->
+            <div class="pcb-info-card">
+                <h3>Gerber &amp; Produktionsdateien</h3>
+                <p>Lade die ZIP-Datei herunter und lade sie direkt beim PCB-Hersteller hoch. Die Einzeldateien sind f&uuml;r manuelle Pr&uuml;fung gedacht.</p>
+                <div class="file-grid">
+                    <a class="file-link file-link-primary" href="gerber/PBC.zip" download>
+                        <span class="file-icon">&#128230;</span> PBC.zip (Komplett-Paket)
+                    </a>
+                    <a class="file-link" href="gerber/Gerber/Gerber.zip" download>
+                        <span class="file-icon">&#128196;</span> Gerber.zip
+                    </a>
+                    <a class="file-link" href="gerber/Schematic/Puck Racer.pdf" download>
+                        <span class="file-icon">&#128203;</span> Schaltplan (PDF)
+                    </a>
+                    <a class="file-link" href="gerber/BOM (JLCPCB)/BOM.xlsx" download>
+                        <span class="file-icon">&#128202;</span> BOM (JLCPCB)
+                    </a>
+                    <a class="file-link" href="gerber/Pick and Place/Puck Racer-all-pos.csv" download>
+                        <span class="file-icon">&#128205;</span> Pick &amp; Place (CSV)
+                    </a>
+                    <a class="file-link" href="gerber/STEP/Puck Racer.step" download>
+                        <span class="file-icon">&#128316;</span> 3D-Modell (STEP)
+                    </a>
+                </div>
+            </div>
+
+            <!-- Bestellanleitung -->
+            <div class="pcb-info-card">
+                <h3>So bestellst du die Platine</h3>
+                <p>Die g&auml;ngigsten PCB-Hersteller f&uuml;r Hobbyisten sind <b>JLCPCB</b> und <b>PCBWay</b>. Beide akzeptieren Gerber-Dateien und liefern weltweit. So geht&rsquo;s:</p>
+                <ol>
+                    <li>&Ouml;ffne <b><a href="https://www.jlcpcb.com" target="_blank" rel="noopener" style="color:#8aece5;">jlcpcb.com</a></b> oder <b><a href="https://www.pcbway.com" target="_blank" rel="noopener" style="color:#8aece5;">pcbway.com</a></b> und erstelle ein Konto.</li>
+                    <li>Klicke auf <b>&bdquo;Order Now&ldquo;</b> bzw. <b>&bdquo;Quick Order PCB&ldquo;</b>.</li>
+                    <li>Lade die <code>PBC.zip</code> oder <code>Gerber.zip</code> hoch. Die Platinenma&szlig;e und Layer werden automatisch erkannt.</li>
+                    <li>Stelle die <b>Menge</b> ein (min. 5 St&uuml;ck, empfohlen: 10 f&uuml;r 8 Pucks + Reserve).</li>
+                    <li>W&auml;hle <b>Farbe</b> und <b>Dicke</b> (Standard: Gr&uuml;n, 1.6 mm &mdash; funktioniert beides).</li>
+                    <li><b>Optional (JLCPCB):</b> Lade die BOM- und Pick&amp;Place-Datei hoch, um SMD-Best&uuml;ckung direkt mitbestellen zu k&ouml;nnen (SMT Assembly).</li>
+                    <li>Bestelle &mdash; Lieferung dauert ca. 7&ndash;14 Tage.</li>
+                </ol>
+                <p style="margin-top:10px; color:#aaa; font-size:0.88rem;"><b>Tipp:</b> Die Platinen selbst sind g&uuml;nstig (5 St&uuml;ck oft unter 2&nbsp;&dollar;), aber es fallen leider <b style="color:#ff8a8a;">relativ hohe Versandkosten</b> nach Europa an. Erfahrungswert: Bei 30 Platinen ca. 6&nbsp;&euro; pro St&uuml;ck inkl. Versand. Am besten gleich eine gr&ouml;&szlig;ere Menge bestellen, um die Versandkosten pro Platine zu senken.</p>
+            </div>
+
+            <!-- ============================================================ -->
+            <!-- TEIL 3: AUFBAU-VIDEOS                                        -->
+            <!-- ============================================================ -->
+            <h2 class="section-heading">Aufbau &amp; L&ouml;tanleitung</h2>
+            <p>Schritt-f&uuml;r-Schritt Videos zum L&ouml;ten, Zusammenbau und Flashen der Pucks. Von der leeren Platine bis zum fertigen Puck.</p>
+
+            <div class="video-placeholder">
+                <span class="video-icon">&#127916;</span>
+                Aufbau-Videos sind in Produktion und werden hier in K&uuml;rze ver&ouml;ffentlicht.
+            </div>
 
             <footer>
-                <a href="Impressum.html">Impressum</a> · <a href="datenschutz.html">Datenschutz</a>
+                <a href="Impressum.html">Impressum</a> &middot; <a href="datenschutz.html">Datenschutz</a>
             </footer>
         </div>
     </div>
     </main>
+
+    <!-- Lightbox Overlay -->
+    <div class="lightbox-overlay" id="lightbox" onclick="this.classList.remove('active')">
+        <img id="lightboxImg" src="" alt="">
+    </div>
+
+    <script>
+        document.querySelectorAll('.zoomable').forEach(function(img) {
+            img.addEventListener('click', function() {
+                document.getElementById('lightboxImg').src = this.src;
+                document.getElementById('lightbox').classList.add('active');
+            });
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') document.getElementById('lightbox').classList.remove('active');
+        });
+    </script>
 </body>
 </html>

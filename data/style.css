@@ -1,8 +1,7 @@
 /* Custom Font für Titel & Branding */
 @font-face {
     font-family: 'puckracer';
-    src: url('puckracer_subset.woff2') format('woff2'),
-         url('puckracer_subset.ttf') format('truetype');
+    src: url('puckracer_subset.ttf') format('truetype');
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -19,6 +18,7 @@
     --text-muted: #718096;
     --border-color: rgba(255, 255, 255, 0.5);
     
+    --menu-bg: #ffffff;
     --primary: #3182ce;
     --primary-hover: #2b6cb0;
     --danger: #e53e3e;
@@ -35,6 +35,7 @@ body.theme-dark {
     --text-main: #e0e0e0;
     --text-muted: #888888;
     --border-color: rgba(255, 255, 255, 0.15);
+    --menu-bg: #1e1e1e;
 }
 
 * { box-sizing: border-box; }
@@ -93,10 +94,9 @@ header {
 .btn-menu:hover { border-color: var(--primary); color: var(--primary); }
 
 .dropdown-content {
-    display: none; position: absolute; background-color: var(--card-bg); min-width: 250px; 
-    box-shadow: 0px 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; 
+    display: none; position: absolute; background-color: var(--menu-bg); min-width: 250px;
+    box-shadow: 0px 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px;
     z-index: 2000; left: 0; top: 45px; overflow: hidden;
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
 }
 .dropdown-content.show { display: block; animation: fade 0.2s; }
 .dropdown-content a, .dropdown-content .menu-item {

@@ -37,8 +37,9 @@ struct SimonGroup {
     int playbackStep;              // Welchen Schritt zeigt der Computer gerade?
     bool lightOn;                  // Für das Blinken beim Zeigen
     
-    // Debounce
+    // Debounce (gleicher Puck 400ms, verschiedene Pucks sofort)
     unsigned long lastInputTime;
+    int lastInputPuck = -1;
     
     // Stats
     int stars;

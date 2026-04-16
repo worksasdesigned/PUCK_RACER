@@ -1,0 +1,16 @@
+{
+  "name": "PUCK RACER Coordinator",
+  "version": "2.99.1",
+  "new_install_prompt_erase": true,
+  "builds": [
+    {
+      "chipFamily": "ESP32-S3",
+      "parts": [
+        {
+          "path": "coordinator.bin",
+          "offset": 0
+        }
+      ]
+    }
+  ]
+}

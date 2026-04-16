@@ -19,7 +19,7 @@ Terminal: SIM_FINISHED (rainbow) or SIM_FAIL (red, 5s)
 ## KEY MECHANICS
 - Sequence stored as puck indices (0 to numPucks-1)
 - SHOW: alternates color (full brightness, speed-dependent) and dim (25%)
-- INPUT: 200ms debounce, correct → advance, wrong → SIM_FAIL
+- INPUT: per-puck debounce (same puck 400ms, different puck immediate), correct → advance, wrong → SIM_FAIL
 - Complete sequence → FEEDBACK → add new color → SHOW again
 - Reach targetSeqLength → SIM_FINISHED (rainbow on all pucks 2x)
 - Stars counter tracks completed sequences

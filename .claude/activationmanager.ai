@@ -37,8 +37,8 @@ Challenge-response license system. Device code derived from MAC, keys validated 
 
 ## FRONTEND CHECK (data/script.js)
 - checkLicenseAndNavigate(url): fetches /api/license
-- If status !== 'FULL' AND playtime_hours*60 >= playtime_limit_minutes → block + redirect to register.html
-- Currently only used in React2P (test case), needs expansion to all games
+- If status != FULL AND playtime expired → 30s countdown overlay (showLicenseCountdown)
+- Overlay: countdown, register link, auto-navigates to game after 30s. Currently only used in React2P
 
 ## KEYGEN (keygen.py)
 - Python script generating keys from device code

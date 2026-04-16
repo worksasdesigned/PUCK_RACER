@@ -20,7 +20,18 @@ fetch('/api/version')
     })
     .catch(() => {});
 
-function _vUrl(url) { return url.split('?')[0] + (_fwVer ? '?v=' + _fwVer : ''); }
+function _vUrl(url) {
+    let [path, qs] = url.split('?', 2);
+    let params = new URLSearchParams(qs || '');
+    if (_fwVer) params.set('v', _fwVer);
+    let p = params.toString();
+    return p ? path + '?' + p : path;
+}
+
+function goHome() {
+    fetch('/api/game/action?cmd=exit').catch(()=>{});
+    nav('/');
+}
 
 function nav(url) {
     // Auto-save: Formularwerte sichern wenn man eine Setup-Seite verlässt
@@ -355,30 +366,54 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// === NEU: LIZENZPRÜFUNG VOR SPIELSTART ===
+// === LIZENZPRÜFUNG VOR SPIELSTART ===
 function checkLicenseAndNavigate(url) {
     fetch('/api/license')
         .then(response => response.json())
         .then(license => {
-            // Prüfen, ob die Testphase abgelaufen ist
             if (license.status !== 'FULL' && (license.playtime_hours * 60) >= license.playtime_limit_minutes) {
-                // Die vom User gewünschte Warnmeldung
-                const message = "Die Testphase ist abgelaufen. Offensichtlich macht das Spiel ja Spaß! Möchtest du einmalig die Vollversion kaufen und weiterspielen?";
-                
-                if (confirm(message)) {
-                    // Nutzer zur Registrierungsseite weiterleiten
-                    nav('/register.html');
-                }
-                // Wenn der Nutzer "Abbrechen" drückt, passiert nichts.
-
+                showLicenseCountdown(url);
             } else {
-                // Lizenz ist gültig oder Zeitlimit nicht erreicht -> zum Spiel weiterleiten
                 nav(url);
             }
         })
         .catch(error => {
             console.error('Fehler bei der Lizenzprüfung:', error);
-            // Im Fehlerfall den Nutzer sicherheitshalber trotzdem zum Spiel lassen
             nav(url);
         });
+}
+
+function showLicenseCountdown(url) {
+    let seconds = 30;
+    const T = typeof getTranslation === 'function' ? getTranslation : k => k;
+    const overlay = document.createElement('div');
+    overlay.id = 'license-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.75);';
+    overlay.innerHTML = `
+        <div style="background:var(--card-bg,#fff);color:var(--text-main,#1a202c);border-radius:16px;padding:2em;max-width:420px;width:90%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+            <h2 style="margin:0 0 0.5em;">${T('lic_title')}</h2>
+            <p>${T('lic_text')}</p>
+            <div id="lcd-count" style="font-size:3em;font-weight:bold;margin:0.3em 0;color:var(--primary,#3182ce);">${seconds}</div>
+            <p id="lcd-info" style="font-size:0.9em;color:var(--text-muted,#718096);">${T('lic_countdown').replace('{0}', seconds)}</p>
+            <a href="#" id="lcd-register" style="display:inline-block;margin-top:1em;padding:0.7em 1.5em;background:var(--primary,#3182ce);color:#fff;border-radius:8px;text-decoration:none;font-weight:bold;">${T('lic_register')}</a>
+        </div>`;
+    document.body.appendChild(overlay);
+
+    document.getElementById('lcd-register').addEventListener('click', function(e) {
+        e.preventDefault();
+        clearInterval(timer);
+        overlay.remove();
+        nav('/register.html');
+    });
+
+    const timer = setInterval(() => {
+        seconds--;
+        document.getElementById('lcd-count').textContent = seconds;
+        document.getElementById('lcd-info').textContent = T('lic_countdown').replace('{0}', seconds);
+        if (seconds <= 0) {
+            clearInterval(timer);
+            overlay.remove();
+            nav(url);
+        }
+    }, 1000);
 }

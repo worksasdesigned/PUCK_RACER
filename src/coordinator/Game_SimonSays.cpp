@@ -16,6 +16,7 @@ void Game_SimonSays::setup() {
         groups[i].state = SIM_SETUP;
         groups[i].totalPlayTime = 0;
         groups[i].lastInputTime = 0;
+        groups[i].lastInputPuck = -1;
         
         if (groups[i].active) {
             groups[i].numPucks = pucksPerGroup[i];
@@ -249,9 +250,11 @@ void Game_SimonSays::handleEvent(int puckIndex, EventPacket event) {
 
         if (grp->state == SIM_INPUT) {
             
-            // Debounce: 200ms Mindestabstand zwischen Eingaben
-            if (millis() - grp->lastInputTime < 200) return;
+            // Debounce: Gleicher Puck 333ms Sperre (Wackelkontakt-Schutz),
+            // verschiedene Pucks sofort erlaubt (schnelle Eingabe möglich)
+            if (localIdx == grp->lastInputPuck && millis() - grp->lastInputTime < 333) return;
             grp->lastInputTime = millis();
+            grp->lastInputPuck = localIdx;
             
             // Feedback
             setPuck(puckIndex, EFF_STATIC, grp->puckColors[localIdx], 0, 255);

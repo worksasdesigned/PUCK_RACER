@@ -1,5 +1,6 @@
 /*
  * PROJEKT: Puck Race - PUCK FIRMWARE
+ * Version 87 LED 15 FPS Cap + Heartbeat/LED Timing-Trennung gegen Flackern
  * Version 81 stability fixes, bidirectional heartbeats
  * Version: 80 Battery Update + Sound Fixes + Core 3.x Support
  * VERSION: 75 (FIX: ESP-NOW Core 2.x Kompatibilität + Promiscuous RSSI Sniffer)
@@ -39,7 +40,7 @@
 #define PIN_BUZZER  5
 #define PIN_BTN     3 //6  // Arcade Button (INPUT_PULLUP)
 #define NUM_LEDS    35
-#define FW_VERSION  86
+#define FW_VERSION  87
 
 // --- TEMPERATUR OVERHEAT ---
 // Schwellwert in °C – ab diesem Wert wird Overheat-Schutz ausgelöst.
@@ -143,6 +144,16 @@ struct {
 // --- BRIGHTNESS LIMIT ---
 uint8_t maxBrightnessPercent = 100;  // Vom Coordinator einstellbar (10-100%)
 
+// --- LED TIMING ---
+// Globales 15 FPS Cap: Minimales Intervall zwischen FastLED.show() Aufrufen.
+// Reduziert die Kollisionswahrscheinlichkeit mit ESP-NOW auf dem Single-Core C3.
+#define LED_MIN_FRAME_MS    67   // ~15 FPS max
+// Nach FastLED.show() warten wir LED_GUARD_MS bevor wir ESP-NOW senden,
+// und senden Heartbeats bevorzugt in der Mitte des Frame-Gaps.
+#define LED_GUARD_MS        5
+#define HEARTBEAT_OFFSET_MS 30   // Heartbeat ~30ms nach letztem show()
+unsigned long lastShowTime = 0;  // Zeitpunkt des letzten FastLED.show()
+
 // --- ANIMATION ENGINE ---
 struct {
     uint8_t id = EFF_OFF;
@@ -151,7 +162,7 @@ struct {
     uint8_t brightness = 50;
     unsigned long lastUpdate = 0;
     int step = 0;
-    int counter = 0; 
+    int counter = 0;
 } anim;
 
 // --- SOUND ENGINE ---
@@ -459,15 +470,23 @@ void loop() {
         esp_wifi_set_promiscuous(false);
     }
 
-    if (!isPaired) {
-        if (now - lastHeartbeat > 2000) {
-            sendEvent(EVT_HELLO);
-            lastHeartbeat = now;
-        }
-    } else {
-        if (now - lastHeartbeat > 5000) {
-            sendEvent(EVT_HEARTBEAT);
-            lastHeartbeat = now;
+    // Heartbeat-Versand: Zeitlich vom LED-Refresh trennen.
+    // Sende nur, wenn mindestens HEARTBEAT_OFFSET_MS seit dem letzten FastLED.show()
+    // vergangen sind, damit ESP-NOW und WS2812B-Timing sich nicht stören.
+    {
+        unsigned long sinceLast = now - lastShowTime;
+        bool safeToSend = (sinceLast >= HEARTBEAT_OFFSET_MS) || (lastShowTime == 0);
+
+        if (!isPaired) {
+            if (now - lastHeartbeat > 2000 && safeToSend) {
+                sendEvent(EVT_HELLO);
+                lastHeartbeat = now;
+            }
+        } else {
+            if (now - lastHeartbeat > 5000 && safeToSend) {
+                sendEvent(EVT_HEARTBEAT);
+                lastHeartbeat = now;
+            }
         }
     }
 }
@@ -784,6 +803,8 @@ void runAnimation() {
 
     unsigned long minInterval = (anim.speed > 0) ? (unsigned long)anim.speed : 100; // min 100ms bei speed=0
     if (anim.id == EFF_PROGRESS) minInterval = 0; // Progress: sofort updaten
+    // 15 FPS Cap: Egal was anim.speed sagt, nie schneller als LED_MIN_FRAME_MS
+    if (minInterval > 0 && minInterval < LED_MIN_FRAME_MS) minInterval = LED_MIN_FRAME_MS;
     if (minInterval > 0 && now - anim.lastUpdate < minInterval) return;
     anim.lastUpdate = now;
 
@@ -869,6 +890,8 @@ void runAnimation() {
             if ((millis() / 200) % 2 == 0) fill_solid(leds, NUM_LEDS, CRGB::Red); else fill_solid(leds, NUM_LEDS, CRGB::Blue); break;
     }
     FastLED.show();
+    lastShowTime = millis();
+    yield();  // WiFi-Stack Verarbeitung nach show() ermöglichen
 }
 
 void performOTA() {

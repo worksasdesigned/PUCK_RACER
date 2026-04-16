@@ -1,0 +1,121 @@
+# Puck Firmware — ESP32-C3 LED Puck
+# File: src/puck/main.cpp
+# FW_VERSION: 87
+
+## PURPOSE
+Standalone firmware for the ESP32-C3 LED pucks. Handles LED animations, button input,
+sound sequences, ESP-NOW communication with the coordinator, battery monitoring,
+and temperature protection.
+
+## HARDWARE
+- MCU: ESP32-C3 (Single-Core RISC-V)
+- 35x WS2812B LEDs (PIN 4, GRB order)
+- Piezo Buzzer (PIN 5)
+- Arcade Button (PIN 3, INPUT_PULLUP)
+- Battery ADC (PIN 0, voltage divider 2:1)
+- NTC Temp Sensor (PIN 6, 10k Beta3950, optional — DISABLE_TEMP_SENSOR flag)
+- FastLED power limit: 5V / 1500mA
+
+## BOOT SEQUENCE
+1. Buzzer off (safety after WDT reset)
+2. ADC + Button + FastLED init
+3. Battery boot check: <3400mV → low battery lockout, <3700mV → battery save mode
+4. Mario startup sound
+5. Watchdog: 3s timeout, panic on hang
+6. WiFi STA mode, ESP-NOW init on WIFI_CHANNEL
+7. Promiscuous sniffer registered but disabled by default (CPU savings)
+8. Broadcast peer added
+
+## MAIN LOOP (loop())
+1. Watchdog reset
+2. OTA check
+3. Process incoming command queue (ISR → ringbuffer → main loop)
+4. Button handling (debounce + glitch filter)
+5. runAnimation() — LED frame rendering with 15 FPS cap
+6. runSound() — non-blocking sound sequence engine
+7. Battery check (every 2s, 5-sample rolling average)
+8. Temperature check (every 2s, overheat protection at 60°C)
+9. Coordinator disconnect detection (15s timeout)
+10. Heartbeat sending (timing-offset from LED refresh)
+
+## LED TIMING (Anti-Flicker, v87)
+Problem: On the single-core ESP32-C3, FastLED.show() and ESP-NOW traffic can collide,
+causing WS2812B timing glitches (visible as LED flicker).
+
+Solution (3 measures):
+- **15 FPS Cap**: LED_MIN_FRAME_MS = 67ms — no effect runs faster than 15 FPS,
+  regardless of anim.speed setting. Reduces collision windows.
+- **yield() after show()**: Immediately after FastLED.show(), yield() gives the WiFi
+  stack a chance to process pending ESP-NOW packets.
+- **Heartbeat offset**: Outgoing heartbeats (EVT_HELLO/EVT_HEARTBEAT) are only sent
+  when at least HEARTBEAT_OFFSET_MS (30ms) have passed since the last FastLED.show().
+  This places ESP-NOW transmissions in the middle of the frame gap, away from LED updates.
+
+Constants:
+- LED_MIN_FRAME_MS = 67 (~15 FPS max)
+- LED_GUARD_MS = 5 (minimum gap after show before any TX)
+- HEARTBEAT_OFFSET_MS = 30 (preferred TX point in frame gap)
+- lastShowTime: global timestamp of last FastLED.show()
+
+## ANIMATION ENGINE (runAnimation())
+- Frame rate: max(anim.speed, LED_MIN_FRAME_MS), except EFF_PROGRESS (immediate)
+- EFF_FLASH_BEEP: one-shot, times out after anim.speed ms
+- All effects write to leds[] array, then FastLED.show() + yield()
+- Supports: OFF, STATIC, BLINK, FLASH, BLINK_COUNT, STATUS, PROGRESS, BREATHE,
+  BREATHE_MOD2, BREATHE_MOD4, SINGLE_CHASE, DOUBLE_CHASE, SPLIT_ROT, RAINBOW,
+  COUNTDOWN, LOADING, WIN, FAIL, SPARKLE, POLICE
+
+## SOUND ENGINE (runSound())
+- Non-blocking note sequencer with Note array (freq + duration)
+- Special mode: isExplosion (random frequencies 50-400Hz)
+- Sequences: OFF, FANFARE, ERROR, EXPLOSION, HERO, MARIO, TETRIS, RACE, SKI, DINGDONG
+
+## ESP-NOW COMMUNICATION
+- Receive: ISR callback → cmdQueue[10] ringbuffer (portMUX spinlock protected)
+- Send: sendEvent() — 3x retransmit with 5ms delay for reliability
+- Deduplication: globalSeqCounter (TX), lastReceivedSeq (RX)
+
+### Pairing Flow
+1. Unpaired: send EVT_HELLO every 2s (broadcast)
+2. Coordinator responds with CMD_PAIR_ACK → store coordinator MAC, isPaired = true
+3. Paired: send EVT_HEARTBEAT every 5s
+4. Disconnect: no command received for 15s → isPaired = false, red STATUS LED, re-pair
+
+### Heartbeat (Bidirectional, v81+)
+- Puck → Coordinator: EVT_HEARTBEAT every 5s (includes battery_mv, fw_version, temp_c10)
+- Coordinator → Puck: CMD_KEEPALIVE every 10s
+- Puck timeout: COORDINATOR_TIMEOUT_MS = 15s → disconnect + re-pair
+- Heartbeat TX timing offset from LED refresh (v87, see LED TIMING section)
+
+### Command Processing (processIncomingCommands())
+- CMD_PING: force re-pair
+- CMD_KEEPALIVE: bidirectional heartbeat (updates lastCommandFromCoordinator)
+- CMD_PAIR_ACK: complete pairing, store coordinator MAC, enable promiscuous if STATUS
+- CMD_EFFECT: setEffect() — LED animation with color, speed, brightness, sound
+- CMD_SOUND / CMD_SEQUENCE: trigger sound sequence
+- CMD_SET_BRIGHTNESS: global brightness limit (10-100%)
+
+## BATTERY PROTECTION
+- Boot check: 8 samples averaged
+  - <3400mV (BAT_CRITICAL_MV): lockout mode, red countdown animation
+  - <3700mV (BAT_LOW_BOOT_MV): battery save mode (50% brightness cap)
+- Runtime: every 2s, 5-sample rolling average
+  - <=3400mV: critical lockout with countdown animation
+  - <=3600mV (BAT_WARNING_MV): battery save mode
+  - <1000mV: no sensor detected, skip monitoring
+
+## TEMPERATURE PROTECTION
+- Check every 2s via NTC (Steinhart-Hart/Beta equation)
+- >=60°C: overheat mode — LEDs off, aggressive beeping (250ms on/off) for 30s
+- Recovery: temperature drops below 55°C (5°C hysteresis)
+- DISABLE_TEMP_SENSOR define: skip for old pucks without NTC
+
+## OTA UPDATE
+- Triggered by CMD_UPDATE with SSID/password payload
+- Connects to WiFi, fetches firmware from http://192.168.42.1/firmware.bin
+- LED progress bar (purple → blue → green/red result)
+
+## RSSI SNIFFER
+- Promiscuous mode callback filters packets by coordinator MAC
+- Only active during EFF_STATUS effect (saves CPU otherwise)
+- Used for signal strength display (red if RSSI < -80)
