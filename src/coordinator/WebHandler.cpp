@@ -12,7 +12,7 @@
 // Globale Instanz aus main.cpp
 extern ActivationManager activationManager;
 
-#define SYS_VER "v2.99.5" 
+#define SYS_VER "v2.99.9" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;

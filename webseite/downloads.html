@@ -141,6 +141,40 @@
             font-weight: bold;
         }
 
+        .version-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .version-table th {
+            background: rgba(138, 236, 229, 0.15);
+            color: #8aece5;
+            text-align: left;
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid rgba(138, 236, 229, 0.3);
+        }
+        .version-table td {
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            color: #ddd;
+            font-size: 0.9rem;
+        }
+        .version-table tr:hover td {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        .version-tag {
+            display: inline-block;
+            background: rgba(138, 236, 229, 0.2);
+            color: #8aece5;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
         @media (max-width: 768px) {
             .file-grid { grid-template-columns: 1fr; }
         }
@@ -180,10 +214,67 @@
             <h2 class="section-heading">Firmware &amp; Web Flasher</h2>
 
             <div class="dl-card">
-                <span class="coming-soon-tag">Open Beta &mdash; Mai 2026</span>
+                <span class="coming-soon-tag">Open Beta</span>
                 <h3>PUCK RACER Firmware</h3>
-                <p>Die Open-Beta-Firmware f&uuml;r Coordinator (ESP32-S3) und Puck (ESP32-C3) wird im <b>Mai 2026</b> ver&ouml;ffentlicht. Mit dem Web Flasher kannst du die Firmware dann direkt im Browser auf deinen ESP32 flashen &mdash; kein PlatformIO n&ouml;tig.</p>
-                <a class="dl-btn dl-btn-disabled" style="pointer-events:none;">Web Flasher &mdash; bald verf&uuml;gbar</a>
+                <p>Mit dem <b>Web Flasher</b> kannst du die Firmware direkt im Browser auf deinen ESP32 flashen &mdash; kein PlatformIO n&ouml;tig. Du brauchst nur ein USB-Kabel und Chrome oder Edge.</p>
+
+                <h4 style="color:#8aece5; margin:20px 0 8px; font-size:0.95rem; text-transform:uppercase;">Ben&ouml;tigte Hardware</h4>
+                <table class="version-table" style="margin-bottom:20px;">
+                    <thead>
+                        <tr>
+                            <th>Rolle</th>
+                            <th>Board</th>
+                            <th>Chip</th>
+                            <th>Flash</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><b>Coordinator</b> (1&times;)</td>
+                            <td>ESP32-S3-DevKitC-1-N16R8</td>
+                            <td>ESP32-S3</td>
+                            <td>16 MB</td>
+                        </tr>
+                        <tr>
+                            <td><b>Puck</b> (1&ndash;30&times;)</td>
+                            <td>ESP32-C3-DevKitM-1</td>
+                            <td>ESP32-C3 (RISC-V)</td>
+                            <td>4 MB</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h4 style="color:#8aece5; margin:20px 0 8px; font-size:0.95rem; text-transform:uppercase;">Firmware Downloads &mdash; PuckRacer Release Candidate 1</h4>
+                <table class="version-table">
+                    <thead>
+                        <tr>
+                            <th>Datei</th>
+                            <th>Version</th>
+                            <th>Gr&ouml;&szlig;e</th>
+                            <th>Beschreibung</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><a href="bin/coordinator.bin" download style="color:#8aece5; font-weight:bold; text-decoration:none;">coordinator.bin</a></td>
+                            <td><span class="version-tag">V2.99.9</span></td>
+                            <td>16 MB</td>
+                            <td>Coordinator komplett (Firmware + WebUI + LittleFS)</td>
+                        </tr>
+                        <tr>
+                            <td><a href="bin/puck.bin" download style="color:#8aece5; font-weight:bold; text-decoration:none;">puck.bin</a></td>
+                            <td><span class="version-tag">FW 88</span></td>
+                            <td>1,2 MB</td>
+                            <td>Puck komplett (Bootloader + Firmware)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;">
+                    <a class="dl-btn" href="flasher.html">Web Flasher &ouml;ffnen</a>
+                    <a class="dl-btn" href="bin/coordinator.bin" download style="background:rgba(138,236,229,0.15); color:#8aece5; border:1px solid rgba(138,236,229,0.3);">Coordinator .bin</a>
+                    <a class="dl-btn" href="bin/puck.bin" download style="background:rgba(138,236,229,0.15); color:#8aece5; border:1px solid rgba(138,236,229,0.3);">Puck .bin</a>
+                </div>
             </div>
 
             <!-- ============================================================ -->
@@ -192,10 +283,9 @@
             <h2 class="section-heading">3D-Druck &amp; STL-Dateien</h2>
 
             <div class="dl-card">
-                <span class="coming-soon-tag">Ende April 2026</span>
                 <h3>Geh&auml;use &amp; Adapter (STL)</h3>
-                <p>Alle 3D-Druck-Dateien f&uuml;r das Puck-Geh&auml;use, den Coordinator-Halter und optionale Adapter werden auf <b>MakerWorld</b> ver&ouml;ffentlicht. Optimiert f&uuml;r PETG-Druck.</p>
-                <a class="dl-btn dl-btn-disabled" style="pointer-events:none;">MakerWorld &mdash; bald verf&uuml;gbar</a>
+                <p>Alle 3D-Druck-Dateien f&uuml;r das Puck-Geh&auml;use, den Coordinator-Halter und optionale Adapter auf <b>MakerWorld</b>. Optimiert f&uuml;r PETG-Druck.</p>
+                <a class="dl-btn" href="https://makerworld.com/de/models/2499985-puck-racer-smart-diy-agility-system#profileId-2748140" target="_blank" rel="noopener">MakerWorld &mdash; 3D-Dateien &ouml;ffnen &#8599;</a>
             </div>
 
             <!-- ============================================================ -->

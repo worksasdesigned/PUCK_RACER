@@ -40,7 +40,7 @@
 #define PIN_BUZZER  5
 #define PIN_BTN     3 //6  // Arcade Button (INPUT_PULLUP)
 #define NUM_LEDS    35
-#define FW_VERSION  87
+#define FW_VERSION  88
 
 // --- TEMPERATUR OVERHEAT ---
 // Schwellwert in °C – ab diesem Wert wird Overheat-Schutz ausgelöst.

@@ -90,7 +90,7 @@
         </div>
 
         <div class="logo">
-            <span onclick="showVersionInfo()" title="Puck Racer">Puck Racer</span>
+            <span onclick="triggerPuckEasterEgg()" title="Puck Racer">Puck Racer</span>
         </div>
 
         <div class="status-bar" id="statusBarGroup">
@@ -154,6 +154,7 @@
                 <div class="puck-part puck-button" style="--z:72px;"></div><div class="puck-part puck-button" style="--z:74px;"></div><div class="puck-part puck-button" style="--z:76px;"></div><div class="puck-part puck-button" style="--z:78px;"></div><div class="puck-part puck-button" style="--z:80px;"></div><div class="puck-part puck-button" style="--z:82px;"></div>
             </div>
         </div>
+        <div style="background:var(--warning);color:#000;display:inline-block;padding:4px 14px;border-radius:20px;font-weight:bold;font-size:0.85rem;letter-spacing:1px;margin-top:20px;">⚠ BETA</div>
         <div class="core-ver-text">CORE <span id="easterEggSysVer">Loading...</span></div>
     </div>
 
@@ -412,25 +413,6 @@
             setLanguage(newLang); 
             renderCarousel();
         }
-
-        // --- VERSION INFO ---
-        window.showVersionInfo = function() {
-            let existing = document.getElementById('versionToast');
-            if (existing) { existing.remove(); return; }
-            let toast = document.createElement('div');
-            toast.id = 'versionToast';
-            toast.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card-bg);backdrop-filter:blur(20px);border:1px solid var(--border-color);border-radius:16px;padding:30px 40px;z-index:10000;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.4);animation:splashFadeIn 0.3s ease;';
-            toast.innerHTML = `
-                <div style="font-family:'puckracer',sans-serif;font-size:1.8rem;letter-spacing:3px;margin-bottom:12px;">PUCK RACER</div>
-                <div style="background:var(--warning);color:#000;display:inline-block;padding:4px 14px;border-radius:20px;font-weight:bold;font-size:0.85rem;letter-spacing:1px;margin-bottom:12px;">⚠ BETA</div>
-                <div style="font-size:1.1rem;font-weight:bold;color:var(--text-main);margin-bottom:6px;">Release Candidate 1</div>
-                <div style="font-size:0.95rem;color:var(--text-muted);">Firmware: ${currentCoreVersion}</div>
-                <div style="margin-top:16px;font-size:0.75rem;color:var(--text-muted);">Tap to close</div>
-            `;
-            toast.onclick = function() { toast.remove(); };
-            document.body.appendChild(toast);
-            setTimeout(() => { if (document.getElementById('versionToast')) toast.remove(); }, 8000);
-        };
 
         // --- EASTER EGGS ---
         window.triggerEasterEgg = function() {

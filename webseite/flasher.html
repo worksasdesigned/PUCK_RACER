@@ -444,35 +444,9 @@
 
                 <div class="flasher-card">
                     <h3>Coordinator Firmware</h3>
-                    <span class="board-info">Board: ESP32-S3-DevKitC-1 &middot; 16 MB Flash</span>
-                    <p>Die Coordinator-Firmware steuert das gesamte PUCK RACER System: Spielverwaltung, WebUI, ESP-NOW Netzwerk und OTA-Updates der Pucks.</p>
-
-                    <table class="version-table">
-                        <thead>
-                            <tr>
-                                <th>Version</th>
-                                <th>Datum</th>
-                                <th>Beschreibung</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><span class="version-tag">v2.99.1</span></td>
-                                <td>2026-04-01</td>
-                                <td>Webbased Shareware version check, JSON Game test</td>
-                            </tr>
-                            <tr>
-                                <td><span class="version-tag">v2.99.0</span></td>
-                                <td>2026-03-29</td>
-                                <td>Test activation, AI summary</td>
-                            </tr>
-                            <tr>
-                                <td><span class="version-tag">v2.98.0</span></td>
-                                <td>2026-03-25</td>
-                                <td>UI update, Temp-Control, neue Settings-Seite, Batterie-Warnung</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <span class="board-info">Board: ESP32-S3-DevKitC-1-N16R8 &middot; 16 MB Flash</span>
+                    <p>Die Coordinator-Firmware steuert das gesamte PUCK RACER System: Spielverwaltung, WebUI, ESP-NOW Netzwerk und OTA-Updates der Pucks. Das Merged-Image enth&auml;lt Bootloader, Partitionstabelle, Firmware und das LittleFS-Dateisystem mit der WebUI.</p>
+                    <p style="margin-top:10px;"><span class="version-tag" style="font-size:1rem; padding:6px 14px;">PuckRacer Release Candidate 1 &mdash; V2.99.9</span></p>
 
                     <div class="flash-button-row">
                         <esp-web-install-button manifest="bin/coordinator_manifest.json">
@@ -490,35 +464,9 @@
 
                 <div class="flasher-card">
                     <h3>Puck Firmware</h3>
-                    <span class="board-info">Board: ESP32-C3-DevKitM-1 &middot; RISC-V Single Core</span>
-                    <p>Die Puck-Firmware steuert LEDs (WS2812B), Buttons, Buzzer, Batterie- und Temperatur-Schutz. Kommunikation mit dem Coordinator via ESP-NOW.</p>
-
-                    <table class="version-table">
-                        <thead>
-                            <tr>
-                                <th>Version</th>
-                                <th>Datum</th>
-                                <th>Beschreibung</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><span class="version-tag">FW 87</span></td>
-                                <td>2026-04-01</td>
-                                <td>LED Anti-Flicker (15 FPS Cap), Heartbeat Timing-Offset, yield() nach show()</td>
-                            </tr>
-                            <tr>
-                                <td><span class="version-tag">FW 86</span></td>
-                                <td>2026-03-25</td>
-                                <td>Bidirektionaler Heartbeat, Temperatur-Schutz, Batterie-Notaus</td>
-                            </tr>
-                            <tr>
-                                <td><span class="version-tag">FW 85</span></td>
-                                <td>2026-03-20</td>
-                                <td>OTA-Support, RSSI Sniffer, Sound-Engine</td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <span class="board-info">Board: ESP32-C3-DevKitM-1 &middot; RISC-V Single Core &middot; 4 MB Flash</span>
+                    <p>Die Puck-Firmware steuert LEDs (WS2812B), Buttons, Buzzer, Batterie- und Temperatur-Schutz. Kommunikation mit dem Coordinator via ESP-NOW. Das Merged-Image enth&auml;lt Bootloader, Partitionstabelle und Firmware.</p>
+                    <p style="margin-top:10px;"><span class="version-tag" style="font-size:1rem; padding:6px 14px;">PuckRacer Release Candidate 1 &mdash; FW 88</span></p>
 
                     <div class="flash-button-row">
                         <esp-web-install-button manifest="bin/puck_manifest.json">

@@ -95,26 +95,6 @@
             </div>
         </div>
 
-        <!-- DEBUG SECTION -->
-        <div class="card" id="debug-section" style="display: none; border-color: var(--danger); margin-top: 20px;">
-            <h2 style="color: var(--danger);">Debug & Test-Optionen</h2>
-            <p class="license-info">
-                Mit diesen Optionen kannst du die Zeitlimits für die Lizenzsperre zu Testzwecken manipulieren.
-            </p>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <div>
-                    <label for="debug-free-mins">Test-Limit (Minuten)</label>
-                    <input type="number" id="debug-free-mins" value="1200">
-                </div>
-                <div>
-                    <label for="debug-extended-mins">Erweitertes Limit (Minuten)</label>
-                    <input type="number" id="debug-extended-mins" value="4800">
-                </div>
-            </div>
-            <button id="debug-set-times" class="btn-warn">Debug-Zeiten setzen</button>
-            <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
-            <button id="debug-apply-time-key" class="btn-primary" style="background: var(--success);">Simuliere "+60h" Key</button>
-        </div>
     </main>
 
     <script>
@@ -205,41 +185,5 @@
                 }
             }
 
-            // --- DEBUG LOGIC ---
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('debug') === '1') {
-                const debugSection = document.getElementById('debug-section');
-                debugSection.style.display = 'block';
-
-                document.getElementById('debug-set-times').addEventListener('click', () => {
-                    const free_mins = document.getElementById('debug-free-mins').value;
-                    const extended_mins = document.getElementById('debug-extended-mins').value;
-                    
-                    fetch('/api/license/debug', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: `free_mins=${free_mins}&extended_mins=${extended_mins}`
-                    }).then(res => {
-                        if(res.ok) {
-                            showMessage('Debug-Zeiten wurden gesetzt. Seite neu laden, um die Änderungen zu sehen.', 'success', 4000);
-                            setTimeout(() => location.reload(), 1500);
-                        } else {
-                            showMessage('Fehler beim Setzen der Debug-Zeiten.', 'error');
-                        }
-                    });
-                });
-
-                document.getElementById('debug-apply-time-key').addEventListener('click', () => {
-                    fetch('/api/license/apply_time_key')
-                        .then(res => {
-                            if(res.ok) {
-                                showMessage('Zeit-Schlüssel wurde simuliert und angewendet. Seite wird neu geladen.', 'success', 4000);
-                                setTimeout(() => location.reload(), 1500);
-                            } else {
-                                showMessage('Konnte Schlüssel nicht anwenden (Vollversion schon aktiv?).', 'error');
-                            }
-                        });
-                });
-            }
         });
     </script>

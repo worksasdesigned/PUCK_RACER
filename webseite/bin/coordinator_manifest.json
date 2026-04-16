@@ -1,6 +1,6 @@
 {
   "name": "PUCK RACER Coordinator",
-  "version": "2.99.1",
+  "version": "2.99.9",
   "new_install_prompt_erase": true,
   "builds": [
     {

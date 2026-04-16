@@ -34,6 +34,18 @@ Challenge-response license system. Device code derived from MAC, keys validated 
 - setDebugTimeLimits(free_mins, extended_mins): override limits for testing
 - applyTimeExtensionKey(): auto-apply TIME key without user input
 - API: POST /api/license/debug, GET /api/license/apply_time_key
+- Backend routes in WebHandler.cpp are behind #if defined(PUCK_RACER_DEBUG)
+
+### Enabling debug mode in platformio.ini
+For local development/testing, add the flag back to [env:coordinator] build_flags:
+```ini
+build_flags =
+    -D PUCK_RACER_DEBUG
+    -DBOARD_HAS_PSRAM
+    -mfix-esp32-psram-cache-issue
+```
+Remove it again before building release binaries for the web flasher.
+The release build process (merge_bin) is documented below.
 
 ## FRONTEND CHECK (data/script.js)
 - checkLicenseAndNavigate(url): fetches /api/license
@@ -43,3 +55,98 @@ Challenge-response license system. Device code derived from MAC, keys validated 
 ## KEYGEN (keygen.py)
 - Python script generating keys from device code
 - Uses zlib.crc32() — matches ESP32 implementation
+
+## REMOVED DEBUG UI (register.html) — for re-adding during testing
+The following was removed from register.html for release. Backend routes are already
+behind #if defined(PUCK_RACER_DEBUG) in WebHandler.cpp — this is the frontend counterpart.
+
+### HTML (insert before </main> closing tag):
+```html
+<!-- DEBUG SECTION -->
+<div class="card" id="debug-section" style="display: none; border-color: var(--danger); margin-top: 20px;">
+    <h2 style="color: var(--danger);">Debug & Test-Optionen</h2>
+    <p class="license-info">
+        Mit diesen Optionen kannst du die Zeitlimits für die Lizenzsperre zu Testzwecken manipulieren.
+    </p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div>
+            <label for="debug-free-mins">Test-Limit (Minuten)</label>
+            <input type="number" id="debug-free-mins" value="1200">
+        </div>
+        <div>
+            <label for="debug-extended-mins">Erweitertes Limit (Minuten)</label>
+            <input type="number" id="debug-extended-mins" value="4800">
+        </div>
+    </div>
+    <button id="debug-set-times" class="btn-warn">Debug-Zeiten setzen</button>
+    <hr style="border: 0; border-top: 1px solid var(--border-color); margin: 20px 0;">
+    <button id="debug-apply-time-key" class="btn-primary" style="background: var(--success);">Simuliere "+60h" Key</button>
+</div>
+```
+
+### JavaScript (insert at end of DOMContentLoaded callback, before closing `});`):
+```javascript
+// --- DEBUG LOGIC ---
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('debug') === '1') {
+    const debugSection = document.getElementById('debug-section');
+    debugSection.style.display = 'block';
+
+    document.getElementById('debug-set-times').addEventListener('click', () => {
+        const free_mins = document.getElementById('debug-free-mins').value;
+        const extended_mins = document.getElementById('debug-extended-mins').value;
+        
+        fetch('/api/license/debug', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `free_mins=${free_mins}&extended_mins=${extended_mins}`
+        }).then(res => {
+            if(res.ok) {
+                showMessage('Debug-Zeiten wurden gesetzt. Seite neu laden.', 'success', 4000);
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                showMessage('Fehler beim Setzen der Debug-Zeiten.', 'error');
+            }
+        });
+    });
+
+    document.getElementById('debug-apply-time-key').addEventListener('click', () => {
+        fetch('/api/license/apply_time_key')
+            .then(res => {
+                if(res.ok) {
+                    showMessage('Zeit-Schlüssel simuliert. Seite wird neu geladen.', 'success', 4000);
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    showMessage('Konnte Schlüssel nicht anwenden (Vollversion schon aktiv?).', 'error');
+                }
+            });
+    });
+}
+```
+
+### Activation: open /register.html?debug=1
+### Requires: PUCK_RACER_DEBUG defined in firmware build for backend routes to exist
+
+## RELEASE BUILD PROCESS (web flasher binaries)
+1. Remove `-D PUCK_RACER_DEBUG` from platformio.ini [env:coordinator] build_flags
+2. Compile: `pio run -e coordinator` and `pio run -e puck`
+3. Build LittleFS: `pio run -t buildfs -e coordinator`
+4. Merge coordinator (ESP32-S3, 16MB):
+   ```
+   esptool.exe --chip esp32s3 merge-bin -o webseite/bin/coordinator.bin \
+       --flash-mode dio --flash-freq 80m --flash-size 16MB \
+       0x0     .pio/build/coordinator/bootloader.bin \
+       0x8000  .pio/build/coordinator/partitions.bin \
+       0x10000 .pio/build/coordinator/firmware.bin \
+       0x610000 .pio/build/coordinator/littlefs.bin
+   ```
+5. Merge puck (ESP32-C3, 4MB):
+   ```
+   esptool.exe --chip esp32c3 merge-bin -o webseite/bin/puck.bin \
+       --flash-mode dio --flash-freq 80m --flash-size 4MB \
+       0x0     .pio/build/puck/bootloader.bin \
+       0x8000  .pio/build/puck/partitions.bin \
+       0x10000 .pio/build/puck/firmware.bin
+   ```
+6. Update version in webseite/bin/coordinator_manifest.json and puck_manifest.json
+7. Update version tables in webseite/flasher.html and webseite/downloads.html
