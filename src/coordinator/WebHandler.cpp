@@ -12,7 +12,7 @@
 // Globale Instanz aus main.cpp
 extern ActivationManager activationManager;
 
-#define SYS_VER "v2.99.9" 
+#define SYS_VER "v3.0.0" 
 
 AsyncWebServer WebHandler::server(80);
 DNSServer WebHandler::dnsServer;
@@ -725,9 +725,31 @@ void WebHandler::begin() {
     });
 
     server.on("/api/heap", HTTP_GET, [](AsyncWebServerRequest *req){
-        String json = "{\"free\":" + String(ESP.getFreeHeap()) + 
+        String json = "{\"free\":" + String(ESP.getFreeHeap()) +
                       ",\"min\":" + String(ESP.getMinFreeHeap()) + "}";
         req->send(200, "application/json", json);
+    });
+
+    // --- CRASH LOG (file-based black box, siehe CrashLogger.cpp) ---
+    // current: aktuelle Log-Datei, old: rotierter Vorgänger (kann fehlen).
+    server.on("/api/crashlog", HTTP_GET, [](AsyncWebServerRequest *req){
+        if (!LittleFS.exists("/crashlog.csv")) {
+            req->send(404, "text/plain", "no log");
+            return;
+        }
+        req->send(LittleFS, "/crashlog.csv", "text/csv");
+    });
+    server.on("/api/crashlog/old", HTTP_GET, [](AsyncWebServerRequest *req){
+        if (!LittleFS.exists("/crashlog.old")) {
+            req->send(404, "text/plain", "no old log");
+            return;
+        }
+        req->send(LittleFS, "/crashlog.old", "text/csv");
+    });
+    server.on("/api/crashlog/clear", HTTP_GET, [](AsyncWebServerRequest *req){
+        if (LittleFS.exists("/crashlog.csv")) LittleFS.remove("/crashlog.csv");
+        if (LittleFS.exists("/crashlog.old")) LittleFS.remove("/crashlog.old");
+        req->send(200, "text/plain", "OK");
     });
 
     // --- WIFI SCANNER ---

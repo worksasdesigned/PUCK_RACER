@@ -65,9 +65,6 @@ private:
     int           totalStops      = 0;
     int           lastStatusState = 0;
 
-    bool          blinkStateOn    = false;
-    unsigned long lastBlinkToggle = 0;
-
     const CRGB PLAYER_COLORS[10] = {
         CRGB::Blue, CRGB(136,0,255), CRGB(0,136,255), CRGB::Yellow,
         CRGB::Magenta, CRGB::Cyan, CRGB(255,136,0), CRGB::White,
@@ -78,8 +75,7 @@ private:
     void triggerEntry(int slotIdx);
     void completeEntry(int slotIdx);
     void completeExit(int slotIdx);
-    void handleBlinking();
-    void setSlotIdleVisual(int slotIdx, int puckIdx); 
+    void setSlotIdleVisual(int slotIdx, int puckIdx);
     void restoreSlotVisuals(int slotIdx);
     void updateStatusPuck();
     void startExitCountdown(int slotIdx, unsigned long elapsed = 0); // Nimmt nun die bereits vergangene Zeit entgegen

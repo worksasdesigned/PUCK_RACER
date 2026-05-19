@@ -44,9 +44,7 @@ void Game_Pitstop::processCommand(String cmd, int value) {
             gameState = PS_RUNNING;
             totalStops = 0;
             lastStatusState = 0;
-            lastBlinkToggle = millis();
-            blinkStateOn = true;
-            
+
             for (int i = 0; i < numPlayers; i++) {
                 slots[i].stopCount = 0;
                 slots[i].entryRunning = false;
@@ -292,43 +290,17 @@ void Game_Pitstop::completeExit(int slotIdx) {
     }
 }
 
-void Game_Pitstop::handleBlinking() {
-    unsigned long now = millis();
-    unsigned long interval = blinkStateOn ? 333 : 666; 
-
-    if (now - lastBlinkToggle >= interval) {
-        blinkStateOn = !blinkStateOn;
-        lastBlinkToggle = now;
-
-        for (int i = 0; i < numPlayers; i++) {
-            if (!slots[i].isActive) continue;
-            
-            if (!slots[i].entryRunning && slots[i].entryDoneAt == 0 && slots[i].entryPuckIdx >= 0) {
-                setSlotIdleVisual(i, slots[i].entryPuckIdx);
-            }
-            
-            if (pitlaneMode && !slots[i].exitRunning && !slots[i].exitWaitingForButton && slots[i].exitDoneAt == 0 && slots[i].exitPuckIdx >= 0) {
-                if (!slots[i].exitPending && !slots[i].entryRunning && slots[i].entryDoneAt == 0) {
-                    setSlotIdleVisual(i, slots[i].exitPuckIdx);
-                }
-            }
-        }
-    }
-}
-
 void Game_Pitstop::setSlotIdleVisual(int slotIdx, int puckIdx) {
+    // Idle = freie Pitlane: jede 2. LED atmet sanft in der Spielerfarbe.
+    // Puck animiert selbstständig (EFF_BREATHE_MOD2) — vorher hat der
+    // Coordinator alle 333/666ms einen Blink-Trigger per Unicast geschickt,
+    // das fällt jetzt weg (weniger ESP-NOW-Last, weniger LED-Strom).
     CRGB col = alwaysYellow ? CRGB::Yellow : PLAYER_COLORS[slotIdx % 10];
-    if (blinkStateOn) {
-        setPuck(puckIdx, EFF_STATIC, col, 0, 200);
-    } else {
-        setPuck(puckIdx, EFF_STATIC, CRGB::Black, 0, 0);
-    }
+    setPuck(puckIdx, EFF_BREATHE_MOD2, col, 20, 200);
 }
 
 void Game_Pitstop::loop() {
     if (gameState != PS_RUNNING) return;
-
-    handleBlinking();
 
     for (int i = 0; i < numPlayers; i++) {
         PitstopSlot& slot = slots[i];

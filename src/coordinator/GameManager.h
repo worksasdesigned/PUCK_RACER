@@ -19,16 +19,7 @@ public:
     // Zugriff auf das aktive Spiel (für WebHandler)
     static Game* getCurrentGame();
 
-    // Verbleibende Nag-Delay Sekunden (0 = kein Delay aktiv)
-    static int getNagDelayRemaining();
-
 private:
     static Game* currentGame;
-    static void _doStartGame(int gameID);
-
-    // Nag-Delay bei abgelaufener Testphase
-    static int _pendingGameID;
-    static unsigned long _nagStartMs;
-    static const unsigned long NAG_DELAY_MS = 30000;
 };
 #endif

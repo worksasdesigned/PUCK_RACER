@@ -4,11 +4,12 @@
     <!-- German pages -->
     <url>
         <loc>https://www.puckracer.net/</loc>
-        <lastmod>2026-03-26</lastmod>
+        <lastmod>2026-05-01</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
         <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/index.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://www.puckracer.net/"/>
     </url>
     <url>
         <loc>https://www.puckracer.net/features.html</loc>
@@ -83,12 +84,13 @@
 
     <!-- English pages -->
     <url>
-        <loc>https://www.puckracer.net/en/index.html</loc>
-        <lastmod>2026-03-26</lastmod>
+        <loc>https://www.puckracer.net/en/</loc>
+        <lastmod>2026-05-01</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
         <xhtml:link rel="alternate" hreflang="de" href="https://www.puckracer.net/"/>
-        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/index.html"/>
+        <xhtml:link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/"/>
+        <xhtml:link rel="alternate" hreflang="x-default" href="https://www.puckracer.net/"/>
     </url>
     <url>
         <loc>https://www.puckracer.net/en/features.html</loc>

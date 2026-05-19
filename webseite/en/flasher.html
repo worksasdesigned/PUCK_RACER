@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Flasher - PUCK RACER | Firmware direkt im Browser flashen</title>
-    <meta name="description" content="PUCK RACER Web Flasher: Flash die Coordinator- und Puck-Firmware direkt im Browser via USB. Kein PlatformIO nötig.">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
-    <link rel="manifest" href="site.webmanifest">
-    <link rel="stylesheet" href="style.css">
+    <title>Web Flasher - PUCK RACER | Flash Firmware Directly in Your Browser</title>
+    <meta name="description" content="PUCK RACER Web Flasher: Flash the Coordinator and Puck firmware directly in your browser via USB. No PlatformIO required.">
+    <link rel="icon" type="image/x-icon" href="../favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+    <link rel="manifest" href="../site.webmanifest">
+    <link rel="stylesheet" href="../style.css">
     <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
     <style>
-        /* Flasher-spezifische Styles */
+        /* Flasher-specific Styles */
         .flasher-section {
             width: 100%;
             margin-bottom: 40px;
@@ -101,7 +101,7 @@
             transform: scale(1.03);
         }
 
-        /* Versions-Tabelle */
+        /* Version Table */
         .version-table {
             width: 100%;
             border-collapse: collapse;
@@ -141,7 +141,7 @@
             font-size: 0.85rem;
         }
 
-        /* Anleitung */
+        /* Instructions */
         .instructions {
             width: 100%;
             margin-bottom: 30px;
@@ -368,11 +368,11 @@
                 <li><a href="features.html">Features</a></li>
                 <li><a href="downloads.html">Downloads</a></li>
                 <li><a href="hardware.html">Hardware</a></li>
-                <li><a href="spiele.html">Spiele</a></li>
+                <li><a href="games.html">Games</a></li>
                 <li><a href="demo.html">Demo</a></li>
-                <li><a href="infos.html">Infos</a></li>
+                <li><a href="about.html">About</a></li>
                 <li><a href="faq.html">FAQ</a></li>
-                <li><a href="en/downloads.html" title="English">&#127468;&#127463; EN</a></li>
+                <li><a href="../flasher.html" title="Deutsch">&#127465;&#127466; DE</a></li>
             </ul>
         </nav>
     </header>
@@ -381,57 +381,57 @@
     <div class="rainbow-border-wrapper">
         <div class="main-container">
             <div class="header-bar">
-                <img src="pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
+                <img src="../pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
             </div>
 
             <h1>Web Flasher</h1>
-            <p class="subtitle">Firmware direkt im Browser flashen &mdash; kein PlatformIO oder Kabel-Chaos nötig.</p>
+            <p class="subtitle">Flash firmware directly in your browser &mdash; no PlatformIO or cable hassle required.</p>
 
-            <!-- Browser-Warnung -->
+            <!-- Browser Warning -->
             <div class="unsupported-msg" id="browserWarning">
-                <strong>Dein Browser wird nicht unterstützt.</strong> Der Web Flasher benötigt Web Serial API und funktioniert nur in <b>Google Chrome</b>, <b>Microsoft Edge</b> oder <b>Opera</b> (Desktop). Firefox und Safari werden leider nicht unterstützt.
+                <strong>Your browser is not supported.</strong> The Web Flasher requires the Web Serial API and only works in <b>Google Chrome</b>, <b>Microsoft Edge</b> or <b>Opera</b> (Desktop). Firefox and Safari are unfortunately not supported.
             </div>
 
-            <!-- Anleitung -->
+            <!-- Instructions -->
             <div class="instructions">
-                <h2>So funktioniert's</h2>
+                <h2>How It Works</h2>
                 <ol class="step-list">
-                    <li><b>Board per USB verbinden.</b> Schließe den ESP32 (Coordinator oder Puck) per USB-Kabel an deinen Computer an.</li>
-                    <li><b>Browser: Chrome oder Edge verwenden.</b> Der Web Flasher nutzt die Web Serial API &mdash; diese funktioniert nur in Chromium-basierten Browsern (Chrome, Edge, Opera).</li>
-                    <li><b>Unten den passenden "Firmware Flashen"-Button klicken.</b> Wähle im Dialog den richtigen COM-Port deines ESP32 aus.</li>
-                    <li><b>Warten bis der Flash-Vorgang abgeschlossen ist.</b> Das Board startet danach automatisch neu. Nicht das USB-Kabel während des Flashens entfernen!</li>
+                    <li><b>Connect the board via USB.</b> Plug the ESP32 (Coordinator or Puck) into your computer using a USB cable.</li>
+                    <li><b>Use Chrome or Edge.</b> The Web Flasher uses the Web Serial API &mdash; this only works in Chromium-based browsers (Chrome, Edge, Opera).</li>
+                    <li><b>Click the "Flash Firmware" button below.</b> Select the correct COM port for your ESP32 in the dialog.</li>
+                    <li><b>Wait until the flash process is complete.</b> The board will restart automatically. Do not disconnect the USB cable during flashing!</li>
                 </ol>
                 <div class="warning-box">
-                    <strong>Wichtig:</strong> Coordinator und Puck verwenden unterschiedliche ESP32-Chips. Flashe niemals eine Puck-Firmware auf den Coordinator oder umgekehrt &mdash; das Board startet sonst nicht!
+                    <strong>Important:</strong> Coordinator and Puck use different ESP32 chips. Never flash a Puck firmware onto the Coordinator or vice versa &mdash; the board will not boot!
                 </div>
 
                 <details class="alt-flash-details">
-                    <summary>Kein Chrome/Edge? &mdash; Firmware manuell mit esptool flashen</summary>
+                    <summary>No Chrome/Edge? &mdash; Flash firmware manually with esptool</summary>
                     <div class="faq-answer">
-                        <p>Wenn dein Browser kein Web Serial unterstützt (z.B. Safari, Firefox), kannst du die <code>.bin</code>-Datei mit dem offiziellen <b>esptool</b> von Espressif manuell flashen. Das funktioniert auf allen Betriebssystemen.</p>
+                        <p>If your browser does not support Web Serial (e.g. Safari, Firefox), you can flash the <code>.bin</code> file manually using the official <b>esptool</b> by Espressif. This works on all operating systems.</p>
 
-                        <h4>Voraussetzung</h4>
-                        <p>Python 3 muss installiert sein. Dann esptool installieren:</p>
+                        <h4>Prerequisites</h4>
+                        <p>Python 3 must be installed. Then install esptool:</p>
                         <pre><code>pip install esptool</code></pre>
 
-                        <h4>Coordinator flashen (ESP32-S3)</h4>
+                        <h4>Flash Coordinator (ESP32-S3)</h4>
                         <pre><code>esptool.py --chip esp32s3 --port PORT --baud 921600 write_flash 0x0 coordinator.bin</code></pre>
 
-                        <h4>Puck flashen (ESP32-C3)</h4>
+                        <h4>Flash Puck (ESP32-C3)</h4>
                         <pre><code>esptool.py --chip esp32c3 --port PORT --baud 921600 write_flash 0x0 puck.bin</code></pre>
 
-                        <h4>PORT ersetzen</h4>
+                        <h4>Replace PORT</h4>
                         <ul>
-                            <li><b>Windows:</b> <code>COM3</code>, <code>COM4</code>, ... &mdash; im Geräte-Manager unter "Anschlüsse (COM &amp; LPT)" nachschauen</li>
-                            <li><b>macOS:</b> <code>/dev/cu.usbserial-*</code> oder <code>/dev/cu.usbmodem*</code> &mdash; mit <code>ls /dev/cu.*</code> im Terminal auflisten</li>
-                            <li><b>Linux:</b> <code>/dev/ttyUSB0</code> oder <code>/dev/ttyACM0</code> &mdash; mit <code>ls /dev/tty*</code> auflisten. Falls keine Berechtigung: <code>sudo usermod -aG dialout $USER</code> und neu einloggen</li>
+                            <li><b>Windows:</b> <code>COM3</code>, <code>COM4</code>, ... &mdash; check Device Manager under "Ports (COM &amp; LPT)"</li>
+                            <li><b>macOS:</b> <code>/dev/cu.usbserial-*</code> or <code>/dev/cu.usbmodem*</code> &mdash; list with <code>ls /dev/cu.*</code> in Terminal</li>
+                            <li><b>Linux:</b> <code>/dev/ttyUSB0</code> or <code>/dev/ttyACM0</code> &mdash; list with <code>ls /dev/tty*</code>. If permission denied: <code>sudo usermod -aG dialout $USER</code> and log out/in again</li>
                         </ul>
 
-                        <p style="margin-top:12px; color:#aaa; font-size:0.85rem;"><b>Tipp:</b> Falls der ESP32 nicht erkannt wird, den BOOT-Button am Board gedrückt halten während du das USB-Kabel einsteckst &mdash; das erzwingt den Download-Modus.</p>
+                        <p style="margin-top:12px; color:#aaa; font-size:0.85rem;"><b>Tip:</b> If the ESP32 is not recognized, hold the BOOT button on the board while plugging in the USB cable &mdash; this forces download mode.</p>
 
                         <p style="margin-top:16px;">
-                            <a class="gemini-help-link" href="https://chatgpt.com/?q=Ich%20m%C3%B6chte%20eine%20.bin-Firmware-Datei%20auf%20einen%20ESP32%20flashen%20mit%20dem%20Espressif%20esptool.%20Frage%20mich%20zuerst%20ob%20ich%20Windows%2C%20macOS%20oder%20Linux%20verwende.%20Erkl%C3%A4re%20mir%20dann%20Schritt%20f%C3%BCr%20Schritt%3A%201.%20Wie%20ich%20Python%203%20und%20pip%20installiere%20falls%20noch%20nicht%20vorhanden%2C%202.%20Wie%20ich%20esptool%20mit%20pip%20installiere%2C%203.%20Wie%20ich%20den%20richtigen%20COM-Port%20bzw%20seriellen%20Port%20finde%2C%204.%20Wie%20ich%20den%20Flash-Befehl%20ausf%C3%BChre.%20Die%20zwei%20Boards%20sind%3A%20ESP32-S3%20(Coordinator%2C%20Befehl%3A%20esptool.py%20--chip%20esp32s3%20--port%20PORT%20--baud%20921600%20write_flash%200x0%20coordinator.bin)%20und%20ESP32-C3%20(Puck%2C%20Befehl%3A%20esptool.py%20--chip%20esp32c3%20--port%20PORT%20--baud%20921600%20write_flash%200x0%20puck.bin).%20Hilf%20mir%20interaktiv%20durch%20den%20Prozess." target="_blank" rel="noopener">
-                                Du brauchst mehr Hilfe? Klicke hier und ChatGPT hilft dir Schritt für Schritt.
+                            <a class="gemini-help-link" href="https://chatgpt.com/?q=I%20want%20to%20flash%20a%20.bin%20firmware%20file%20onto%20an%20ESP32%20using%20the%20Espressif%20esptool.%20First%20ask%20me%20whether%20I%20am%20using%20Windows%2C%20macOS%20or%20Linux.%20Then%20explain%20step%20by%20step%3A%201.%20How%20to%20install%20Python%203%20and%20pip%20if%20not%20already%20installed%2C%202.%20How%20to%20install%20esptool%20with%20pip%2C%203.%20How%20to%20find%20the%20correct%20COM%20port%20or%20serial%20port%2C%204.%20How%20to%20run%20the%20flash%20command.%20The%20two%20boards%20are%3A%20ESP32-S3%20(Coordinator%2C%20command%3A%20esptool.py%20--chip%20esp32s3%20--port%20PORT%20--baud%20921600%20write_flash%200x0%20coordinator.bin)%20and%20ESP32-C3%20(Puck%2C%20command%3A%20esptool.py%20--chip%20esp32c3%20--port%20PORT%20--baud%20921600%20write_flash%200x0%20puck.bin).%20Guide%20me%20interactively%20through%20the%20process." target="_blank" rel="noopener">
+                                Need more help? Click here and ChatGPT will guide you step by step.
                             </a>
                         </p>
                     </div>
@@ -445,14 +445,14 @@
                 <div class="flasher-card">
                     <h3>Coordinator Firmware</h3>
                     <span class="board-info">Board: ESP32-S3-DevKitC-1-N16R8 &middot; 16 MB Flash</span>
-                    <p>Die Coordinator-Firmware steuert das gesamte PUCK RACER System: Spielverwaltung, WebUI, ESP-NOW Netzwerk und OTA-Updates der Pucks. Das Merged-Image enth&auml;lt Bootloader, Partitionstabelle, Firmware und das LittleFS-Dateisystem mit der WebUI.</p>
+                    <p>The Coordinator firmware controls the entire PUCK RACER system: game management, WebUI, ESP-NOW network and OTA updates for the Pucks. The merged image contains bootloader, partition table, firmware and the LittleFS file system with the WebUI.</p>
                     <p style="margin-top:10px;"><span class="version-tag" style="font-size:1rem; padding:6px 14px;">PuckRacer Release Candidate 1 &mdash; V2.99.9</span></p>
 
                     <div class="flash-button-row">
-                        <esp-web-install-button manifest="bin/coordinator_manifest.json">
-                            <button slot="activate">Coordinator Firmware flashen</button>
-                            <span slot="unsupported">Dein Browser unterstützt kein Web Serial.</span>
-                            <span slot="not-allowed">Web Serial ist in diesem Kontext nicht erlaubt.</span>
+                        <esp-web-install-button manifest="../bin/coordinator_manifest.json">
+                            <button slot="activate">Flash Coordinator Firmware</button>
+                            <span slot="unsupported">Your browser does not support Web Serial.</span>
+                            <span slot="not-allowed">Web Serial is not allowed in this context.</span>
                         </esp-web-install-button>
                     </div>
                 </div>
@@ -465,27 +465,27 @@
                 <div class="flasher-card">
                     <h3>Puck Firmware</h3>
                     <span class="board-info">Board: ESP32-C3-DevKitM-1 &middot; RISC-V Single Core &middot; 4 MB Flash</span>
-                    <p>Die Puck-Firmware steuert LEDs (WS2812B), Buttons, Buzzer, Batterie- und Temperatur-Schutz. Kommunikation mit dem Coordinator via ESP-NOW. Das Merged-Image enth&auml;lt Bootloader, Partitionstabelle und Firmware.</p>
+                    <p>The Puck firmware controls LEDs (WS2812B), buttons, buzzer, battery and temperature protection. Communication with the Coordinator via ESP-NOW. The merged image contains bootloader, partition table and firmware.</p>
                     <p style="margin-top:10px;"><span class="version-tag" style="font-size:1rem; padding:6px 14px;">PuckRacer Release Candidate 1 &mdash; FW 89</span></p>
 
                     <div class="flash-button-row">
-                        <esp-web-install-button manifest="bin/puck_manifest.json">
-                            <button slot="activate">Puck Firmware flashen</button>
-                            <span slot="unsupported">Dein Browser unterstützt kein Web Serial.</span>
-                            <span slot="not-allowed">Web Serial ist in diesem Kontext nicht erlaubt.</span>
+                        <esp-web-install-button manifest="../bin/puck_manifest.json">
+                            <button slot="activate">Flash Puck Firmware</button>
+                            <span slot="unsupported">Your browser does not support Web Serial.</span>
+                            <span slot="not-allowed">Web Serial is not allowed in this context.</span>
                         </esp-web-install-button>
                     </div>
                 </div>
 
-                <!-- OTA HINWEIS -->
+                <!-- OTA NOTE -->
                 <div class="flasher-card" style="border-color:rgba(0,255,157,0.3); background:rgba(0,255,157,0.05); margin-top:18px;">
-                    <h3 style="color:#00ff9d;">Du hast schon einmal geflasht? &mdash; OTA Update</h3>
-                    <p>Wenn dein Puck bereits einmal per USB geflasht wurde, kannst du Folgeupdates drahtlos per <b>OTA</b> &uuml;ber das Coordinator-Webinterface einspielen. Daf&uuml;r brauchst du kein USB-Kabel.</p>
-                    <p style="margin-top:8px;"><b>Wichtig:</b> Nutze daf&uuml;r <u>nicht</u> die <code>puck.bin</code> oben, sondern die separate OTA-Datei <code>puck_OTA_FW89.bin</code>. Sie enth&auml;lt nur den Firmware-Teil (ohne Bootloader) und ist genau f&uuml;r den OTA-Pfad gemacht.</p>
+                    <h3 style="color:#00ff9d;">Already flashed once? &mdash; OTA Update</h3>
+                    <p>If your puck has already been flashed via USB, you can install future firmware updates wirelessly via <b>OTA</b> through the coordinator&apos;s web interface. No USB cable needed.</p>
+                    <p style="margin-top:8px;"><b>Important:</b> For OTA, do <u>not</u> use the <code>puck.bin</code> above. Use the dedicated OTA file <code>puck_OTA_FW89.bin</code> instead. It contains only the firmware part (no bootloader) and is built specifically for the OTA path.</p>
                     <p style="margin-top:10px;"><span class="version-tag" style="font-size:1rem; padding:6px 14px; background:rgba(0,255,157,0.15); color:#00ff9d;">PuckRacer Release Candidate 1 &mdash; FW 89</span></p>
                     <div class="flash-button-row" style="margin-top:14px;">
-                        <a href="bin/puck_OTA_FW89.bin" download style="display:inline-flex; align-items:center; gap:8px; background:#00ff9d; color:#0d0d14; padding:12px 22px; border-radius:10px; font-weight:bold; text-transform:uppercase; letter-spacing:1px; text-decoration:none; font-size:0.95rem;">
-                            &#11015; puck_OTA_FW89.bin herunterladen
+                        <a href="../bin/puck_OTA_FW89.bin" download style="display:inline-flex; align-items:center; gap:8px; background:#00ff9d; color:#0d0d14; padding:12px 22px; border-radius:10px; font-weight:bold; text-transform:uppercase; letter-spacing:1px; text-decoration:none; font-size:0.95rem;">
+                            &#11015; Download puck_OTA_FW89.bin
                         </a>
                     </div>
                 </div>
@@ -500,14 +500,14 @@
             </div>
 
             <footer>
-                <a href="Impressum.html">Impressum</a> &middot; <a href="datenschutz.html">Datenschutz</a>
+                <a href="../Impressum.html">Legal Notice</a> &middot; <a href="../datenschutz.html">Privacy Policy</a>
             </footer>
         </div>
     </div>
     </main>
 
     <script>
-        // Browser-Check: Web Serial API verfügbar?
+        // Browser check: Web Serial API available?
         if (!("serial" in navigator)) {
             document.getElementById('browserWarning').style.display = 'block';
         }

@@ -11,9 +11,11 @@
 #include "Common.h"
 #include "WebHandler.h"
 #include "GameManager.h"
-#include "PuckNetwork.h" 
+#include "PuckNetwork.h"
 #include "WifiScanner.h"
 #include "ActivationManager.h"
+#include "StatusLed.h"
+#include "CrashLogger.h"
 
 #define SYSTEM_VERSION "1.6-Debug"
 
@@ -23,6 +25,9 @@ void setup() {
     Serial.begin(115200);
     delay(2000); // Warten damit man den Serial Monitor öffnen kann
     Serial.println("\n\n--- COORDINATOR BOOT ---");
+
+    // 0. Status-LED Ring sofort einschalten (Lila = boot)
+    StatusLed::begin();
 
     // 1. Dateisystem
     if (!LittleFS.begin(true)) {
@@ -42,6 +47,11 @@ void setup() {
     }
     // ----------------------
 
+    // 1b. Crash-Logger sofort starten, BEVOR Netzwerk/Webserver hochkommen.
+    // So fängt der Boot-Marker (Reset-Reason) den vorherigen Crash-Grund ein,
+    // auch wenn ein folgender Init-Step hängt oder neu bootet.
+    CrashLogger::begin();
+
     // 2. Activation Manager Start
     activationManager.begin();
 
@@ -58,8 +68,10 @@ void setup() {
 }
 
 void loop() {
-    PuckNetwork::update(); 
-    WebHandler::update();      
-    GameManager::update();  
-    WifiScanner::loop();   
+    PuckNetwork::update();
+    WebHandler::update();
+    GameManager::update();
+    WifiScanner::loop();
+    StatusLed::update();
+    CrashLogger::update();
 }

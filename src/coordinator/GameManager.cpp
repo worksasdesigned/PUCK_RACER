@@ -1,8 +1,5 @@
 #include "GameManager.h"
 #include "PuckNetwork.h"
-#include "ActivationManager.h"
-
-extern ActivationManager activationManager;
 
 #include "Game_SimpleCounter.h"
 #include "Game_SimpleCountdown.h"
@@ -73,48 +70,18 @@ int lowestHeapGameId = 0;
 int lowestHeapValue = 999999;
 int lastGameId = 0;
 
-// Nag-Delay Statics
-int GameManager::_pendingGameID = 0;
-unsigned long GameManager::_nagStartMs = 0;
-
 void GameManager::begin() {
     Serial.println("GM: Game Engine gestartet.");
-    StatsManager::begin(); // NEU
+    StatsManager::begin();
 }
 
 void GameManager::update() {
-    // Nag-Delay: Spiel verzögert starten
-    if (_pendingGameID > 0 && (millis() - _nagStartMs >= NAG_DELAY_MS)) {
-        int id = _pendingGameID;
-        _pendingGameID = 0;
-        _nagStartMs = 0;
-        Serial.printf("GM: Nag-Delay abgelaufen, starte Spiel ID %d\n", id);
-        _doStartGame(id);
-    }
-
     if (currentGame) currentGame->loop();
 }
 
 void GameManager::startGame(int gameID) {
     Serial.printf("GM: Starte Spiel ID %d\n", gameID);
 
-    // Lizenzprüfung: Testphase abgelaufen → 30s Verzögerung
-    if (activationManager.getStatus() != LicenseStatus::FULL) {
-        uint32_t playedMin = StatsManager::getTotalPlaytimeMinutes();
-        uint32_t limitMin  = activationManager.getPlaytimeLimitMinutes();
-        if (playedMin >= limitMin) {
-            Serial.printf("GM: Testphase abgelaufen (%u/%u min) – 30s Nag-Delay\n", playedMin, limitMin);
-            _pendingGameID = gameID;
-            _nagStartMs = millis();
-            currentGame = nullptr; // altes Spiel beenden
-            return;
-        }
-    }
-
-    _doStartGame(gameID);
-}
-
-void GameManager::_doStartGame(int gameID) {
     StatsManager::addGameStart(gameID);
     StatsManager::startPlaytime();
     currentGame = nullptr;
@@ -160,17 +127,10 @@ void GameManager::_doStartGame(int gameID) {
             lowestHeapValue = h;
             lowestHeapGameId = lastGameId;
         }
-        lastGameId = gameID; // das letzte spiel wegschreiben
+        lastGameId = gameID;
         Serial.print("Spiel geladen: "); Serial.println(currentGame->getName());
         currentGame->setup();
     }
-}
-
-int GameManager::getNagDelayRemaining() {
-    if (_pendingGameID == 0) return 0;
-    unsigned long elapsed = millis() - _nagStartMs;
-    if (elapsed >= NAG_DELAY_MS) return 0;
-    return (int)((NAG_DELAY_MS - elapsed) / 1000);
 }
 
 Game* GameManager::getCurrentGame() { return currentGame; }

@@ -1,0 +1,63 @@
+# CrashLogger — Coordinator Black-Box
+# Files: src/coordinator/CrashLogger.h, src/coordinator/CrashLogger.cpp
+
+## PURPOSE
+File-basierte Black-Box zur Diagnose von Coordinator-Hangs/Crashes.
+Schreibt periodisch Heap-, TX/RX- und Stack-Stats nach LittleFS, sodass
+nach einem Crash oder Hang post-mortem rekonstruiert werden kann, wie der
+Coordinator sich vor dem Ausfall verhalten hat.
+
+Hintergrund: Symptom war "alle Pucks verlieren Heartbeat gleichzeitig, WLAN
+sichtbar, Webserver tot" nach 5–20 min Pitstop/Hunt/ShuttleRun. Hypothesen:
+TX-Path-Freeze, Heap-Fragmentation, Stack-Overflow. CrashLogger trackt alle
+drei, damit nicht mehr geraten werden muss.
+
+## DATEN
+- /crashlog.csv  — aktuelle Log-Datei (max ~256KB)
+- /crashlog.old  — vorheriger Log nach Rotation (kann fehlen)
+
+## FORMAT
+CSV mit Zeilentyp in Spalte 1:
+- B,uptime_s,reset_code,reset_reason
+  Zeile beim Boot. reset_code = esp_reset_reason() (0=UNKNOWN, 1=POWERON,
+  2=EXT, 3=SW, 4=PANIC, 5=INT_WDT, 6=TASK_WDT, 7=WDT, 8=DEEPSLEEP,
+  9=BROWNOUT, 10=SDIO). POWERON/EXT = sauberer Neustart. PANIC/WDT =
+  echter Crash. Wenn nach langer Uptime KEIN B-Marker und KEIN S-Sample
+  mehr kommt, war es ein Hang ohne Reset (Power-Cycle nötig).
+- S,uptime_s,heap_free,heap_min,largest,stack_hw,tx_ok,tx_fail,sc,cb,rx,qo,pucks,gid,clients
+  - heap_free: ESP.getFreeHeap()
+  - heap_min:  ESP.getMinFreeHeap() (Watermark seit Boot)
+  - largest:   heap_caps_get_largest_free_block(MALLOC_CAP_8BIT)
+               Wenn das stark fällt während heap_free hoch bleibt =
+               Heap-Fragmentation. Trigger für AsyncTCP-/ESP-NOW-Failures.
+  - stack_hw:  uxTaskGetStackHighWaterMark(NULL) für Loop-Task. Bytes,
+               die der Stack noch frei hatte. Klein und sinkend = Risiko.
+  - tx_ok/tx_fail: kumulierte Successfull/Failed Unicast-Sends
+  - sc/cb:    sendCalls vs sendCallbacks. cb friert ein während sc weitersteigt
+              = klassischer TX-Freeze (send-Callback feuert nicht mehr).
+              In PuckNetwork triggert dies ab 30 konsekutiven TX-Fails eine
+              Auto-Recovery (esp_now_deinit + reinit).
+  - rx/qo:    totalPacketsRx, queueOverflows
+  - pucks:    Anzahl aktiver Pucks (active == true)
+  - gid:      lastGameId (0 = idle, sonst Game-ID aus Common.h)
+  - clients:  WiFi.softAPgetStationNum() (verbundene Handys/PCs)
+
+## SAMPLE-RATE
+5s. Bei ~80 Byte/Zeile → 60KB/h → 256KB-Rotation alle ~4h.
+
+## API-ENDPOINTS (WebHandler.cpp)
+- GET /api/crashlog       → text/csv aus /crashlog.csv (404 wenn leer)
+- GET /api/crashlog/old   → text/csv aus /crashlog.old (404 wenn nicht rotiert)
+- GET /api/crashlog/clear → löscht beide Dateien
+
+## TRADE-OFFS
+- LittleFS-Schreiben alle 5s belastet Flash (wear-leveling fängt es ab,
+  aber bewusst akzeptiert für Diagnose, nicht für Dauerbetrieb).
+- Bei Hang im Main-Loop wird die letzte S-Zeile NICHT mehr geschrieben →
+  Lücke zwischen letztem Sample und Boot-Marker zeigt Hang-Zeitpunkt.
+- File wird pro Sample neu geöffnet/geschlossen. Wäre per-handle-keep
+  schneller, aber Crash → letzter Block verloren. Bewusst sicher gewählt.
+
+## KEINE Z-CRASH-ANALYSE-LOGIK
+CrashLogger schreibt nur. Auswertung passiert offline am PC nach Download
+über /api/crashlog. Format ist absichtlich grep-/awk-/Excel-freundlich.

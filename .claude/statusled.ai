@@ -1,0 +1,41 @@
+# StatusLed — Coordinator Status-Indikator
+# Files: src/coordinator/StatusLed.h, src/coordinator/StatusLed.cpp
+
+## PURPOSE
+Sehr sparsamer Status-Indikator über einen WS2812B Ring (16 LEDs an GPIO 4,
+versorgt direkt aus +/- am Coordinator). Zeigt grob den Betriebszustand:
+- BOOT: alle 16 LEDs Lila
+- NO_PUCK: jede 2. LED Gelb (8 LEDs)
+- HAS_PUCK: jede 4. LED Grün (4 LEDs)
+
+## HARDWARE
+- Pin: GPIO 4 (Data)
+- LED-Anzahl: 16 (definierte Konstante STATUS_LED_COUNT)
+- Globale Helligkeit: 191 (~75%) via FastLED.setBrightness
+- Chip/Reihenfolge: WS2812B / GRB
+
+## API
+- StatusLed::begin() — FastLED-Setup, initialer Zustand BOOT, Lila sofort an
+- StatusLed::update() — alle 10s prüft, ob Pucks aktiv sind, transitioniert
+  NO_PUCK <-> HAS_PUCK
+- StatusLed::setState(StatusLedState) — manueller Zustandswechsel; rendert
+  NUR wenn sich der Zustand wirklich geändert hat (kein FastLED.show() ohne Grund)
+
+## CPU/POWER NOTES
+- FastLED.show() läuft ausschließlich bei echtem Zustandswechsel.
+  Polling-Intervall in update() = 10s (STATUS_LED_CHECK_INTERVAL_MS).
+- Kein Heartbeat-Refresh, kein periodisches Re-Render → minimale Störung
+  von ESP-NOW (RMT-Interrupts).
+- Stromverbrauch im Dauerbetrieb (NO_PUCK Gelb 8 LEDs @ 75%) bleibt unter
+  ~250 mA Spitze; HAS_PUCK Grün 4 LEDs unter ~120 mA.
+
+## INTEGRATION
+- main.cpp: StatusLed::begin() als allererster Schritt in setup() (vor
+  LittleFS), damit der User den Boot sofort sieht. StatusLed::update() im
+  loop() nach den anderen Modulen.
+- Liest PuckNetwork::getPucks() und iteriert MAX_PEERS für die HAS_PUCK
+  Erkennung (Active-Flag).
+
+## DEPENDENCIES
+- FastLED (lib_deps coordinator env)
+- PuckNetwork.h (für getPucks() und MAX_PEERS via Common.h)

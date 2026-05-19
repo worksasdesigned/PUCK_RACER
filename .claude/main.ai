@@ -1,4 +1,4 @@
-# main.cpp — Coordinator Entry Point
+﻿# main.cpp — Coordinator Entry Point
 # Files: src/coordinator/main.cpp
 
 ## PURPOSE
@@ -6,20 +6,24 @@ Boot sequence and main loop for the ESP32-S3 coordinator.
 
 ## BOOT ORDER
 1. Serial 115200, 2s delay for monitor
-2. LittleFS.begin(true) — format on first boot
-3. Storage check: warn if <300KB free
-4. activationManager.begin() — license validation
-5. PuckNetwork::begin() — WiFi AP + ESP-NOW
-6. WebHandler::begin() — web server + DNS
-7. GameManager::begin() — stats init
+2. StatusLed::begin() — WS2812B Ring an GPIO 4, sofort Lila (Boot-Indikator)
+3. LittleFS.begin(true) — format on first boot
+4. Storage check: warn if <300KB free
+5. CrashLogger::begin() — schreibt sofort BOOT-Marker mit reset_reason in /crashlog.csv
+6. activationManager.begin() — license validation (NUR fuer JS-Anzeige, keine C-Blockade)
+7. PuckNetwork::begin() — WiFi AP + ESP-NOW
+8. WebHandler::begin() — web server + DNS
+9. GameManager::begin() — stats init
 
 ## MAIN LOOP
-PuckNetwork::update() → WebHandler::update() → GameManager::update() → WifiScanner::loop()
-All called every iteration, no delays.
+PuckNetwork::update() -> WebHandler::update() -> GameManager::update() -> WifiScanner::loop() -> StatusLed::update() -> CrashLogger::update()
+All called every iteration, no delays. StatusLed::update() ist ein 10s-Tick,
+der nur bei Zustandswechsel FastLED.show() ruft. CrashLogger::update() ist
+ein 5s-Tick, der dann eine CSV-Zeile an /crashlog.csv anhaengt.
 
 ## GLOBALS
 - ActivationManager activationManager — singleton, accessed by WebHandler
 - SYSTEM_VERSION "1.6-Debug" — shown in /api/version
 
 ## DEPENDENCIES
-Common.h, WebHandler.h, GameManager.h, PuckNetwork.h, WifiScanner.h, ActivationManager.h
+Common.h, WebHandler.h, GameManager.h, PuckNetwork.h, WifiScanner.h, ActivationManager.h, StatusLed.h, CrashLogger.h

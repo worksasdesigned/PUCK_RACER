@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>PUCKRACER — Flyer DIN A6</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   PUCKRACER FLYER — DIN A6 (105 x 148 mm), 2 Seiten
+   Druckfertig: Chrome → "Drucken" → "Als PDF speichern"
+   Wichtig im Druckdialog:
+     - Format: A6
+     - Ränder: Keine
+     - Hintergrundgrafiken: Aktiviert
+   ============================================================ */
+
+/* Eigene PUCKRACER-Schriftart aus dem Coordinator (data/style.css) */
+@font-face {
+    font-family: 'puckracer';
+    src: url('puckracer_subset.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+    font-display: swap;
+}
+
+@page {
+    size: A6 portrait;
+    margin: 0;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+html, body {
+    background: #0d0d14;
+    font-family: 'Montserrat', 'Segoe UI', Roboto, sans-serif;
+    color: #ffffff;
+}
+
+/* Vorschau-Modus: zentriert beide Seiten am Bildschirm */
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+}
+
+/* ============================================================
+   RGB RAINBOW RAHMEN (übernommen aus der index.html)
+   ============================================================ */
+@keyframes rainbow-glow {
+    0%   { background-position: 0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.rainbow-wrap {
+    width: 105mm;
+    height: 148mm;
+    padding: 2mm;
+    background: linear-gradient(45deg,
+        #ff0000, #ff7f00, #ffff00, #00ff00,
+        #0000ff, #4b0082, #9400d3, #ff0000);
+    background-size: 400% 400%;
+    animation: rainbow-glow 8s ease infinite;
+    position: relative;
+    overflow: hidden;
+}
+
+.page {
+    width: 100%;
+    height: 100%;
+    background:
+        radial-gradient(ellipse at 30% 20%, rgba(138, 236, 229, 0.10), transparent 60%),
+        radial-gradient(ellipse at 80% 80%, rgba(0, 255, 157, 0.08), transparent 55%),
+        linear-gradient(145deg, #1a1a24 0%, #0d0d14 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+/* ============================================================
+   SEITE 1 — VORDERSEITE
+   ============================================================ */
+
+/* HINTERGRUNDBILD (zentral, randabfallend) */
+.hero-bg {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+/* HINWEIS: Hier später das Sporthallen-Foto einsetzen.
+   Aktuell wird das Puck-Produktbild der index.html genutzt.
+   Bewusst kleiner gehalten und vertikal mittig, damit eingebauter
+   Bildtext nicht von der PUCKRACER-Überschrift überlagert wird. */
+.hero-bg img {
+    width: 70%;
+    max-width: 70mm;
+    height: auto;
+    max-height: 70%;
+    object-fit: contain;
+    margin-top: 4mm;
+    filter:
+        drop-shadow(0 0 18px rgba(255, 50, 50, 0.55))
+        drop-shadow(0 0 36px rgba(255, 0, 0, 0.35))
+        drop-shadow(0 0 50px rgba(138, 236, 229, 0.25));
+    opacity: 0.95;
+}
+
+/* dunkler Vignette-Layer über dem Bild für besseren Textkontrast */
+.hero-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(180deg,
+            rgba(13, 13, 20, 0.55) 0%,
+            rgba(13, 13, 20, 0.15) 30%,
+            rgba(13, 13, 20, 0.20) 65%,
+            rgba(13, 13, 20, 0.85) 100%);
+    pointer-events: none;
+}
+
+/* OBEN LINKS — LOGO */
+.brand {
+    position: absolute;
+    top: 6mm;
+    left: 6mm;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 2mm;
+}
+
+.brand img {
+    height: 11mm;
+    width: auto;
+    filter: brightness(0) invert(1) drop-shadow(0 0 4px rgba(255,255,255,0.3));
+}
+
+.brand-text {
+    font-family: 'puckracer', 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-size: 7.5mm;
+    letter-spacing: 0.4mm;
+    color: #ffffff;
+    text-shadow: 0 0 6px rgba(138, 236, 229, 0.6);
+    line-height: 1;
+}
+
+/* OBEN RECHTS — OPEN BETA BADGE (schräg)
+   Etwas tiefer und kompakter platziert, damit das Logo + PUCKRACER
+   in der oberen linken Ecke frei bleibt. */
+.beta-badge {
+    position: absolute;
+    top: 17mm;
+    right: -8mm;
+    z-index: 4;
+    transform: rotate(15deg);
+    background: linear-gradient(135deg, #00ff9d 0%, #00d4ff 100%);
+    color: #0d0d14;
+    padding: 2.5mm 11mm;
+    font-weight: 900;
+    text-align: center;
+    text-transform: uppercase;
+    box-shadow:
+        0 0 12px rgba(0, 255, 157, 0.7),
+        0 0 24px rgba(0, 212, 255, 0.4),
+        0 4px 8px rgba(0, 0, 0, 0.4);
+    border: 0.5mm solid rgba(255, 255, 255, 0.4);
+}
+
+.beta-badge .big {
+    display: block;
+    font-size: 3.6mm;
+    letter-spacing: 0.4mm;
+    line-height: 1;
+}
+
+.beta-badge .small {
+    display: block;
+    font-size: 2.4mm;
+    font-weight: 700;
+    letter-spacing: 0.3mm;
+    margin-top: 0.7mm;
+}
+
+/* UNTEN LINKS — TAGLINE */
+.tagline {
+    position: absolute;
+    bottom: 7mm;
+    left: 6mm;
+    right: 6mm;
+    z-index: 3;
+    text-align: left;
+}
+
+.tagline-sub {
+    font-size: 3.4mm;
+    font-weight: 400;
+    color: #ffffff;
+    letter-spacing: 0.2mm;
+    line-height: 1.2;
+    margin-bottom: 1.2mm;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+.tagline-main {
+    font-family: 'puckracer', 'Montserrat', sans-serif;
+    font-size: 6.0mm;
+    font-weight: 900;
+    color: #00ff9d;
+    text-transform: uppercase;
+    letter-spacing: 0.5mm;
+    line-height: 1.1;
+    text-shadow:
+        0 0 8px rgba(0, 255, 157, 0.5),
+        0 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* MINI-URL UNTEN RECHTS, FALLS PLATZ */
+.url-corner {
+    position: absolute;
+    bottom: 7mm;
+    right: 6mm;
+    z-index: 3;
+    font-size: 2.6mm;
+    font-weight: 700;
+    color: #8aece5;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    letter-spacing: 0.2mm;
+}
+
+/* ============================================================
+   SEITE 2 — RÜCKSEITE
+   ============================================================ */
+
+.page-back {
+    padding: 6mm;
+    display: flex;
+    flex-direction: column;
+}
+
+.back-header {
+    text-align: center;
+    margin-bottom: 3mm;
+}
+
+.back-header h2 {
+    font-size: 4.4mm;
+    font-weight: 900;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.3mm;
+    line-height: 1.2;
+    margin-bottom: 2mm;
+}
+
+.back-header .divider {
+    height: 0.4mm;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        #00ff9d 30%,
+        #8aece5 70%,
+        transparent 100%);
+    border: none;
+    border-radius: 1mm;
+}
+
+/* ZWEI-SPALTEN-LAYOUT */
+.back-cols {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 60% 40%;
+    gap: 3mm;
+    margin-top: 4mm;
+    margin-bottom: 4mm;
+}
+
+/* LINKS: Bullet-Liste */
+.bullets {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2.5mm;
+}
+
+.bullet {
+    display: flex;
+    gap: 2mm;
+    align-items: flex-start;
+    line-height: 1.25;
+}
+
+.bullet-icon {
+    flex: 0 0 4mm;
+    color: #00ff9d;
+    font-weight: 900;
+    font-size: 3.6mm;
+    line-height: 1;
+    margin-top: 0.3mm;
+    text-shadow: 0 0 4px rgba(0, 255, 157, 0.6);
+}
+
+.bullet-text {
+    font-size: 2.7mm;
+    color: #ffffff;
+    font-weight: 400;
+}
+
+.bullet-text strong {
+    color: #8aece5;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.1mm;
+    font-size: 2.8mm;
+    display: block;
+    margin-bottom: 0.3mm;
+}
+
+/* RECHTS: QR-Box */
+.qr-box {
+    background: linear-gradient(145deg,
+        rgba(255, 255, 255, 0.10) 0%,
+        rgba(255, 255, 255, 0.04) 100%);
+    border: 0.4mm solid rgba(0, 255, 157, 0.45);
+    border-radius: 3mm;
+    padding: 3mm 2mm;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    box-shadow:
+        0 0 8px rgba(0, 255, 157, 0.25),
+        inset 0 0 10px rgba(138, 236, 229, 0.08);
+}
+
+.qr-title {
+    font-size: 3.0mm;
+    font-weight: 900;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 0.2mm;
+    margin-bottom: 2mm;
+    line-height: 1.1;
+}
+
+.qr-img {
+    width: 33mm;
+    height: 33mm;
+    background: #ffffff;
+    padding: 1.2mm;
+    border-radius: 1.5mm;
+    margin-bottom: 2mm;
+    display: block;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+}
+
+.qr-caption {
+    font-size: 2.2mm;
+    color: #cccccc;
+    font-weight: 400;
+    line-height: 1.25;
+}
+
+/* FUSSZEILE */
+.back-footer {
+    text-align: center;
+    padding-top: 3mm;
+    border-top: 0.3mm solid rgba(255, 255, 255, 0.15);
+    font-size: 2.8mm;
+    font-weight: 700;
+    color: #8aece5;
+    letter-spacing: 0.2mm;
+}
+
+.back-footer .sep {
+    color: rgba(255, 255, 255, 0.3);
+    margin: 0 2mm;
+    font-weight: 400;
+}
+
+/* GROSSE URL HERVORHEBUNG */
+.big-url {
+    text-align: center;
+    margin: 2mm 0 0 0;
+    padding: 2mm 0;
+    font-family: 'puckracer', 'Montserrat', sans-serif;
+    font-size: 5.6mm;
+    font-weight: 900;
+    color: #00ff9d;
+    text-transform: lowercase;
+    letter-spacing: 0.4mm;
+    text-shadow:
+        0 0 8px rgba(0, 255, 157, 0.55),
+        0 0 16px rgba(0, 255, 157, 0.3);
+    line-height: 1;
+}
+
+/* ============================================================
+   PRINT-OPTIMIERUNG
+   ============================================================ */
+@media print {
+    body {
+        gap: 0;
+        padding: 0;
+    }
+    .rainbow-wrap {
+        page-break-after: always;
+        animation: none; /* statisch beim Druck */
+        background: linear-gradient(45deg,
+            #ff0000, #ff7f00, #ffff00, #00ff00,
+            #0000ff, #4b0082, #9400d3);
+    }
+    .rainbow-wrap:last-child {
+        page-break-after: auto;
+    }
+}
+
+/* ============================================================
+   BILDSCHIRMVORSCHAU — Skalierung auf großen Monitoren
+   ============================================================ */
+@media screen {
+    .rainbow-wrap {
+        box-shadow:
+            0 0 30px rgba(138, 236, 229, 0.25),
+            0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+    .preview-hint {
+        color: #888;
+        font-size: 0.85rem;
+        text-align: center;
+        max-width: 600px;
+        line-height: 1.5;
+        margin: 10px 20px;
+    }
+    .preview-hint code {
+        background: rgba(138, 236, 229, 0.1);
+        color: #8aece5;
+        padding: 2px 6px;
+        border-radius: 3px;
+    }
+}
+@media print {
+    .preview-hint { display: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="preview-hint">
+    Vorschau — A6 Flyer, 2 Seiten. Zum Drucken: <code>Strg+P</code>, Format <strong>A6</strong>,
+    Ränder <strong>Keine</strong>, Hintergrundgrafiken <strong>aktiviert</strong>.
+    Mit „Als PDF speichern" entsteht eine druckfertige PDF.
+</div>
+
+<!-- ============================================================
+     SEITE 1 — VORDERSEITE
+     ============================================================ -->
+<div class="rainbow-wrap">
+    <div class="page">
+
+        <!-- Hintergrundbild: später durch Sporthallen-Foto ersetzbar -->
+        <div class="hero-bg">
+            <img src="pictures/front1_tech.png" alt="PUCK RACER">
+        </div>
+
+        <!-- Open-Beta Stör-Badge oben rechts -->
+        <div class="beta-badge">
+            <span class="big">Open Beta</span>
+            <span class="small">Jetzt testen!</span>
+        </div>
+
+        <!-- Logo oben links -->
+        <div class="brand">
+            <img src="pictures/logo_klein.png" alt="">
+            <span class="brand-text">PUCKRACER</span>
+        </div>
+
+        <!-- Tagline unten links -->
+        <div class="tagline">
+            <div class="tagline-sub">Das DIY Reaktionslicht-System</div>
+            <div class="tagline-main">Für Vereine<br>&amp; Schulen</div>
+        </div>
+
+        <!-- Mini-URL unten rechts -->
+        <div class="url-corner">puckracer.net</div>
+
+    </div>
+</div>
+
+<!-- ============================================================
+     SEITE 2 — RÜCKSEITE
+     ============================================================ -->
+<div class="rainbow-wrap">
+    <div class="page page-back">
+
+        <!-- Kopfzeile -->
+        <div class="back-header">
+            <h2>Professionelles Training.<br>Eigener Bau.</h2>
+            <hr class="divider">
+        </div>
+
+        <!-- Zwei Spalten -->
+        <div class="back-cols">
+
+            <!-- Bullet-Liste -->
+            <ul class="bullets">
+                <li class="bullet">
+                    <span class="bullet-icon">&#10003;</span>
+                    <span class="bullet-text">
+                        <strong>100 % Lokal</strong>
+                        Steuerung direkt im Smartphone-Browser. Keine App, keine Cloud.
+                    </span>
+                </li>
+                <li class="bullet">
+                    <span class="bullet-icon">&#10003;</span>
+                    <span class="bullet-text">
+                        <strong>Hohe Reichweite</strong>
+                        ESP-NOW Funk mit bis zu 50 m Reichweite.
+                    </span>
+                </li>
+                <li class="bullet">
+                    <span class="bullet-icon">&#10003;</span>
+                    <span class="bullet-text">
+                        <strong>Vielseitig</strong>
+                        Über 25 fertige Spiele für Reaktion, Fitness &amp; Kognition.
+                    </span>
+                </li>
+                <li class="bullet">
+                    <span class="bullet-icon">&#10003;</span>
+                    <span class="bullet-text">
+                        <strong>Spieler &amp; Klassen</strong>
+                        Eigene Spieler- und Klassenverwaltung direkt im System.
+                    </span>
+                </li>
+                <li class="bullet">
+                    <span class="bullet-icon">&#10003;</span>
+                    <span class="bullet-text">
+                        <strong>Unschlagbar günstig</strong>
+                        Open-Source-Hardware (3D-Druck) für unter 25&nbsp;&euro; pro Puck. Kein Abo.
+                    </span>
+                </li>
+            </ul>
+
+            <!-- QR-Box -->
+            <div class="qr-box">
+                <div class="qr-title">Werde Teil<br>der Beta!</div>
+                <img class="qr-img"
+                     src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=0&format=svg&data=https%3A%2F%2Fwww.puckracer.net"
+                     alt="QR Code zu puckracer.net">
+                <div class="qr-caption">Scanne den Code,<br>teste die Live-Demo<br>und starte dein Projekt.</div>
+            </div>
+
+        </div>
+
+        <!-- Hervorgehobene URL -->
+        <div class="big-url">www.puckracer.net</div>
+
+        <!-- Fußzeile -->
+        <div class="back-footer">
+            &#127760; www.puckracer.net
+            <span class="sep">|</span>
+            &#9993; info@puckracer.net
+        </div>
+
+    </div>
+</div>
+
+</body>
+</html>

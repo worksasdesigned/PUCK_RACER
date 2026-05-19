@@ -206,7 +206,7 @@
             </div>
 
             <h1>Downloads</h1>
-            <p>Firmware, 3D print files and PCB designs for the PUCK RACER project.</p>
+            <p>Firmware, 3D print files and PCB designs for the PUCK RACER project. PUCK RACER is fully open source &ndash; hardware and software. All sources on <a href="https://github.com/worksasdesigned/PUCK_RACER" target="_blank" rel="noopener" style="color:#8aece5; font-weight:bold;">GitHub</a>.</p>
 
             <!-- ============================================================ -->
             <!-- 1. WEBFLASHER / FIRMWARE                                     -->
@@ -214,7 +214,7 @@
             <h2 class="section-heading">Firmware &amp; Web Flasher</h2>
 
             <div class="dl-card">
-                <span class="coming-soon-tag">Open Beta</span>
+                <span class="coming-soon-tag">Open Source</span>
                 <h3>PUCK RACER Firmware</h3>
                 <p>Use the <b>Web Flasher</b> to flash the firmware directly in your browser &mdash; no PlatformIO required. All you need is a USB cable and Chrome or Edge.</p>
 
@@ -249,31 +249,49 @@
                     <thead>
                         <tr>
                             <th>File</th>
+                            <th>Type</th>
                             <th>Version</th>
                             <th>Size</th>
-                            <th>Description</th>
+                            <th>Use case</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td><a href="../bin/coordinator.bin" download style="color:#8aece5; font-weight:bold; text-decoration:none;">coordinator.bin</a></td>
+                            <td>Coordinator &middot; USB</td>
                             <td><span class="version-tag">V2.99.9</span></td>
                             <td>16 MB</td>
-                            <td>Coordinator complete (Firmware + WebUI + LittleFS)</td>
+                            <td>Initial flash via USB cable using the Web Flasher or esptool. Includes bootloader, firmware and the WebUI (LittleFS).</td>
                         </tr>
                         <tr>
                             <td><a href="../bin/puck.bin" download style="color:#8aece5; font-weight:bold; text-decoration:none;">puck.bin</a></td>
-                            <td><span class="version-tag">FW 88</span></td>
+                            <td>Puck &middot; USB</td>
+                            <td><span class="version-tag">FW 89</span></td>
                             <td>1.2 MB</td>
-                            <td>Puck complete (Bootloader + Firmware)</td>
+                            <td>Initial flash via USB cable using the Web Flasher or esptool. Includes bootloader and firmware.</td>
+                        </tr>
+                        <tr>
+                            <td><a href="../bin/puck_OTA_FW89.bin" download style="color:#00ff9d; font-weight:bold; text-decoration:none;">puck_OTA_FW89.bin</a></td>
+                            <td><span style="color:#00ff9d; font-weight:bold;">Puck &middot; OTA</span></td>
+                            <td><span class="version-tag" style="background:rgba(0,255,157,0.15); color:#00ff9d;">FW 89</span></td>
+                            <td>1.1 MB</td>
+                            <td>Wireless update of pucks already running firmware, via the coordinator&apos;s firmware update page. <b>Do not flash via USB!</b></td>
                         </tr>
                     </tbody>
                 </table>
 
+                <div class="dl-card" style="background:rgba(0,255,157,0.07); border:1px solid rgba(0,255,157,0.3); padding:14px 18px; margin-top:18px; margin-bottom:0;">
+                    <p style="margin:0; color:#ddd; font-size:0.9rem;">
+                        <b style="color:#00ff9d;">USB vs. OTA &mdash; what is the difference?</b><br>
+                        The <b>USB file</b> (<code>puck.bin</code>) contains bootloader + firmware and is written to the ESP32 over the USB cable for the <b>initial flash</b>. The <b>OTA file</b> (<code>puck_OTA_FW89.bin</code>) is firmware only (no bootloader) and is pulled wirelessly from the coordinator by an already running puck. <b>Always use the OTA file for OTA updates</b> &mdash; trying to OTA-flash <code>puck.bin</code> will fail because it includes the bootloader area.
+                    </p>
+                </div>
+
                 <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:18px;">
-                    <a class="dl-btn" href="../flasher.html">Open Web Flasher</a>
+                    <a class="dl-btn" href="flasher.html">Open Web Flasher</a>
                     <a class="dl-btn" href="../bin/coordinator.bin" download style="background:rgba(138,236,229,0.15); color:#8aece5; border:1px solid rgba(138,236,229,0.3);">Coordinator .bin</a>
-                    <a class="dl-btn" href="../bin/puck.bin" download style="background:rgba(138,236,229,0.15); color:#8aece5; border:1px solid rgba(138,236,229,0.3);">Puck .bin</a>
+                    <a class="dl-btn" href="../bin/puck.bin" download style="background:rgba(138,236,229,0.15); color:#8aece5; border:1px solid rgba(138,236,229,0.3);">Puck .bin (USB)</a>
+                    <a class="dl-btn" href="../bin/puck_OTA_FW89.bin" download style="background:rgba(0,255,157,0.15); color:#00ff9d; border:1px solid rgba(0,255,157,0.4);">Puck .bin (OTA)</a>
                 </div>
             </div>
 
@@ -295,7 +313,7 @@
 
             <div class="dl-card">
                 <h3>Board Production Files</h3>
-                <p>The PUCK RACER PCB (KiCad) as Gerber download. Upload the ZIP file directly to JLCPCB or PCBWay. More details on the <a href="hardware.html" style="color:#8aece5; font-weight:bold;">Hardware page</a>.</p>
+                <p>The PUCK RACER PCB (KiCad) as Gerber download. Upload the ZIP file directly to JLCPCB or PCBWay. More details on the <a href="hardware.html" style="color:#8aece5; font-weight:bold;">Hardware page</a>. All sources also on <a href="https://github.com/worksasdesigned/PUCK_RACER" target="_blank" rel="noopener" style="color:#8aece5; font-weight:bold;">GitHub</a>.</p>
                 <div class="file-grid">
                     <a class="file-link file-link-primary" href="../gerber/PBC.zip" download>
                         <span class="file-icon">&#128230;</span> PBC.zip (Complete Package)

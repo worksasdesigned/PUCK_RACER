@@ -1,5 +1,5 @@
-# PuckRacer Coordinator — Architecture Index
-# Last updated: 2026-04-01
+﻿# PuckRacer Coordinator — Architecture Index
+# Last updated: 2026-04-29
 
 ## SYSTEM OVERVIEW
 ESP32-S3 coordinator that manages wireless LED pucks via ESP-NOW for sports/training games.
@@ -10,16 +10,18 @@ ESP32-S3 coordinator that manages wireless LED pucks via ESP-NOW for sports/trai
 - Filesystem: LittleFS (serves HTML/JS/CSS to browser)
 - No PSRAM usage (clone compatibility issues)
 - Version: defined as SYSTEM_VERSION in main.cpp
+- Status-LED Ring: 16x WS2812B an GPIO 4 (Lila Boot / Gelb idle / Grün connected)
 
 ## BOOT SEQUENCE (main.cpp)
-1. LittleFS.begin() — mount filesystem
-2. activationManager.begin() — load/validate license
-3. PuckNetwork::begin() — WiFi AP + ESP-NOW init
-4. WebHandler::begin() — AsyncWebServer + DNS
-5. GameManager::begin() — StatsManager init
+1. StatusLed::begin() — WS2812B Ring (16 LEDs an GPIO 4), Lila als Boot-Indikator
+2. LittleFS.begin() — mount filesystem
+3. activationManager.begin() — load/validate license
+4. PuckNetwork::begin() — WiFi AP + ESP-NOW init
+5. WebHandler::begin() — AsyncWebServer + DNS
+6. GameManager::begin() — StatsManager init
 
 ## MAIN LOOP (main.cpp)
-PuckNetwork::update() → WebHandler::update() → GameManager::update() → WifiScanner::loop()
+PuckNetwork::update() → WebHandler::update() → GameManager::update() → WifiScanner::loop() → StatusLed::update()
 
 ## FILE MAP
 
@@ -34,6 +36,7 @@ PuckNetwork::update() → WebHandler::update() → GameManager::update() → Wif
 | StatsManager.h/cpp | Game start counts (NVS), puck clicks/time, playtime tracking | statsmanager.ai |
 | ActivationManager.h/cpp | License system (FREE/EXTENDED/FULL), CRC32 keys, debug mode | activationmanager.ai |
 | Wifiscanner.h/cpp | WiFi channel analyzer, promiscuous mode packet counting | wifiscanner.ai |
+| StatusLed.h/cpp | WS2812B Status-Ring an GPIO 4 (Boot/idle/connected) | statusled.ai |
 | Game.h | Abstract base class: setup(), loop(), handleEvent(), processCommand(), getStatusJSON() | (in index.ai) |
 
 ### Puck Firmware (src/puck/)

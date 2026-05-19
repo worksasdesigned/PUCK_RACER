@@ -27,6 +27,7 @@ struct PuckInfo {
     unsigned long lastMinuteTick; // statistics
     CommandPacket lastEffect;     // Cache: letzter gesendeter Effekt
     bool hasLastEffect;           // Flag ob Cache gültig
+    unsigned long lastRestoreSent; // Storm-Bremse: letzter Restore-Resend an diesen Puck
 };
 
 // Statistik Struktur
@@ -37,6 +38,9 @@ struct NetworkStats {
     unsigned long queueOverflows;
     unsigned long successfulTx;
     unsigned long failedTx;
+    unsigned long sendCalls;        // Diagnose: wie oft esp_now_send aufgerufen
+    unsigned long sendCallbacks;    // Diagnose: wie oft OnDataSent gefeuert hat
+    unsigned long recoveryEvents;   // Diagnose: wie oft Auto-Recovery (esp_now reinit) lief
 };
 
 // --- NEU: OTA State Machine ---
@@ -97,6 +101,9 @@ private:
     static void updateOtaStateMachine();
     // NEU: Sendet Trigger an einen einzelnen Puck per Unicast
     static void sendOtaTriggerToPuck(const uint8_t* mac);
+
+    // Auto-Recovery: ESP-NOW reinit wenn der Sendepfad eingefroren ist
+    static void recoverEspNow();
 
     static PuckInfo pucks[MAX_PEERS];
     

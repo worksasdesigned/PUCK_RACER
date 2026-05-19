@@ -1,6 +1,6 @@
 # Puck Firmware — ESP32-C3 LED Puck
 # File: src/puck/main.cpp
-# FW_VERSION: 87
+# FW_VERSION: 89
 
 ## PURPOSE
 Standalone firmware for the ESP32-C3 LED pucks. Handles LED animations, button input,
@@ -11,10 +11,15 @@ and temperature protection.
 - MCU: ESP32-C3 (Single-Core RISC-V)
 - 35x WS2812B LEDs (PIN 4, GRB order)
 - Piezo Buzzer (PIN 5)
-- Arcade Button (PIN 3, INPUT_PULLUP)
+- Arcade Button (PIN 6, external 10k pull-up + INPUT_PULLUP)
 - Battery ADC (PIN 0, voltage divider 2:1)
-- NTC Temp Sensor (PIN 6, 10k Beta3950, optional — DISABLE_TEMP_SENSOR flag)
+- NTC Temp Sensor (PIN 3, 10k Beta3950, optional — DISABLE_TEMP_SENSOR flag)
 - FastLED power limit: 5V / 1500mA
+
+## HARDWARE PIN HISTORY
+- v85 and earlier: NTC=GPIO3, BTN=GPIO6 (correct)
+- v86–v88: NTC=GPIO6, BTN=GPIO3 (BUG — pins swapped, button presses never reached coordinator)
+- v89: reverted to NTC=GPIO3, BTN=GPIO6 to match production PCB wiring
 
 ## BOOT SEQUENCE
 1. Buzzer off (safety after WDT reset)

@@ -35,12 +35,12 @@
 // --- HARDWARE ---
 #define PIN_BAT     0  // ADC Pin für den Batterie-Spannungsteiler
 // GPIO1 ist der letzte freie ADC1-Pin für weitere analoge Sensoren
-#define PIN_NTC     6 //3  // NTC Temperatursensor (10kOhm Beta3950, 10kOhm Festwiderstand)
+#define PIN_NTC     3  // NTC Temperatursensor (10kOhm Beta3950, 10kOhm Festwiderstand)
 #define PIN_LED     4
 #define PIN_BUZZER  5
-#define PIN_BTN     3 //6  // Arcade Button (INPUT_PULLUP)
+#define PIN_BTN     6  // Arcade Button (externer 10kOhm Pull-Up, zusätzlich INPUT_PULLUP intern)
 #define NUM_LEDS    35
-#define FW_VERSION  88
+#define FW_VERSION  89
 
 // --- TEMPERATUR OVERHEAT ---
 // Schwellwert in °C – ab diesem Wert wird Overheat-Schutz ausgelöst.

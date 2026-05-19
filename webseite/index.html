@@ -4,21 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PUCK RACER - Das DIY Reaktionslicht-System f&uuml;r Vereine & Schulen</title>
-    <meta name="description" content="PUCK RACER – Das DIY Reaktionslicht-System mit 27+ Spielen f&uuml;r Vereine, Schulen und Zuhause. Open-Source-Hardware, unter 20&euro; pro Puck, keine App n&ouml;tig.">
-    <meta name="keywords" content="Reaktionslicht, Reaktionstraining, DIY, ESP32, Puck, LED Training, Sportspiel, Verein, Schule, Open Source Hardware">
-    <link rel="canonical" href="https://www.puckracer.net/index.html">
-    <link rel="alternate" hreflang="de" href="https://www.puckracer.net/index.html">
-    <link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/index.html">
+    <meta name="description" content="PUCK RACER – Das DIY Reaktionslicht-System mit 27+ Spielen f&uuml;r Vereine, Schulen und Zuhause. Vollst&auml;ndig Open Source (Hardware &amp; Software), unter 20&euro; pro Puck, keine App n&ouml;tig.">
+    <meta name="keywords" content="Reaktionslicht, Reaktionstraining, DIY, ESP32, Puck, LED Training, Sportspiel, Verein, Schule, Open Source Hardware, Open Source Software">
+    <link rel="canonical" href="https://www.puckracer.net/">
+    <link rel="alternate" hreflang="de" href="https://www.puckracer.net/">
+    <link rel="alternate" hreflang="en" href="https://www.puckracer.net/en/">
+    <link rel="alternate" hreflang="x-default" href="https://www.puckracer.net/">
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="PUCK RACER - Das DIY Reaktionslicht-System">
-    <meta property="og:description" content="Professionelles Reaktionstraining mit 27+ Spielen. Open-Source-Hardware unter 20&euro; pro Puck. Keine App, kein Abo.">
+    <meta property="og:description" content="Professionelles Reaktionstraining mit 27+ Spielen. Vollst&auml;ndig Open Source (Hardware &amp; Software) unter 20&euro; pro Puck. Keine App, kein Abo.">
     <meta property="og:image" content="https://www.puckracer.net/pictures/front1_tech.png">
     <meta property="og:url" content="https://www.puckracer.net/">
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="PUCK RACER - Das DIY Reaktionslicht-System">
-    <meta name="twitter:description" content="Professionelles Reaktionstraining mit 27+ Spielen. Open-Source-Hardware unter 20&euro; pro Puck.">
+    <meta name="twitter:description" content="Professionelles Reaktionstraining mit 27+ Spielen. Vollst&auml;ndig Open Source (Hardware &amp; Software) unter 20&euro; pro Puck.">
     <meta name="twitter:image" content="https://www.puckracer.net/pictures/front1_tech.png">
     <link rel="icon" type="image/x-icon" href="favicon.ico">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -54,11 +55,10 @@
         }
     }
     </script>
-    <script>
-    if (!navigator.language.startsWith('de') && !document.referrer.includes('puckracer.net')) {
-        window.location.replace('en/index.html');
-    }
-    </script>
+    <!-- KEIN automatischer Sprach-Redirect: Googlebot crawlt aus US-Locale,
+         würde sonst dauerhaft auf /en/ umgeleitet und die deutsche Seite
+         als Duplikat der englischen einstufen. Sprachwahl erfolgt über
+         den EN-Link in der Navigation und über hreflang. -->
 </head>
 <body>
     <header>
@@ -86,8 +86,8 @@
                 <img src="pictures/logo_klein.png" alt="PUCK RACER Logo" class="logo">
             </div>
 
-            <a href="faq.html#beta" style="display:block; background:rgba(236,201,75,0.1); border:1px solid rgba(236,201,75,0.3); border-radius:10px; padding:12px 20px; margin-bottom:25px; text-align:center; color:#ecc94b; font-size:0.9rem; width:100%; text-decoration:none; transition:background 0.3s;">
-                Dieses Projekt befindet sich aktuell in der <strong>Closed Beta</strong>. Hardware und Software sind noch nicht &ouml;ffentlich verf&uuml;gbar.<br><span style="font-size:0.8rem; opacity:0.85;">Neugierig? Werde Teil des Beta-Tests &rarr;</span>
+            <a href="https://github.com/worksasdesigned/PUCK_RACER" target="_blank" rel="noopener" style="display:block; background:rgba(138,236,229,0.1); border:1px solid rgba(138,236,229,0.35); border-radius:10px; padding:12px 20px; margin-bottom:25px; text-align:center; color:#8aece5; font-size:0.9rem; width:100%; text-decoration:none; transition:background 0.3s;">
+                &#127881; <strong>100% Open Source</strong> &mdash; Hardware, Software und Firmware sind frei auf GitHub verf&uuml;gbar!<br><span style="font-size:0.8rem; opacity:0.85;">GitHub &rarr; github.com/worksasdesigned/PUCK_RACER</span>
             </a>
 
             <!-- HERO -->
@@ -173,7 +173,7 @@
             <div class="features-grid">
                 <div class="feature-card">
                     <h3>&#9881; Preiswert & DIY</h3>
-                    <p>Komplette Hardware unter 20&nbsp;&euro; pro Puck. Open-Source-Platine, zahlreiche 3D-druckbare Adapter und ein tolles Projekt zum Selberbauen.</p>
+                    <p>Komplette Hardware unter 20&nbsp;&euro; pro Puck. Hardware und Software sind vollst&auml;ndig Open Source &ndash; <a href="https://github.com/worksasdesigned/PUCK_RACER" target="_blank" rel="noopener" style="color:#8aece5;">GitHub</a>.</p>
                 </div>
                 <div class="feature-card">
                     <h3>&#9889; Professionelles Training</h3>

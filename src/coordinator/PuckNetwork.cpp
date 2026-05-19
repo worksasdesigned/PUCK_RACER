@@ -3,6 +3,7 @@
 #include <Preferences.h>
 #include "StatsManager.h"
 #include <esp_wifi.h>       // Für esp_wifi_set_ps() – WiFi Power-Save Steuerung
+#include <esp_heap_caps.h>  // Für heap_caps_get_largest_free_block() – Heap-Fragmentation-Diagnose
 
 PuckInfo PuckNetwork::pucks[MAX_PEERS];
 volatile QueueItem PuckNetwork::eventQueue[QUEUE_SIZE];
@@ -18,7 +19,14 @@ static unsigned long quietBeepTime = 0;
 static bool quietBeepBroadcast = false;
 static uint8_t quietBeepMac[6] = {};
 
-NetworkStats PuckNetwork::stats = {0, 0, 0, 0, 0, 0};
+NetworkStats PuckNetwork::stats = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+// Auto-Recovery: zähle aufeinanderfolgende TX-Fehlschläge.
+// Wenn der Counter eine Schwelle überschreitet, ist der ESP-NOW-Sendepfad
+// eingefroren (beobachtet: TX-OK steht still, TX-FAIL läuft hoch). Wir machen
+// dann einen kontrollierten esp_now_deinit + reinit + Peers neu setzen.
+static unsigned int consecutiveTxFails = 0;
+static const unsigned int CONSEC_FAIL_RECOVERY_THRESHOLD = 30;
 
 volatile bool PuckNetwork::sendStatusReady = false;
 volatile esp_now_send_status_t PuckNetwork::lastSendStatus = ESP_NOW_SEND_FAIL;
@@ -143,19 +151,27 @@ void PuckNetwork::update() {
                 sendToPuck(item.mac, brt);
             }
 
+            // Storm-Bremse: bei jedem EVT_HELLO würde der Puck sonst den Cached-Effekt
+            // erneut bekommen. Wenn ein PAIR_ACK verloren geht, sendet der Puck weiter
+            // EVT_HELLO im 2s-Takt → Cached-Effect-Spam → Feedback-Loop. Wir resenden
+            // den Effekt höchstens alle 5s pro MAC.
+            unsigned long now_hello = millis();
             bool restored = false;
             for (int i = 0; i < MAX_PEERS; i++) {
                 if (pucks[i].hasLastEffect && memcmp(pucks[i].mac, item.mac, 6) == 0) {
-                    Serial.printf("RECONNECT: Puck %d → restoring cached effect (ID=%d)\n", 
-                                  i, pucks[i].lastEffect.effectID);
-                    sendToPuck(item.mac, pucks[i].lastEffect);
+                    if (now_hello - pucks[i].lastRestoreSent >= 5000) {
+                        Serial.printf("RECONNECT: Puck %d → restoring cached effect (ID=%d)\n",
+                                      i, pucks[i].lastEffect.effectID);
+                        sendToPuck(item.mac, pucks[i].lastEffect);
+                        pucks[i].lastRestoreSent = now_hello;
+                    }
                     restored = true;
                     break;
                 }
             }
             if (!restored) {
-                CommandPacket light; light.cmd = CMD_EFFECT; light.effectID = EFF_STATUS; 
-                light.r = 0; light.g = 255; light.b = 0; light.extra = 255; light.duration = 0; 
+                CommandPacket light; light.cmd = CMD_EFFECT; light.effectID = EFF_STATUS;
+                light.r = 0; light.g = 255; light.b = 0; light.extra = 255; light.duration = 0;
                 sendToPuck(item.mac, light);
             }
         }
@@ -222,15 +238,25 @@ void PuckNetwork::update() {
         for(int i = 0; i < MAX_PEERS; i++) {
             if(pucks[i].active) {
                 int percent = map(constrain(pucks[i].rssi, -95, -55), -95, -55, 0, 255);
+                // Floor: bei NUM_LEDS=35 wäre val<8 → numLit=0 → 0 LEDs an.
+                // Bei sehr schwachem Signal wollen wir trotzdem 1 LED zeigen.
+                if (percent < 8) percent = 8;
                 CommandPacket cp;
+                memset(&cp, 0, sizeof(cp));
                 cp.cmd = CMD_EFFECT; cp.effectID = EFF_PROGRESS;
-                cp.duration = percent; cp.extra = 40; 
+                cp.duration = percent; cp.extra = 40;
                 const uint8_t palette[][3] = {
-                    {0,0,255}, {0,255,0}, {255,0,0}, {255,255,0}, {255,0,255}, {0,255,255}, 
+                    {0,0,255}, {0,255,0}, {255,0,0}, {255,255,0}, {255,0,255}, {0,255,255},
                     {255,165,0}, {128,0,128}, {64,224,208}, {255,192,203}, {255,255,255}, {0,255,0}
                 };
                 cp.r = palette[i % 12][0]; cp.g = palette[i % 12][1]; cp.b = palette[i % 12][2];
-                esp_now_send(pucks[i].mac, (uint8_t*)&cp, sizeof(cp));
+                // sendToPuck statt nacktem esp_now_send: serialisiert die Calls
+                // (kein Queue-Overflow bei vielen Pucks), retried bei Verlust und
+                // füttert consecutiveTxFails / Auto-Recovery korrekt. Vorher hingen
+                // die Pucks im grünen EFF_STATUS aus dem Pair-Restore fest, weil
+                // die EFF_PROGRESS-Pakete je nach Anzahl Pucks und Linkqualität
+                // verworfen wurden.
+                sendToPuck(pucks[i].mac, cp);
             }
         }
     }
@@ -372,6 +398,7 @@ void PuckNetwork::triggerUpdateBroadcast() {
 void PuckNetwork::OnDataSent(const uint8_t *mac_addr, esp_now_send_status_t status) {
     lastSendStatus = status;
     sendStatusReady = true;
+    stats.sendCallbacks++;
 }
 
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 0, 0)
@@ -405,6 +432,7 @@ void PuckNetwork::OnDataRecv(const uint8_t *mac_addr, const uint8_t *incomingDat
                 
                 pucks[i].lastSeqNr = tempEvt.seqNr - 1;
                 pucks[i].temp_c10 = -999;
+                pucks[i].lastRestoreSent = 0;
                 pucks[i].totalClicks = StatsManager::getPuckClicks(mac_addr);
                 pucks[i].totalMinutes = StatsManager::getPuckTime(mac_addr);
                 pucks[i].lastMinuteTick = millis();
@@ -495,20 +523,22 @@ void PuckNetwork::sendToPuck(const uint8_t* mac, CommandPacket cmd) {
 
     for (int retries = 0; retries < 3; retries++) {
         sendStatusReady = false;
+        stats.sendCalls++;
         esp_err_t result = esp_now_send(mac, (uint8_t*)&cmd, sizeof(cmd));
-        
+
         if (result != ESP_OK) {
             delay(5);
-            continue; 
+            continue;
         }
-        
+
         unsigned long start = millis();
         while (!sendStatusReady && millis() - start < 15) {
-            yield(); 
+            yield();
         }
-        
+
         if (sendStatusReady && lastSendStatus == ESP_NOW_SEND_SUCCESS) {
             stats.successfulTx++;
+            consecutiveTxFails = 0;
             if (cmd.cmd == CMD_EFFECT) {
                 for (int i = 0; i < MAX_PEERS; i++) {
                     if (pucks[i].active && memcmp(pucks[i].mac, mac, 6) == 0) {
@@ -518,12 +548,22 @@ void PuckNetwork::sendToPuck(const uint8_t* mac, CommandPacket cmd) {
                     }
                 }
             }
-            return; 
+            return;
         }
-        
+
         delay(8);
     }
-    stats.failedTx++; 
+    stats.failedTx++;
+    consecutiveTxFails++;
+
+    // Auto-Recovery: ESP-NOW Sendepfad eingefroren? Reinit erzwingen.
+    // Wir tun das nur einmal pro Schwellen-Überschreitung, damit wir nicht
+    // permanent neuinitialisieren falls die Pucks tatsächlich offline sind.
+    if (consecutiveTxFails == CONSEC_FAIL_RECOVERY_THRESHOLD) {
+        Serial.printf("!!! TX-PATH FROZEN (%u consec fails) — triggering ESP-NOW recovery\n",
+                      consecutiveTxFails);
+        recoverEspNow();
+    }
 }
 
 void PuckNetwork::broadcast(CommandPacket cmd) {
@@ -549,7 +589,7 @@ void PuckNetwork::broadcast(CommandPacket cmd) {
 PuckInfo* PuckNetwork::getPucks() { return pucks; }
 
 NetworkStats PuckNetwork::getStats() { return stats; }
-void PuckNetwork::resetStats() { stats = {0,0,0,0,0,0}; }
+void PuckNetwork::resetStats() { stats = {0,0,0,0,0,0,0,0,0}; }
 
 void PuckNetwork::printStats() {
     float qual = 0;
@@ -561,9 +601,63 @@ void PuckNetwork::printStats() {
         txQual = (float)stats.successfulTx / (float)(stats.successfulTx + stats.failedTx) * 100.0;
     }
 
-    Serial.printf("[NET] RX-Total: %lu | Valid: %lu | Dupes: %lu | RX-Qual: %.1f%%  ||  TX-OK: %lu | TX-FAIL: %lu | TX-Qual: %.1f%%\n", 
+    // largest_free_block enttarnt Heap-Fragmentation: free kann groß sein,
+    // aber wenn größter zusammenhängender Block < ~2KB ist, schlagen
+    // AsyncTCP/ESP-NOW Allokationen fehl und der Coordinator hängt.
+    uint32_t largestBlock = heap_caps_get_largest_free_block(MALLOC_CAP_8BIT);
+
+    Serial.printf("[NET] RX:%lu(V:%lu D:%lu Q:%.0f%%) TX-OK:%lu FAIL:%lu Q:%.0f%% calls:%lu cb:%lu heap:%u/largest:%u rec:%lu\n",
         stats.totalPacketsRx, stats.validEvents, stats.duplicates, qual,
-        stats.successfulTx, stats.failedTx, txQual);
+        stats.successfulTx, stats.failedTx, txQual,
+        stats.sendCalls, stats.sendCallbacks,
+        ESP.getFreeHeap(), largestBlock, stats.recoveryEvents);
+}
+
+void PuckNetwork::recoverEspNow() {
+    stats.recoveryEvents++;
+    Serial.println("RECOVERY: esp_now_deinit + reinit + re-add peers");
+
+    esp_now_unregister_recv_cb();
+    esp_now_unregister_send_cb();
+    esp_now_deinit();
+
+    delay(50);
+
+    if (esp_now_init() != ESP_OK) {
+        Serial.println("RECOVERY: esp_now_init() FAILED — Coordinator wird neu gestartet.");
+        delay(100);
+        ESP.restart();
+        return;
+    }
+
+    esp_now_register_recv_cb(OnDataRecv);
+    esp_now_register_send_cb((esp_now_send_cb_t)OnDataSent);
+
+    // Broadcast-Peer auf STA-Interface neu eintragen
+    esp_now_peer_info_t peerInfo = {};
+    const uint8_t broadcast[] = BROADCAST_MAC;
+    memcpy(peerInfo.peer_addr, broadcast, 6);
+    peerInfo.channel = WIFI_CHANNEL;
+    peerInfo.encrypt = false;
+    peerInfo.ifidx = WIFI_IF_STA;
+    esp_now_add_peer(&peerInfo);
+
+    // Aktive Pucks als Peers neu eintragen
+    int restored = 0;
+    for (int i = 0; i < MAX_PEERS; i++) {
+        if (pucks[i].active) {
+            esp_now_peer_info_t pi = {};
+            memcpy(pi.peer_addr, pucks[i].mac, 6);
+            pi.channel = WIFI_CHANNEL;
+            pi.encrypt = false;
+            pi.ifidx = WIFI_IF_STA;
+            if (esp_now_add_peer(&pi) == ESP_OK) restored++;
+        }
+    }
+
+    sendStatusReady = false;
+    consecutiveTxFails = 0;
+    Serial.printf("RECOVERY: complete, %d Puck-Peers wiederhergestellt.\n", restored);
 }
 
 void PuckNetwork::setCredentials(String ssid, String password) {
