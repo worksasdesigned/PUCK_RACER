@@ -92,20 +92,20 @@
 
             <label style="display:block; margin-bottom:15px;">
                 <span data-i18n="param_batwarn_mv">⚠️ Battery Warning (mV)</span>
-                <input type="range" id="sldBatWarn" min="3600" max="3800" step="50" value="3600"
+                <input type="range" id="sldBatWarn" min="3300" max="3700" step="50" value="3400"
                        oninput="document.getElementById('lblBatWarn').textContent=this.value+'mV ('+mvToPct(this.value)+'%)'"
                        onchange="saveSysPref('bat_warn_mv', parseInt(this.value))"
                        style="width:100%; margin-top:5px;">
-                <div id="lblBatWarn" style="text-align:center; font-size:0.9rem; color:var(--text-muted);">3600mV (33%)</div>
+                <div id="lblBatWarn" style="text-align:center; font-size:0.9rem; color:var(--text-muted);">3400mV (11%)</div>
             </label>
 
             <label style="display:block; margin-bottom:15px;">
                 <span data-i18n="param_batcrit_mv">🔴 Battery Critical (mV)</span>
-                <input type="range" id="sldBatCrit" min="3450" max="3600" step="50" value="3500"
+                <input type="range" id="sldBatCrit" min="3100" max="3500" step="50" value="3200"
                        oninput="document.getElementById('lblBatCrit').textContent=this.value+'mV ('+mvToPct(this.value)+'%)'"
                        onchange="saveSysPref('bat_crit_mv', parseInt(this.value))"
                        style="width:100%; margin-top:5px;">
-                <div id="lblBatCrit" style="text-align:center; font-size:0.9rem; color:var(--text-muted);">3400mV (11%)</div>
+                <div id="lblBatCrit" style="text-align:center; font-size:0.9rem; color:var(--text-muted);">3200mV (–)</div>
             </label>
         </div>
 
@@ -138,8 +138,8 @@
             document.getElementById('chkHeapWarn').checked  = prefs.heap_warn === true;
             document.getElementById('chkFsWarn').checked    = prefs.fs_warn  === true;
             // Battery threshold sliders
-            var warnMv = prefs.bat_warn_mv || 3600;
-            var critMv = prefs.bat_crit_mv || 3400;
+            var warnMv = prefs.bat_warn_mv || 3400;
+            var critMv = prefs.bat_crit_mv || 3200;
             document.getElementById('sldBatWarn').value = warnMv;
             document.getElementById('lblBatWarn').textContent = warnMv + 'mV (' + mvToPct(warnMv) + '%)';
             document.getElementById('sldBatCrit').value = critMv;

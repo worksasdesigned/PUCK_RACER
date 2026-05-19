@@ -180,20 +180,41 @@ setInterval(function() {
 })();
 
 // === BATTERY TOAST SYSTEM ===
+// Debounce: Toast nur wenn der Wert N Polls in Folge unter der Schwelle bleibt.
+// Bei 1500ms Polling = ~15s ununterbrochen. Filtert Boot-Glitches (0V-Reading
+// kurz nach Reconnect) und einzelne Funk-Schluckaufs.
 const _batDismissed = new Set();
+const _batLowStreak = {};
+const _batCritStreak = {};
+const BAT_DEBOUNCE_SAMPLES = 10;
 
 function checkBatteryLevels(pucks) {
     var prefs = _getSysPrefs();
-    var critMv = prefs.bat_crit_mv || 3400;
-    var warnMv = prefs.bat_warn_mv || 3600;
+    var critMv = prefs.bat_crit_mv || 3200;
+    var warnMv = prefs.bat_warn_mv || 3400;
     pucks.forEach((p, i) => {
-        if (!p.active) return;
+        if (!p.active) { _batLowStreak[i] = 0; _batCritStreak[i] = 0; return; }
         const num = i + 1;
+        // Unrealistische Messung (z.B. 0V kurz nach Connect) ignorieren —
+        // aber Streak NICHT zurücksetzen, sonst kippt ein folgendes gültiges
+        // Low-Sample sofort durch.
         if (p.bat < 1000) return;
-        if (p.bat <= critMv && prefs.bat_crit !== false) {
-            _showBatToast(i, 'critical', (typeof getTranslation === 'function' ? getTranslation('bat_critical') : 'Puck #{n} battery empty!').replace('{n}', num), '#c53030');
-        } else if (p.bat <= warnMv && prefs.bat_low !== false) {
-            _showBatToast(i, 'warning', (typeof getTranslation === 'function' ? getTranslation('bat_warning') : 'Puck #{n} battery low!').replace('{n}', num), '#c05621');
+
+        if (p.bat <= critMv) {
+            _batCritStreak[i] = (_batCritStreak[i] || 0) + 1;
+            _batLowStreak[i] = 0;
+            if (_batCritStreak[i] >= BAT_DEBOUNCE_SAMPLES && prefs.bat_crit !== false) {
+                _showBatToast(i, 'critical', (typeof getTranslation === 'function' ? getTranslation('bat_critical') : 'Puck #{n} battery empty!').replace('{n}', num), '#c53030');
+            }
+        } else if (p.bat <= warnMv) {
+            _batLowStreak[i] = (_batLowStreak[i] || 0) + 1;
+            _batCritStreak[i] = 0;
+            if (_batLowStreak[i] >= BAT_DEBOUNCE_SAMPLES && prefs.bat_low !== false) {
+                _showBatToast(i, 'warning', (typeof getTranslation === 'function' ? getTranslation('bat_warning') : 'Puck #{n} battery low!').replace('{n}', num), '#c05621');
+            }
+        } else {
+            _batLowStreak[i] = 0;
+            _batCritStreak[i] = 0;
         }
     });
 }
