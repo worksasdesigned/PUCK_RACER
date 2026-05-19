@@ -110,14 +110,14 @@
             }
 
             let container = document.getElementById('playerList');
-            let plrs = [...data.pl];
-            if (data.st >= 3) plrs.sort((a,b) => b.sc - a.sc);
+            // Immer nach Score sortieren — vorher nur am Spielende, jetzt live.
+            let plrs = [...data.pl].sort((a, b) => b.sc - a.sc);
             let maxScore = Math.max(...plrs.map(p => p.sc));
 
-            plrs.forEach((p, index) => {
+            plrs.forEach((p) => {
                 let name = sessionStorage.getItem(`p_name_${p.id}`) || `Hunter ${p.id+1}`;
                 let col = COLORS[p.id % 10];
-                
+
                 let isWin = (data.st >= 3 && p.sc === maxScore && maxScore > 0);
                 let rowClass = "p-row";
                 if (isWin) rowClass += " row-win";
@@ -127,17 +127,19 @@
 
                 if (!rowEl) {
                     container.insertAdjacentHTML('beforeend', `
-                    <div id="${rowId}" class="${rowClass}" style="border-left-color: ${col}; order:${index}">
+                    <div id="${rowId}" class="${rowClass}" style="border-left-color: ${col}">
                         <div class="color-dot" style="background:${col}; box-shadow:0 0 10px ${col}"></div>
                         <div class="p-name">${name}</div>
                         <div class="p-score" id="sc-${p.id}">${isWin ? `${p.sc} 🥇` : p.sc}</div>
                     </div>`);
                 } else {
                     rowEl.className = rowClass;
-                    rowEl.style.order = index;
                     document.getElementById(`sc-${p.id}`).innerHTML = isWin ? `${p.sc} 🥇` : p.sc;
                 }
             });
+
+            // FLIP-Animation: bringt die Zeilen-Reihenfolge im DOM in Sync mit plrs.
+            sortListAnimated('playerList', plrs.map(p => `h-row-${p.id}`));
         }
 
         function doAction(cmd) { fetch(`/api/game/action?cmd=${cmd}`); }

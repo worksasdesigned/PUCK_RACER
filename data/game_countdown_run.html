@@ -225,7 +225,7 @@
 
                 if (!rowEl) {
                     container.insertAdjacentHTML('beforeend', `
-                    <div id="${rowId}" class="score-row" style="border-left-color: ${color}; order: ${idx}; opacity: ${rowOpacity};">
+                    <div id="${rowId}" class="score-row" style="border-left-color: ${color}; opacity: ${rowOpacity};">
                         <div style="display:flex; align-items:center;">
                             <span class="rank" id="rank-${s.id}">${rank}</span>
                             <span class="score-name">${name}${recordIcon}</span>
@@ -236,17 +236,18 @@
                         </div>
                     </div>`);
                 } else {
-                    rowEl.style.order = idx;
                     rowEl.style.opacity = rowOpacity;
-                    
+
                     let nameEl = rowEl.querySelector('.score-name');
                     if (nameEl.innerHTML !== `${name}${recordIcon}`) nameEl.innerHTML = `${name}${recordIcon}`;
-                    
+
                     document.getElementById(`rank-${s.id}`).innerText = rank;
                     document.getElementById(`sub-${s.id}`).innerText = subHtml;
                     document.getElementById(`val-${s.id}`).innerHTML = valHtml;
                 }
             });
+
+            sortListAnimated('scoreboard', sortedScores.map(s => `score-row-${s.id}`));
         }
 
         // --- HIER WURDE DER KNOTEN GELÖST ---

@@ -223,6 +223,11 @@ After the real first beta is released il will provide the bin files in case of u
     - Test version keygen working in react2p
     - Test version of JSON GAME   
 
+**V3.0.1**   
+    - change to OpenSource, Removed c Blocker of Licence key. HTML blocker stays for registration use  
+    - Stabilization fix. passed 3h permanent test!   
+    - many small fixes.  
+
 
 --- 
 

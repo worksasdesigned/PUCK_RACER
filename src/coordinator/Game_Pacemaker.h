@@ -54,9 +54,9 @@ private:
     int currentSegment = -1;
     bool halfPassedFlag = false;
     
-    // 5er Blöcke Farben (Rot, Blau, Grün, Gelb, Magenta, Cyan, Orange, Pink) für Setup
+    // 4er Blöcke Farben (Rot, Blau, Grün, Gelb, Magenta, Cyan, Orange, Pink) für Setup
     const CRGB BLOCK_COLORS[8] = {
-        CRGB::Red, CRGB::Blue, CRGB::Green, CRGB::Yellow, 
+        CRGB::Red, CRGB::Blue, CRGB::Green, CRGB::Yellow,
         CRGB::Magenta, CRGB::Cyan, CRGB::Orange, CRGB::DeepPink
     };
 

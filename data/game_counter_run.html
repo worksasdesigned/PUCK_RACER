@@ -144,7 +144,7 @@
 
                 if (!rowEl) {
                     container.insertAdjacentHTML('beforeend', `
-                    <div id="${rowId}" class="score-row" style="border-left-color: ${color}; order: ${idx};">
+                    <div id="${rowId}" class="score-row" style="border-left-color: ${color};">
                         <div style="display:flex; align-items:center;">
                             <span class="rank" id="rank-${s.id}">${rank}</span>
                             <span class="score-name">${name}</span>
@@ -152,11 +152,12 @@
                         <span class="score-val" id="val-${s.id}">${s.sc}</span>
                     </div>`);
                 } else {
-                    rowEl.style.order = idx;
                     document.getElementById(`rank-${s.id}`).innerText = rank;
                     document.getElementById(`val-${s.id}`).innerText = s.sc;
                 }
             });
+
+            sortListAnimated('scoreboard', sortedScores.map(s => `score-row-${s.id}`));
         }
 
         function doAction(act) {

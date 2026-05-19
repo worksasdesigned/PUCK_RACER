@@ -28,6 +28,50 @@ function _vUrl(url) {
     return p ? path + '?' + p : path;
 }
 
+// === SORTABLE LIST: FLIP-Animation ===
+// Reordert die Kinder eines Containers in der durch orderedIds vorgegebenen
+// Reihenfolge und animiert den Übergang von alter zu neuer Y-Position.
+// Funktioniert für jeden Block-/Flex-Container — nutzt KEIN CSS `order`
+// (nicht animatable), sondern echtes appendChild + transform-Animation.
+function sortListAnimated(containerId, orderedIds) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const rows = orderedIds.map(id => document.getElementById(id)).filter(Boolean);
+    if (rows.length < 2) return;
+
+    // Falls die DOM-Reihenfolge bereits stimmt: nichts tun (kein Reflow).
+    const visible = Array.from(container.children).filter(c => rows.includes(c));
+    let same = true;
+    for (let i = 0; i < rows.length; i++) {
+        if (visible[i] !== rows[i]) { same = false; break; }
+    }
+    if (same) return;
+
+    // FIRST: alte Y-Positionen merken.
+    const oldTops = new Map();
+    rows.forEach(r => oldTops.set(r, r.getBoundingClientRect().top));
+
+    // LAST: tatsächlich neu anordnen.
+    rows.forEach(r => container.appendChild(r));
+
+    // INVERT + PLAY: alten Offset als translateY setzen, dann zurückanimieren.
+    // Nach Ende inline-Styles entfernen, sonst übersteuert unser `transition:
+    // transform` die CSS-Transitions der Zeile (background/border-color etc.).
+    rows.forEach(r => {
+        const delta = oldTops.get(r) - r.getBoundingClientRect().top;
+        if (delta === 0) return;
+        r.style.transition = 'none';
+        r.style.transform = `translateY(${delta}px)`;
+        void r.offsetWidth; // force reflow so the inverted offset takes effect first
+        r.style.transition = 'transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)';
+        r.style.transform = '';
+        r.addEventListener('transitionend', () => {
+            r.style.transition = '';
+            r.style.transform = '';
+        }, { once: true });
+    });
+}
+
 function goHome() {
     fetch('/api/game/action?cmd=exit').catch(()=>{});
     nav('/');

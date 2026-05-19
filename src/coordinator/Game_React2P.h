@@ -65,9 +65,16 @@ private:
     
     ReactGroup groups[5]; 
 
-    const CRGB P1_POOL[3] = {CRGB::Red, CRGB::Magenta, CRGB::DeepPink};
-    const CRGB P2_POOL[3] = {CRGB::Blue, CRGB::Cyan, CRGB::Lime};
-    const CRGB FAKE_POOL[4] = {CRGB::Yellow, CRGB::Orange, CRGB::White, CRGB::Gold};
+    // Spielerfarben bewusst eng am Grundton gehalten (alle P1 = Rotfamilie,
+    // alle P2 = Blaufamilie). Vorher: Magenta/DeepPink (Rosa) in P1 und
+    // Cyan/Lime in P2 — Rosa wirkt aus der Distanz wie Rot, Cyan wie Blau,
+    // dadurch entstanden Fehlinterpretationen bei aktivem FakeColor-Modus.
+    const CRGB P1_POOL[3] = {CRGB::Red, CRGB::OrangeRed, CRGB::Crimson};
+    const CRGB P2_POOL[3] = {CRGB::Blue, CRGB::RoyalBlue, CRGB::DodgerBlue};
+    // Fehlfarben: deutlich abgesetzt von Rot UND Blau, untereinander klar
+    // unterscheidbar. Yellow/Gold/Orange waren auf den LEDs alle warmgelb;
+    // jetzt vier wirklich verschiedene Töne.
+    const CRGB FAKE_POOL[4] = {CRGB::Yellow, CRGB::Green, CRGB::White, CRGB::Purple};
     
     const CRGB GROUP_COLORS[5] = {CRGB::Purple, CRGB::Turquoise, CRGB::Coral, CRGB::Aquamarine, CRGB::MediumPurple};
 

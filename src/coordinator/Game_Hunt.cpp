@@ -110,12 +110,15 @@ unsigned long Game_Hunt::calculateTimeout() {
 
 void Game_Hunt::startGameSequence() {
     gameState = HUNT_COUNTDOWN;
-    stateStartTime = millis();
-    
+
     for(int i=0; i<actualPuckCount; i++) {
         setPuck(activePucks[i].globalIdx, EFF_BLINK, CRGB::Purple, 200, 200);
         delay(10);
     }
+    // stateStartTime erst NACH den Effekt-Sends setzen — sonst läuft der
+    // 3s-Countdown bereits während die EFF_BLINK-Pakete (bei 12 Pucks ~200ms)
+    // verschickt werden und das Spiel startet vor dem GO-Ton statt mit ihm.
+    stateStartTime = millis();
     if (soundOn) {
         CommandPacket snd; memset(&snd, 0, sizeof(snd)); snd.cmd = CMD_SEQUENCE; snd.extra = SEQ_SKI;
         PuckNetwork::broadcast(snd);

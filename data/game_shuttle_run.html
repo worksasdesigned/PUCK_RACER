@@ -180,7 +180,20 @@
 
             let players = data.players || [];
             let winnerTime = data.winnerTime;
-            
+
+            // Sortier-Index für FLIP-Animation: finished nach Zeit asc (schneller oben),
+            // sonst nach round desc (wer weiter gelaufen ist, oben). Player-Index `i`
+            // bleibt als stabile Identität bestehen — er steckt in row-ID & Farbe.
+            let order = players
+                .map((p, i) => ({ p, i }))
+                .sort((a, b) => {
+                    if (a.p.finished && !b.p.finished) return -1;
+                    if (!a.p.finished && b.p.finished) return 1;
+                    if (a.p.finished && b.p.finished) return a.p.time - b.p.time;
+                    return (b.p.round || 0) - (a.p.round || 0);
+                })
+                .map(o => `run-row-${o.i}`);
+
             players.forEach((p, i) => {
                 let name = sessionStorage.getItem(`p_name_${i}`) || `Player ${i+1}`;
                 let color = COLORS[i % COLORS.length];
@@ -249,6 +262,8 @@
                     document.getElementById(`info-${i}`).innerHTML = `${roundsTxt}<br>${timeTxt}`;
                 }
             });
+
+            sortListAnimated('scoreboard', order);
         }
 
         function doAction(act) {

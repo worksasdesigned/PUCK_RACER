@@ -74,7 +74,9 @@ void Game_Pacemaker::initGame() {
 }
 
 CRGB Game_Pacemaker::getPuckColor(int idx) {
-    return BLOCK_COLORS[(idx / 5) % 8];
+    // 4er Blöcke: Pucks 0-3 = Farbe 0, 4-7 = Farbe 1, 8-11 = Farbe 2, ...
+    // Bei >8 Pucks erscheint automatisch eine dritte Farbe (Grün).
+    return BLOCK_COLORS[(idx / 4) % 8];
 }
 
 CRGB Game_Pacemaker::getGroupColor(int group) {
@@ -99,7 +101,9 @@ int Game_Pacemaker::getSequencePuck(int group, int step) {
 
 void Game_Pacemaker::showTrack() {
     for(int i=0; i<activePucksCount; i++) {
-        int fillLevel = ((i % 5) + 1) * 51; 
+        // 4 Stufen pro Farbblock: 25%, 50%, 75%, 100% Füllung.
+        int fillLevel = ((i % 4) + 1) * 64;
+        if (fillLevel > 255) fillLevel = 255;
         setPuck(puckGlobalIds[i], EFF_PROGRESS, getPuckColor(i), fillLevel, 200);
         delay(15);
     }

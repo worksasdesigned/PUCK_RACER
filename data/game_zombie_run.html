@@ -170,7 +170,20 @@
 
         function renderTable(groups) {
             let container = document.getElementById('gameBoard');
-            
+
+            // Sortier-Reihenfolge für FLIP-Animation: Eliminated immer ans Ende,
+            // dann die Aktiven nach Shuttle-Laps bzw. überstandenen Runden (rnd) absteigend.
+            let order = groups
+                .map((g, i) => ({ g, i }))
+                .sort((a, b) => {
+                    let aDead = a.g.st === 6 ? 1 : 0;
+                    let bDead = b.g.st === 6 ? 1 : 0;
+                    if (aDead !== bDead) return aDead - bDead;
+                    if (isShuttle) return (b.g.shl || 0) - (a.g.shl || 0);
+                    return (b.g.rnd || 0) - (a.g.rnd || 0);
+                })
+                .map(o => `z-row-${o.i}`);
+
             groups.forEach((g, i) => {
                 let rowId = `z-row-${i}`;
                 let rowEl = document.getElementById(rowId);
@@ -345,6 +358,8 @@
                     chaseEl.style.display = 'none';
                 }
             });
+
+            sortListAnimated('gameBoard', order);
         }
 
         function doStart() {

@@ -80,7 +80,12 @@
         
         let p2StartIdx = -1;
         let numGroups = parseInt(sessionStorage.getItem('pm_grp') || 1);
-        let isShuttle = false; 
+        let isShuttle = false;
+        // Mapping: globaler Puck-Index (aus /api/effects, kann Lücken haben) → Layout-Index.
+        // Beim Anzeigen blinkt der Coordinator die Pucks in der dichten Layout-Reihenfolge,
+        // also muss /api/effects-Output umgeschrieben werden, damit puck_vis_${layoutIdx}
+        // korrekt synchronisiert wird, wenn die aktiven Pucks Lücken im pucks[]-Array haben.
+        let globalToLayout = {};
         
         // Zähler für dynamische Felder
         let pCounts = [1, 1];
@@ -227,7 +232,12 @@
                 if (isShuttle) activeLayout = ["A1", "A2", "A3", "A4", "A5", "C1", "C2", "C3", "C4", "C5", "E1", "E2"];
                 else activeLayout = PM_LAYOUTS[pCount] || PM_LAYOUTS[12];
 
+                // Aktive Pucks aus /api/status (data) in dichter Layout-Reihenfolge mappen.
+                // data[i].id = globaler pucks[]-Index, i = Layout-Position.
+                globalToLayout = {};
+                let activePucks = data.filter(p => p.active);
                 for(let i = 0; i < pCount && i < activeLayout.length; i++) {
+                    globalToLayout[activePucks[i].id] = i;
                     let coord = activeLayout[i];
                     let cell = document.getElementById(`cell-${coord}`);
                     let startHtml = "";
@@ -251,15 +261,20 @@
                 let r = await fetch('/api/effects');
                 let data = await r.json();
                 data.forEach(eff => {
+                    // eff.id ist der globale pucks[]-Index — auf Layout-Position umrechnen,
+                    // sonst zeigt der Effekt am falschen Display-Slot wenn aktive Pucks
+                    // Lücken im pucks[]-Array haben.
+                    const layoutIdx = globalToLayout[eff.id];
+                    if (layoutIdx === undefined) return;
                     const rgb = `rgb(${eff.r}, ${eff.g}, ${eff.b})`;
-                    
-                    let vis = document.getElementById(`puck_vis_${eff.id}`);
+
+                    let vis = document.getElementById(`puck_vis_${layoutIdx}`);
                     if(vis) {
                         vis.classList.remove('eff-breathe', 'eff-chase', 'eff-rainbow');
                         if(eff.eff == 3 || eff.eff == 4 || eff.eff == 5) vis.classList.add('eff-breathe');
                         if(eff.eff == 6 || eff.eff == 7) vis.classList.add('eff-chase');
                         if(eff.eff == 9) vis.classList.add('eff-rainbow');
-                        
+
                         if(eff.eff == 18) {
                             let percent = Math.round(eff.dur / 2.55);
                             vis.style.background = `conic-gradient(${rgb} ${percent}%, var(--border-color) ${percent}%)`;
@@ -271,14 +286,14 @@
                         vis.style.boxShadow = `0 0 15px ${rgb}`;
                     }
 
-                    // Synce die Farben auf die dynamischen Boxen
-                    if(eff.id === 0) {
+                    // Synce die Farben auf die dynamischen Boxen (Vergleich auf Layout-Position)
+                    if(layoutIdx === 0) {
                         for(let p=0; p<pCounts[0]; p++) {
                             let cb = document.getElementById(`cb_0_${p}`);
                             if(cb) { cb.style.background = rgb; cb.style.boxShadow = `0 0 10px ${rgb}`; }
                         }
                     }
-                    if(!isShuttle && numGroups === 2 && eff.id === p2StartIdx) {
+                    if(!isShuttle && numGroups === 2 && layoutIdx === p2StartIdx) {
                         for(let p=0; p<pCounts[1]; p++) {
                             let cb = document.getElementById(`cb_1_${p}`);
                             if(cb) { cb.style.background = rgb; cb.style.boxShadow = `0 0 10px ${rgb}`; }
